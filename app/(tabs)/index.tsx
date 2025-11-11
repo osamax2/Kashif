@@ -1,100 +1,107 @@
+import { FontAwesome } from "@expo/vector-icons";
+import { useRouter } from 'expo-router';
 import React from "react";
 import {
-  View,
+  I18nManager,
+  Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  StyleSheet,
-  I18nManager,
-  ScrollView,
+  View,
 } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 export default function Index() {
+  const router = useRouter();
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header (logo + app name) */}
-      <View style={styles.header}>
-        <Image
-          source={require("../../assets/images/icon.png")}
-          style={styles.logoHeader}
-          resizeMode="contain"
-        />
-        <View style={styles.headerText}>
-          <Text style={styles.appName}>كاشف</Text>
-          <Text style={styles.appTag}>عينك على الطريق</Text>
-        </View>
-      </View>
-
-      {/* Card / Form area */}
-      <View style={styles.card}>
-        <Text style={styles.title}>تسجيل الدخول</Text>
-        <Text style={styles.subtitle}>مرحباً بعودتك</Text>
-
-        {/* E-Mail */}
-        <View style={styles.field}>
-          <Text style={styles.label}>البريد الإلكتروني</Text>
-          <TextInput
-            placeholder="example@email.com"
-            placeholderTextColor="#AAB3C0"
-            style={styles.inputUnderline}
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Header (logo + app name) */}
+        <View style={styles.header}>
+          <Image
+              source={require("../../assets/images/icon.png")}
+              style={styles.logoHeader}
+              resizeMode="contain"
           />
-        </View>
-
-        {/* Passwort */}
-        <View style={styles.field}>
-          <Text style={styles.label}>كلمة المرور</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              secureTextEntry
-              style={styles.inputUnderline}
-              placeholder="••••••••"
-              placeholderTextColor="#AAB3C0"
-            />
-            <TouchableOpacity style={[styles.eyeTouch, I18nManager.isRTL ? { right: 8 } : { left: 8 }]}>
-              <Text style={styles.eyeIcon}>👁️</Text>
-            </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text style={styles.appName}>كاشف</Text>
+            <Text style={styles.appTag}>عينك على الطريق</Text>
           </View>
         </View>
 
-        {/* Login-Button */}
-        <TouchableOpacity style={styles.loginButton} activeOpacity={0.9}>
-          <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
-          <FontAwesome name="bolt" size={18} color="#0D2B66" style={[styles.boltIcon, I18nManager.isRTL ? { marginRight: 8 } : { marginLeft: 8 }]} />
-        </TouchableOpacity>
+        {/* Card / Form area */}
+        <View style={styles.card}>
+          <Text style={styles.title}>تسجيل الدخول</Text>
+          <Text style={styles.subtitle}>مرحباً بعودتك</Text>
 
-        <Text style={styles.orText}>أو سجل باستخدام</Text>
+          {/* Form (wraps email, password, buttons, links) */}
+          <View style={styles.form}>
+            {/* E-Mail */}
+            <View style={styles.field}>
+              <Text style={styles.label}>البريد الإلكتروني</Text>
+              <TextInput
+                  placeholder="example@email.com"
+                  placeholderTextColor="#AAB3C0"
+                  style={styles.inputUnderline}
+                  textAlign="right"
+              />
+            </View>
 
-        <View style={styles.socialRow}>
-          <TouchableOpacity style={[styles.socialButton, styles.whatsapp]}>
-            <FontAwesome name="whatsapp" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
-            <Text style={styles.socialText}>WhatsApp</Text>
-          </TouchableOpacity>
+            {/* Passwort */}
+            <View style={styles.field}>
+              <Text style={styles.label}>كلمة المرور</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                    secureTextEntry
+                    style={styles.inputUnderline}
+                    placeholder="••••••••"
+                    placeholderTextColor="#AAB3C0"
+                    textAlign="right"
+                />
+                <TouchableOpacity style={[styles.eyeTouch, I18nManager.isRTL ? { right: 8 } : { left: 8 }]}>
+                  <Text style={styles.eyeIcon}>👁️</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
-          <TouchableOpacity style={[styles.socialButton, styles.facebook]}>
-            <FontAwesome name="facebook" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
-            <Text style={styles.socialText}>Facebook</Text>
-          </TouchableOpacity>
+            {/* Login-Button */}
+            <TouchableOpacity style={styles.loginButton} activeOpacity={0.9}>
+              <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
+              <FontAwesome name="bolt" size={18} color="#0D2B66" style={[styles.boltIcon, I18nManager.isRTL ? { marginRight: 8 } : { marginLeft: 8 }]} />
+            </TouchableOpacity>
+
+            <Text style={styles.orText}>أو سجل باستخدام</Text>
+
+            <View style={styles.socialRow}>
+              <TouchableOpacity style={[styles.socialButton, styles.whatsapp]}>
+                <FontAwesome name="whatsapp" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
+                <Text style={styles.socialText}>WhatsApp</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.socialButton, styles.facebook]}>
+                <FontAwesome name="facebook" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
+                <Text style={styles.socialText}>Facebook</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Links unten */}
+            <View style={styles.linksContainer}>
+              <TouchableOpacity style={styles.linkRow}>
+                <FontAwesome name="plus-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
+                <Text style={styles.link}>أنشئ حسابًا جديدًا</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/forgot')}>
+                <FontAwesome name="question-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
+                <Text style={styles.link}>نسيت كلمة المرور؟</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-
-        {/* Links unten */}
-        <View style={styles.linksContainer}>
-          <TouchableOpacity style={styles.linkRow}>
-            <FontAwesome name="plus-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
-            <Text style={styles.link}>أنشئ حسابًا جديدًا</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.linkRow}>
-            <FontAwesome name="question-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
-            <Text style={styles.link}>نسيت كلمة المرور؟</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
   );
 }
 
@@ -102,7 +109,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "#0D2B66", // Dunkelblau
-    alignItems: "center",
+    alignItems: "stretch",
     justifyContent: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
@@ -129,11 +136,13 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "800",
     textAlign: "left",
+    fontFamily: 'Tajawal-Bold',
   },
   appTag: {
     color: "#BFD7EA",
     fontSize: 14,
     textAlign: "left",
+    fontFamily: 'Tajawal-Regular',
   },
   title: {
     fontSize: 22,
@@ -141,29 +150,37 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginTop: 10,
     textAlign: "right",
+    fontFamily: 'Tajawal-Bold',
   },
   subtitle: {
     fontSize: 14,
     color: "#BFD7EA",
     marginBottom: 30,
     textAlign: "right",
+    fontFamily: 'Tajawal-Regular',
   },
   card: {
     width: "100%",
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 16,
     padding: 20,
-    alignItems: "center",
+    alignItems: "stretch",
     marginTop: 8,
     marginBottom: 20,
   },
-  field: { width: "100%", marginBottom: 14 },
+  field: { width: "100%", marginBottom: 14, alignItems: 'stretch' },
+  form: {
+    width: '100%',
+    alignItems: 'stretch',
+  },
   label: {
-    color: "#F4B400", // Gelb
-    alignSelf: "flex-end",
-    marginRight: 6,
-    marginBottom: 6,
-    fontSize: 14,
+    width: '100%',
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    color: '#F4B400',
+    marginBottom: 8,
+    fontSize: 16,
+    fontFamily: 'Tajawal-Medium',
   },
   inputUnderline: {
     width: "100%",
@@ -172,6 +189,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: "#FFFFFF",
     textAlign: "right",
+    writingDirection: 'rtl',
     fontSize: 14,
   },
   passwordContainer: {
@@ -209,6 +227,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
     textAlign: "center",
+    fontFamily: 'Tajawal-Medium',
   },
   boltIcon: { marginLeft: 8, backgroundColor: "#FFFFFF", padding: 2, borderRadius: 6 },
   orText: {
@@ -241,6 +260,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
     textAlign: "right",
+    fontFamily: 'Tajawal-Medium',
   },
   linksContainer: {
     flexDirection: "row",
@@ -254,5 +274,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textDecorationLine: "underline",
     textAlign: "right",
+    fontFamily: 'Tajawal-Regular',
   },
 });

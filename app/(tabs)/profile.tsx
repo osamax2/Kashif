@@ -1,52 +1,52 @@
+import { FontAwesome } from "@expo/vector-icons";
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, I18nManager, ScrollView } from "react-native";
-import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import { I18nManager, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 export default function Profile() {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.inner}>
-        <Text style={styles.headerTitle}>الملف الشخصي</Text>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.inner}>
+          <Text style={styles.headerTitle}>الملف الشخصي</Text>
 
-        <View style={styles.avatarWrap}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.levelNumber}>4</Text>
+          <View style={styles.avatarWrap}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.levelNumber}>4</Text>
+            </View>
+            <Text style={styles.levelLabel}>محترف 🚀</Text>
           </View>
-          <Text style={styles.levelLabel}>محترف 🚀</Text>
-        </View>
 
-        <View style={styles.progressRow}>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: "65%" }]} />
+          <View style={styles.progressRow}>
+            <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarFill, { width: "65%" }]} />
+            </View>
           </View>
+
+          <View style={styles.nameRow}>
+            <Text style={styles.userName}>أحمد محمد</Text>
+            <Text style={styles.coins}><Text style={styles.coinsNumber}>340</Text> نقطة  <FontAwesome name="coins" size={16} color="#F4B400" /></Text>
+          </View>
+
+          <View style={styles.achievements}
+          >
+            <Text style={styles.rankText}>المركز الرابع في منطقتك 🏆</Text>
+            <Text style={styles.rankText}>المركز السادس في سوريا 🏆</Text>
+
+            <Text style={styles.latestTitle}>آخر المكافآت المكتسبة:</Text>
+
+            <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+10 بلاغ جديد</Text></View>
+            <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+20 تم إصلاح</Text></View>
+            <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+10 بلاغ جديد</Text></View>
+          </View>
+
+          <TouchableOpacity style={styles.shareBtn} activeOpacity={0.9}>
+            <Text style={styles.shareText}>شارك إنجازك</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.nameRow}>
-          <Text style={styles.userName}>أحمد محمد</Text>
-          <Text style={styles.coins}><Text style={styles.coinsNumber}>340</Text> نقطة  <FontAwesome name="coins" size={16} color="#F4B400" /></Text>
-        </View>
-
-        <View style={styles.achievements}
-        >
-          <Text style={styles.rankText}>المركز الرابع في منطقتك 🏆</Text>
-          <Text style={styles.rankText}>المركز السادس في سوريا 🏆</Text>
-
-          <Text style={styles.latestTitle}>آخر المكافآت المكتسبة:</Text>
-
-          <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+10 بلاغ جديد</Text></View>
-          <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+20 تم إصلاح</Text></View>
-          <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+10 بلاغ جديد</Text></View>
-        </View>
-
-        <TouchableOpacity style={styles.shareBtn} activeOpacity={0.9}>
-          <Text style={styles.shareText}>شارك إنجازك</Text>
-        </TouchableOpacity>
-      </View>
-
-    </ScrollView>
+      </ScrollView>
   );
 }
 
