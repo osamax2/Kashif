@@ -1,0 +1,258 @@
+import React from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  I18nManager,
+  ScrollView,
+} from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+
+export default function Index() {
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Header (logo + app name) */}
+      <View style={styles.header}>
+        <Image
+          source={require("../../assets/images/icon.png")}
+          style={styles.logoHeader}
+          resizeMode="contain"
+        />
+        <View style={styles.headerText}>
+          <Text style={styles.appName}>كاشف</Text>
+          <Text style={styles.appTag}>عينك على الطريق</Text>
+        </View>
+      </View>
+
+      {/* Card / Form area */}
+      <View style={styles.card}>
+        <Text style={styles.title}>تسجيل الدخول</Text>
+        <Text style={styles.subtitle}>مرحباً بعودتك</Text>
+
+        {/* E-Mail */}
+        <View style={styles.field}>
+          <Text style={styles.label}>البريد الإلكتروني</Text>
+          <TextInput
+            placeholder="example@email.com"
+            placeholderTextColor="#AAB3C0"
+            style={styles.inputUnderline}
+          />
+        </View>
+
+        {/* Passwort */}
+        <View style={styles.field}>
+          <Text style={styles.label}>كلمة المرور</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              secureTextEntry
+              style={styles.inputUnderline}
+              placeholder="••••••••"
+              placeholderTextColor="#AAB3C0"
+            />
+            <TouchableOpacity style={[styles.eyeTouch, I18nManager.isRTL ? { right: 8 } : { left: 8 }]}>
+              <Text style={styles.eyeIcon}>👁️</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Login-Button */}
+        <TouchableOpacity style={styles.loginButton} activeOpacity={0.9}>
+          <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
+          <FontAwesome name="bolt" size={18} color="#0D2B66" style={[styles.boltIcon, I18nManager.isRTL ? { marginRight: 8 } : { marginLeft: 8 }]} />
+        </TouchableOpacity>
+
+        <Text style={styles.orText}>أو سجل باستخدام</Text>
+
+        <View style={styles.socialRow}>
+          <TouchableOpacity style={[styles.socialButton, styles.whatsapp]}>
+            <FontAwesome name="whatsapp" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
+            <Text style={styles.socialText}>WhatsApp</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.socialButton, styles.facebook]}>
+            <FontAwesome name="facebook" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
+            <Text style={styles.socialText}>Facebook</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Links unten */}
+        <View style={styles.linksContainer}>
+          <TouchableOpacity style={styles.linkRow}>
+            <FontAwesome name="plus-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
+            <Text style={styles.link}>أنشئ حسابًا جديدًا</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.linkRow}>
+            <FontAwesome name="question-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
+            <Text style={styles.link}>نسيت كلمة المرور؟</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    backgroundColor: "#0D2B66", // Dunkelblau
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  header: {
+    width: "100%",
+    flexDirection: "row-reverse", // RTL: logo on the right
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingTop: 12,
+    paddingBottom: 10,
+  },
+  logoHeader: {
+    width: 110,
+    height: 110,
+    marginLeft: 12, // Platz zwischen Logo und Text (für row-reverse)
+  },
+  headerText: {
+    flex: 1,
+    alignItems: "flex-start", // Text links vom Logo
+  },
+  appName: {
+    color: "#FFFFFF",
+    fontSize: 36,
+    fontWeight: "800",
+    textAlign: "left",
+  },
+  appTag: {
+    color: "#BFD7EA",
+    fontSize: 14,
+    textAlign: "left",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginTop: 10,
+    textAlign: "right",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#BFD7EA",
+    marginBottom: 30,
+    textAlign: "right",
+  },
+  card: {
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    padding: 20,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  field: { width: "100%", marginBottom: 14 },
+  label: {
+    color: "#F4B400", // Gelb
+    alignSelf: "flex-end",
+    marginRight: 6,
+    marginBottom: 6,
+    fontSize: 14,
+  },
+  inputUnderline: {
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.4)",
+    paddingVertical: 8,
+    color: "#FFFFFF",
+    textAlign: "right",
+    fontSize: 14,
+  },
+  passwordContainer: {
+    width: "100%",
+    position: "relative",
+    justifyContent: "center",
+  },
+  eyeTouch: {
+    position: "absolute",
+    top: 6,
+    padding: 6,
+  },
+  eyeIcon: {
+    color: "#AAB3C0",
+    fontSize: 18,
+  },
+  loginButton: {
+    backgroundColor: "#F4B400",
+    paddingVertical: 12,
+    borderRadius: 8,
+    width: "100%",
+    marginTop: 18,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3, // Android shadow
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loginButtonText: {
+    color: "#0D2B66",
+    fontWeight: "700",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  boltIcon: { marginLeft: 8, backgroundColor: "#FFFFFF", padding: 2, borderRadius: 6 },
+  orText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    marginVertical: 10,
+  },
+  socialRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 12,
+  },
+  socialButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginHorizontal: 6,
+  },
+  whatsapp: {
+    backgroundColor: "#25D366",
+  },
+  facebook: {
+    backgroundColor: "#1877F2",
+  },
+  socialText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    textAlign: "right",
+  },
+  linksContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 8,
+  },
+  linkRow: { flexDirection: "row-reverse", alignItems: "center" },
+  link: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    textDecorationLine: "underline",
+    textAlign: "right",
+  },
+});
