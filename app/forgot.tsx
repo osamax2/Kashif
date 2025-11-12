@@ -89,7 +89,7 @@ export default function ForgotPassword() {
                         </Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 28 }}>
+                    <TouchableOpacity onPress={() => router.back()} style={{ width: '100%' }}>
                         <Text style={styles.backLink}>العودة إلى تسجيل الدخول</Text>
                     </TouchableOpacity>
                 </View>
@@ -99,51 +99,47 @@ export default function ForgotPassword() {
 }
 
 const styles = StyleSheet.create({
-    loader: {
-        flex: 1,
-        backgroundColor: "#0D2B66",
-        alignItems: "center",
-        justifyContent: "center",
-    },
     container: {
         flexGrow: 1,
         backgroundColor: '#0D2B66',
-        alignItems: 'stretch',
+        alignItems: 'flex-end', // Inhalt rechtsbündig
+        justifyContent: 'flex-start',
         paddingVertical: 80,
         paddingHorizontal: 28,
+        direction: 'rtl',
     },
     title: {
         fontFamily: "Tajawal-Bold",
         color: "#FFFFFF",
         fontSize: 26,
-        textAlign: "center",
+        textAlign: "right",
         writingDirection: "rtl",
-        includeFontPadding: false,
-        lineHeight: 32,
-        paddingBottom: 4,
+        alignSelf: "flex-end",
         marginBottom: 12,
     },
     info: {
         fontFamily: "Tajawal-Regular",
         color: "#F4B400",
-        textAlign: "center",
         fontSize: 14,
-        lineHeight: 22,
+        textAlign: "right",
         writingDirection: "rtl",
+        alignSelf: "flex-end",
         marginBottom: 30,
+        lineHeight: 22,
     },
     form: {
         width: '100%',
-        alignItems: 'stretch',
+        alignItems: 'flex-end',
     },
     label: {
-        width: '100%',
-        fontFamily: "Tajawal-Regular",
-        color: "#F4B400",
-        fontSize: 16,
+        alignSelf: 'flex-end',
+        textAlign: 'left',
+        writingDirection:'ltr',
+        color: '#F4B400',
         marginBottom: 8,
-        textAlign: "right",
-        writingDirection: "rtl",
+        fontSize: 16,
+        fontFamily: 'Tajawal-Medium',
+        includeFontPadding: false,
     },
     inputRow: {
         width: '100%',
@@ -151,21 +147,20 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        flexDirection: 'row',
+        flexDirection: 'row-reverse', // Icon rechts
         alignItems: 'center',
         marginBottom: 14,
     },
     inputIcon: {
-        marginRight: 10,
+        marginLeft: 8,
     },
     input: {
         flex: 1,
         color: '#fff',
         fontSize: 16,
         fontFamily: 'Tajawal-Regular',
-        writingDirection: 'rtl',
-        includeFontPadding: false,
         textAlign: 'right',
+        writingDirection: 'rtl',
     },
     button: {
         width: "100%",
@@ -179,24 +174,25 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 5,
     },
-    buttonDisabled: {
-        opacity: 0.6,
-    },
+    buttonDisabled: { opacity: 0.6 },
     buttonText: {
         color: "#0D2B66",
         fontFamily: "Tajawal-Bold",
         fontSize: 16,
-        lineHeight: 20,
-        includeFontPadding: false,
         textAlign: "center",
         writingDirection: "rtl",
     },
     backLink: {
-        color: "#DDE9FF",
+        color: "#A8C6FA",
         textDecorationLine: "underline",
-        textAlign: "center",
         fontFamily: "Tajawal-Regular",
         fontSize: 15,
         writingDirection: "rtl",
+        textAlign: "center", // Text zentriert
+        alignSelf: "center", // gesamte Komponente mittig
+        marginTop: 40,
+        width: "100%", // nimmt volle Breite ein, damit der Text exakt mittig sitzt
     },
+
 });
+

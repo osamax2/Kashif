@@ -64,23 +64,20 @@ export default function Index() {
                     placeholderTextColor="#AAB3C0"
                     textAlign="right"
                 />
-                <TouchableOpacity style={[styles.eyeTouch, I18nManager.isRTL ? { right: 8 } : { left: 8 }]}>
-                  <Text style={styles.eyeIcon}>👁️</Text>
-                </TouchableOpacity>
+
               </View>
             </View>
 
             {/* Login-Button */}
             <TouchableOpacity style={styles.loginButton} activeOpacity={0.9}>
               <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
-              <FontAwesome name="bolt" size={18} color="#0D2B66" style={[styles.boltIcon, I18nManager.isRTL ? { marginRight: 8 } : { marginLeft: 8 }]} />
-            </TouchableOpacity>
+              </TouchableOpacity>
 
             <Text style={styles.orText}>أو سجل باستخدام</Text>
 
             <View style={styles.socialRow}>
               <TouchableOpacity style={[styles.socialButton, styles.whatsapp]}>
-                <FontAwesome name="whatsapp" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
+                <FontAwesome name="whatsapp" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 10 } : { marginRight: 10 }} />
                 <Text style={styles.socialText}>WhatsApp</Text>
               </TouchableOpacity>
 
@@ -111,7 +108,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: "#0D2B66", // Dunkelblau
+    backgroundColor: "#033076", // Dunkelblau
     // Alles physisch nach links
     alignItems: "flex-end",
     justifyContent: "center",
@@ -125,11 +122,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-end",
     paddingTop: 12,
-    paddingBottom: 10,
+    paddingBottom: 20,
   },
   logoHeader: {
-    width: 110,
-    height: 110,
+    width: 140,
+    height: 140,
     marginRight: 12,
   },
   headerText: {
@@ -138,7 +135,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     color: "#FFFFFF",
-    fontSize: 36,
+    fontSize: 70,
     fontWeight: "800",
     textAlign: "left",
     writingDirection: 'ltr',
@@ -147,7 +144,7 @@ const styles = StyleSheet.create({
   },
   appTag: {
     color: "#BFD7EA",
-    fontSize: 14,
+    fontSize: 25,
     textAlign: "left",
     writingDirection: 'ltr',
     includeFontPadding: false,
@@ -238,7 +235,7 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 18,
     marginBottom: 12,
-    shadowColor: "#000",
+    shadowColor: "#ffffff",
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
@@ -248,9 +245,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loginButtonText: {
-    color: "#0D2B66",
+    color: "#ffffff",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 24,
     textAlign: "left",
     writingDirection: 'ltr',
     fontFamily: 'Tajawal-Medium',
