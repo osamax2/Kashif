@@ -1,22 +1,24 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
-import React from "react";
+import React, { useState } from "react";
 import {
   I18nManager,
   Image,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import RtlTextInput from '../../components/ui/rtl-textinput';
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 export default function Index() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   return (
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header (logo + app name) */}
@@ -42,7 +44,9 @@ export default function Index() {
             {/* E-Mail */}
             <View style={styles.field}>
               <Text style={styles.label}>البريد الإلكتروني</Text>
-              <TextInput
+              <RtlTextInput
+                  value={email}
+                  onChangeText={setEmail}
                   placeholder="example@email.com"
                   placeholderTextColor="#AAB3C0"
                   style={styles.inputUnderline}
@@ -54,8 +58,10 @@ export default function Index() {
             <View style={styles.field}>
               <Text style={styles.label}>كلمة المرور</Text>
               <View style={styles.passwordContainer}>
-                <TextInput
+                <RtlTextInput
                     secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
                     style={styles.inputUnderline}
                     placeholder="••••••••"
                     placeholderTextColor="#AAB3C0"
@@ -109,7 +115,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "#0D2B66", // Dunkelblau
-    alignItems: "stretch",
+    alignItems: "flex-start",
     justifyContent: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
@@ -129,19 +135,23 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
-    alignItems: "flex-start", // Text links vom Logo
+    alignItems: "flex-start", // Text rechts vom Logo (RTL)
   },
   appName: {
     color: "#FFFFFF",
     fontSize: 36,
     fontWeight: "800",
-    textAlign: "left",
+    textAlign: "right",
+    writingDirection: 'rtl',
+    includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
   },
   appTag: {
     color: "#BFD7EA",
     fontSize: 14,
-    textAlign: "left",
+    textAlign: "right",
+    writingDirection: 'rtl',
+    includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
   title: {
@@ -150,6 +160,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginTop: 10,
     textAlign: "right",
+    includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
   },
   subtitle: {
@@ -157,6 +168,7 @@ const styles = StyleSheet.create({
     color: "#BFD7EA",
     marginBottom: 30,
     textAlign: "right",
+    includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
   card: {
@@ -164,32 +176,40 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 16,
     padding: 20,
-    alignItems: "stretch",
+    display: "flex",
+    alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
+    direction:"rtl",
     marginTop: 8,
     marginBottom: 20,
   },
-  field: { width: "100%", marginBottom: 14, alignItems: 'stretch' },
+  field: { width: "100%", marginBottom: 14, },//alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start' },
   form: {
+    display: 'flex',
     width: '100%',
-    alignItems: 'stretch',
+    //alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
   },
   label: {
     width: '100%',
     textAlign: 'right',
-    writingDirection: 'rtl',
+    writingDirection:'rtl',
     color: '#F4B400',
     marginBottom: 8,
     fontSize: 16,
     fontFamily: 'Tajawal-Medium',
+    includeFontPadding: false,
   },
   inputUnderline: {
     width: "100%",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.4)",
     paddingVertical: 8,
+    paddingRight: 12,
+    paddingLeft: 0,
     color: "#FFFFFF",
     textAlign: "right",
     writingDirection: 'rtl',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
     fontSize: 14,
   },
   passwordContainer: {
@@ -226,7 +246,8 @@ const styles = StyleSheet.create({
     color: "#0D2B66",
     fontWeight: "700",
     fontSize: 16,
-    textAlign: "center",
+    textAlign: "right",
+    writingDirection: 'rtl',
     fontFamily: 'Tajawal-Medium',
   },
   boltIcon: { marginLeft: 8, backgroundColor: "#FFFFFF", padding: 2, borderRadius: 6 },
@@ -234,6 +255,8 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     marginVertical: 10,
+    textAlign: 'center',
+    width: '100%',
   },
   socialRow: {
     flexDirection: "row",
@@ -260,6 +283,8 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
     textAlign: "right",
+    writingDirection: 'rtl',
+    includeFontPadding: false,
     fontFamily: 'Tajawal-Medium',
   },
   linksContainer: {
@@ -274,6 +299,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textDecorationLine: "underline",
     textAlign: "right",
+    writingDirection: 'rtl',
+    includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
 });

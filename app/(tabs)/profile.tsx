@@ -1,52 +1,117 @@
 import { FontAwesome } from "@expo/vector-icons";
-import React from "react";
-import { I18nManager, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import GlassButton from '../../components/ui/glass-button';
+import {
+  Alert,
+  I18nManager,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+// RTL aktivieren
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
-export default function Profile() {
+export default function ProfileScreen() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!I18nManager.isRTL) {
+      I18nManager.allowRTL(true);
+      I18nManager.forceRTL(true);
+    }
+  }, []);
+
+  const isValidEmail = (value: string) => /^\S+@\S+\.\S+$/.test(value);
+
+  const handleReset = async () => {
+    if (!isValidEmail(email)) {
+      Alert.alert("خطأ", "الرجاء إدخال بريد إلكتروني صالح.");
+      return;
+    }
+
+    setSending(true);
+    try {
+      await new Promise((res) => setTimeout(res, 1000));
+      Alert.alert(
+          "تم",
+          "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني."
+      );
+      router.push("/login");
+    } catch (e) {
+      Alert.alert("خطأ", "حدث خطأ أثناء الطلب. حاول مرة أخرى.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.inner}>
-          <Text style={styles.headerTitle}>الملف الشخصي</Text>
+      <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.inner}>
+            <Text style={styles.title}>نسيت كلمة المرور</Text>
 
-          <View style={styles.avatarWrap}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.levelNumber}>4</Text>
+            <Text style={styles.info}>
+              أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور
+            </Text>
+
+            <View style={styles.form}>
+              <Text style={styles.label}>البريد الإلكتروني</Text>
+
+              <View style={styles.inputRow}>
+                <FontAwesome
+                    name="envelope"
+                    size={18}
+                    color="#FFFFFF"
+                    style={styles.inputIcon}
+                />
+                <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="email@address.com"
+                    placeholderTextColor="#DCE8FF"
+                    keyboardType="email-address"
+                    style={styles.input}
+                />
+              </View>
+
+              <GlassButton
+                  containerStyle={[
+                    styles.button,
+                    (!isValidEmail(email) || sending) && styles.buttonDisabled,
+                  ]}
+                  onPress={handleReset}
+                  disabled={!isValidEmail(email) || sending}
+              >
+                <Text style={styles.buttonText}>
+                  {sending ? "...جاري الإرسال" : "إعادة تعيين كلمة المرور"}
+                </Text>
+              </GlassButton>
+
+              <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.backContainer}
+              >
+                <Text style={styles.backLink}>العودة إلى تسجيل الدخول</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.levelLabel}>محترف 🚀</Text>
           </View>
-
-          <View style={styles.progressRow}>
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: "65%" }]} />
-            </View>
-          </View>
-
-          <View style={styles.nameRow}>
-            <Text style={styles.userName}>أحمد محمد</Text>
-            <Text style={styles.coins}><Text style={styles.coinsNumber}>340</Text> نقطة  <FontAwesome name="coins" size={16} color="#F4B400" /></Text>
-          </View>
-
-          <View style={styles.achievements}
-          >
-            <Text style={styles.rankText}>المركز الرابع في منطقتك 🏆</Text>
-            <Text style={styles.rankText}>المركز السادس في سوريا 🏆</Text>
-
-            <Text style={styles.latestTitle}>آخر المكافآت المكتسبة:</Text>
-
-            <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+10 بلاغ جديد</Text></View>
-            <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+20 تم إصلاح</Text></View>
-            <View style={styles.rewardRow}><FontAwesome name="handshake-o" size={18} color="#F4B400" style={styles.rewardIcon} /><Text style={styles.rewardText}>+10 بلاغ جديد</Text></View>
-          </View>
-
-          <TouchableOpacity style={styles.shareBtn} activeOpacity={0.9}>
-            <Text style={styles.shareText}>شارك إنجازك</Text>
-          </TouchableOpacity>
-        </View>
-
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
   );
 }
 
@@ -54,64 +119,100 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "#0D2B66",
-    alignItems: "center",
-    paddingVertical: 20,
+    alignItems: "flex-end", // alles nach rechts
+    paddingVertical: 80,
+    paddingHorizontal: 28,
   },
   inner: {
-    width: "92%",
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 20,
-    padding: 18,
-    alignItems: "center",
+    width: "100%",
+    alignItems: "flex-end", // Inhalte rechtsbündig
+    direction: "rtl",
   },
-  headerTitle: {
+  title: {
+    fontFamily: "Tajawal-Bold",
     color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "800",
-    marginTop: 6,
-    marginBottom: 18,
-    textAlign: "center",
+    fontSize: 26,
+    textAlign: "right",
+    writingDirection: "rtl",
+    marginBottom: 12,
+    alignSelf: "flex-end",
   },
-  avatarWrap: {
+  info: {
+    fontFamily: "Tajawal-Regular",
+    color: "#F4B400",
+    textAlign: "right",
+    fontSize: 14,
+    lineHeight: 22,
+    writingDirection: "rtl",
+    marginBottom: 30,
+    alignSelf: "flex-end",
+  },
+  form: {
+    width: "100%",
+    alignItems: "flex-end",
+  },
+  label: {
+    width: "100%",
+    fontFamily: "Tajawal-Regular",
+    color: "#F4B400",
+    fontSize: 16,
+    marginBottom: 8,
+    textAlign: "right",
+    writingDirection: "rtl",
+    alignSelf: "flex-end",
+  },
+  inputRow: {
+    width: "100%",
+    backgroundColor: "#6F9BEA",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: "row-reverse", // Icon rechts, Text links
     alignItems: "center",
     marginBottom: 14,
   },
-  avatarCircle: {
-    width: 110,
-    height: 110,
-    borderRadius: 999,
-    backgroundColor: "#7EA2F9",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
+  inputIcon: {
+    marginLeft: 8,
   },
-  levelNumber: { color: "#F4B400", fontSize: 36, fontWeight: "700" },
-  levelLabel: { color: "#FFFFFF", marginTop: 6 },
-  progressRow: { width: "100%", paddingVertical: 10 },
-  progressBarBg: {
-    height: 14,
-    backgroundColor: "#2E4B8A",
-    borderRadius: 8,
-    overflow: "hidden",
+  input: {
+    flex: 1,
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Tajawal-Regular",
+    textAlign: "right",
+    writingDirection: "rtl",
   },
-  progressBarFill: { height: "100%", backgroundColor: "#F4B400" },
-  nameRow: { width: "100%", flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", marginTop: 12 },
-  userName: { color: "#FFFFFF", fontSize: 18, fontWeight: "700" },
-  coins: { color: "#F4B400", fontSize: 14, alignItems: "center" },
-  coinsNumber: { color: "#F4B400", fontWeight: "700", marginRight: 6 },
-  achievements: { width: "100%", marginTop: 20, alignItems: "flex-start" },
-  rankText: { color: "#BFD7EA", textAlign: "right", marginBottom: 8 },
-  latestTitle: { color: "#F4B400", fontWeight: "700", marginTop: 8, marginBottom: 8 },
-  rewardRow: { flexDirection: "row-reverse", alignItems: "center", marginBottom: 8 },
-  rewardIcon: { marginLeft: 8 },
-  rewardText: { color: "#FFFFFF" },
-  shareBtn: {
-    backgroundColor: "#F4B400",
+  button: {
     width: "100%",
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 18,
+    backgroundColor: "#F4B400",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 8,
+    elevation: 5,
+    marginTop: 10,
   },
-  shareText: { color: "#0D2B66", fontWeight: "700" },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: "#0D2B66",
+    fontFamily: "Tajawal-Bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  backContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 28,
+  },
+  backLink: {
+    color: "#DDE9FF",
+    textDecorationLine: "underline",
+    fontFamily: "Tajawal-Regular",
+    fontSize: 15,
+  },
 });
