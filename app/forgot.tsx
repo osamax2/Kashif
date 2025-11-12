@@ -1,3 +1,4 @@
+import { ensureRTL, rtlStyles } from '@/constants/rtl';
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -24,10 +25,7 @@ export default function ForgotPassword() {
     const [sending, setSending] = useState(false);
 
     useEffect(() => {
-        if (!I18nManager.isRTL) {
-            I18nManager.allowRTL(true);
-            I18nManager.forceRTL(true);
-        }
+        ensureRTL();
     }, []);
 
     const isValidEmail = (value: string) => /^\S+@\S+\.\S+$/.test(value);
@@ -56,7 +54,7 @@ export default function ForgotPassword() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <ScrollView
-                contentContainerStyle={styles.container}
+                contentContainerStyle={[styles.container, rtlStyles.scrollContent]}
                 keyboardShouldPersistTaps="handled"
             >
                 <Text style={styles.title}>نسيت كلمة المرور</Text>
@@ -64,9 +62,8 @@ export default function ForgotPassword() {
                 <Text style={styles.info}>
                     أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور
                 </Text>
-
                 <View style={styles.form}>
-                    <Text style={styles.label}>البريد الإلكتروني</Text>
+                    <Text style={[styles.label, rtlStyles.textRight]}>البريد الإلكتروني</Text>
 
                     <View style={styles.inputRow}>
                         <TextInput
@@ -75,7 +72,7 @@ export default function ForgotPassword() {
                             placeholder="email@address.com"
                             placeholderTextColor="#DCE8FF"
                             keyboardType="email-address"
-                            style={styles.input}
+                            style={[styles.input, rtlStyles.textRight]}
                             textAlign="right"
                         />
                         <FontAwesome name="envelope" size={18} color="#FFFFFF" style={styles.inputIcon} />

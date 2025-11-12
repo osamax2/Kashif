@@ -1,5 +1,5 @@
 import { PropsWithChildren, useState } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { I18nManager, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -14,7 +14,10 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
   return (
       <ThemedView>
         <TouchableOpacity
-            style={styles.heading}
+            style={[
+              styles.heading,
+              I18nManager.isRTL ? { flexDirection: 'row-reverse' } : null,
+            ]}
             onPress={() => setIsOpen((value) => !value)}
             activeOpacity={0.8}>
           <IconSymbol
@@ -25,9 +28,16 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
               style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }}
           />
 
-          <ThemedText type="defaultSemiBold">{title}</ThemedText>
+          <ThemedText type="defaultSemiBold" style={{ textAlign: 'right', writingDirection: 'rtl' }}>{title}</ThemedText>
         </TouchableOpacity>
-        {isOpen && <ThemedView style={styles.content}>{children}</ThemedView>}
+        {isOpen && (
+          <ThemedView style={[
+            styles.content,
+            I18nManager.isRTL ? { marginRight: 24, marginLeft: 0 } : null,
+          ]}>
+            {children}
+          </ThemedView>
+        )}
       </ThemedView>
   );
 }

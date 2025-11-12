@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     },
     placeholder: {
         position: 'absolute',
-        right: 12,
+        right: 0,
         top: '50%',
         transform: [{ translateY: -10 }],
         includeFontPadding: false,
@@ -54,5 +54,6 @@ const styles = StyleSheet.create({
         textAlign: 'right',
         fontSize: 14,
         fontFamily: 'Tajawal-Regular',
+        pointerEvents: 'none',
     },
 });

@@ -12,9 +12,6 @@ import {
 } from "react-native";
 import RtlTextInput from '../../components/ui/rtl-textinput';
 
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
-
 export default function Index() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -115,42 +112,44 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "#0D2B66", // Dunkelblau
-    alignItems: "flex-start",
+    // Alles physisch nach links
+    alignItems: "flex-end",
     justifyContent: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
+    direction: 'ltr',
   },
   header: {
     width: "100%",
-    flexDirection: "row-reverse", // RTL: logo on the right
+    flexDirection: "row", // LTR: logo left, text right
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "flex-end",
     paddingTop: 12,
     paddingBottom: 10,
   },
   logoHeader: {
     width: 110,
     height: 110,
-    marginLeft: 12, // Platz zwischen Logo und Text (für row-reverse)
+    marginRight: 12,
   },
   headerText: {
     flex: 1,
-    alignItems: "flex-start", // Text rechts vom Logo (RTL)
+    alignItems: "flex-end",
   },
   appName: {
     color: "#FFFFFF",
     fontSize: 36,
     fontWeight: "800",
-    textAlign: "right",
-    writingDirection: 'rtl',
+    textAlign: "left",
+    writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
   },
   appTag: {
     color: "#BFD7EA",
     fontSize: 14,
-    textAlign: "right",
-    writingDirection: 'rtl',
+    textAlign: "left",
+    writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
@@ -159,7 +158,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     marginTop: 10,
-    textAlign: "right",
+    textAlign: "left",
+    writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
   },
@@ -167,7 +167,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#BFD7EA",
     marginBottom: 30,
-    textAlign: "right",
+    textAlign: "left",
+    writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
@@ -177,21 +178,25 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     display: "flex",
-    alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
-    direction:"rtl",
+    alignItems: 'flex-end',
+    direction:"ltr",
     marginTop: 8,
     marginBottom: 20,
   },
-  field: { width: "100%", marginBottom: 14, },//alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start' },
+  field: { 
+    width: "100%", 
+    marginBottom: 14,
+    alignItems: 'flex-end',
+  },
   form: {
     display: 'flex',
     width: '100%',
-    //alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
+    alignItems: 'flex-end',
   },
   label: {
-    width: '100%',
-    textAlign: 'right',
-    writingDirection:'rtl',
+    alignSelf: 'flex-end',
+    textAlign: 'left',
+    writingDirection:'ltr',
     color: '#F4B400',
     marginBottom: 8,
     fontSize: 16,
@@ -206,11 +211,10 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     paddingLeft: 0,
     color: "#FFFFFF",
-    textAlign: "right",
-    writingDirection: 'rtl',
     includeFontPadding: false,
     textAlignVertical: 'center',
     fontSize: 14,
+    alignSelf: 'flex-end',
   },
   passwordContainer: {
     width: "100%",
@@ -220,6 +224,7 @@ const styles = StyleSheet.create({
   eyeTouch: {
     position: "absolute",
     top: 6,
+    left: 8,
     padding: 6,
   },
   eyeIcon: {
@@ -246,8 +251,8 @@ const styles = StyleSheet.create({
     color: "#0D2B66",
     fontWeight: "700",
     fontSize: 16,
-    textAlign: "right",
-    writingDirection: 'rtl',
+    textAlign: "left",
+    writingDirection: 'ltr',
     fontFamily: 'Tajawal-Medium',
   },
   boltIcon: { marginLeft: 8, backgroundColor: "#FFFFFF", padding: 2, borderRadius: 6 },
@@ -282,8 +287,8 @@ const styles = StyleSheet.create({
   socialText: {
     color: "#FFFFFF",
     fontWeight: "600",
-    textAlign: "right",
-    writingDirection: 'rtl',
+    textAlign: "left",
+    writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Medium',
   },
@@ -293,13 +298,13 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 8,
   },
-  linkRow: { flexDirection: "row-reverse", alignItems: "center" },
+  linkRow: { flexDirection: "row", alignItems: "center" },
   link: {
     color: "#FFFFFF",
     fontSize: 13,
     textDecorationLine: "underline",
-    textAlign: "right",
-    writingDirection: 'rtl',
+    textAlign: "left",
+    writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },

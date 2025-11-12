@@ -1,3 +1,4 @@
+import { rtlStyles } from '@/constants/rtl';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
@@ -15,6 +16,7 @@ export default function TabLayout() {
                 tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
                 headerShown: false,
                 tabBarButton: HapticTab,
+                tabBarLabelStyle: [rtlStyles.textRight],
             }}>
             <Tabs.Screen
                 name="index"
