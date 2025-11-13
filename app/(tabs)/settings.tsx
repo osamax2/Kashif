@@ -8,6 +8,9 @@ import {
     Switch,
     ScrollView,
 } from "react-native";
+import ChangeModal from "@/components/ChangeModal";
+import LanguageDropdown from "@/components/LanguageDropdown";
+import IOSActionSheet from "@/components/IOSActionSheet";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -21,6 +24,17 @@ export default function SettingsScreen() {
     const [notifReports, setNotifReports] = useState(true);
     const [notifPoints, setNotifPoints] = useState(false);
     const [notifGeneral, setNotifGeneral] = useState(true);
+
+    const [languageSheet, setLanguageSheet] = useState(false);
+    const [selectedLanguage, setSelectedLanguage] = useState("العربية");
+
+    const [emailModal, setEmailModal] = useState(false);
+    const [passwordModal, setPasswordModal] = useState(false);
+    const [phoneModal, setPhoneModal] = useState(false);
+
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [phone, setPhone] = useState("");
 
     return (
         <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 60 }}>
@@ -39,22 +53,32 @@ export default function SettingsScreen() {
             </Text>
 
             {/* ACTIONS */}
-            <View style={styles.card}>
-                <SettingsItem label="تغيير البريد الإلكتروني"  />
-                <SettingsItem label="تغيير كلمة المرور"  />
-                <SettingsItem label="تغيير رقم الموبايل"  />
+            <View
+                style={styles.card}>
+                <TouchableOpacity onPress={() => setEmailModal(true)}>
+                    <Text style={styles.textItem}>تغيير البريد الإلكتروني</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => setPasswordModal(true)}>
+                    <Text style={styles.textItem}>تغيير كلمة المرور</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => setPhoneModal(true)}>
+                    <Text style={styles.textItem}>تغيير رقم الموبايل</Text>
+                </TouchableOpacity>
 
                 {/* Language */}
-                <View style={styles.languageRow}>
-                    {/* rechts → العربية ▼ */}
-                    <View style={styles.languageSelector}>
-                        <Text style={styles.languageValue}>العربية</Text>
-                        <Text style={styles.languageArrow}>▼</Text>
-                    </View>
-
-                    {/* links → اللغة */}
+                <TouchableOpacity
+                    onPress={() => setLanguageSheet(true)}
+                    style={styles.languageRow}
+                >
                     <Text style={styles.languageLabel}>اللغة</Text>
-                </View>
+
+                    <View style={styles.languageSelector}>
+                        <Text style={styles.languageValue}>{selectedLanguage}</Text>
+                        <Text style={styles.languageArrow}>›</Text>
+                    </View>
+                </TouchableOpacity>
 
 
 
@@ -69,6 +93,15 @@ export default function SettingsScreen() {
                     />
                 </View>
             </View>
+            <IOSActionSheet
+                visible={languageSheet}
+                onClose={() => setLanguageSheet(false)}
+                options={["العربية", "English", "Deutsch", "Türkçe"]}
+                onSelect={(choice) => {
+                    setSelectedLanguage(choice);
+                    alert("تم اختيار اللغة: " + choice);
+                }}
+            />
 
             {/* Notifications */}
             <Text style={styles.sectionTitle}>   الإشعارات</Text>
@@ -94,18 +127,66 @@ export default function SettingsScreen() {
             <TouchableOpacity style={styles.saveButton}>
                 <Text style={styles.saveButtonText}>حفظ التغييرات</Text>
             </TouchableOpacity>
+
+
+            {/* ------- MODALS ------- */}
+            <ChangeModal
+                visible={emailModal}
+                onClose={() => setEmailModal(false)}
+                title="تغيير البريد الإلكتروني"
+                placeholder="اكتب بريدك الجديد"
+                value={email}
+                setValue={setEmail}
+                onSave={() => {
+                    alert("تم تغيير البريد الإلكتروني 👍");
+                    setEmailModal(false);
+                }}
+            />
+
+            <ChangeModal
+                visible={passwordModal}
+                onClose={() => setPasswordModal(false)}
+                title="تغيير كلمة المرور"
+                placeholder="اكتب كلمة المرور الجديدة"
+                value={password}
+                setValue={setPassword}
+                onSave={() => {
+                    alert("تم تغيير كلمة المرور 👍");
+                    setPasswordModal(false);
+                }}
+            />
+
+            <ChangeModal
+                visible={phoneModal}
+                onClose={() => setPhoneModal(false)}
+                title="تغيير رقم الموبايل"
+                placeholder="اكتب رقمك الجديد"
+                value={phone}
+                setValue={setPhone}
+                onSave={() => {
+                    alert("تم تغيير رقم الموبايل 👍");
+                    setPhoneModal(false);
+                }}
+            />
         </ScrollView>
+
+
     );
 }
 
 /* COMPONENT: Row for main actions */
-function SettingsItem({ label }: { label: string }) {
-    return (
-        <TouchableOpacity style={styles.settingsItem}>
-            <Text style={styles.settingsLabel}>{label}</Text>
-        </TouchableOpacity>
-    );
-}
+//function SettingsItem({ label }: { label: string }) {
+  //  return (
+    //    <TouchableOpacity style={styles.settingsItem}>
+         //   <Text style={styles.settingsLabel}>{label}</Text>
+     //   </TouchableOpacity>
+   //// );
+//}
+
+
+
+
+
 
 /* COMPONENT: Switch Row */
 function SwitchRow({ label, value, onChange }) {
@@ -256,4 +337,14 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontFamily: "Tajawal-Bold",
     },
+    textItem: {
+        color: "#fff",
+        fontSize: 16,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderColor: "rgba(255,255,255,0.25)",
+        fontFamily: "Tajawal-Regular",
+        textAlign: "left",
+    },
+
 });
