@@ -35,14 +35,14 @@ export default function SettingsScreen() {
 
             {/* USER ID */}
             <Text style={styles.userId}>
-                <Text style={{ color: "#ccc" }}>رقم المستخدم: </Text>U-2025-143
+                <Text style={{ color: "#ccc" }}>   رقم المستخدم: </Text>U-2025-143
             </Text>
 
             {/* ACTIONS */}
             <View style={styles.card}>
-                <SettingsItem label="تغيير البريد الإلكتروني" />
-                <SettingsItem label="تغيير كلمة المرور" />
-                <SettingsItem label="تغيير رقم الموبايل" />
+                <SettingsItem label="تغيير البريد الإلكتروني"  />
+                <SettingsItem label="تغيير كلمة المرور"  />
+                <SettingsItem label="تغيير رقم الموبايل"  />
 
                 {/* Language */}
                 <View style={styles.languageRow}>
@@ -71,7 +71,7 @@ export default function SettingsScreen() {
             </View>
 
             {/* Notifications */}
-            <Text style={styles.sectionTitle}>الإشعارات</Text>
+            <Text style={styles.sectionTitle}>   الإشعارات</Text>
 
             <View style={styles.card}>
                 <SwitchRow
