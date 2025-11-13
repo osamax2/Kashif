@@ -53,12 +53,12 @@ export default function Register() {
                 <Switch value={news} onValueChange={setNews} />
             </View>
 
-            <TouchableOpacity style={styles.primaryBtn} onPress={onSubmit} disabled={!tos}>
+            <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push("/home")}>
                 <Text style={styles.primaryText}>تسجيل حساب جديد</Text>
             </TouchableOpacity>
 
             {/* Unten: zurück zum Login – zentriert */}
-            <TouchableOpacity style={{ width: "100%", alignItems: "center", marginTop: 20 }} onPress={() => router.push("/login")}>
+            <TouchableOpacity style={{ width: "100%", alignItems: "center", marginTop: 20 }} onPress={() => router.back("/tabs/index")}>
                 <Text style={styles.backToLogin}>لديك حساب؟ سجل الدخول</Text>
             </TouchableOpacity>
         </ScrollView>

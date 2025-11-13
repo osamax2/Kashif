@@ -1,11 +1,8 @@
-import { rtlStyles } from '@/constants/rtl';
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+// app/(tabs)/_layout.tsx
+import { Tabs } from "expo-router";
+import React from "react";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
@@ -13,26 +10,72 @@ export default function TabLayout() {
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
                 headerShown: false,
-                tabBarButton: HapticTab,
-                tabBarLabelStyle: [rtlStyles.textRight],
-            }}>
+                tabBarActiveTintColor: "#F4B400",
+                tabBarInactiveTintColor: "#AAB3C0",
+                tabBarStyle: {
+                    backgroundColor: "#0D2B66",
+                    borderTopWidth: 0,
+                    height: 60,
+                    paddingBottom: 6,
+                    paddingTop: 6,
+                    position: "absolute",
+                    elevation: 0,
+                },
+                tabBarLabelStyle: {
+                    fontSize: 12,
+                    fontFamily: "Tajawal-Regular",
+                    textAlign: "center",
+                    writingDirection: "rtl",
+                },
+            }}
+        >
             <Tabs.Screen
-
-                name="index"
+                name="home"
                 options={{
-                    title: 'Home',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+                    title: "الرئيسية",
+                    tabBarIcon: ({ color }) => (
+                        <IconSymbol name="house.fill" size={26} color={color} />
+                    ),
                 }}
             />
+
+            <Tabs.Screen
+                name="reports"
+                options={{
+                    title: "البلاغات",
+                    tabBarIcon: ({ color }) => (
+                        <IconSymbol name="chart.bar.fill" size={24} color={color} />
+                    ),
+                }}
+            />
+
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: 'Profile',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle" color={color} />,
+                    title: "الملف الشخصي",
+                    tabBarIcon: ({ color }) => (
+                        <IconSymbol
+                            name="person.crop.circle"
+                            size={26}
+                            color={color}
+                        />
+                    ),
                 }}
             />
+
+            <Tabs.Screen
+                name="settings"
+                options={{
+                    title: "الإعدادات",
+                    tabBarIcon: ({ color }) => (
+                        <IconSymbol
+                            name="gearshape.fill"
+                            size={26}
+                            color={color}
+                        />
+                    ),
+                }}
             />
         </Tabs>
     );
