@@ -69,9 +69,13 @@ export default function Index() {
             </View>
 
             {/* Login-Button */}
-            <TouchableOpacity style={styles.loginButton} activeOpacity={0.9}>
+            <TouchableOpacity
+                style={styles.loginButton}
+                activeOpacity={0.9}
+                onPress={() => router.replace('/home')} // ← wichtig: replace
+            >
               <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
-              </TouchableOpacity>
+            </TouchableOpacity>
 
             <Text style={styles.orText}>أو سجل باستخدام</Text>
 
@@ -89,8 +93,9 @@ export default function Index() {
 
             {/* Links unten */}
             <View style={styles.linksContainer}>
-              <TouchableOpacity style={styles.linkRow}>
-                <FontAwesome name="plus-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
+              <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/register')}>
+                {/* plus-icon bleibt optional */}
+                { <FontAwesome name="plus-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} /> }
                 <Text style={styles.link}>أنشئ حسابًا جديدًا</Text>
               </TouchableOpacity>
 
