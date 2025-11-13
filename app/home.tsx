@@ -1,52 +1,28 @@
-// app/home.tsx
-import React, {useMemo} from "react";
-import "react-native-maps"
-import {
-    I18nManager,
-    View,
-    Text,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    Image,
-    ImageBackground,
-    Platform,
-} from "react-native";
-import { useRouter } from "expo-router";
+// app/(tabs)/home.tsx
+import React, { useState } from "react";
+import { I18nManager, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 export default function HomeScreen() {
-    const router = useRouter();
+    const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
-    // Lazy-Import für react-native-maps (falls nicht installiert, nutzen wir Fallback-Bild)
-    const MapView = useMemo(() => {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            return require("react-native-maps").default;
-        } catch {
-            return null;
-        }
-    }, []);
-    const Marker = useMemo(() => {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            return require("react-native-maps").Marker;
-        } catch {
-            return null;
-        }
-    }, []);
+    const allMarkers = [
+        { id: 1, type: "pothole", coord: { latitude: 40.418, longitude: -3.703 } },
+        { id: 2, type: "accident", coord: { latitude: 40.417, longitude: -3.705 } },
+        { id: 3, type: "speed", coord: { latitude: 40.414, longitude: -3.708 } },
+        { id: 4, type: "pothole", coord: { latitude: 40.411, longitude: -3.699 } },
+    ];
+
+    const visibleMarkers = activeFilter ? allMarkers.filter(m => m.type === activeFilter) : allMarkers;
 
     return (
         <View style={styles.root}>
-            {/* Top App Bar */}
+            {/* Appbar */}
             <View style={styles.appbar}>
-                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-                    <Text style={styles.backIcon}>‹</Text>
-                </TouchableOpacity>
-                <Text style={styles.appbarTitle}>الرئيسية</Text>
-                <View style={{ width: 32 }} />
+                <Text style={styles.title}>الرئيسية</Text>
             </View>
 
             {/* Search */}
@@ -57,125 +33,74 @@ export default function HomeScreen() {
                     style={styles.searchInput}
                     textAlign="right"
                 />
-                <Text style={styles.searchIcon}>🔎</Text>
+                <Text style={styles.searchIcon}>🔍</Text>
             </View>
 
-            {/* Filter Chips */}
+            {/* Filters */}
             <View style={styles.filters}>
-                <FilterChip color="#F05252" label="حفرة" />
-                <FilterChip color="#F59E0B" label="حادث" />
-                <FilterChip color="#34D399" label="كاشف السرعة" />
+                <FilterButton label="حفرة" color="#FBBF24" active={activeFilter === "pothole"} onPress={() => setActiveFilter(activeFilter === "pothole" ? null : "pothole")} />
+                <FilterButton label="حادث" color="#F43F5E" active={activeFilter === "accident"} onPress={() => setActiveFilter(activeFilter === "accident" ? null : "accident")} />
+                <FilterButton label="كاشف السرعة" color="#22C55E" active={activeFilter === "speed"} onPress={() => setActiveFilter(activeFilter === "speed" ? null : "speed")} />
             </View>
 
-            {/* Map area */}
-            <View style={styles.mapCard}>
-                {MapView && Marker ? (
-                    <MapView
-                        style={StyleSheet.absoluteFill}
-                        initialRegion={{
-                            latitude: 40.4168,
-                            longitude: -3.7038,
-                            latitudeDelta: 0.06,
-                            longitudeDelta: 0.06,
-                        }}
-                    >
-                        {/* Beispiel-Icons – du kannst hier deine eigenen Marker verwenden */}
-                        <Marker coordinate={{ latitude: 40.418, longitude: -3.703 }}>
-                            <WarnMarker type="pothole" />
+            {/* Map */}
+            <View style={styles.mapContainer}>
+                <MapView
+                    style={StyleSheet.absoluteFill}
+                    initialRegion={{
+                        latitude: 33.5138,
+                        longitude: 36.2765,
+                        latitudeDelta: 0.2,
+                        longitudeDelta: 0.2,
+                    }}
+                >
+
+                    {visibleMarkers.map(m => (
+                        <Marker key={m.id} coordinate={m.coord}>
+                            <View style={styles.marker}>
+                                <Text style={{ fontSize: 18 }}>⚠️</Text>
+                            </View>
                         </Marker>
-                        <Marker coordinate={{ latitude: 40.415, longitude: -3.708 }}>
-                            <WarnMarker type="speed" />
-                        </Marker>
-                        <Marker coordinate={{ latitude: 40.412, longitude: -3.699 }}>
-                            <WarnMarker type="accident" />
-                        </Marker>
-                    </MapView>
-                ) : (
-                    // Fallback: statisches „Karten“-Bild (optional ersetzbar)
-                    <ImageBackground
-                        source={require("@/assets/images/react-logo.png")} // ersetze durch eigenes Map-Bild, wenn du magst
-                        resizeMode="cover"
-                        style={StyleSheet.absoluteFill}
-                    />
-                )}
+                    ))}
+                </MapView>
 
                 {/* FAB */}
-                <TouchableOpacity style={styles.fab} onPress={() => {/* open create report */}}>
+                <TouchableOpacity style={styles.fab}>
                     <Text style={styles.fabPlus}>＋</Text>
                 </TouchableOpacity>
             </View>
 
             {/* Bottom info bar */}
             <View style={styles.infoBar}>
-                <Text style={styles.infoText}>
-                    <Text style={{ fontWeight: "bold" }}>عدد البلاغات النشطة: </Text>
-                    42
-                    <Text>  </Text>
-                    <Text>📒</Text>
-                </Text>
+                <Text style={styles.infoText}>عدد البلاغات النشطة: 42 📘</Text>
             </View>
         </View>
     );
 }
 
-function FilterChip({ color, label }: { color: string; label: string }) {
+function FilterButton({ label, color, active, onPress }: { label: string; color: string; active: boolean; onPress: () => void }) {
     return (
-        <View style={styles.chip}>
+        <TouchableOpacity onPress={onPress} style={[styles.filterBtn, active && { backgroundColor: "rgba(255,255,255,0.15)" }]}>
             <View style={[styles.dot, { backgroundColor: color }]} />
-            <Text style={styles.chipText}>{label}</Text>
-        </View>
-    );
-}
-
-function WarnMarker({ type }: { type: "pothole" | "accident" | "speed" }) {
-    // Platzhalter-Icons – gern durch PNG/SVG ersetzen
-    const emoji =
-        type === "pothole" ? "⚠️" : type === "accident" ? "🚧" : "🛑";
-    return (
-        <View style={styles.markerPill}>
-            <Text style={styles.markerText}>{emoji}</Text>
-        </View>
+            <Text style={styles.filterLabel}>{label}</Text>
+        </TouchableOpacity>
     );
 }
 
 const BLUE = "#0D2B66";
 
 const styles = StyleSheet.create({
-    root: {
-        flex: 1,
-        backgroundColor: BLUE,
-        direction: "rtl",
-    },
+    root: { flex: 1, backgroundColor: BLUE, direction: "rtl" },
 
-    /* Appbar */
     appbar: {
-        height: Platform.OS === "ios" ? 92 : 72,
-        paddingTop: Platform.OS === "ios" ? 44 : 20,
-        paddingHorizontal: 12,
+        height: Platform.OS === "ios" ? 90 : 70,
+        paddingTop: Platform.OS === "ios" ? 45 : 20,
         backgroundColor: BLUE,
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.15)",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-    backBtn: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
         alignItems: "center",
         justifyContent: "center",
     },
-    backIcon: { color: "#FFD166", fontSize: 22, lineHeight: 22 },
-    appbarTitle: {
-        color: "#FFFFFF",
-        fontSize: 20,
-        fontFamily: "Tajawal-Bold",
-        textAlign: "center",
-        flex: 1,
-    },
+    title: { color: "#fff", fontSize: 20, fontFamily: "Tajawal-Bold" },
 
-    /* Search */
     searchRow: {
         flexDirection: "row-reverse",
         alignItems: "center",
@@ -186,62 +111,33 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         height: 40,
     },
-    searchIcon: {
-        color: "#FFD166",
-        fontSize: 18,
-        marginHorizontal: 6,
-    },
-    searchInput: {
-        flex: 1,
-        color: "#fff",
-        fontSize: 14,
-        paddingVertical: 6,
-        textAlign: "right",
-    },
+    searchInput: { flex: 1, color: "#fff", fontSize: 14 },
+    searchIcon: { color: "#FFD166", fontSize: 18, marginHorizontal: 6 },
 
-    /* Filters */
     filters: {
-        marginTop: 8,
-        paddingHorizontal: 12,
+        marginTop: 6,
         flexDirection: "row-reverse",
-        alignItems: "center",
-        gap: 16,
-    },
-    chip: {
-        flexDirection: "row-reverse",
-        alignItems: "center",
-        paddingVertical: 6,
+        justifyContent: "space-around",
         paddingHorizontal: 8,
     },
-    dot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        marginLeft: 6,
-    },
-    chipText: {
-        color: "#FFFFFF",
-        fontFamily: "Tajawal-Medium",
-        fontSize: 14,
-    },
+    filterBtn: { flexDirection: "row-reverse", alignItems: "center", padding: 6, borderRadius: 8 },
+    dot: { width: 10, height: 10, borderRadius: 5, marginLeft: 6 },
+    filterLabel: { color: "#fff", fontSize: 14 },
 
-    /* Map card */
-    mapCard: {
+    mapContainer: {
         flex: 1,
         marginTop: 8,
-        marginHorizontal: 12,
+        marginHorizontal: 8,
         borderRadius: 14,
         overflow: "hidden",
         backgroundColor: "#123a7a",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.18)",
     },
+    marker: { backgroundColor: "#fff", padding: 2, borderRadius: 8 },
 
-    /* FAB */
     fab: {
         position: "absolute",
         bottom: 18,
-        left: 18, // in RTL liegt die Karte rechts, FAB unten rechts im Mockup wirkt links wegen RTL → hier optisch unten rechts? brauchst du rechts: nimm 'right: 18'
+        right: 18,
         width: 56,
         height: 56,
         borderRadius: 28,
@@ -249,35 +145,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         elevation: 6,
-        shadowColor: "#000",
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 4 },
     },
-    fabPlus: { color: BLUE, fontSize: 28, lineHeight: 28, marginTop: -2 },
+    fabPlus: { color: BLUE, fontSize: 28, marginTop: -2 },
 
-    /* Marker */
-    markerPill: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        paddingVertical: 2,
-        paddingHorizontal: 6,
-        borderWidth: 1,
-        borderColor: "rgba(0,0,0,0.1)",
-    },
-    markerText: { fontSize: 14 },
-
-    /* Bottom info bar */
-    infoBar: {
-        height: 34,
-        backgroundColor: "#1A3B7A",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    infoText: {
-        color: "#FFFFFF",
-        fontSize: 13,
-        textAlign: "center",
-        fontFamily: "Tajawal-Medium",
-    },
+    infoBar: { height: 34, backgroundColor: "#1A3B7A", alignItems: "center", justifyContent: "center" },
+    infoText: { color: "#fff", fontSize: 13, fontFamily: "Tajawal-Medium" },
 });
