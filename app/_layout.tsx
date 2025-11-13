@@ -17,15 +17,16 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-    useEffect(() => {
-        // For iOS/Android: ensure LTR layout direction
-        if (Platform.OS === 'ios' || Platform.OS === 'android') {
-            if (I18nManager.isRTL) {
-                I18nManager.forceRTL(false);
-                // Note: The app needs a full restart for direction changes to take effect
-            }
-        }
-    }, []);
+    return (
+        <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen
+                name="(tabs)"
+                options={{ headerShown: false }}
+            />
+            {/* falls du login / register / forgot hast, am besten auch: */}
+            {/* <Stack.Screen name="login" options={{ headerShown: false }} /> */}
+        </Stack>
+    );
     const colorScheme = useColorScheme();
 
     const [fontsLoaded] = useFonts({

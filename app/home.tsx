@@ -37,11 +37,26 @@ export default function HomeScreen() {
             </View>
 
             {/* Filters */}
-            <View style={styles.filters}>
-                <FilterButton label="حفرة" color="#FBBF24" active={activeFilter === "pothole"} onPress={() => setActiveFilter(activeFilter === "pothole" ? null : "pothole")} />
-                <FilterButton label="حادث" color="#F43F5E" active={activeFilter === "accident"} onPress={() => setActiveFilter(activeFilter === "accident" ? null : "accident")} />
-                <FilterButton label="كاشف السرعة" color="#22C55E" active={activeFilter === "speed"} onPress={() => setActiveFilter(activeFilter === "speed" ? null : "speed")} />
+            <View style={styles.categoriesRow}>
+
+                <View style={styles.categoryItem}>
+                    <Text style={styles.categoryText}>كاشف السرعة</Text>
+                    <View style={[styles.dot, { backgroundColor: "green" }]} />
+                </View>
+
+                <View style={styles.categoryItem}>
+                    <Text style={styles.categoryText}>حادث</Text>
+                    <View style={[styles.dot, { backgroundColor: "red" }]} />
+                </View>
+
+                <View style={styles.categoryItem}>
+                    <Text style={styles.categoryText}>حفرة</Text>
+                    <View style={[styles.dot, { backgroundColor: "gold" }]} />
+                </View>
+
             </View>
+
+
 
             {/* Map */}
             <View style={styles.mapContainer}>
@@ -66,7 +81,7 @@ export default function HomeScreen() {
 
                 {/* FAB */}
                 <TouchableOpacity style={styles.fab}>
-                    <Text style={styles.fabPlus}>＋</Text>
+                    <Text style={styles.fabPlus}>+</Text>
                 </TouchableOpacity>
             </View>
 
@@ -93,25 +108,25 @@ const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: BLUE, direction: "rtl" },
 
     appbar: {
-        height: Platform.OS === "ios" ? 90 : 70,
-        paddingTop: Platform.OS === "ios" ? 45 : 20,
+        height: Platform.OS === "ios" ? 80 : 80,
+        paddingTop: Platform.OS === "ios" ? 30 : 30,
         backgroundColor: BLUE,
         alignItems: "center",
         justifyContent: "center",
     },
-    title: { color: "#fff", fontSize: 20, fontFamily: "Tajawal-Bold" },
+    title: { color: "#fff", fontSize: 24, fontFamily: "Tajawal-Bold" },
 
     searchRow: {
         flexDirection: "row-reverse",
         alignItems: "center",
-        marginHorizontal: 12,
+        marginHorizontal: 15,
         marginTop: 10,
         backgroundColor: "#2C4A87",
         borderRadius: 10,
         paddingHorizontal: 10,
         height: 40,
     },
-    searchInput: { flex: 1, color: "#fff", fontSize: 14 },
+    searchInput: { flex: 1, color: "#fff", fontSize: 16 },
     searchIcon: { color: "#FFD166", fontSize: 18, marginHorizontal: 6 },
 
     filters: {
@@ -121,7 +136,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
     },
     filterBtn: { flexDirection: "row-reverse", alignItems: "center", padding: 6, borderRadius: 8 },
-    dot: { width: 10, height: 10, borderRadius: 5, marginLeft: 6 },
+    //dot: { width: 10, height: 10, borderRadius: 5, marginLeft: 6 },
     filterLabel: { color: "#fff", fontSize: 14 },
 
     mapContainer: {
@@ -137,7 +152,7 @@ const styles = StyleSheet.create({
     fab: {
         position: "absolute",
         bottom: 18,
-        right: 18,
+        left: 18,
         width: 56,
         height: 56,
         borderRadius: 28,
@@ -146,8 +161,38 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         elevation: 6,
     },
-    fabPlus: { color: BLUE, fontSize: 28, marginTop: -2 },
+    fabPlus: { color: BLUE, fontSize: 28, marginTop: -2},
 
-    infoBar: { height: 34, backgroundColor: "#1A3B7A", alignItems: "center", justifyContent: "center" },
+    infoBar: { height: 34, backgroundColor: "#1A3B7A", alignItems: "center", justifyContent: "center" ,},
     infoText: { color: "#fff", fontSize: 13, fontFamily: "Tajawal-Medium" },
+
+    categoriesRow: {
+        width: "100%",
+        flexDirection: "row-reverse",   // RTL → Reihenfolge von rechts nach links
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: 8,
+        paddingHorizontal: 20,
+    },
+
+    categoryItem: {
+        flexDirection: "row-reverse",   // ⭐ WICHTIG: Text zuerst, Punkt danach
+        alignItems: "center",
+        gap: 4,
+    },
+
+    categoryText: {
+        color: "#FFFFFF",
+        fontSize: 15,
+        fontFamily: "Tajawal-Bold",
+        textAlign: "right",
+    },
+
+    dot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+    },
+
+
 });

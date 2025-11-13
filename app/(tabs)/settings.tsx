@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     },
 
     saveButtonText: {
-        color: BLUE,
+        color: "#ffffff",
         fontSize: 18,
         fontFamily: "Tajawal-Bold",
     },
