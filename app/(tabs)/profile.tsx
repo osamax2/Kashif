@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     },
 
     shareButtonText: {
-        color: "#0D2B66",
+        color: "#fff",
         fontSize: 18,
         fontFamily: "Tajawal-Bold",
     },
