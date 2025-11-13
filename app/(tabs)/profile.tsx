@@ -1,18 +1,60 @@
 // app/(tabs)/profile.tsx
-
 import React from "react";
 import {
     View,
     Text,
     StyleSheet,
-    I18nManager,
     TouchableOpacity,
+    I18nManager,
+    Alert,
+    Linking,
+    Share,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
+const BLUE = "#0D2B66";
+const YELLOW = "#F4B400";
+
 export default function ProfileScreen() {
+    // später kannst du diese Werte dynamisch aus der DB setzen
+    const level = 4;
+    const points = 340;
+    const name = "أحمد محمد";
+
+    const profileLink = "https://kashif.app/user/123"; // TODO: echten Link einsetzen
+
+    const handleShareAchievement = async () => {
+        const message = `أنا في المستوى ${level} في تطبيق كاشف ومعي ${points} نقطة! جرّب التطبيق من هنا: ${profileLink}`;
+
+        try {
+            // 1) Erst versuchen, WhatsApp zu öffnen
+            const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(
+                message
+            )}`;
+            const canOpen = await Linking.canOpenURL(whatsappUrl);
+
+            if (canOpen) {
+                await Linking.openURL(whatsappUrl);
+                return;
+            }
+
+            // 2) Fallback: Link kopieren + normales Share-Menü
+            await Clipboard.setStringAsync(profileLink);
+            Alert.alert(
+                "تم نسخ الرابط",
+                "تم نسخ رابط إنجازك إلى الحافظة، يمكنك لصقه في أي تطبيق."
+            );
+
+            await Share.share({ message });
+        } catch (error) {
+            console.log(error);
+            Alert.alert("خطأ", "تعذر مشاركة إنجازك الآن. حاول مرة أخرى لاحقاً.");
+        }
+    };
+
     return (
         <View style={styles.root}>
             {/* Header */}
@@ -26,7 +68,7 @@ export default function ProfileScreen() {
 
             {/* Big Circle Level */}
             <View style={styles.levelCircle}>
-                <Text style={styles.levelNumber}>4</Text>
+                <Text style={styles.levelNumber}>{level}</Text>
             </View>
 
             <Text style={styles.levelName}>محترف 🚀</Text>
@@ -38,11 +80,11 @@ export default function ProfileScreen() {
 
             {/* Points */}
             <Text style={styles.points}>
-                <Text style={{ color: "#F4B400" }}>340</Text> نقطة 🪙
+                <Text style={{ color: YELLOW }}>{points}</Text> نقطة 🪙
             </Text>
 
             {/* Username */}
-            <Text style={styles.username}>أحمد محمد</Text>
+            <Text style={styles.username}>{name}</Text>
 
             {/* Rank Section */}
             <View style={styles.rankBox}>
@@ -54,32 +96,34 @@ export default function ProfileScreen() {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>آخر النقاط المكتسبة:</Text>
 
-                <View style={styles.pointRow}>
-                    <Text style={styles.pointText}>+10 بلاغ جديد</Text>
-                    <Text style={styles.pointIcon}>📢</Text>
-                </View>
+                <View style={styles.pointsContainer}>
+                    <View style={styles.pointRow}>
+                        <Text style={styles.pointText}> +10 بلاغ جديد</Text>
+                        <Text style={styles.pointIcon}>📢</Text>
+                    </View>
 
-                <View style={styles.pointRow}>
-                    <Text style={styles.pointText}>+20 تم إصلاح</Text>
-                    <Text style={styles.pointIcon}>🔧</Text>
-                </View>
+                    <View style={styles.pointRow}>
+                        <Text style={styles.pointText}> +20 تم إصلاح</Text>
+                        <Text style={styles.pointIcon}>🔧</Text>
+                    </View>
 
-                <View style={styles.pointRow}>
-                    <Text style={styles.pointText}>+10 بلاغ جديد</Text>
-                    <Text style={styles.pointIcon}>📢</Text>
+                    <View style={styles.pointRow}>
+                        <Text style={styles.pointText}> +10 بلاغ جديد</Text>
+                        <Text style={styles.pointIcon}>📢</Text>
+                    </View>
                 </View>
             </View>
 
             {/* Button */}
-            <TouchableOpacity style={styles.shareButton}>
+            <TouchableOpacity
+                style={styles.shareButton}
+                onPress={handleShareAchievement}
+            >
                 <Text style={styles.shareButtonText}>شارك إنجازك</Text>
             </TouchableOpacity>
         </View>
     );
 }
-
-const BLUE = "#0D2B66";
-const YELLOW = "#F4B400";
 
 const styles = StyleSheet.create({
     root: {
@@ -128,7 +172,7 @@ const styles = StyleSheet.create({
     },
 
     levelNumber: {
-        color: "#F4B400",
+        color: YELLOW,
         fontSize: 38,
         fontFamily: "Tajawal-Bold",
     },
@@ -160,6 +204,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 12,
         fontFamily: "Tajawal-Regular",
+        textAlign: "right",
     },
 
     username: {
@@ -167,6 +212,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         marginTop: 8,
         fontFamily: "Tajawal-Bold",
+        textAlign: "center",
     },
 
     rankBox: {
@@ -193,34 +239,53 @@ const styles = StyleSheet.create({
         fontFamily: "Tajawal-Bold",
     },
 
+    pointsContainer: {
+        width: "100%",
+        gap: 8,
+        marginTop: 8,
+    },
+
     pointRow: {
-        flexDirection: "row-reverse",
+        flexDirection: "row-reverse",  // 🔥 WICHTIG → RTL
         justifyContent: "space-between",
-        backgroundColor: "#1A3A70",
-        padding: 12,
+        alignItems: "center",
+        backgroundColor: "#133B7A",
+        paddingVertical: 5,
+        paddingHorizontal: 14,
         borderRadius: 10,
-        marginBottom: 8,
     },
 
     pointText: {
-        color: "white",
+        color: "#FFFFFF",
         fontSize: 15,
+        fontFamily: "Tajawal-Regular",
+        textAlign: "left",            // 🔥 Text rechts
+        flex: 1,                       // 🔥 Schiebt Icon nach links
     },
 
     pointIcon: {
         fontSize: 20,
+        marginLeft: 10,                // Abstand vom Text
     },
 
     shareButton: {
-        marginTop: 26,
         backgroundColor: YELLOW,
-        paddingVertical: 14,
-        paddingHorizontal: 34,
-        borderRadius: 12,
+        paddingVertical: 12,
+        borderRadius: 8,
+        width: "100%",
+        marginTop: 18,
+        marginBottom: 12,
+        shadowColor: "#ffffff",
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+        elevation: 3,
+        alignItems: "center",
+        justifyContent: "center",
     },
 
     shareButtonText: {
-        color: BLUE,
+        color: "#0D2B66",
         fontSize: 18,
         fontFamily: "Tajawal-Bold",
     },
