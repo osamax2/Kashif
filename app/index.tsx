@@ -10,8 +10,8 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import RtlTextInput from '../../components/ui/rtl-textinput';
-
+import RtlTextInput from '../components/ui/rtl-textinput';
+//router.replace("/(tabs)/home");
 export default function Index() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -21,7 +21,7 @@ export default function Index() {
         {/* Header (logo + app name) */}
         <View style={styles.header}>
           <Image
-              source={require("../../assets/images/icon.png")}
+              source={require("../assets/images/icon.png")}
               style={styles.logoHeader}
               resizeMode="contain"
           />
@@ -68,11 +68,11 @@ export default function Index() {
               </View>
             </View>
 
-            {/* Login-Button */}
+            {/* Index-Button */}
             <TouchableOpacity
                 style={styles.loginButton}
                 activeOpacity={0.9}
-                onPress={() => router.replace('/home')} // ← wichtig: replace
+                onPress={() => router.replace('/(tabs)/home')} // ← wichtig: replace
             >
               <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
             </TouchableOpacity>

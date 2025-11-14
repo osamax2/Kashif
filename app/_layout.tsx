@@ -13,16 +13,19 @@ I18nManager.allowRTL(false);
 I18nManager.forceRTL(false);
 
 export const unstable_settings = {
-    anchor: '(tabs)',
+    initialRouteName: 'index',
 };
 
 export default function RootLayout() {
     return (
         <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen
                 name="(tabs)"
                 options={{ headerShown: false }}
+
             />
+
             {/* falls du login / register / forgot hast, am besten auch: */}
             {/* <Stack.Screen name="login" options={{ headerShown: false }} /> */}
         </Stack>
@@ -44,6 +47,7 @@ export default function RootLayout() {
             <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+                <Stack.Screen name="index" options={{ headerShown: false }} />
             </Stack>
             <StatusBar style="auto" />
         </ThemeProvider>

@@ -57,7 +57,7 @@ export default function Register() {
                 <Text style={styles.primaryText}>تسجيل حساب جديد</Text>
             </TouchableOpacity>
 
-            {/* Unten: zurück zum Login – zentriert */}
+            {/* Unten: zurück zum Index – zentriert */}
             <TouchableOpacity style={{ width: "100%", alignItems: "center", marginTop: 20 }} onPress={() => router.back("/tabs/index")}>
                 <Text style={styles.backToLogin}>لديك حساب؟ سجل الدخول</Text>
             </TouchableOpacity>

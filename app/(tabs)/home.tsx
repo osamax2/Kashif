@@ -13,7 +13,7 @@ import {
     Image,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-
+import { Router } from "expo-router";
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
@@ -53,18 +53,18 @@ export default function HomeScreen() {
     const menuItems = [
         {
             id: "pothole",
-            icon: require("../assets/icons/pothole.png"),
-            offset: { top: 120, left: -180 },
+            icon: require("../../assets/icons/pothole.png"),
+            offset: { top: 150, left: -190 },
         },
         {
             id: "accident",
-            icon: require("../assets/icons/accident.png"),
-            offset: { top: 70, left: -230},
+            icon: require("../../assets/icons/accident.png"),
+            offset: { top: 90, left: -240},
         },
         {
             id: "speed",
-            icon: require("../assets/icons/speed.png"),
-            offset: { top: 180, left: -210  },
+            icon: require("../../assets/icons/speed.png"),
+            offset: { top: 220, left: -230 },
         },
     ];
 
@@ -160,6 +160,10 @@ export default function HomeScreen() {
                     </Animated.View>
                 ))}
 
+            {/* INFO BAR */}
+            <View style={styles.infoBar}>
+                <Text style={styles.infoText}>عدد البلاغات النشطة: 42 📘</Text>
+            </View>
 
         </View>
 );
@@ -223,11 +227,11 @@ const styles = StyleSheet.create({
 
     fab: {
         position: "absolute",
-        bottom: 18,
-        left: 18,
+        bottom: 90,
+        left: 15,
         width: 56,
         height: 56,
-        borderRadius: 50,
+        borderRadius: 40,
         backgroundColor: "#F4B400",
         alignItems: "center",
         justifyContent: "center",
@@ -235,7 +239,7 @@ const styles = StyleSheet.create({
     },
     fabPlus: { color: BLUE, fontSize: 28, marginTop: -2},
 
-    infoBar: { height: 50, backgroundColor: "#1A3B7A", alignItems: "center", justifyContent: "center" ,},
+    infoBar: { height: 60, backgroundColor: "#1A3B7A", alignItems: "center", justifyContent: "center" ,},
     infoText: { color: "#fff", fontSize: 13, fontFamily: "Tajawal-Medium" },
 
     categoriesRow: {
@@ -243,8 +247,8 @@ const styles = StyleSheet.create({
         flexDirection: "row-reverse",   // RTL → Reihenfolge von rechts nach links
         justifyContent: "space-between",
         alignItems: "center",
-        marginTop: 8,
-        paddingHorizontal: 20,
+        marginTop: 9,
+        paddingHorizontal: 45,
     },
 
     categoryItem: {
