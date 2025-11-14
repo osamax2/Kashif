@@ -11,6 +11,7 @@ import {
 import ChangeModal from "@/components/ChangeModal";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import IOSActionSheet from "@/components/IOSActionSheet";
+import SuccessModal from "@/components/SuccessModal";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -24,6 +25,7 @@ export default function SettingsScreen() {
     const [notifReports, setNotifReports] = useState(true);
     const [notifPoints, setNotifPoints] = useState(false);
     const [notifGeneral, setNotifGeneral] = useState(true);
+    const [successVisible, setSuccessVisible] = useState(false);
 
     const [languageSheet, setLanguageSheet] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState("العربية");
@@ -35,6 +37,37 @@ export default function SettingsScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [phone, setPhone] = useState("");
+
+
+
+    const saveChanges = () => {
+        // Beispiel: Daten sammeln
+
+        const payload = {
+            hideName,
+            notifReports,
+            notifPoints,
+            notifGeneral,
+            email,
+            phone
+        };
+
+        console.log("Gespeicherte Daten:", payload);
+
+        // Beispiel Backend Request (optional)
+        /*
+        fetch("https://deinserver/speichern", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        */
+
+        // Erfolgsmeldung
+
+        setSuccessVisible(true); // Modernes Popup anzeigen
+
+    };
 
     return (
         <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 60 }}>
@@ -81,6 +114,11 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
 
 
+                <SuccessModal
+                    visible={successVisible}
+                    message="تم حفظ التغييرات بنجاح"
+                    onClose={() => setSuccessVisible(false)}
+                />
 
                 {/* Hide name */}
                 <View style={styles.switchRow}>
@@ -124,7 +162,7 @@ export default function SettingsScreen() {
                 />
             </View>
 
-            <TouchableOpacity style={styles.saveButton}>
+            <TouchableOpacity style={styles.saveButton}onPress={saveChanges}>
                 <Text style={styles.saveButtonText}>حفظ التغييرات</Text>
             </TouchableOpacity>
 
