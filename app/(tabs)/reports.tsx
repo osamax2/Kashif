@@ -1,19 +1,5 @@
-// app/(tabs)/reports.tsx
 import React from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    I18nManager,
-    TouchableOpacity,
-} from "react-native";
-
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
-
-const BLUE = "#0D2B66";
-const YELLOW = "#F4B400";
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from "react-native";
 
 export default function ReportsScreen() {
     const reports = [
@@ -22,247 +8,355 @@ export default function ReportsScreen() {
         { id: "1234567", date: "01.12.2021", status: "قيد المراجعة", icon: "⏳" },
     ];
 
-    const stats = [
-        { label: "البلاغات المفتوحة", value: "90%" },
-        { label: "البلاغات قيد المعالجة", value: "40%" },
-        { label: "البلاغات التي تم إصلاحها", value: "64%" },
-    ];
-
     return (
-        <View style={styles.root}>
-            {/* HEADER */}
-            <View className="header" style={styles.header}>
-                <Text style={styles.headerTitle}>البلاغات</Text>
+        <ScrollView style={styles.container}>
+            <Text style={styles.header}>البلاغات</Text>
+            <TouchableOpacity>
+                <Text style={styles.bell}>🔔</Text>
+            </TouchableOpacity>
+
+            {/* Section Title */}
+            <Text style={styles.sectionTitle}>إحصائيات بلاغاتي</Text>
+
+            {/* Neon Stats Row */}
+            <View style={styles.statsRow}>
+                <NeonCircle title="البلاغات المقترحة" value="90%" color="#4F46E5" />
+                <NeonCircle title="البلاغات قيد المعالجة" value="40%" color="#FF6B6B" />
+                <NeonCircle title="تم إصلاحها" value="64%" color="#4ADE80" />
             </View>
 
-            <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-                {/* STATS MINIMAL */}
-                <Text style={styles.sectionTitle}>إحصائيات بلاغاتي</Text>
 
-                <View style={styles.statsContainer}>
-                    {stats.map((s, idx) => (
-                        <View key={idx} style={styles.statRow}>
-                            <View style={styles.statCircleOuter}>
-                                <View style={styles.statCircleInner} />
-                                <Text style={styles.statValue}>{s.value}</Text>
-                            </View>
 
-                            <View style={styles.statTextBox}>
-                                <Text style={styles.statLabel}>{s.label}</Text>
-                                <Text style={styles.statSub}>آخر 30 يومًا</Text>
-                            </View>
-                        </View>
-                    ))}
-                </View>
+            {/* ░░ MODERNE REPORT-KARTEN ░░ */}
+            <Text style={styles.sectionTitleSmall}>قائمة بلاغاتي</Text>
 
-                {/* ALERT CARD */}
-                <View style={styles.alertCard}>
-                    <Text style={styles.alertTitle}>تنبيهات فورية</Text>
-                    <Text style={styles.alertText}>⏰ لا توجد تنبيهات جديدة في الوقت الحالي.</Text>
-                    <TouchableOpacity>
-                        <Text style={styles.alertLink}>إدارة التنبيهات</Text>
-                    </TouchableOpacity>
-                </View>
+            <View style={{ marginHorizontal: 16, marginTop: 10 }}>
+                <ReportCard
+                    number="1239878"
+                    date="10.11.2024"
+                    status="مفتوح"
+                    icon="🔎"
+                    color="#4FD1C5"
+                />
 
-                {/* REPORT CARDS */}
-                <Text style={styles.sectionTitle}>قائمة بلاغاتي</Text>
+                <ReportCard
+                    number="6676434"
+                    date="12.05.2022"
+                    status="تم الإصلاح"
+                    icon="✔️"
+                    color="#68D391"
+                />
 
-                <View style={styles.listContainer}>
-                    {reports.map((r) => (
-                        <TouchableOpacity key={r.id} style={styles.reportCard} activeOpacity={0.85}>
-                            <View style={styles.reportHeaderRow}>
-                                <Text style={styles.reportStatus}>
-                                    {r.icon} {r.status}
-                                </Text>
-                                <Text style={styles.reportDate}>{r.date}</Text>
-                            </View>
+                <ReportCard
+                    number="1234567"
+                    date="01.12.2021"
+                    status="قيد المراجعة"
+                    icon="⏳"
+                    color="#F6AD55"
+                />
+            </View>
+        </ScrollView>
+    );
+}
+/* ░░ MODERNE REPORT-CARD ░░ */
+function ReportCard({
+                        number,
+                        date,
+                        status,
+                        icon,
+                        color,
+                    }: {
+    number: string;
+    date: string;
+    status: string;
+    icon: string;
+    color: string;
+}) {
+    return (
+        <View style={[styles.cardRow, { borderLeftColor: color }]}>
+            <View style={styles.cardRowContent}>
+                <Text style={styles.cardStatusText}>
+                    {status} {icon}
+                </Text>
 
-                            <View style={styles.reportBottomRow}>
-                                <Text style={styles.reportIdLabel}>رقم البلاغ</Text>
-                                <Text style={styles.reportIdValue}>{r.id}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            </ScrollView>
+                <Text style={styles.cardDate}>{date}</Text>
+
+                <Text style={styles.cardNumber}>{number}</Text>
+            </View>
         </View>
     );
 }
 
-/* ---------------- STYLES ---------------- */
+/* ---------------------- Neon Circle Component ---------------------- */
+
+function NeonCircle({ title, value, color }) {
+    return (
+        <View style={styles.circleContainer}>
+            <View style={[styles.circleGlow, { shadowColor: color }]} />
+            <View style={[styles.circle, { borderColor: color }]}>
+                <Text style={styles.circleValue}>{value}</Text>
+            </View>
+            <Text style={styles.circleLabel}>{title}</Text>
+        </View>
+    );
+}
+
+/* ---------------------- Styles ---------------------- */
+
+const BLUE = "#0D2B66";
+const YELLOW = "#F4B400";
 
 const styles = StyleSheet.create({
-    root: {
-        flex: 1,
+    container: {
         backgroundColor: BLUE,
+        padding: 16,
         direction: "rtl",
+        flex: 1,
     },
 
     header: {
-        height: 70,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingTop: 10,
+        color: "white",
+        fontSize: 26,
+        textAlign: "center",
+        fontFamily: "Tajawal-Bold",
+        marginVertical: 10,
     },
-    headerTitle: {
-        color: "#FFFFFF",
+
+    sectionTitle: {
+        color: YELLOW,
+        fontSize: 18,
+        marginVertical: 14,
+        fontFamily: "Tajawal-Bold",
+    },
+
+    /* ---------------- Neon Stats ---------------- */
+    statsRow: {
+        flexDirection: "row-reverse",
+        justifyContent: "space-between",
+        marginBottom: 20,
+    },
+
+    circleContainer: {
+        alignItems: "center",
+        width: "33%",
+    },
+    back: { fontSize: 26, color: YELLOW },
+    bell: { fontSize: 26, color: YELLOW },
+
+
+    circleValue: {
+        color: "white",
         fontSize: 22,
         fontFamily: "Tajawal-Bold",
     },
 
-    sectionTitle: {
-        color: "#FFFFFF",
-        fontSize: 18,
-        fontFamily: "Tajawal-Bold",
-        marginTop: 10,
-        marginBottom: 8,
-        marginRight: 18,
-    },
-
-    /* STATS MINIMAL */
-    statsContainer: {
-        marginHorizontal: 16,
-        borderRadius: 16,
-        backgroundColor: "#103A78",
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-    },
-
-    statRow: {
-        flexDirection: "row-reverse",
-        alignItems: "center",
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.08)",
-    },
-
-    statCircleOuter: {
-        width: 46,
-        height: 46,
-        borderRadius: 23,
-        borderWidth: 2,
-        borderColor: "#A8C6FA",
-        justifyContent: "center",
-        alignItems: "center",
-        marginLeft: 12,
-        position: "relative",
-    },
-    statCircleInner: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        borderWidth: 2,
-        borderColor: "#F4B400",
-        position: "absolute",
-        opacity: 0.7,
-    },
-    statValue: {
-        color: "#FFFFFF",
-        fontSize: 14,
-        fontFamily: "Tajawal-Bold",
-    },
-
-    statTextBox: {
-        flex: 1,
-    },
-    statLabel: {
-        color: "#FFFFFF",
-        fontSize: 15,
-        fontFamily: "Tajawal-Bold",
-        textAlign: "right",
-    },
-    statSub: {
-        color: "#A8C6FA",
-        fontSize: 12,
+    circleLabel: {
+        color: "#DCE1EB",
+        marginTop: 6,
         fontFamily: "Tajawal-Regular",
-        marginTop: 2,
-        textAlign: "right",
     },
 
-    /* ALERT CARD */
-    alertCard: {
-        marginTop: 16,
-        marginHorizontal: 16,
-        backgroundColor: "#123D7F",
-        borderRadius: 16,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.15)",
+    circleGlow: {
+        position: "absolute",
+        width: 90,
+        height: 90,
+        borderRadius: 50,
+        shadowRadius: 12,
+        shadowOpacity: 0.9,
+        shadowOffset: { width: 0, height: 0 },
     },
+
+    /* ---------------- Alerts Box ---------------- */
+    alertBox: {
+        backgroundColor: "#112F66",
+        padding: 16,
+        borderRadius: 14,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.1)",
+    },
+
     alertTitle: {
         color: YELLOW,
         fontFamily: "Tajawal-Bold",
         fontSize: 16,
         marginBottom: 6,
     },
+
     alertText: {
-        color: "#E2ECFF",
+        color: "#DCE1EB",
         fontFamily: "Tajawal-Regular",
-        fontSize: 13,
-        marginBottom: 10,
-    },
-    alertLink: {
-        color: "#A8C6FA",
-        fontFamily: "Tajawal-Medium",
-        fontSize: 13,
-        textDecorationLine: "underline",
+        marginBottom: 8,
     },
 
-    /* REPORT CARDS */
-    listContainer: {
+    alertEdit: {
+        color: YELLOW,
+        alignSelf: "flex-start",
+        fontFamily: "Tajawal-Medium",
+    },
+
+    /* ---------------- Neon Table ---------------- */
+    table: {
+        width: "100%",
+        backgroundColor: "#112F66",
+        borderRadius: 14,
+        overflow: "hidden",
+        borderColor: YELLOW,
+        borderWidth: 1.2,
+    },
+
+    tableHeaderRow: {
+        flexDirection: "row-reverse",
+        backgroundColor: YELLOW,
+        padding: 10,
+    },
+
+    tableHeader: {
+        flex: 1,
+        textAlign: "center",
+        color: BLUE,
+        fontFamily: "Tajawal-Bold",
+        fontSize: 15,
+    },
+
+    tableRow: {
+        flexDirection: "row-reverse",
+        paddingVertical: 12,
+        paddingHorizontal: 6,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255,255,255,0.08)",
+    },
+
+    tableCell: {
+        flex: 1,
+        textAlign: "center",
+        color: "white",
+        fontFamily: "Tajawal-Regular",
+        fontSize: 15,
+    },
+
+    /* GLASS CARD TOP */
+    glassCard: {
+        backgroundColor: "rgba(255,255,255,0.06)",
+        padding: 18,
+        marginHorizontal: 16,
+        marginTop: 10,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.12)",
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+    glassTitle: {
+        color: "#FFFFFF",
+        fontFamily: "Tajawal-Bold",
+        fontSize: 17,
+        textAlign: "center",
+        marginBottom: 16,
+    },
+    glassStatsRow: {
+        flexDirection: "row-reverse",
+        justifyContent: "space-between",
+    },
+
+    /* CIRCLES */
+    circleBox: {
+        alignItems: "center",
+        width: "30%",
+    },
+
+
+    circleText: {
+        color: "#fff",
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+    },
+
+
+    /* SECTION TITLE */
+    sectionTitleSmall: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        marginBottom: 10,
+        marginRight: 20,
+        marginTop: 20,
+        fontFamily: "Tajawal-Bold",
+    },
+
+    /* ALERT CARD */
+    card: {
+        backgroundColor: "#103A78",
         marginHorizontal: 16,
         marginTop: 8,
-    },
-
-    reportCard: {
-        backgroundColor: "#103A78",
+        padding: 16,
         borderRadius: 16,
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-        marginBottom: 10,
+        borderColor: "#234C8A",
+        borderWidth: 1,
         shadowColor: "#000",
         shadowOpacity: 0.3,
-        shadowRadius: 5,
-        shadowOffset: { width: 0, height: 3 },
+        shadowRadius: 6,
+        elevation: 5,
+    },
+    rowBetween: {
+        flexDirection: "row-reverse",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    alertIcon: { fontSize: 22, color: "#FFD166" },
+    edit: {
+        color: "#A8C6FA",
+        textDecorationLine: "underline",
+        fontFamily: "Tajawal-Regular",
+    },
+
+    /* MODERNE REPORT-KARTEN UNTEN */
+    cardRow: {
+        backgroundColor: "rgba(255,255,255,0.07)",
+        borderRadius: 16,
+        marginBottom: 12,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderLeftWidth: 6,
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 4 },
         elevation: 4,
     },
-
-    reportHeaderRow: {
+    cardRowContent: {
         flexDirection: "row-reverse",
-        justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 6,
+        justifyContent: "space-between",
     },
-
-    reportStatus: {
+    cardStatusText: {
         color: "#FFFFFF",
-        fontSize: 14,
+        fontSize: 15,
         fontFamily: "Tajawal-Bold",
+        width: 120,
+        textAlign: "center",
     },
-
-    reportDate: {
+    cardDate: {
         color: "#A8C6FA",
-        fontSize: 12,
-        fontFamily: "Tajawal-Regular",
-    },
-
-    reportBottomRow: {
-        flexDirection: "row-reverse",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: 4,
-    },
-
-    reportIdLabel: {
-        color: "#D0D9F5",
-        fontSize: 12,
-        fontFamily: "Tajawal-Regular",
-    },
-
-    reportIdValue: {
-        color: YELLOW,
         fontSize: 14,
+        fontFamily: "Tajawal-Regular",
+        textAlign: "center",
+        width: 100,
+    },
+    cardNumber: {
+        color: "#FFFFFF",
+        fontSize: 16,
         fontFamily: "Tajawal-Bold",
+        textAlign: "center",
+        width: 110,
+    },
+    circle: {
+        width: 85,
+        height: 85,
+        borderRadius: 50,
+        borderWidth: 6,
+        justifyContent: "center",
+        alignItems: "center",
     },
 });
