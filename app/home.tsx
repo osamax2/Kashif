@@ -1,6 +1,17 @@
 // app/(tabs)/home.tsx
-import React, { useState } from "react";
-import { I18nManager, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from "react-native";
+import React, {useRef, useState} from "react";
+import {
+    I18nManager,
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    Platform,
+    Animated,
+    Pressable,
+    Image,
+} from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 I18nManager.allowRTL(true);
@@ -17,6 +28,45 @@ export default function HomeScreen() {
     ];
 
     const visibleMarkers = activeFilter ? allMarkers.filter(m => m.type === activeFilter) : allMarkers;
+    const [menuOpen, setMenuOpen] = useState(false);
+    const scaleAnim = useRef(new Animated.Value(0)).current;
+
+    const toggleMenu = () => {
+        if (!menuOpen) {
+            setMenuOpen(true);
+            Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+        } else {
+            Animated.spring(scaleAnim, { toValue: 0, useNativeDriver: true }).start(() =>
+                setMenuOpen(false)
+            );
+        }
+    };
+// POSITION OF FAB
+    const [fabPos, setFabPos] = useState({ x: 0, y: 0 });
+
+// SAVE FAB LOCATION
+    const onFabLayout = (e) => {
+        const { x, y } = e.nativeEvent.layout;
+        setFabPos({ x, y });
+    };
+
+    const menuItems = [
+        {
+            id: "pothole",
+            icon: require("../assets/icons/pothole.png"),
+            offset: { top: 120, left: -180 },
+        },
+        {
+            id: "accident",
+            icon: require("../assets/icons/accident.png"),
+            offset: { top: 70, left: -230},
+        },
+        {
+            id: "speed",
+            icon: require("../assets/icons/speed.png"),
+            offset: { top: 180, left: -210  },
+        },
+    ];
 
     return (
         <View style={styles.root}>
@@ -80,17 +130,39 @@ export default function HomeScreen() {
                 </MapView>
 
                 {/* FAB */}
-                <TouchableOpacity style={styles.fab}>
+                <TouchableOpacity style={styles.fab} onPress={toggleMenu} onLayout={onFabLayout}>
                     <Text style={styles.fabPlus}>+</Text>
                 </TouchableOpacity>
+
             </View>
 
-            {/* Bottom info bar */}
-            <View style={styles.infoBar}>
-                <Text style={styles.infoText}>عدد البلاغات النشطة: 42 📘</Text>
-            </View>
+
+            {/* RADIAL ITEMS (ICONS) */}
+            {menuOpen &&
+                menuItems.map((item) => (
+                    <Animated.View
+                        key={item.id}
+                        style={[
+                            styles.circleItem,
+                            {
+                                transform: [{ scale: scaleAnim }],
+                                top: fabPos.y + item.offset.top,
+                                left: fabPos.x + item.offset.left,
+                            },
+                        ]}
+                    >
+                        <Pressable
+                            onPress={() => alert("Ausgewählt: " + item.id)}
+                            style={styles.circlePress}
+                        >
+                            <Image source={item.icon} style={{ width: 42, height: 42 }} />
+                        </Pressable>
+                    </Animated.View>
+                ))}
+
+
         </View>
-    );
+);
 }
 
 function FilterButton({ label, color, active, onPress }: { label: string; color: string; active: boolean; onPress: () => void }) {
@@ -155,7 +227,7 @@ const styles = StyleSheet.create({
         left: 18,
         width: 56,
         height: 56,
-        borderRadius: 28,
+        borderRadius: 50,
         backgroundColor: "#F4B400",
         alignItems: "center",
         justifyContent: "center",
@@ -163,7 +235,7 @@ const styles = StyleSheet.create({
     },
     fabPlus: { color: BLUE, fontSize: 28, marginTop: -2},
 
-    infoBar: { height: 34, backgroundColor: "#1A3B7A", alignItems: "center", justifyContent: "center" ,},
+    infoBar: { height: 50, backgroundColor: "#1A3B7A", alignItems: "center", justifyContent: "center" ,},
     infoText: { color: "#fff", fontSize: 13, fontFamily: "Tajawal-Medium" },
 
     categoriesRow: {
@@ -193,6 +265,21 @@ const styles = StyleSheet.create({
         height: 12,
         borderRadius: 6,
     },
+    circleItem: {
+        position: "absolute",
+        zIndex: 10,
+        width: 55,
+        height: 55,
+    },
 
+    circlePress: {
+        width: "100%",
+        height: "100%",
+        borderRadius: 30,
+        backgroundColor: "white",
+        justifyContent: "center",
+        alignItems: "center",
+        elevation: 8,
+    },
 
 });
