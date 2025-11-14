@@ -1,5 +1,4 @@
-// app/(tabs)/home.tsx
-import React, {useRef, useState} from "react";
+import React, { useRef, useState } from "react";
 import {
     I18nManager,
     View,
@@ -13,13 +12,14 @@ import {
     Image,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import { Router } from "expo-router";
+
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
-export default function HomeScreen() {
-    const [activeFilter, setActiveFilter] = useState<string | null>(null);
+const BLUE = "#0D2B66";
 
+export default function HomeScreen() {
+    /** MARKER-DATEN */
     const allMarkers = [
         { id: 1, type: "pothole", coord: { latitude: 40.418, longitude: -3.703 } },
         { id: 2, type: "accident", coord: { latitude: 40.417, longitude: -3.705 } },
@@ -27,7 +27,24 @@ export default function HomeScreen() {
         { id: 4, type: "pothole", coord: { latitude: 40.411, longitude: -3.699 } },
     ];
 
-    const visibleMarkers = activeFilter ? allMarkers.filter(m => m.type === activeFilter) : allMarkers;
+    /** ⬇⬇ MULTI-FILTER statt nur ein Filter */
+    const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+    const toggleFilter = (type: string) => {
+        setActiveFilters((prev) =>
+            prev.includes(type)
+                ? prev.filter((f) => f !== type) // ausschalten
+                : [...prev, type] // hinzufügen
+        );
+    };
+
+    const visibleMarkers =
+        activeFilters.length === 0
+            ? allMarkers
+            : allMarkers.filter((m) => activeFilters.includes(m.type));
+    /** ⬆⬆ MULTI-FILTER LOGIK */
+
+    /** RADIAL-MENÜ beim +-Button */
     const [menuOpen, setMenuOpen] = useState(false);
     const scaleAnim = useRef(new Animated.Value(0)).current;
 
@@ -36,46 +53,34 @@ export default function HomeScreen() {
             setMenuOpen(true);
             Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
         } else {
-            Animated.spring(scaleAnim, { toValue: 0, useNativeDriver: true }).start(() =>
-                setMenuOpen(false)
+            Animated.spring(scaleAnim, { toValue: 0, useNativeDriver: true }).start(
+                () => setMenuOpen(false)
             );
         }
     };
-// POSITION OF FAB
-    const [fabPos, setFabPos] = useState({ x: 0, y: 0 });
 
-// SAVE FAB LOCATION
-    const onFabLayout = (e) => {
+    // Position des FAB (für Icons)
+    const [fabPos, setFabPos] = useState({ x: 0, y: 0 });
+    const onFabLayout = (e: any) => {
         const { x, y } = e.nativeEvent.layout;
         setFabPos({ x, y });
     };
 
     const menuItems = [
-        {
-            id: "pothole",
-            icon: require("../../assets/icons/pothole.png"),
-            offset: { top: 150, left: -190 },
-        },
-        {
-            id: "accident",
-            icon: require("../../assets/icons/accident.png"),
-            offset: { top: 90, left: -240},
-        },
-        {
-            id: "speed",
-            icon: require("../../assets/icons/speed.png"),
-            offset: { top: 220, left: -230 },
-        },
+        { id: "pothole", icon: require("../../assets/icons/pothole.png"), offset: { top: 170, left: -180 } },
+        { id: "accident", icon: require("../../assets/icons/accident.png"), offset: { top: 100, left: -220 } },
+        { id: "speed", icon: require("../../assets/icons/speed.png"), offset: { top: 240, left: -230 } },
+
     ];
 
     return (
         <View style={styles.root}>
-            {/* Appbar */}
+            {/* HEADER */}
             <View style={styles.appbar}>
                 <Text style={styles.title}>الرئيسية</Text>
             </View>
 
-            {/* Search */}
+            {/* SUCHE */}
             <View style={styles.searchRow}>
                 <TextInput
                     placeholder="ابحث عن موقع أو شارع"
@@ -86,29 +91,85 @@ export default function HomeScreen() {
                 <Text style={styles.searchIcon}>🔍</Text>
             </View>
 
-            {/* Filters */}
+            {/* FILTER-LEISTE (ALLE 3 KLICKBAR, MULTI-SELECT) */}
             <View style={styles.categoriesRow}>
+                {/* كاشف السرعة */}
+                <TouchableOpacity
+                    style={[
+                        styles.categoryItem,
+                        activeFilters.includes("speed") && styles.categoryItemActive,
+                    ]}
+                    onPress={() => toggleFilter("speed")}
+                >
+                    <Text
+                        style={[
+                            styles.categoryText,
+                            activeFilters.includes("speed") && styles.categoryTextActive,
+                        ]}
+                    >
+                        كاشف السرعة
+                    </Text>
+                    <View
+                        style={[
+                            styles.dot,
+                            { backgroundColor: "green" },
+                            activeFilters.includes("speed") && styles.dotActive,
+                        ]}
+                    />
+                </TouchableOpacity>
 
-                <View style={styles.categoryItem}>
-                    <Text style={styles.categoryText}>كاشف السرعة</Text>
-                    <View style={[styles.dot, { backgroundColor: "green" }]} />
-                </View>
+                {/* حادث */}
+                <TouchableOpacity
+                    style={[
+                        styles.categoryItem,
+                        activeFilters.includes("accident") && styles.categoryItemActive,
+                    ]}
+                    onPress={() => toggleFilter("accident")}
+                >
+                    <Text
+                        style={[
+                            styles.categoryText,
+                            activeFilters.includes("accident") && styles.categoryTextActive,
+                        ]}
+                    >
+                        حادث
+                    </Text>
+                    <View
+                        style={[
+                            styles.dot,
+                            { backgroundColor: "red" },
+                            activeFilters.includes("accident") && styles.dotActive,
+                        ]}
+                    />
+                </TouchableOpacity>
 
-                <View style={styles.categoryItem}>
-                    <Text style={styles.categoryText}>حادث</Text>
-                    <View style={[styles.dot, { backgroundColor: "red" }]} />
-                </View>
-
-                <View style={styles.categoryItem}>
-                    <Text style={styles.categoryText}>حفرة</Text>
-                    <View style={[styles.dot, { backgroundColor: "gold" }]} />
-                </View>
-
+                {/* حفرة */}
+                <TouchableOpacity
+                    style={[
+                        styles.categoryItem,
+                        activeFilters.includes("pothole") && styles.categoryItemActive,
+                    ]}
+                    onPress={() => toggleFilter("pothole")}
+                >
+                    <Text
+                        style={[
+                            styles.categoryText,
+                            activeFilters.includes("pothole") && styles.categoryTextActive,
+                        ]}
+                    >
+                        حفرة
+                    </Text>
+                    <View
+                        style={[
+                            styles.dot,
+                            { backgroundColor: "gold" },
+                            activeFilters.includes("pothole") && styles.dotActive,
+                        ]}
+                    />
+                </TouchableOpacity>
             </View>
 
-
-
-            {/* Map */}
+            {/* KARTE */}
             <View style={styles.mapContainer}>
                 <MapView
                     style={StyleSheet.absoluteFill}
@@ -119,8 +180,7 @@ export default function HomeScreen() {
                         longitudeDelta: 0.2,
                     }}
                 >
-
-                    {visibleMarkers.map(m => (
+                    {visibleMarkers.map((m) => (
                         <Marker key={m.id} coordinate={m.coord}>
                             <View style={styles.marker}>
                                 <Text style={{ fontSize: 18 }}>⚠️</Text>
@@ -130,14 +190,16 @@ export default function HomeScreen() {
                 </MapView>
 
                 {/* FAB */}
-                <TouchableOpacity style={styles.fab} onPress={toggleMenu} onLayout={onFabLayout}>
+                <TouchableOpacity
+                    style={styles.fab}
+                    onPress={toggleMenu}
+                    onLayout={onFabLayout}
+                >
                     <Text style={styles.fabPlus}>+</Text>
                 </TouchableOpacity>
-
             </View>
 
-
-            {/* RADIAL ITEMS (ICONS) */}
+            {/* RADIAL-MENÜ UM DEN FAB */}
             {menuOpen &&
                 menuItems.map((item) => (
                     <Animated.View
@@ -160,25 +222,15 @@ export default function HomeScreen() {
                     </Animated.View>
                 ))}
 
-            {/* INFO BAR */}
+            {/* INFO-BAR UNTEN */}
             <View style={styles.infoBar}>
                 <Text style={styles.infoText}>عدد البلاغات النشطة: 42 📘</Text>
             </View>
-
         </View>
-);
-}
-
-function FilterButton({ label, color, active, onPress }: { label: string; color: string; active: boolean; onPress: () => void }) {
-    return (
-        <TouchableOpacity onPress={onPress} style={[styles.filterBtn, active && { backgroundColor: "rgba(255,255,255,0.15)" }]}>
-            <View style={[styles.dot, { backgroundColor: color }]} />
-            <Text style={styles.filterLabel}>{label}</Text>
-        </TouchableOpacity>
     );
 }
 
-const BLUE = "#0D2B66";
+/* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: BLUE, direction: "rtl" },
@@ -205,16 +257,6 @@ const styles = StyleSheet.create({
     searchInput: { flex: 1, color: "#fff", fontSize: 16 },
     searchIcon: { color: "#FFD166", fontSize: 18, marginHorizontal: 6 },
 
-    filters: {
-        marginTop: 6,
-        flexDirection: "row-reverse",
-        justifyContent: "space-around",
-        paddingHorizontal: 8,
-    },
-    filterBtn: { flexDirection: "row-reverse", alignItems: "center", padding: 6, borderRadius: 8 },
-    //dot: { width: 10, height: 10, borderRadius: 5, marginLeft: 6 },
-    filterLabel: { color: "#fff", fontSize: 14 },
-
     mapContainer: {
         flex: 1,
         marginTop: 8,
@@ -227,24 +269,30 @@ const styles = StyleSheet.create({
 
     fab: {
         position: "absolute",
-        bottom: 90,
+        bottom: 120,
         left: 15,
         width: 56,
         height: 56,
-        borderRadius: 40,
+        borderRadius: 30,
         backgroundColor: "#F4B400",
         alignItems: "center",
         justifyContent: "center",
         elevation: 6,
     },
-    fabPlus: { color: BLUE, fontSize: 28, marginTop: -2},
+    fabPlus: { color: BLUE, fontSize: 28, marginTop: -2 },
 
-    infoBar: { height: 60, backgroundColor: "#1A3B7A", alignItems: "center", justifyContent: "center" ,},
+    infoBar: {
+        height: 70,
+        backgroundColor: "#1A3B7A",
+        alignItems: "center",
+        justifyContent: "center",
+    },
     infoText: { color: "#fff", fontSize: 13, fontFamily: "Tajawal-Medium" },
 
+    /* FILTER-LEISTE */
     categoriesRow: {
         width: "100%",
-        flexDirection: "row-reverse",   // RTL → Reihenfolge von rechts nach links
+        flexDirection: "row-reverse",
         justifyContent: "space-between",
         alignItems: "center",
         marginTop: 9,
@@ -252,9 +300,16 @@ const styles = StyleSheet.create({
     },
 
     categoryItem: {
-        flexDirection: "row-reverse",   // ⭐ WICHTIG: Text zuerst, Punkt danach
+        flexDirection: "row-reverse",
         alignItems: "center",
         gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 16,
+    },
+
+    categoryItemActive: {
+        backgroundColor: "rgba(255,255,255,0.12)",
     },
 
     categoryText: {
@@ -263,12 +318,21 @@ const styles = StyleSheet.create({
         fontFamily: "Tajawal-Bold",
         textAlign: "right",
     },
+    categoryTextActive: {
+        color: "#FFD166",
+    },
 
     dot: {
         width: 12,
         height: 12,
         borderRadius: 6,
     },
+    dotActive: {
+        borderWidth: 2,
+        borderColor: "#FFFFFF",
+    },
+
+    /* RADIAL-MENÜ ICONS */
     circleItem: {
         position: "absolute",
         zIndex: 10,
@@ -285,5 +349,4 @@ const styles = StyleSheet.create({
         alignItems: "center",
         elevation: 8,
     },
-
 });
