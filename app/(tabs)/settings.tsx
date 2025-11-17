@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
         flexDirection: "row-reverse",   // RTL Reihenfolge
         alignItems: "center",
         justifyContent: "space-between",
-        paddingVertical: 2,
+        paddingVertical: 8,
         borderBottomWidth: 1,
         borderBottomColor: "rgba(255,255,255,0.25)",
     },
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         color: "#fff",
         fontSize: 14,
-        marginBottom: 5,
+        marginBottom: 14,
         fontFamily: "Tajawal-Bold",
         textAlign: "left",
     },
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     textItem: {
         color: "#fff",
         fontSize: 16,
-        paddingVertical: 10,
+        paddingVertical: 7,
         borderBottomWidth: 1,
         borderColor: "rgba(255,255,255,0.25)",
         fontFamily: "Tajawal-Regular",

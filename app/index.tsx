@@ -77,19 +77,34 @@ export default function Index() {
               <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
             </TouchableOpacity>
 
+            {/* --- Social Login --- */}
             <Text style={styles.orText}>أو سجل باستخدام</Text>
 
+            {/* WHATSAPP + GOOGLE */}
             <View style={styles.socialRow}>
-              <TouchableOpacity style={[styles.socialButton, styles.whatsapp]}>
-                <FontAwesome name="whatsapp" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 10 } : { marginRight: 10 }} />
-                <Text style={styles.socialText}>WhatsApp</Text>
+              {/* WhatsApp */}
+              <TouchableOpacity style={[styles.socialButtonModern, { backgroundColor: "#25D366" }]}>
+                <FontAwesome name="whatsapp" size={20} color="#fff" style={{ marginLeft: 8 }} />
+                <Text style={styles.socialTextModern}>WhatsApp</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.socialButton, styles.facebook]}>
-                <FontAwesome name="facebook" size={18} color="#fff" style={I18nManager.isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
-                <Text style={styles.socialText}>Facebook</Text>
+              {/* Google */}
+              <TouchableOpacity style={[styles.socialButtonModern, { backgroundColor: "rgba(239,78,64,0.9)" }]}>
+                <Image
+                    source={require("../assets/icons/google.png")}
+                    style={{ width: 22, height: 22, marginLeft: 8 }}
+                />
+                <Text style={styles.socialTextModern}>Google</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Apple – zentriert */}
+            <TouchableOpacity style={styles.appleButton}>
+              <FontAwesome name="apple" size={24} color="#fff" style={{ marginLeft: -3 }} />
+              <Text style={styles.appleText}>تسجيل الدخول باستخدام Apple</Text>
+            </TouchableOpacity>
+
+
 
             {/* Links unten */}
             <View style={styles.linksContainer}>
@@ -117,7 +132,7 @@ const styles = StyleSheet.create({
     // Alles physisch nach links
     alignItems: "flex-end",
     justifyContent: "center",
-    paddingVertical: 40,
+    paddingVertical: 45,
     paddingHorizontal: 20,
     direction: 'ltr',
   },
@@ -126,8 +141,8 @@ const styles = StyleSheet.create({
     flexDirection: "row", // LTR: logo left, text right
     alignItems: "center",
     justifyContent: "flex-end",
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingTop: 25,
+    paddingBottom: 15,
   },
   logoHeader: {
     width: 140,
@@ -135,7 +150,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   headerText: {
-    flex: 1,
+    flex: 0,
     alignItems: "flex-end",
   },
   appName: {
@@ -159,7 +174,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     color: "#FFFFFF",
-    marginTop: 10,
+    marginTop: 7,
     textAlign: "left",
     writingDirection: 'ltr',
     includeFontPadding: false,
@@ -260,8 +275,8 @@ const styles = StyleSheet.create({
   boltIcon: { marginLeft: 8, backgroundColor: "#FFFFFF", padding: 2, borderRadius: 6 },
   orText: {
     color: "#FFFFFF",
-    fontSize: 13,
-    marginVertical: 10,
+    fontSize: 16,
+    marginVertical: 6,
     textAlign: 'center',
     width: '100%',
   },
@@ -283,9 +298,7 @@ const styles = StyleSheet.create({
   whatsapp: {
     backgroundColor: "#25D366",
   },
-  facebook: {
-    backgroundColor: "#1877F2",
-  },
+
   socialText: {
     color: "#FFFFFF",
     fontWeight: "600",
@@ -310,4 +323,45 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
+  google: {
+    backgroundColor: "#DB4437", // Google Red
+  },
+
+
+  socialButtonModern: {
+    flex: 1,
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginHorizontal: 6,
+    elevation: 3,
+  },
+
+  socialTextModern: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Tajawal-Medium",
+  },
+
+  appleButton: {
+    width: "100%",
+    backgroundColor: "#000",
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 4,
+    flexDirection: "row-reverse",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+  },
+
+  appleText: {
+    color: "#fff",
+    fontSize: 17,
+    fontFamily: "Tajawal-Bold",
+    marginHorizontal: 8,
+  },
+
 });
