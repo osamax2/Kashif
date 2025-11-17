@@ -1,3 +1,4 @@
+// app/(tabs)/home.tsx
 import React, { useRef, useState } from "react";
 import {
     I18nManager,
@@ -12,6 +13,7 @@ import {
     Image,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import ReportDialog from "@/components/ReportDialog";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -27,7 +29,12 @@ export default function HomeScreen() {
         { id: 4, type: "pothole", coord: { latitude: 40.411, longitude: -3.699 } },
     ];
 
-    /** ⬇⬇ MULTI-FILTER statt nur ein Filter */
+    /** Dialog-Typ (welcher Meldungs-Typ wird erstellt?) */
+    const [reportType, setReportType] = useState<
+        "pothole" | "accident" | "speed" | null
+    >(null);
+
+    /** MULTI-FILTER */
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
     const toggleFilter = (type: string) => {
@@ -42,7 +49,6 @@ export default function HomeScreen() {
         activeFilters.length === 0
             ? allMarkers
             : allMarkers.filter((m) => activeFilters.includes(m.type));
-    /** ⬆⬆ MULTI-FILTER LOGIK */
 
     /** RADIAL-MENÜ beim +-Button */
     const [menuOpen, setMenuOpen] = useState(false);
@@ -67,11 +73,22 @@ export default function HomeScreen() {
     };
 
     const menuItems = [
-        { id: "pothole", icon: require("../../assets/icons/pothole.png"), offset: { top: 170, left: -180 } },
-        { id: "accident", icon: require("../../assets/icons/accident.png"), offset: { top: 100, left: -220 } },
-        { id: "speed", icon: require("../../assets/icons/speed.png"), offset: { top: 240, left: -230 } },
-
-    ];
+        {
+            id: "pothole",
+            icon: require("../../assets/icons/pothole.png"),
+            offset: { top: 170, left: -180 },
+        },
+        {
+            id: "accident",
+            icon: require("../../assets/icons/accident.png"),
+            offset: { top: 100, left: -220 },
+        },
+        {
+            id: "speed",
+            icon: require("../../assets/icons/speed.png"),
+            offset: { top: 240, left: -230 },
+        },
+    ] as const;
 
     return (
         <View style={styles.root}>
@@ -214,7 +231,10 @@ export default function HomeScreen() {
                         ]}
                     >
                         <Pressable
-                            onPress={() => alert("Ausgewählt: " + item.id)}
+                            onPress={() => {
+                                setReportType(item.id); // Dialog öffnen
+                                setMenuOpen(false);
+                            }}
                             style={styles.circlePress}
                         >
                             <Image source={item.icon} style={{ width: 42, height: 42 }} />
@@ -226,6 +246,13 @@ export default function HomeScreen() {
             <View style={styles.infoBar}>
                 <Text style={styles.infoText}>عدد البلاغات النشطة: 42 📘</Text>
             </View>
+
+            {/* MELDUNGS-DIALOG */}
+            <ReportDialog
+                visible={reportType !== null}
+                type={reportType}
+                onClose={() => setReportType(null)}
+            />
         </View>
     );
 }
