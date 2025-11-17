@@ -1,362 +1,563 @@
-import React from "react";
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from "react-native";
-
-export default function ReportsScreen() {
-    const reports = [
-        { id: "1239878", date: "10.11.2024", status: "مفتوح", icon: "🔍" },
-        { id: "6676434", date: "12.05.2022", status: "تم الإصلاح", icon: "✔️" },
-        { id: "1234567", date: "01.12.2021", status: "قيد المراجعة", icon: "⏳" },
-    ];
-
-    return (
-        <ScrollView style={styles.container}>
-            <Text style={styles.header}>البلاغات</Text>
-            <TouchableOpacity>
-                <Text style={styles.bell}>🔔</Text>
-            </TouchableOpacity>
-
-            {/* Section Title */}
-            <Text style={styles.sectionTitle}>إحصائيات بلاغاتي</Text>
-
-            {/* Neon Stats Row */}
-            <View style={styles.statsRow}>
-                <NeonCircle title="البلاغات المقترحة" value="90%" color="#4F46E5" />
-                <NeonCircle title="البلاغات قيد المعالجة" value="40%" color="#FF6B6B" />
-                <NeonCircle title="تم إصلاحها" value="64%" color="#4ADE80" />
-            </View>
-
-
-
-            {/* ░░ MODERNE REPORT-KARTEN ░░ */}
-            <Text style={styles.sectionTitleSmall}>قائمة بلاغاتي</Text>
-
-            <View style={{ marginHorizontal: 16, marginTop: 10 }}>
-                <ReportCard
-                    number="1239878"
-                    date="10.11.2024"
-                    status="مفتوح"
-                    icon="🔎"
-                    color="#4FD1C5"
-                />
-
-                <ReportCard
-                    number="6676434"
-                    date="12.05.2022"
-                    status="تم الإصلاح"
-                    icon="✔️"
-                    color="#68D391"
-                />
-
-                <ReportCard
-                    number="1234567"
-                    date="01.12.2021"
-                    status="قيد المراجعة"
-                    icon="⏳"
-                    color="#F6AD55"
-                />
-            </View>
-        </ScrollView>
-    );
-}
-/* ░░ MODERNE REPORT-CARD ░░ */
-function ReportCard({
-                        number,
-                        date,
-                        status,
-                        icon,
-                        color,
-                    }: {
-    number: string;
-    date: string;
-    status: string;
-    icon: string;
-    color: string;
-}) {
-    return (
-        <View style={[styles.cardRow, { borderLeftColor: color }]}>
-            <View style={styles.cardRowContent}>
-                <Text style={styles.cardStatusText}>
-                    {status} {icon}
-                </Text>
-
-                <Text style={styles.cardDate}>{date}</Text>
-
-                <Text style={styles.cardNumber}>{number}</Text>
-            </View>
-        </View>
-    );
-}
-
-/* ---------------------- Neon Circle Component ---------------------- */
-
-function NeonCircle({ title, value, color }) {
-    return (
-        <View style={styles.circleContainer}>
-            <View style={[styles.circleGlow, { shadowColor: color }]} />
-            <View style={[styles.circle, { borderColor: color }]}>
-                <Text style={styles.circleValue}>{value}</Text>
-            </View>
-            <Text style={styles.circleLabel}>{title}</Text>
-        </View>
-    );
-}
-
-/* ---------------------- Styles ---------------------- */
+// app/(tabs)/reports.tsx
+import React, { useState, useRef, useEffect } from "react";
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    FlatList,
+    Animated,
+    Modal,
+    Image,
+    Pressable,
+    Platform,
+} from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
+import MapView, { Marker } from "react-native-maps";
 
 const BLUE = "#0D2B66";
-const YELLOW = "#F4B400";
+const CARD_BG = "rgba(255,255,255,0.06)";
+const CARD_BORDER = "rgba(255,255,255,0.18)";
+
+// Status-Konfiguration: Icon + Farbe
+const STATUS_META: {
+    [key: string]: { icon: string; color: string };
+} = {
+    "مفتوح": { icon: "🔍", color: "#4DA3FF" },
+    "تم الإصلاح": { icon: "✔️", color: "#4CD964" },
+    "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
+};
+
+// Beispiel-Daten
+const INITIAL_DATA = [
+    {
+        id: "1239878",
+        date: "10.11.2024",
+        status: "مفتوح",
+        title: "حفرة كبيرة في الشارع الرئيسي",
+        description:
+            "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
+        image: require("../../assets/images/example-report.jpg"),
+    },
+    {
+        id: "6676434",
+        date: "12.05.2022",
+        status: "تم الإصلاح",
+        title: "إشارة مرور معطلة",
+        description:
+            "إشارة المرور عند التقاطع الرئيسي كانت متوقفة عن العمل، وتم إصلاحها من قبل البلدية.",
+        image: require("../../assets/images/example-report.jpg"),
+    },
+    {
+        id: "1234567",
+        date: "01.12.2021",
+        status: "قيد المراجعة",
+        title: "كاميرا سرعة غير واضحة",
+        description:
+            "كاميرا السرعة الجديدة لا تظهر بشكل واضح للسائقين، وتم إرسال البلاغ للمراجعة.",
+        image: require("../../assets/images/example-report.jpg"),
+    },
+];
+
+// kleine Komponente für die Prozent-Kreise
+function CircleStat({ percent, label, color }) {
+    return (
+        <View style={{ alignItems: "center", width: 100 }}>
+            <View
+                style={{
+                    width: 90,
+                    height: 90,
+                    borderRadius: 50,
+                    borderWidth: 6,
+                    borderColor: color,
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}
+            >
+                <Text style={{ color: "#fff", fontSize: 22, fontFamily: "Tajawal-Bold" }}>
+                    {percent}%
+                </Text>
+            </View>
+
+            <Text
+                style={{
+                    color: "#fff",
+                    fontSize: 13,
+                    textAlign: "center",
+                    marginTop: 5,
+                    fontFamily: "Tajawal-Regular",
+                }}
+            >
+                {label}
+            </Text>
+        </View>
+    );
+}
+
+export default function ReportsScreen() {
+    const [reports, setReports] = useState(INITIAL_DATA);
+    const [selected, setSelected] = useState<any | null>(null);
+    const [detailVisible, setDetailVisible] = useState(false);
+
+    const openDetails = (report: any) => {
+        setSelected(report);
+        setDetailVisible(true);
+    };
+
+    const closeDetails = () => {
+        setDetailVisible(false);
+        setSelected(null);
+    };
+
+
+
+    const renderReport = ({ item, index }: { item: any; index: number }) => {
+        return (
+            <Swipeable
+                overshootLeft={false}
+                overshootRight={false}
+                renderRightActions={() => (
+                    <View style={[styles.swipeAction, styles.swipeDetails]}>
+                        <Text style={styles.swipeText}>ℹ️ تفاصيل</Text>
+                    </View>
+                )}
+                onSwipeableRightOpen={() => openDetails(item)}
+            >
+                <ReportCard report={item} index={index} onPress={() => openDetails(item)} />
+            </Swipeable>
+        );
+    };
+
+    return (
+        <View style={styles.root}>
+            {/* HEADER */}
+            <View style={styles.header}>
+                <TouchableOpacity style={styles.bellBtn}>
+                    <Text style={styles.bellIcon}>🔔</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.headerTitle}>البلاغات</Text>
+
+                {/* Platzhalter links, damit Titel wirklich mittig ist */}
+                <View style={{ width: 40 }} />
+            </View>
+
+            {/* إحصائيات بلاغاتي */}
+            <Text
+                style={{
+                    color: "#FFD166",
+                    fontSize: 18,
+                    fontFamily: "Tajawal-Bold",
+                    marginTop: 10,
+                    marginBottom: 10,
+                    textAlign: "right",
+                    paddingHorizontal: 20,
+                }}
+            >
+                إحصائيات بلاغاتي
+            </Text>
+
+            {/* Drei Kreise */}
+            <View
+                style={{
+                    flexDirection: "row-reverse",
+                    justifyContent: "space-between",
+                    paddingHorizontal: 20,
+                    marginBottom: 10,
+                }}
+            >
+                <CircleStat percent={90} label="البلاغات المقترحة" color="#7A8BFF" />
+                <CircleStat percent={40} label="البلاغات قيد المعالجة" color="#FF7777" />
+                <CircleStat percent={64} label="تم إصلاحها" color="#4ADE80" />
+            </View>
+
+            {/* Überschrift Liste */}
+            <View style={styles.listHeaderRow}>
+                <Text style={styles.listHeaderText}>قائمة بلاغاتي</Text>
+            </View>
+
+            {/* LISTE */}
+            <FlatList
+                data={reports}
+                keyExtractor={(item) => item.id}
+                renderItem={renderReport}
+                contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
+                showsVerticalScrollIndicator={false}
+            />
+
+            {/* DETAILS-POPUP */}
+            <Modal visible={detailVisible} transparent animationType="slide">
+                <View style={styles.modalBackdrop}>
+                    <View style={styles.modalGlass}>
+                        {selected && (
+                            <>
+                                {/* Bild */}
+                                <Image source={selected.image} style={styles.modalImage} />
+
+                                {/* Titel */}
+                                <Text style={styles.modalTitle}>{selected.title}</Text>
+
+                                {/* Status */}
+                                <View style={styles.modalStatusRow}>
+                                    <Text
+                                        style={[
+                                            styles.modalStatusIcon,
+                                            { color: STATUS_META[selected.status].color },
+                                        ]}
+                                    >
+                                        {STATUS_META[selected.status].icon}
+                                    </Text>
+                                    <Text
+                                        style={[
+                                            styles.modalStatusText,
+                                            { color: STATUS_META[selected.status].color },
+                                        ]}
+                                    >
+                                        {selected.status}
+                                    </Text>
+                                </View>
+
+                                {/* ID + Datum */}
+                                <View style={styles.modalMetaRow}>
+                                    <Text style={styles.modalMetaText}>
+                                        رقم البلاغ: {selected.id}
+                                    </Text>
+                                    <Text style={styles.modalMetaText}>
+                                        التاريخ: {selected.date}
+                                    </Text>
+                                </View>
+
+                                {/* Beschreibung */}
+                                <Text style={styles.modalDescription}>
+                                    {selected.description}
+                                </Text>
+
+                                {/* Mini-Map */}
+                                <View style={styles.miniMapContainer}>
+                                    <MapView
+                                        style={styles.miniMap}
+                                        initialRegion={{
+                                            latitude: 33.5138,
+                                            longitude: 36.2765,
+                                            latitudeDelta: 0.01,
+                                            longitudeDelta: 0.01,
+                                        }}
+                                    >
+                                        <Marker
+                                            coordinate={{ latitude: 33.5138, longitude: 36.2765 }}
+                                        >
+                                            <Text style={{ fontSize: 28 }}>📍</Text>
+                                        </Marker>
+                                    </MapView>
+                                </View>
+
+                                {/* Close Button */}
+                                <Pressable style={styles.modalButton} onPress={closeDetails}>
+                                    <Text style={styles.modalButtonText}>إغلاق</Text>
+                                </Pressable>
+                            </>
+                        )}
+                    </View>
+                </View>
+            </Modal>
+        </View>
+    );
+}
+
+/* ---------- EINZELNE KARTE MIT ANIMATION & GLAS ---------- */
+
+function ReportCard({
+                        report,
+                        index,
+                        onPress,
+                    }: {
+    report: any;
+    index: number;
+    onPress: () => void;
+}) {
+    const anim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.spring(anim, {
+            toValue: 1,
+            useNativeDriver: true,
+            delay: index * 60,
+        }).start();
+    }, []);
+
+    const meta = STATUS_META[report.status];
+
+    return (
+        <Animated.View
+            style={[
+                styles.cardAnimated,
+                {
+                    opacity: anim,
+                    transform: [
+                        {
+                            translateY: anim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [16, 0],
+                            }),
+                        },
+                    ],
+                },
+            ]}
+        >
+            <TouchableOpacity activeOpacity={0.85} onPress={onPress}>
+                <View
+                    style={[
+                        styles.reportCard,
+                        { borderRightColor: meta.color, shadowColor: meta.color },
+                    ]}
+                >
+                    {/* rechte Seite: Icon + Status */}
+                    <View style={styles.cardRight}>
+                        <View
+                            style={[
+                                styles.statusBubble,
+                                { backgroundColor: meta.color + "22" },
+                            ]}
+                        >
+                            <Text style={[styles.statusIcon, { color: meta.color }]}>
+                                {meta.icon}
+                            </Text>
+                        </View>
+                        <Text style={[styles.statusText, { color: meta.color }]}>
+                            {report.status}
+                        </Text>
+                    </View>
+
+                    {/* linke Seite: ID + Datum */}
+                    <View style={styles.cardLeft}>
+                        <Text style={styles.reportId}>{report.id}</Text>
+                        <Text style={styles.reportDate}>{report.date}</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+}
+
+/* ---------- STYLES ---------- */
 
 const styles = StyleSheet.create({
-    container: {
+    root: {
+        flex: 1,
         backgroundColor: BLUE,
-        padding: 16,
-        direction: "rtl",
-        flex: 1,
+        paddingTop: Platform.OS === "ios" ? 48 : 32,
     },
 
+    /* HEADER */
     header: {
-        color: "white",
+        flexDirection: "row-reverse",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        marginBottom: 4,
+    },
+    headerTitle: {
+        color: "#fff",
         fontSize: 26,
-        textAlign: "center",
-        fontFamily: "Tajawal-Bold",
-        marginVertical: 10,
-    },
-
-    sectionTitle: {
-        color: YELLOW,
-        fontSize: 18,
-        marginVertical: 14,
         fontFamily: "Tajawal-Bold",
     },
-
-    /* ---------------- Neon Stats ---------------- */
-    statsRow: {
-        flexDirection: "row-reverse",
-        justifyContent: "space-between",
-        marginBottom: 20,
+    bellBtn: {
+        padding: 4,
+    },
+    bellIcon: {
+        fontSize: 30,
     },
 
-    circleContainer: {
-        alignItems: "center",
-        width: "33%",
+    listHeaderRow: {
+        paddingHorizontal: 20,
+        marginTop: 4,
+        marginBottom: 4,
+        alignItems: "flex-end",
     },
-    back: { fontSize: 26, color: YELLOW },
-    bell: { fontSize: 26, color: YELLOW },
-
-
-    circleValue: {
-        color: "white",
-        fontSize: 22,
-        fontFamily: "Tajawal-Bold",
-    },
-
-    circleLabel: {
-        color: "#DCE1EB",
-        marginTop: 6,
-        fontFamily: "Tajawal-Regular",
-    },
-
-    circleGlow: {
-        position: "absolute",
-        width: 90,
-        height: 90,
-        borderRadius: 50,
-        shadowRadius: 12,
-        shadowOpacity: 0.9,
-        shadowOffset: { width: 0, height: 0 },
-    },
-
-    /* ---------------- Alerts Box ---------------- */
-    alertBox: {
-        backgroundColor: "#112F66",
-        padding: 16,
-        borderRadius: 14,
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.1)",
-    },
-
-    alertTitle: {
-        color: YELLOW,
-        fontFamily: "Tajawal-Bold",
+    listHeaderText: {
+        color: "#FFD166",
         fontSize: 16,
-        marginBottom: 6,
-    },
-
-    alertText: {
-        color: "#DCE1EB",
-        fontFamily: "Tajawal-Regular",
-        marginBottom: 8,
-    },
-
-    alertEdit: {
-        color: YELLOW,
-        alignSelf: "flex-start",
-        fontFamily: "Tajawal-Medium",
-    },
-
-    /* ---------------- Neon Table ---------------- */
-    table: {
-        width: "100%",
-        backgroundColor: "#112F66",
-        borderRadius: 14,
-        overflow: "hidden",
-        borderColor: YELLOW,
-        borderWidth: 1.2,
-    },
-
-    tableHeaderRow: {
-        flexDirection: "row-reverse",
-        backgroundColor: YELLOW,
-        padding: 10,
-    },
-
-    tableHeader: {
-        flex: 1,
-        textAlign: "center",
-        color: BLUE,
         fontFamily: "Tajawal-Bold",
-        fontSize: 15,
+        textAlign: "left",
     },
 
-    tableRow: {
-        flexDirection: "row-reverse",
-        paddingVertical: 12,
-        paddingHorizontal: 6,
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.08)",
-    },
-
-    tableCell: {
-        flex: 1,
-        textAlign: "center",
-        color: "white",
-        fontFamily: "Tajawal-Regular",
-        fontSize: 15,
-    },
-
-    /* GLASS CARD TOP */
-    glassCard: {
-        backgroundColor: "rgba(255,255,255,0.06)",
-        padding: 18,
+    /* Card / Glass */
+    cardAnimated: {
         marginHorizontal: 16,
-        marginTop: 10,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.12)",
-        shadowColor: "#000",
-        shadowOpacity: 0.25,
-        shadowRadius: 10,
-        elevation: 5,
+        marginVertical: 8,
     },
-    glassTitle: {
-        color: "#FFFFFF",
-        fontFamily: "Tajawal-Bold",
-        fontSize: 17,
-        textAlign: "center",
-        marginBottom: 16,
-    },
-    glassStatsRow: {
+
+    reportCard: {
         flexDirection: "row-reverse",
         justifyContent: "space-between",
-    },
-
-    /* CIRCLES */
-    circleBox: {
         alignItems: "center",
-        width: "30%",
+        padding: 16,
+        borderRadius: 20,
+        backgroundColor: CARD_BG,
+        borderWidth: 1,
+        borderColor: CARD_BORDER,
+        borderRightWidth: 6,
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 6,
     },
 
+    cardRight: {
+        flexDirection: "row-reverse",
+        alignItems: "center",
+        gap: 10,
+    },
 
-    circleText: {
+    statusBubble: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    statusIcon: {
+        fontSize: 24,
+    },
+
+    statusText: {
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+        color: "#fff",
+    },
+
+    cardLeft: {
+        alignItems: "flex-start",
+    },
+
+    reportId: {
         color: "#fff",
         fontSize: 18,
         fontFamily: "Tajawal-Bold",
     },
 
-
-    /* SECTION TITLE */
-    sectionTitleSmall: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        marginBottom: 10,
-        marginRight: 20,
-        marginTop: 20,
-        fontFamily: "Tajawal-Bold",
-    },
-
-    /* ALERT CARD */
-    card: {
-        backgroundColor: "#103A78",
-        marginHorizontal: 16,
-        marginTop: 8,
-        padding: 16,
-        borderRadius: 16,
-        borderColor: "#234C8A",
-        borderWidth: 1,
-        shadowColor: "#000",
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        elevation: 5,
-    },
-    rowBetween: {
-        flexDirection: "row-reverse",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    alertIcon: { fontSize: 22, color: "#FFD166" },
-    edit: {
-        color: "#A8C6FA",
-        textDecorationLine: "underline",
+    reportDate: {
+        color: "#d0d7ea",
+        fontSize: 13,
+        marginTop: 2,
         fontFamily: "Tajawal-Regular",
     },
 
-    /* MODERNE REPORT-KARTEN UNTEN */
-    cardRow: {
-        backgroundColor: "rgba(255,255,255,0.07)",
-        borderRadius: 16,
-        marginBottom: 12,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderLeftWidth: 6,
-        shadowColor: "#000",
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 4,
-    },
-    cardRowContent: {
-        flexDirection: "row-reverse",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-    cardStatusText: {
-        color: "#FFFFFF",
-        fontSize: 15,
-        fontFamily: "Tajawal-Bold",
-        width: 120,
-        textAlign: "center",
-    },
-    cardDate: {
-        color: "#A8C6FA",
-        fontSize: 14,
-        fontFamily: "Tajawal-Regular",
-        textAlign: "center",
-        width: 100,
-    },
-    cardNumber: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontFamily: "Tajawal-Bold",
-        textAlign: "center",
-        width: 110,
-    },
-    circle: {
-        width: 85,
-        height: 85,
-        borderRadius: 50,
-        borderWidth: 6,
+    /* Swipe-Actions */
+    swipeAction: {
         justifyContent: "center",
         alignItems: "center",
+        width: 90,
+        marginVertical: 8,
+        borderRadius: 18,
+    },
+    swipeDelete: {
+        backgroundColor: "#FF3B30",
+    },
+    swipeDetails: {
+        backgroundColor: "#5856D6",
+    },
+    swipeText: {
+        color: "#fff",
+        fontFamily: "Tajawal-Bold",
+        fontSize: 14,
+    },
+
+    /* Modal / Details */
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.65)",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+
+    modalGlass: {
+        width: "100%",
+        borderRadius: 22,
+        padding: 16,
+        backgroundColor: "rgba(15,37,80,0.95)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.18)",
+        shadowColor: "#000",
+        shadowOpacity: 0.35,
+        shadowOffset: { width: 0, height: 6 },
+        shadowRadius: 14,
+    },
+
+    modalImage: {
+        width: "100%",
+        height: 200,
+        borderRadius: 18,
+        marginBottom: 12,
+    },
+
+    modalTitle: {
+        color: "#fff",
+        fontSize: 20,
+        fontFamily: "Tajawal-Bold",
+        marginBottom: 6,
+        textAlign: "right",
+    },
+
+    modalStatusRow: {
+        flexDirection: "row-reverse",
+        alignItems: "center",
+        marginBottom: 8,
+        gap: 8,
+    },
+
+    modalStatusIcon: {
+        fontSize: 23,
+    },
+
+    modalStatusText: {
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+    },
+
+    modalMetaRow: {
+        flexDirection: "row-reverse",
+        justifyContent: "space-between",
+        marginBottom: 10,
+    },
+
+    modalMetaText: {
+        color: "#ccc",
+        fontSize: 14,
+        fontFamily: "Tajawal-Regular",
+    },
+
+    modalDescription: {
+        color: "#fff",
+        fontSize: 15,
+        fontFamily: "Tajawal-Regular",
+        marginBottom: 16,
+        textAlign: "right",
+    },
+
+    miniMapContainer: {
+        height: 160,
+        borderRadius: 16,
+        overflow: "hidden",
+        marginBottom: 16,
+    },
+
+    miniMap: {
+        flex: 1,
+    },
+
+    modalButton: {
+        backgroundColor: "#FFD166",
+        paddingVertical: 10,
+        borderRadius: 16,
+        alignItems: "center",
+    },
+
+    modalButtonText: {
+        color: BLUE,
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
     },
 });
