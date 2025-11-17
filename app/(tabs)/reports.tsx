@@ -24,7 +24,7 @@ const STATUS_META: {
     [key: string]: { icon: string; color: string };
 } = {
     "مفتوح": { icon: "🔍", color: "#4DA3FF" },
-    "تم الإصلاح": { icon: "✔️", color: "#4CD964" },
+    "تم الإصلاح": { icon: "✔", color: "#4CD964" },
     "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
 };
 
@@ -38,6 +38,7 @@ const INITIAL_DATA = [
         description:
             "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
         image: require("../../assets/images/example-report.jpg"),
+
     },
     {
         id: "6676434",
@@ -47,6 +48,7 @@ const INITIAL_DATA = [
         description:
             "إشارة المرور عند التقاطع الرئيسي كانت متوقفة عن العمل، وتم إصلاحها من قبل البلدية.",
         image: require("../../assets/images/example-report.jpg"),
+
     },
     {
         id: "1234567",
@@ -56,6 +58,7 @@ const INITIAL_DATA = [
         description:
             "كاميرا السرعة الجديدة لا تظهر بشكل واضح للسائقين، وتم إرسال البلاغ للمراجعة.",
         image: require("../../assets/images/example-report.jpg"),
+        alignItems: "left",
     },
 ];
 
@@ -154,7 +157,7 @@ export default function ReportsScreen() {
                     paddingHorizontal: 20,
                 }}
             >
-                إحصائيات بلاغاتي
+                <Text style={styles.listHeaderText}>إحصائيات بلاغاتي</Text>
             </Text>
 
             {/* Drei Kreise */}
@@ -311,8 +314,14 @@ function ReportCard({
                         { borderRightColor: meta.color, shadowColor: meta.color },
                     ]}
                 >
-                    {/* rechte Seite: Icon + Status */}
-                    <View style={styles.cardRight}>
+                    {/* rechte Seite = ID + Datum (untereinander) */}
+                    <View style={{ alignItems: "flex-end" }}>
+                        <Text style={styles.reportId}>{report.id}</Text>
+                        <Text style={styles.reportDate}>{report.date}</Text>
+                    </View>
+
+                    {/* linke Seite = Icon + Status (nebeneinander) */}
+                    <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
                         <View
                             style={[
                                 styles.statusBubble,
@@ -323,15 +332,10 @@ function ReportCard({
                                 {meta.icon}
                             </Text>
                         </View>
+
                         <Text style={[styles.statusText, { color: meta.color }]}>
                             {report.status}
                         </Text>
-                    </View>
-
-                    {/* linke Seite: ID + Datum */}
-                    <View style={styles.cardLeft}>
-                        <Text style={styles.reportId}>{report.id}</Text>
-                        <Text style={styles.reportDate}>{report.date}</Text>
                     </View>
                 </View>
             </TouchableOpacity>
@@ -366,13 +370,14 @@ const styles = StyleSheet.create({
     },
     bellIcon: {
         fontSize: 30,
+
     },
 
     listHeaderRow: {
         paddingHorizontal: 20,
         marginTop: 4,
         marginBottom: 4,
-        alignItems: "flex-end",
+        alignItems: "flex-start",
     },
     listHeaderText: {
         color: "#FFD166",
@@ -498,7 +503,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontFamily: "Tajawal-Bold",
         marginBottom: 6,
-        textAlign: "right",
+        textAlign: "left",
     },
 
     modalStatusRow: {
@@ -510,6 +515,7 @@ const styles = StyleSheet.create({
 
     modalStatusIcon: {
         fontSize: 23,
+        alignItems: "center",
     },
 
     modalStatusText: {
@@ -534,7 +540,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontFamily: "Tajawal-Regular",
         marginBottom: 16,
-        textAlign: "right",
+        textAlign: "left",
     },
 
     miniMapContainer: {
