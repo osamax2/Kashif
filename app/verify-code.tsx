@@ -84,7 +84,10 @@ export default function VerifyCodeScreen() {
             </View>
 
             {/* Button */}
-            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+            <TouchableOpacity
+                style={styles.submitBtn}
+                onPress={() => router.push("/reset-password")}   // ⇠ HIER verbinden
+            >
                 <Text style={styles.submitText}>متابعة</Text>
             </TouchableOpacity>
 

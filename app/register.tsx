@@ -58,7 +58,7 @@ export default function Register() {
             </TouchableOpacity>
 
             {/* Unten: zurück zum Index – zentriert */}
-            <TouchableOpacity style={{ width: "100%", alignItems: "center", marginTop: 20 }} onPress={() => router.back("/tabs/index")}>
+            <TouchableOpacity style={{ width: "100%", alignItems: "center", marginTop: 20 }} onPress={() => router.back("/index")}>
                 <Text style={styles.backToLogin}>لديك حساب؟ سجل الدخول</Text>
             </TouchableOpacity>
         </ScrollView>
