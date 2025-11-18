@@ -40,7 +40,7 @@ export default function Register() {
             </View>
 
             <View style={styles.field}>
-                <Text style={styles.label}>الكنية</Text>
+                <Text style={styles.label}>اسم العائلة</Text>
                 <TextInput style={styles.input} value={dept} onChangeText={setDept} placeholder="اكتب الكنية" placeholderTextColor="#AAB3C0" textAlign="right" />
             </View>
 
