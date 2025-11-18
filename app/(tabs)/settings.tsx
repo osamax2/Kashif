@@ -12,6 +12,8 @@ import ChangeModal from "@/components/ChangeModal";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import IOSActionSheet from "@/components/IOSActionSheet";
 import SuccessModal from "@/components/SuccessModal";
+import {Ionicons} from "@expo/vector-icons";
+import {router} from "expo-router";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -38,7 +40,10 @@ export default function SettingsScreen() {
     const [password, setPassword] = useState("");
     const [phone, setPhone] = useState("");
 
-
+    const handleLogout = () => {
+        // später Firebase signOut
+        router.replace("/index"); // zurück zu Login
+    };
 
     const saveChanges = () => {
         // Beispiel: Daten sammeln
@@ -73,13 +78,19 @@ export default function SettingsScreen() {
         <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 60 }}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity>
-                    <Text style={styles.backIcon}>‹</Text>
+                {/* BACK BUTTON */}
+                <TouchableOpacity onPress={() => router.push("/(tabs)/home")}>
+                    <Ionicons name="chevron-forward" size={26} color="#FFD166" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>الإعدادات</Text>
-                <View style={{ width: 32 }} />
-            </View>
 
+                {/* TITLE */}
+                <Text style={styles.headerTitle}>الإعدادات</Text>
+
+                {/* LOGOUT ICON (oben rechts) */}
+                <TouchableOpacity onPress={handleLogout}>
+                    <Ionicons name="log-out-outline" size={26} color="#FFD166" />
+                </TouchableOpacity>
+            </View>
             {/* USER ID */}
             <Text style={styles.userId}>
                 <Text style={{ color: "#ccc" }}>   رقم المستخدم: </Text>U-2025-143
@@ -206,6 +217,7 @@ export default function SettingsScreen() {
                     setPhoneModal(false);
                 }}
             />
+
         </ScrollView>
 
 
