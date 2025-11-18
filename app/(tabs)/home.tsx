@@ -86,7 +86,7 @@ export default function HomeScreen() {
         {
             id: "speed",
             icon: require("../../assets/icons/speed.png"),
-            offset: { top: 240, left: -230 },
+            offset: { top: 240, left: -220 },
         },
     ] as const;
 

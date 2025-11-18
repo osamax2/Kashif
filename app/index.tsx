@@ -89,7 +89,7 @@ export default function Index() {
               </TouchableOpacity>
 
               {/* Google */}
-              <TouchableOpacity style={[styles.socialButtonModern, { backgroundColor: "rgba(239,78,64,0.9)" }]}>
+              <TouchableOpacity style={[styles.socialButtonModern, { backgroundColor: "rgba(206,43,33,0.92)" }]}>
                 <Image
                     source={require("../assets/icons/google.png")}
                     style={{ width: 22, height: 22, marginLeft: 8 }}
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Tajawal-Regular',
   },
   title: {
-    fontSize: 22,
+    fontSize: 25,
     fontWeight: "700",
     color: "#FFFFFF",
     marginTop: 7,
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Tajawal-Regular',
   },
   google: {
-    backgroundColor: "#DB4437", // Google Red
+    backgroundColor: "rgb(185,66,70)", // Google Red
   },
 
 
