@@ -1,198 +1,320 @@
-import { ensureRTL, rtlStyles } from '@/constants/rtl';
-import { FontAwesome } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState, useRef } from "react";
 import {
-    Alert,
-    I18nManager,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
+    View,
     Text,
-    TextInput,
+    StyleSheet,
     TouchableOpacity,
-    View
+    Animated,
+    TextInput,
+    Modal,
+    Platform,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+const BLUE = "#0D2B66";
 
-// RTL nur einmal aktivieren
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
-
-export default function ForgotPassword() {
+export default function ForgotScreen() {
+    const [method, setMethod] = useState<"email" | "phone" | null>(null);
+    const [successVisible, setSuccessVisible] = useState(false);
+    const [showBottomActions, setShowBottomActions] = useState(false);
     const router = useRouter();
-    const [email, setEmail] = useState("");
-    const [sending, setSending] = useState(false);
+    const inputAnim = useRef(new Animated.Value(0)).current;
 
-    useEffect(() => {
-        ensureRTL();
-    }, []);
+    const handleSubmit = () => {
+        setSuccessVisible(true);
 
-    const isValidEmail = (value: string) => /^\S+@\S+\.\S+$/.test(value);
+        setTimeout(() => {
+            setShowBottomActions(true);
+        }, 600);
+    };
 
-    const handleReset = async () => {
-        if (!isValidEmail(email)) {
-            Alert.alert("خطأ", "الرجاء إدخال بريد إلكتروني صالح.");
-            return;
-        }
+    const showInput = () => {
+        Animated.timing(inputAnim, {
+            toValue: 1,
+            duration: 350,
+            useNativeDriver: false,
+        }).start();
+    };
 
-        setSending(true);
-        try {
-            await new Promise((res) => setTimeout(res, 1000));
-            Alert.alert("تم", "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.");
-            router.push("/login");
-        } catch (e) {
-            Alert.alert("خطأ", "حدث خطأ أثناء الطلب. حاول مرة أخرى.");
-        } finally {
-            setSending(false);
-        }
+    const selectMethod = (m: "email" | "phone") => {
+        setMethod(m);
+        showInput();
     };
 
     return (
-        <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-            <ScrollView
-                contentContainerStyle={[styles.container, rtlStyles.scrollContent]}
-                keyboardShouldPersistTaps="handled"
-            >
-                <Text style={styles.title}>نسيت كلمة المرور</Text>
+        <View style={styles.root}>
+            {/* HEADER */}
+            <Text style={styles.title}>نسيت كلمة المرور</Text>
 
-                <Text style={styles.info}>
-                    أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور
-                </Text>
-                <View style={styles.form}>
-                    <Text style={[styles.label, rtlStyles.textRight]}>البريد الإلكتروني</Text>
+            <Text style={styles.subtitle}>
+                اختر طريقة الاستعادة ثم أدخل بياناتك لإعادة تعيين كلمة المرور
+            </Text>
 
-                    <View style={styles.inputRow}>
-                        <TextInput
-                            value={email}
-                            onChangeText={setEmail}
-                            placeholder="email@address.com"
-                            placeholderTextColor="#DCE8FF"
-                            keyboardType="email-address"
-                            style={[styles.input, rtlStyles.textRight]}
-                            textAlign="right"
-                        />
-                        <FontAwesome name="envelope" size={18} color="#FFFFFF" style={styles.inputIcon} />
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.button, (!isValidEmail(email) || sending) && styles.buttonDisabled]}
-                        onPress={handleReset}
-                        disabled={!isValidEmail(email) || sending}
-                        activeOpacity={0.9}
+            {/* SELECT METHOD */}
+            <View style={styles.pillsRow}>
+                <TouchableOpacity
+                    style={[styles.pill, method === "email" && styles.pillActive]}
+                    onPress={() => selectMethod("email")}
+                >
+                    <Ionicons
+                        name="mail"
+                        size={20}
+                        color={method === "email" ? "#FFD166" : "#FFFFFF"}
+                        style={{ marginLeft: 6 }}
+                    />
+                    <Text
+                        style={[
+                            styles.pillText,
+                            method === "email" && { color: "#FFD166" },
+                        ]}
                     >
-                        <Text style={styles.buttonText}>
-                            {sending ? "...جاري الإرسال" : "إعادة تعيين كلمة المرور"}
-                        </Text>
-                    </TouchableOpacity>
+                        البريد الإلكتروني
+                    </Text>
+                </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => router.back()} style={{ width: '100%' }}>
-                        <Text style={styles.backLink}>العودة إلى تسجيل الدخول</Text>
-                    </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.pill, method === "phone" && styles.pillActive]}
+                    onPress={() => selectMethod("phone")}
+                >
+                    <Ionicons
+                        name="call"
+                        size={20}
+                        color={method === "phone" ? "#FFD166" : "#FFFFFF"}
+                        style={{ marginLeft: 6 }}
+                    />
+                    <Text
+                        style={[
+                            styles.pillText,
+                            method === "phone" && { color: "#FFD166" },
+                        ]}
+                    >
+                        رقم الهاتف
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* INPUT FIELD */}
+            <Animated.View
+                style={[
+                    styles.inputWrapper,
+                    {
+                        opacity: inputAnim,
+                        marginTop: inputAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 20],
+                        }),
+                    },
+                ]}
+            >
+                {method === "email" && (
+                    <TextInput
+                        placeholder="example@email.com"
+                        placeholderTextColor="#AAB3C0"
+                        style={styles.input}
+                        textAlign="right"
+                    />
+                )}
+
+                {method === "phone" && (
+                    <TextInput
+                        placeholder="+963"
+                        placeholderTextColor="#AAB3C0"
+                        keyboardType="phone-pad"
+                        style={styles.input}
+                        textAlign="right"
+                    />
+                )}
+            </Animated.View>
+
+            {/* RESET */}
+            {method && (
+                <TouchableOpacity style={styles.resetButton} onPress={() => router.push("/verify-code")}>
+                    <Text style={styles.resetText}>إعادة تعيين كلمة المرور</Text>
+                </TouchableOpacity>
+            )}
+            {/* BOTTOM ACTIONS */}
+            {showBottomActions && (
+                <View style={styles.bottomActions}>
+
+            {/* BACK */}
+            <TouchableOpacity>
+                <Text style={styles.backLink}>العودة إلى تسجيل الدخول</Text>
+            </TouchableOpacity>
+
                 </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+            )}
+
+            {/* SUCCESS POPUP */}
+            <Modal visible={successVisible} transparent animationType="fade">
+                <View style={styles.modalBg}>
+                    <View style={styles.modalBox}>
+                        <Text style={styles.modalTitle}>🎉 تم الإرسال بنجاح</Text>
+                        <Text style={styles.modalMsg}>
+                            تم إرسال رمز التفعيل إلى هاتفك. يرجى التحقق والمتابعة.
+                        </Text>
+
+                        <TouchableOpacity
+                            style={styles.modalBtn}
+                            onPress={() => setSuccessVisible(false)}
+                        >
+                            <Text style={styles.modalBtnText}>متابعة</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flexGrow: 1,
-        backgroundColor: '#0D2B66',
-        alignItems: 'flex-end', // Inhalt rechtsbündig
-        justifyContent: 'flex-start',
-        paddingVertical: 80,
-        paddingHorizontal: 28,
-        direction: 'rtl',
-    },
-    title: {
-        fontFamily: "Tajawal-Bold",
-        color: "#FFFFFF",
-        fontSize: 26,
-        textAlign: "right",
-        writingDirection: "rtl",
-        alignSelf: "flex-end",
-        marginBottom: 12,
-    },
-    info: {
-        fontFamily: "Tajawal-Regular",
-        color: "#F4B400",
-        fontSize: 14,
-        textAlign: "right",
-        writingDirection: "rtl",
-        alignSelf: "flex-end",
-        marginBottom: 30,
-        lineHeight: 22,
-    },
-    form: {
-        width: '100%',
-        alignItems: 'flex-end',
-    },
-    label: {
-        alignSelf: 'flex-end',
-        textAlign: 'left',
-        writingDirection:'ltr',
-        color: '#F4B400',
-        marginBottom: 8,
-        fontSize: 16,
-        fontFamily: 'Tajawal-Medium',
-        includeFontPadding: false,
-    },
-    inputRow: {
-        width: '100%',
-        backgroundColor: '#6F9BEA',
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        flexDirection: 'row-reverse', // Icon rechts
-        alignItems: 'center',
-        marginBottom: 14,
-    },
-    inputIcon: {
-        marginLeft: 8,
-    },
-    input: {
+    root: {
         flex: 1,
-        color: '#fff',
-        fontSize: 16,
-        fontFamily: 'Tajawal-Regular',
-        textAlign: 'right',
-        writingDirection: 'rtl',
+        backgroundColor: BLUE,
+        paddingTop: 80,
+        paddingHorizontal: 24,
+        direction: "rtl",
     },
-    button: {
-        width: "100%",
-        backgroundColor: "#F4B400",
-        paddingVertical: 14,
-        borderRadius: 8,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOpacity: 0.2,
-        shadowOffset: { width: 0, height: 6 },
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    buttonDisabled: { opacity: 0.6 },
-    buttonText: {
-        color: "#0D2B66",
+
+    title: {
+        color: "#FFFFFF",
+        fontSize: 32,
         fontFamily: "Tajawal-Bold",
+        textAlign: "center",
+        marginBottom: 10,
+    },
+
+    subtitle: {
+        color: "#FFD166",
         fontSize: 16,
         textAlign: "center",
-        writingDirection: "rtl",
-    },
-    backLink: {
-        color: "#A8C6FA",
-        textDecorationLine: "underline",
+        marginBottom: 20,
         fontFamily: "Tajawal-Regular",
-        fontSize: 15,
-        writingDirection: "rtl",
-        textAlign: "center", // Text zentriert
-        alignSelf: "center", // gesamte Komponente mittig
-        marginTop: 40,
-        width: "100%", // nimmt volle Breite ein, damit der Text exakt mittig sitzt
     },
 
-});
+    pillsRow: {
+        flexDirection: "row-reverse",
+        justifyContent: "center",
+        gap: 10,
+        marginTop: 10,
+    },
 
+    pill: {
+        flexDirection: "row-reverse",
+        alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.07)",
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.15)",
+    },
+
+    pillActive: {
+        backgroundColor: "rgba(255,255,255,0.18)",
+        borderColor: "#FFD166",
+    },
+
+    pillText: {
+        color: "#FFFFFF",
+        fontSize: 15,
+        fontFamily: "Tajawal-Medium",
+    },
+
+    inputWrapper: {
+        width: "100%",
+    },
+
+    input: {
+        backgroundColor: "#FFFFFF",
+        width: "100%",
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        fontSize: 16,
+        fontFamily: "Tajawal-Regular",
+        color: "#000",
+    },
+
+    resetButton: {
+        backgroundColor: "#F4B400",
+        paddingVertical: 14,
+        borderRadius: 10,
+        marginTop: 25,
+    },
+
+    resetText: {
+        textAlign: "center",
+        color: "#fff",
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+    },
+
+    backLink: {
+        marginTop: 80,
+        textAlign: "center",
+        color: "#BFD7EA",
+        textDecorationLine: "underline",
+        fontSize: 15,
+        fontFamily: "Tajawal-Regular",
+    },
+
+    modalBg: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.55)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    modalBox: {
+        width: "80%",
+        backgroundColor: "rgba(255,255,255,0.95)",
+        padding: 22,
+        borderRadius: 22,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 10,
+    },
+
+    modalTitle: {
+        fontSize: 20,
+        fontFamily: "Tajawal-Bold",
+        color: "#0D2B66",
+        marginBottom: 8,
+    },
+
+    modalMsg: {
+        fontSize: 15,
+        fontFamily: "Tajawal-Regular",
+        color: "#333",
+        textAlign: "center",
+        marginBottom: 20,
+    },
+
+    modalBtn: {
+        backgroundColor: "#F4B400",
+        paddingVertical: 10,
+        paddingHorizontal: 40,
+        borderRadius: 16,
+    },
+
+    modalBtnText: {
+        color: "#fff",
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+    },
+
+    bottomActions: {
+        marginTop: 25,
+        gap: 10,
+    },
+
+    linkText: {
+        color: "#FFD166",
+        fontSize: 15,
+        fontFamily: "Tajawal-Bold",
+        textDecorationLine: "underline",
+        textAlign: "right",
+    },
+});
