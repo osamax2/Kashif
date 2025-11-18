@@ -141,16 +141,16 @@ const styles = StyleSheet.create({
     flexDirection: "row", // LTR: logo left, text right
     alignItems: "center",
     justifyContent: "flex-end",
-    paddingTop: 25,
+    paddingTop: 14,
     paddingBottom: 15,
   },
   logoHeader: {
     width: 140,
     height: 140,
-    marginRight: 12,
+    marginRight: 17,
   },
   headerText: {
-    flex: 0,
+    flex: -1,
     alignItems: "flex-end",
   },
   appName: {
@@ -174,11 +174,12 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontWeight: "700",
     color: "#FFFFFF",
-    marginTop: 7,
+    marginTop: -4,
     textAlign: "left",
     writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
+    marginVertical: 6,
   },
   subtitle: {
     fontSize: 14,
@@ -193,11 +194,11 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
     display: "flex",
     alignItems: 'flex-end',
     direction:"ltr",
-    marginTop: 8,
+    marginTop: 1,
     marginBottom: 20,
   },
   field: { 
@@ -276,7 +277,7 @@ const styles = StyleSheet.create({
   orText: {
     color: "#FFFFFF",
     fontSize: 16,
-    marginVertical: 6,
+    marginVertical: 15,
     textAlign: 'center',
     width: '100%',
   },
@@ -313,15 +314,17 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 8,
   },
-  linkRow: { flexDirection: "row", alignItems: "center" },
+  linkRow: { flexDirection: "row", alignItems: "center" ,marginTop: 13,},
   link: {
     color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 14,
     textDecorationLine: "underline",
     textAlign: "left",
     writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
+    marginTop: 10,
+
   },
   google: {
     backgroundColor: "rgb(185,66,70)", // Google Red
