@@ -214,11 +214,11 @@ export default function SettingsScreen() {
 
 /* COMPONENT: Row for main actions */
 //function SettingsItem({ label }: { label: string }) {
-  //  return (
-    //    <TouchableOpacity style={styles.settingsItem}>
-         //   <Text style={styles.settingsLabel}>{label}</Text>
-     //   </TouchableOpacity>
-   //// );
+//  return (
+//    <TouchableOpacity style={styles.settingsItem}>
+//   <Text style={styles.settingsLabel}>{label}</Text>
+//   </TouchableOpacity>
+//// );
 //}
 
 
