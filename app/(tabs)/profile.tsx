@@ -88,8 +88,8 @@ export default function ProfileScreen() {
 
             {/* Rank Section */}
             <View style={styles.rankBox}>
-                <Text style={styles.rankLine}>🏆 المركز الرابع في منطقتك</Text>
-                <Text style={styles.rankLine}>🏆 المركز السادس في سوريا</Text>
+                <Text style={styles.rankLine}>🏆المركز الرابع في منطقتك</Text>
+                <Text style={styles.rankLine}>🏆المركز السادس في سوريا </Text>
             </View>
 
             {/* Latest Points */}
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         color: YELLOW,
         fontSize: 18,
-        marginBottom: 10,
+        marginBottom: 8,
         fontFamily: "Tajawal-Bold",
     },
 

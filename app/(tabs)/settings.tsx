@@ -1,17 +1,18 @@
-import React, { useState } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    I18nManager,
-    Switch,
-    ScrollView,
-} from "react-native";
 import ChangeModal from "@/components/ChangeModal";
-import LanguageDropdown from "@/components/LanguageDropdown";
 import IOSActionSheet from "@/components/IOSActionSheet";
 import SuccessModal from "@/components/SuccessModal";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+    I18nManager,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -21,6 +22,7 @@ const YELLOW = "#F4B400";
 const CARD = "#133B7A";
 
 export default function SettingsScreen() {
+    const router = useRouter();
     const [hideName, setHideName] = useState(false);
     const [notifReports, setNotifReports] = useState(true);
     const [notifPoints, setNotifPoints] = useState(false);
@@ -73,11 +75,13 @@ export default function SettingsScreen() {
         <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 60 }}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity>
-                    <Text style={styles.backIcon}>‹</Text>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Ionicons name="arrow-back" size={26} color={YELLOW} style={styles.backIcon} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>الإعدادات</Text>
-                <View style={{ width: 32 }} />
+                <TouchableOpacity onPress={() => router.replace("/") }>
+                    <Ionicons name="log-out" size={22} color={YELLOW} style={[styles.logoutIcon, { transform: [{ scaleX: -1 }] }]} />
+                </TouchableOpacity>
             </View>
 
             {/* USER ID */}
@@ -105,11 +109,10 @@ export default function SettingsScreen() {
                     onPress={() => setLanguageSheet(true)}
                     style={styles.languageRow}
                 >
-                    <Text style={styles.languageLabel}>اللغة</Text>
-
-                    <View style={styles.languageSelector}>
-                        <Text style={styles.languageValue}>{selectedLanguage}</Text>
-                        <Text style={styles.languageArrow}>›</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 'auto' }}>
+                        <Text style={[styles.languageLabel, { marginLeft: 6 }]}>اللغة:</Text>
+                        <Text style={[styles.languageValue, { marginLeft: 6 }]}>{selectedLanguage}</Text>
+                        <Text style={styles.languageArrow}></Text>
                     </View>
                 </TouchableOpacity>
 
@@ -135,7 +138,7 @@ export default function SettingsScreen() {
                 visible={languageSheet}
                 onClose={() => setLanguageSheet(false)}
                 options={["العربية", "English", "Deutsch", "Türkçe"]}
-                onSelect={(choice) => {
+                onSelect={(choice: string) => {
                     setSelectedLanguage(choice);
                     alert("تم اختيار اللغة: " + choice);
                 }}
@@ -227,7 +230,7 @@ export default function SettingsScreen() {
 
 
 /* COMPONENT: Switch Row */
-function SwitchRow({ label, value, onChange }) {
+function SwitchRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
     return (
         <View style={styles.switchRow}>
             <Text style={styles.switchText}>{label}</Text>
@@ -254,10 +257,16 @@ const styles = StyleSheet.create({
 
     header: {
         width: "100%",
-        flexDirection: "row-reverse",
+        flexDirection: "row",
+        direction: "ltr",
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 20,
+    },
+
+    logoutIcon: {
+        color: YELLOW,
+        fontSize: 22,
     },
 
     backIcon: {
@@ -269,6 +278,8 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 24,
         fontFamily: "Tajawal-Bold",
+        flex: 1,
+        textAlign: "center",
     },
 
     userId: {
@@ -315,7 +326,7 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 14,
         fontFamily: "Tajawal-Bold",
-        textAlign: "right",
+                textAlign: "left",
     },
 
     languageSelector: {
@@ -328,6 +339,7 @@ const styles = StyleSheet.create({
         color: "#F4B400",     // gelb wie dein Bild
         fontSize: 14,
         fontFamily: "Tajawal-Bold",
+        textAlign: "left",
     },
 
     languageArrow: {
