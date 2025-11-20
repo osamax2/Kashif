@@ -1,15 +1,14 @@
-// app/(tabs)/profile.tsx
 import React from "react";
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
+    ScrollView,
     I18nManager,
-    Alert,
     Linking,
-    Share,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 
 I18nManager.allowRTL(true);
@@ -19,109 +18,96 @@ const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
 
 export default function ProfileScreen() {
-    // später kannst du diese Werte dynamisch aus der DB setzen
-    const level = 4;
-    const points = 340;
-    const name = "أحمد محمد";
-
-    const profileLink = "https://kashif.app/user/123"; // TODO: echten Link einsetzen
+    const shareLink = "https://your-app-link.com"; // hier deinen echten Link eintragen
+    const points = 340; // Beispielwert
 
     const handleShareAchievement = async () => {
-        const message = `أنا في المستوى ${level} في تطبيق كاشف ومعي ${points} نقطة! جرّب التطبيق من هنا: ${profileLink}`;
+        // 1) Link kopieren
+        await Clipboard.setStringAsync(shareLink);
+        alert("✔️ تم نسخ الرابط بنجاح!");
 
-        try {
-            // 1) Erst versuchen, WhatsApp zu öffnen
-            const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(
-                message
-            )}`;
-            const canOpen = await Linking.canOpenURL(whatsappUrl);
+        // 2) WhatsApp öffnen
+        const message = `🔥 إنجازي في كاشف:\nلقد حصلت على ${points} نقطة!\n\n${shareLink}`;
+        const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
 
-            if (canOpen) {
-                await Linking.openURL(whatsappUrl);
-                return;
-            }
-
-            // 2) Fallback: Link kopieren + normales Share-Menü
-            await Clipboard.setStringAsync(profileLink);
-            Alert.alert(
-                "تم نسخ الرابط",
-                "تم نسخ رابط إنجازك إلى الحافظة، يمكنك لصقه في أي تطبيق."
-            );
-
-            await Share.share({ message });
-        } catch (error) {
-            console.log(error);
-            Alert.alert("خطأ", "تعذر مشاركة إنجازك الآن. حاول مرة أخرى لاحقاً.");
-        }
+        Linking.openURL(url).catch(() => {
+            alert("❌ WhatsApp غير مثبت على هذا الجهاز");
+        });
     };
 
     return (
-        <View style={styles.root}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backBtn}>
-                    <Text style={styles.backIcon}>‹</Text>
+        <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 40 }}>
+            {/* HEADER */}
+            <View style={styles.headerRow}>
+                <TouchableOpacity style={styles.iconBtn}>
+                    <Ionicons name="settings-sharp" size={28} color={YELLOW} />
                 </TouchableOpacity>
+
                 <Text style={styles.headerTitle}>الملف الشخصي</Text>
-                <View style={{ width: 32 }} />
+
+                <TouchableOpacity style={styles.iconBtn}>
+                    <Ionicons name="chevron-forward" size={30} color={YELLOW} />
+                </TouchableOpacity>
             </View>
 
-            {/* Big Circle Level */}
+            {/* LEVEL CIRCLE */}
             <View style={styles.levelCircle}>
-                <Text style={styles.levelNumber}>{level}</Text>
+                <Text style={styles.levelNumber}>4</Text>
             </View>
 
-            <Text style={styles.levelName}>محترف 🚀</Text>
+            <Text style={styles.levelText}>محترف 🚀</Text>
 
-            {/* Progress Bar */}
+            {/* PROGRESS BAR */}
             <View style={styles.progressBar}>
                 <View style={styles.progressFill} />
             </View>
 
-            {/* Points */}
-            <Text style={styles.points}>
-                <Text style={{ color: YELLOW }}>{points}</Text> نقطة 🪙
+            <Text style={styles.pointsText}>
+                340 نقطة <Text style={{ fontSize: 20 }}>🟡</Text>
             </Text>
 
-            {/* Username */}
-            <Text style={styles.username}>{name}</Text>
+            {/* USERNAME */}
+            <Text style={styles.userName}>ماكس موستِرمان</Text>
 
-            {/* Rank Section */}
-            <View style={styles.rankBox}>
-                <Text style={styles.rankLine}>🏆المركز الرابع في منطقتك</Text>
-                <Text style={styles.rankLine}>🏆المركز السادس في سوريا </Text>
-            </View>
+            {/* STATS */}
+            <View style={styles.statsRow}>
+                <View style={styles.statBox}>
+                    <Ionicons name="star" size={28} color={YELLOW} />
+                    <Text style={styles.statNumber}>340</Text>
+                    <Text style={styles.statLabel}>النقاط</Text>
+                </View>
 
-            {/* Latest Points */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>آخر النقاط المكتسبة:</Text>
+                <View style={styles.statBox}>
+                    <Ionicons name="rocket" size={28} color={YELLOW} />
+                    <Text style={styles.statNumber}>4</Text>
+                    <Text style={styles.statLabel}>المستوى</Text>
+                </View>
 
-                <View style={styles.pointsContainer}>
-                    <View style={styles.pointRow}>
-                        <Text style={styles.pointText}> +10 بلاغ جديد</Text>
-                        <Text style={styles.pointIcon}>📢</Text>
-                    </View>
-
-                    <View style={styles.pointRow}>
-                        <Text style={styles.pointText}> +20 تم إصلاح</Text>
-                        <Text style={styles.pointIcon}>🔧</Text>
-                    </View>
-
-                    <View style={styles.pointRow}>
-                        <Text style={styles.pointText}> +10 بلاغ جديد</Text>
-                        <Text style={styles.pointIcon}>📢</Text>
-                    </View>
+                <View style={styles.statBox}>
+                    <Ionicons name="bar-chart" size={28} color={YELLOW} />
+                    <Text style={styles.statNumber}>12</Text>
+                    <Text style={styles.statLabel}>البلاغات</Text>
                 </View>
             </View>
 
-            {/* Button */}
-            <TouchableOpacity
-                style={styles.shareButton}
-                onPress={handleShareAchievement}
-            >
-                <Text style={styles.shareButtonText}>شارك إنجازك</Text>
+            {/* LAST POINTS */}
+            <Text style={styles.lastPointsTitle}>آخر النقاط المكتسبة:</Text>
+
+            <View style={styles.pointsCard}>
+                <Text style={styles.pointsCardText}>+10 بلاغات جديدة</Text>
+                <Ionicons name="notifications" size={22} color={YELLOW} />
+            </View>
+
+            <View style={styles.pointsCard}>
+                <Text style={styles.pointsCardText}>+20 تم إصلاحها</Text>
+                <Ionicons name="hammer" size={22} color={YELLOW} />
+            </View>
+
+            {/* SHARE BUTTON – EINZIGER BUTTON */}
+            <TouchableOpacity style={styles.shareBtn} onPress={handleShareAchievement}>
+                <Text style={styles.shareText}>شارك إنجازك</Text>
             </TouchableOpacity>
-        </View>
+        </ScrollView>
     );
 }
 
@@ -129,162 +115,145 @@ const styles = StyleSheet.create({
     root: {
         flex: 1,
         backgroundColor: BLUE,
-        paddingTop: 50,
-        paddingHorizontal: 20,
         direction: "rtl",
-        alignItems: "center",
+        paddingHorizontal: 20,
     },
 
-    header: {
-        width: "100%",
+    headerRow: {
         flexDirection: "row-reverse",
-        alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: 20,
-    },
-
-    backBtn: {
-        width: 32,
-        height: 32,
-        justifyContent: "center",
         alignItems: "center",
-    },
-
-    backIcon: {
-        color: YELLOW,
-        fontSize: 22,
+        marginTop: 40,
+        marginBottom: 20,
     },
 
     headerTitle: {
         color: "#FFFFFF",
-        fontSize: 22,
+        fontSize: 24,
         fontFamily: "Tajawal-Bold",
+    },
+
+    iconBtn: {
+        padding: 6,
     },
 
     levelCircle: {
         width: 130,
         height: 130,
-        backgroundColor: "#335A9A",
-        borderRadius: 70,
-        alignItems: "center",
+        borderRadius: 80,
+        backgroundColor: "#2C4A87",
         justifyContent: "center",
-        marginTop: 10,
+        alignItems: "center",
+        alignSelf: "center",
     },
 
     levelNumber: {
-        color: YELLOW,
-        fontSize: 38,
+        color: "#FFD166",
+        fontSize: 42,
         fontFamily: "Tajawal-Bold",
     },
 
-    levelName: {
+    levelText: {
         color: "#FFFFFF",
-        fontSize: 18,
-        marginTop: 10,
-        fontFamily: "Tajawal-Medium",
+        fontSize: 22,
+        textAlign: "center",
+        marginVertical: 10,
+        fontFamily: "Tajawal-Bold",
     },
 
     progressBar: {
         width: "80%",
-        height: 12,
-        backgroundColor: "#1A3A70",
-        borderRadius: 10,
-        marginTop: 16,
+        height: 16,
+        borderRadius: 20,
+        backgroundColor: "#1B3768",
+        alignSelf: "center",
         overflow: "hidden",
+        marginBottom: 8,
     },
 
     progressFill: {
-        width: "60%",
+        width: "70%",
         height: "100%",
         backgroundColor: YELLOW,
     },
 
-    points: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        marginTop: 12,
-        fontFamily: "Tajawal-Regular",
-        textAlign: "right",
-    },
-
-    username: {
+    pointsText: {
         color: "#FFFFFF",
         fontSize: 20,
-        marginTop: 8,
-        fontFamily: "Tajawal-Bold",
         textAlign: "center",
-    },
-
-    rankBox: {
-        marginTop: 20,
-        alignItems: "center",
-        gap: 4,
-    },
-
-    rankLine: {
-        color: "#FFFFFF",
-        fontSize: 15,
-        fontFamily: "Tajawal-Regular",
-    },
-
-    section: {
-        marginTop: 28,
-        width: "90%",
-    },
-
-    sectionTitle: {
-        color: YELLOW,
-        fontSize: 18,
-        marginBottom: 8,
+        marginBottom: 20,
         fontFamily: "Tajawal-Bold",
     },
 
-    pointsContainer: {
-        width: "100%",
-        gap: 8,
-        marginTop: 8,
+    userName: {
+        color: "#FFFFFF",
+        fontSize: 20,
+        textAlign: "center",
+        marginBottom: 8,
+        marginTop: -9,
+        fontFamily: "Tajawal-Bold",
     },
 
-    pointRow: {
-        flexDirection: "row-reverse",  // 🔥 WICHTIG → RTL
+    statsRow: {
+        flexDirection: "row-reverse",
+        justifyContent: "space-between",
+        marginBottom: 20,
+    },
+
+    statBox: {
+        width: "30%",
+        backgroundColor: "#123A7A",
+        paddingVertical: 12,
+        borderRadius: 18,
+        alignItems: "center",
+    },
+
+    statNumber: {
+        color: "#FFD166",
+        fontSize: 20,
+        fontFamily: "Tajawal-Bold",
+        marginTop: 4,
+    },
+
+    statLabel: {
+        color: "#FFFFFF",
+        fontSize: 12,
+        fontFamily: "Tajawal-Regular",
+        marginTop: 4,
+    },
+
+    lastPointsTitle: {
+        color: "#FFD166",
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+        marginBottom: 10,
+    },
+
+    pointsCard: {
+        backgroundColor: "#123A7A",
+        padding: 12,
+        borderRadius: 14,
+        marginBottom: 8,
+        flexDirection: "row-reverse",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#133B7A",
-        paddingVertical: 5,
-        paddingHorizontal: 14,
-        borderRadius: 10,
     },
 
-    pointText: {
+    pointsCardText: {
         color: "#FFFFFF",
-        fontSize: 15,
+        fontSize: 16,
         fontFamily: "Tajawal-Regular",
-        textAlign: "left",            // 🔥 Text rechts
-        flex: 1,                       // 🔥 Schiebt Icon nach links
     },
 
-    pointIcon: {
-        fontSize: 20,
-        marginLeft: 10,                // Abstand vom Text
-    },
-
-    shareButton: {
+    shareBtn: {
         backgroundColor: YELLOW,
-        paddingVertical: 12,
-        borderRadius: 8,
-        width: "100%",
-        marginTop: 18,
-        marginBottom: 12,
-        shadowColor: "#ffffff",
-        shadowOpacity: 0.3,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 4,
-        elevation: 3,
+        paddingVertical: 14,
+        borderRadius: 14,
+        marginTop: 10,
         alignItems: "center",
-        justifyContent: "center",
     },
 
-    shareButtonText: {
+    shareText: {
         color: "#fff",
         fontSize: 18,
         fontFamily: "Tajawal-Bold",
