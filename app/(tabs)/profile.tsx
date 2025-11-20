@@ -1,15 +1,15 @@
-import React from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    I18nManager,
-    Linking,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
+import React from "react";
+import {
+    I18nManager,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -94,13 +94,13 @@ export default function ProfileScreen() {
             <Text style={styles.lastPointsTitle}>آخر النقاط المكتسبة:</Text>
 
             <View style={styles.pointsCard}>
+                <Ionicons style={styles.pointsCardIcon} name="notifications" size={22} color={YELLOW} />
                 <Text style={styles.pointsCardText}>+10 بلاغات جديدة</Text>
-                <Ionicons name="notifications" size={22} color={YELLOW} />
             </View>
 
             <View style={styles.pointsCard}>
+                <Ionicons style={styles.pointsCardIcon} name="hammer" size={22} color={YELLOW} />
                 <Text style={styles.pointsCardText}>+20 تم إصلاحها</Text>
-                <Ionicons name="hammer" size={22} color={YELLOW} />
             </View>
 
             {/* SHARE BUTTON – EINZIGER BUTTON */}
@@ -234,15 +234,23 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 14,
         marginBottom: 8,
-        flexDirection: "row-reverse",
-        justifyContent: "space-between",
+        flexDirection: "row",
         alignItems: "center",
+        justifyContent: "flex-end",
+        gap: 12,
+        direction: "rtl",
     },
 
     pointsCardText: {
         color: "#FFFFFF",
         fontSize: 16,
         fontFamily: "Tajawal-Regular",
+        textAlign: "left",
+        flex: 1,
+    },
+
+    pointsCardIcon: {
+        marginRight: 4,
     },
 
     shareBtn: {
