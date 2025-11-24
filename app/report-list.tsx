@@ -1,6 +1,4 @@
 // app/(tabs)/reports.tsx
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     Animated,
@@ -20,7 +18,6 @@ import MapView, { Marker } from "react-native-maps";
 const BLUE = "#0D2B66";
 const CARD_BG = "rgba(255,255,255,0.06)";
 const CARD_BORDER = "rgba(255,255,255,0.18)";
-const YELLOW = "#F4B400";
 
 // Status-Konfiguration: Icon + Farbe
 const STATUS_META: {
@@ -40,39 +37,54 @@ const INITIAL_DATA = [
         title: "حفرة كبيرة في الشارع الرئيسي",
         description:
             "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
-        image: require("../../assets/images/example-report.jpg"),
+        image: require("../assets/images/example-report.jpg"),
 
     },
     {
-        id: "6676434",
-        date: "12.05.2022",
-        status: "تم الإصلاح",
-        title: "إشارة مرور معطلة",
+        id: "1239878",
+        date: "10.11.2024",
+        status: "مفتوح",
+        title: "حفرة كبيرة في الشارع الرئيسي",
         description:
-            "إشارة المرور عند التقاطع الرئيسي كانت متوقفة عن العمل، وتم إصلاحها من قبل البلدية.",
-        image: require("../../assets/images/example-report.jpg"),
+            "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
+        image: require("../assets/images/example-report.jpg"),
 
     },
-    {
-        id: "1234567",
-        date: "01.12.2021",
-        status: "قيد المراجعة",
-        title: "كاميرا سرعة غير واضحة",
+{
+        id: "1239878",
+        date: "10.11.2024",
+        status: "مفتوح",
+        title: "حفرة كبيرة في الشارع الرئيسي",
         description:
-            "كاميرا السرعة الجديدة لا تظهر بشكل واضح للسائقين، وتم إرسال البلاغ للمراجعة.",
-        image: require("../../assets/images/example-report.jpg"),
-        alignItems: "left",
+            "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
+        image: require("../assets/images/example-report.jpg"),
+
     },
+{
+        id: "1239878",
+        date: "10.11.2024",
+        status: "مفتوح",
+        title: "حفرة كبيرة في الشارع الرئيسي",
+        description:
+            "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
+        image: require("../assets/images/example-report.jpg"),
+
+    },
+{
+        id: "1239878",
+        date: "10.11.2024",
+        status: "مفتوح",
+        title: "حفرة كبيرة في الشارع الرئيسي",
+        description:
+            "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
+        image: require("../assets/images/example-report.jpg"),
+
+    },
+
 ];
 
 // kleine Komponente für die Prozent-Kreise
-type CircleStatProps = {
-    percent: number;
-    label: string;
-    color: string;
-};
-
-function CircleStat({ percent, label, color }: CircleStatProps) {
+function CircleStat({ percent, label, color }) {
     return (
         <View style={{ alignItems: "center", width: 100 }}>
             <View
@@ -107,7 +119,6 @@ function CircleStat({ percent, label, color }: CircleStatProps) {
 }
 
 export default function ReportsScreen() {
-    const router = useRouter();
     const [reports, setReports] = useState(INITIAL_DATA);
     const [selected, setSelected] = useState<any | null>(null);
     const [detailVisible, setDetailVisible] = useState(false);
@@ -134,9 +145,9 @@ export default function ReportsScreen() {
                         <Text style={styles.swipeText}>ℹ️ تفاصيل</Text>
                     </View>
                 )}
-                onSwipeableRightOpen={() => router.push("/report-list")}
+                onSwipeableRightOpen={() => openDetails(item)}
             >
-                <ReportCard report={item} index={index} onPress={() => router.push("/report-list")} />
+                <ReportCard report={item} index={index} onPress={() => openDetails(item)} />
             </Swipeable>
         );
     };
@@ -145,52 +156,16 @@ export default function ReportsScreen() {
         <View style={styles.root}>
             {/* HEADER */}
             <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.bellBtn}
-                    activeOpacity={0.85}
-                    onPress={() => router.push("/notifications")}
-                    accessibilityLabel="فتح الإشعارات"
-                    accessibilityRole="button"
-                >
-                    <Ionicons name="notifications" size={22} color={BLUE} />
-                </TouchableOpacity>
+            
+                <Text style={styles.headerTitle}>البلاغات المفتوحة</Text>
 
-                <Text style={styles.headerTitle}>البلاغات</Text>
-
-                {/* Back icon (wie im Profil) */}
-                <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-                    <Ionicons name="chevron-forward" size={30} color={YELLOW} />
-                </TouchableOpacity>
+                {/* Platzhalter links, damit Titel wirklich mittig ist */}
+                <View style={{ width: 40 }} />
             </View>
 
-            {/* إحصائيات بلاغاتي */}
-            <Text
-                style={{
-                    color: "#FFD166",
-                    fontSize: 18,
-                    fontFamily: "Tajawal-Bold",
-                    marginTop: 10,
-                    marginBottom: 10,
-                    textAlign: "right",
-                    paddingHorizontal: 20,
-                }}
-            >
-                <Text style={styles.listHeaderText}>إحصائيات بلاغاتي</Text>
-            </Text>
-
-            {/* Drei Kreise */}
-            <View
-                style={{
-                    flexDirection: "row-reverse",
-                    justifyContent: "space-between",
-                    paddingHorizontal: 20,
-                    marginBottom: 10,
-                }}
-            >
-                <CircleStat percent={90} label="البلاغات المقترحة" color="#7A8BFF" />
-                <CircleStat percent={40} label="البلاغات قيد المعالجة" color="#FF7777" />
-                <CircleStat percent={64} label="تم إصلاحها" color="#4ADE80" />
-            </View>
+            
+            
+            
 
             {/* Überschrift Liste */}
             <View style={styles.listHeaderRow}>
@@ -384,20 +359,11 @@ const styles = StyleSheet.create({
         fontFamily: "Tajawal-Bold",
     },
     bellBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-        backgroundColor: YELLOW,
-        alignItems: "center",
-        justifyContent: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 5,
-        elevation: 3,
+        padding: 4,
     },
-    iconBtn: {
-        padding: 6,
+    bellIcon: {
+        fontSize: 30,
+
     },
 
     listHeaderRow: {

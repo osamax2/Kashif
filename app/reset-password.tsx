@@ -1,15 +1,15 @@
 // app/reset-password.tsx
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    View,
-    Text,
+    Platform,
     StyleSheet,
+    Text,
     TextInput,
     TouchableOpacity,
-    Platform,
+    View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 
 const BLUE = "#0D2B66";
 

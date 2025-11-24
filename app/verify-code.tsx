@@ -9,7 +9,7 @@ import {
     Keyboard,
     Platform,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import {router} from "expo-router";
 import { useRouter } from "expo-router";
 const BLUE = "#0D2B66";

@@ -1,16 +1,15 @@
-import React, { useState, useRef } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Animated,
-    TextInput,
-    Modal,
-    Platform,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+import React, { useRef, useState } from "react";
+import {
+    Animated,
+    Modal,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from "react-native";
 const BLUE = "#0D2B66";
 
 export default function ForgotScreen() {

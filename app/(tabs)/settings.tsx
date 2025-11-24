@@ -1,17 +1,19 @@
-import React, { useState } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    I18nManager,
-    Switch,
-    ScrollView,
-} from "react-native";
 import ChangeModal from "@/components/ChangeModal";
-import LanguageDropdown from "@/components/LanguageDropdown";
 import IOSActionSheet from "@/components/IOSActionSheet";
 import SuccessModal from "@/components/SuccessModal";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+
+import {
+    I18nManager,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -37,6 +39,8 @@ export default function SettingsScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [phone, setPhone] = useState("");
+
+    const router = useRouter();
 
 
 
@@ -73,11 +77,17 @@ export default function SettingsScreen() {
         <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 60 }}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity>
-                    <Text style={styles.backIcon}>‹</Text>
+                {/* Logout Icon – oben rechts (visuell) */}
+                <TouchableOpacity onPress={() => alert("تم تسجيل الخروج")} style={styles.iconBtn}>
+                    <Ionicons name="log-out-outline" size={28} color={YELLOW} />
                 </TouchableOpacity>
+
                 <Text style={styles.headerTitle}>الإعدادات</Text>
-                <View style={{ width: 32 }} />
+
+                {/* Back icon (like profile) */}
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+                    <Ionicons name="chevron-forward" size={30} color={YELLOW} />
+                </TouchableOpacity>
             </View>
 
             {/* USER ID */}
@@ -105,12 +115,13 @@ export default function SettingsScreen() {
                     onPress={() => setLanguageSheet(true)}
                     style={styles.languageRow}
                 >
-                    <Text style={styles.languageLabel}>اللغة</Text>
-
-                    <View style={styles.languageSelector}>
+                     <View style={styles.languageSelector}>
                         <Text style={styles.languageValue}>{selectedLanguage}</Text>
-                        <Text style={styles.languageArrow}>›</Text>
+                       
                     </View>
+                    <Text style={styles.languageLabel}>اللغة: </Text>
+
+                   
                 </TouchableOpacity>
 
 
@@ -270,6 +281,9 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontFamily: "Tajawal-Bold",
     },
+    iconBtn: {
+        padding: 6,
+    },
 
     userId: {
         color: "#fff",
@@ -321,7 +335,8 @@ const styles = StyleSheet.create({
     languageSelector: {
         flexDirection: "row-reverse",
         alignItems: "center",
-        gap: 0,
+        gap: 8,
+        marginRight: "auto",
     },
 
     languageValue: {
