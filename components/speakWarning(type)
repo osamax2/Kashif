@@ -1,0 +1,26 @@
+async function speakWarning(type) {
+
+    if (type === "pothole" && !warnPothole) return;
+    if (type === "accident" && !warnAccident) return;
+    if (type === "speed" && !warnSpeed) return;
+
+    let message = "";
+
+    switch (type) {
+        case "pothole":
+            message = "تحذير! توجد حفرة أمامك";
+            break;
+        case "accident":
+            message = "تحذير! حادث على الطريق";
+            break;
+        case "speed":
+            message = "احذر! كاميرا سرعة أمامك";
+            break;
+    }
+
+    await Speech.speak(message, {
+        language: "ar-SA",
+        rate: 0.9,
+        pitch: 1
+    });
+}

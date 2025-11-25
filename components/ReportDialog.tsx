@@ -1,16 +1,17 @@
 // components/ReportDialog.tsx
+import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Modal,
-    View,
-    Text,
-    StyleSheet,
-    Pressable,
-    TextInput,
     Animated,
+    Image,
+    Modal,
     Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
-
 const BLUE = "#0D2B66";
 const LIGHT_CARD = "#E6F0FF";
 const YELLOW = "#F4B400";
@@ -41,8 +42,46 @@ export default function ReportDialog({
     const [address, setAddress] = useState("شارع المزة، دمشق");
     const [notes, setNotes] = useState("");
     const [successId, setSuccessId] = useState<string | null>(null);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [photoMenu, setPhotoMenu] = useState(false);
 
     const slideAnim = useRef(new Animated.Value(0)).current;
+
+
+async function pickImage() {
+  try {
+    // Auswahl: Kamera ODER Galerie
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 0.7,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  } catch (e) {
+    console.log("Image pick error:", e);
+  }
+}
+
+async function takePhoto() {
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+  if (!permission.granted) {
+    alert("يرجى السماح للوصول إلى الكاميرا");
+    return;
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    allowsEditing: true,
+    quality: 0.7,
+  });
+
+  if (!result.canceled) {
+    setSelectedImage(result.assets[0].uri);
+  }
+}
 
     useEffect(() => {
         if (visible) {
@@ -105,56 +144,70 @@ export default function ReportDialog({
                         },
                     ]}
                 >
-                    {/* Header */}
-                    <View style={styles.headerRow}>
-                        <Pressable onPress={onClose} hitSlop={10}>
-                            <Text style={styles.backIcon}>↩︎</Text>
-                        </Pressable>
+                    
+                   {/* Header */}
+<View style={styles.headerRow}>
+    <Pressable onPress={onClose} hitSlop={10}>
+        <Text style={styles.backIcon}>↩︎</Text>
+    </Pressable>
 
-                        <Text style={styles.title}>{title}</Text>
+    <Text style={styles.title}>{title}</Text>
 
-                        {/* Kamera-Icon rechts */}
-                        <Pressable onPress={() => {}} hitSlop={10}>
-                            <View style={styles.cameraBadge}>
-                                <Text style={styles.cameraIcon}>📷</Text>
-                                <View style={styles.cameraPlus}>
-                                    <Text style={styles.cameraPlusText}>+</Text>
-                                </View>
-                            </View>
-                        </Pressable>
-                    </View>
+    {/* Kamera-Icon rechts */}
+    <Pressable onPress={() => setPhotoMenu(true)} hitSlop={10}>
+        <View style={styles.cameraBadge}>
+            <Text style={styles.cameraIcon}>📷</Text>
+            <View style={styles.cameraPlus}>
+                <Text style={styles.cameraPlusText}>+</Text>
+            </View>
+        </View>
+    </Pressable>
+</View>
 
-                    {/* Level / Typ */}
-                    <View style={styles.sectionRow}>
-                        <Text style={styles.sectionLabel}>
-                            {type === "speed" ? "نوعه:" : "مستوى الخطورة:"}
-                        </Text>
-                    </View>
+{/* ⬇️ HIER DAS FOTO-ANZEIGE-FELD EINBAUEN */}
+{selectedImage && (
+  <View style={{ alignItems: "center", marginTop: 10 }}>
+    <Image
+      source={{ uri: selectedImage }}
+      style={{
+        width: 120,
+        height: 120,
+        borderRadius: 16,
+        marginBottom: 6,
+      }}
+    />
+  </View>
+)}
+
+{/* Level / Typ */}
+<View style={styles.sectionRow}>
+    <Text style={styles.sectionLabel}>
+        {type === "speed" ? "نوعه:" : "مستوى الخطورة:"}
+    </Text>
+</View>
 
                     {type === "speed" ? (
-                        // Radar-Typ (stationär / mobil / Kamera)
                         <View style={styles.chipRow}>
                             <Chip
                                 label="ثابتة"
                                 active={severity === "low"}
-                                color="#4DA3FF"
+                                variant="radar"
                                 onPress={() => setSeverity("low")}
                             />
                             <Chip
                                 label="متنقلة"
                                 active={severity === "medium"}
-                                color="#4DA3FF"
+                                variant="radar"
                                 onPress={() => setSeverity("medium")}
                             />
                             <Chip
                                 label="كاميرا مراقبة"
                                 active={severity === "high"}
-                                color="#4DA3FF"
+                                variant="radar"
                                 onPress={() => setSeverity("high")}
                             />
                         </View>
                     ) : (
-                        // Gefahr-Level (niedrig / mittel / hoch)
                         <View style={styles.chipRow}>
                             <Chip
                                 label="منخفضة"
@@ -210,18 +263,18 @@ export default function ReportDialog({
                     />
 
                     {/* Zeitzeile */}
-                    <View style={styles.timeRow}>
-                        <Text style={styles.timeText}>
-                            🕒 وقت البلاغ:{" "}
-                            {new Date().toLocaleString("ar-SY", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                year: "numeric",
-                                month: "2-digit",
-                                day: "2-digit",
-                            })}
-                        </Text>
-                    </View>
+                    <Text style={styles.timeText}>
+    🕒 وقت البلاغ:{" "}
+    {`م${new Date().getHours() % 12 || 12}:${String(new Date().getMinutes()).padStart(2, "0")}`}
+    {" • "}
+    {new Date().toLocaleDateString("ar-SY", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    })}
+</Text>
+
+
 
                     {/* Erfolgsnachricht */}
                     {successId && (
@@ -237,48 +290,72 @@ export default function ReportDialog({
                     )}
 
                     {/* Senden-Button unten rechts */}
-                    <View style={styles.footerRow}>
-                        <Pressable style={styles.sendButton} onPress={handleSend}>
-                            <Text style={styles.sendIcon}>▶︎</Text>
-                        </Pressable>
-                    </View>
+                    <View style={styles.sendBtnWrapper}>
+    <Pressable style={styles.sendBtn} onPress={handleSend}>
+        <Text style={styles.sendBtnText}>إرسال</Text>
+    </Pressable>
+</View>
+
                 </Animated.View>
+                
+                {/* --- PHOTO MENU --- */}
+{photoMenu && (
+  <View style={styles.photoOverlay}>
+    {/* Hintergrund zum Schließen */}
+    <Pressable style={styles.photoOverlayBg} onPress={() => setPhotoMenu(false)} />
+
+    <View style={styles.photoMenuBox}>
+      <Pressable style={styles.photoMenuItem} onPress={takePhoto}>
+        <Text style={styles.photoMenuIcon}>📷</Text>
+        <Text style={styles.photoMenuText}>التقاط صورة</Text>
+      </Pressable>
+
+      <Pressable style={styles.photoMenuItem} onPress={pickImage}>
+        <Text style={styles.photoMenuIcon}>🖼️</Text>
+        <Text style={styles.photoMenuText}>اختيار صورة من الهاتف</Text>
+      </Pressable>
+    </View>
+  </View>
+)}
+
             </View>
+            
         </Modal>
+        
     );
 }
 
 /** Kleine Pill-Buttons */
+/** Kleine Pill-Buttons */
 function Chip({
-                  label,
-                  active,
-                  color,
-                  onPress,
-              }: {
+    label,
+    active,
+    color,
+    variant,
+    onPress,
+}: {
     label: string;
     active: boolean;
-    color: string;
+    color?: string;
+    variant?: "radar";
     onPress: () => void;
 }) {
+    const isRadar = variant === "radar";
+    const backgroundColor = active
+        ? isRadar
+            ? BLUE
+            : color || "#FFF"
+        : isRadar
+        ? "#FFF"
+        : "rgba(255,255,255,0.2)";
+
+    const borderColor = active ? (isRadar ? BLUE : "transparent") : "transparent";
+
+    const textColor = active ? (isRadar ? YELLOW : BLUE) : isRadar ? BLUE : "#ffa834";
+
     return (
-        <Pressable
-            onPress={onPress}
-            style={[
-                styles.chip,
-                {
-                    backgroundColor: active ? color : "rgba(255,255,255,0.2)",
-                    borderColor: active ? color : "transparent",
-                },
-            ]}
-        >
-            <Text
-                style={[
-                    styles.chipText,
-                    { color: active ? BLUE : "#ffa834" },
-                ]}
-            >
-                {label}
-            </Text>
+        <Pressable onPress={onPress} style={[styles.chip, { backgroundColor, borderColor }]}> 
+            <Text style={[styles.chipText, { color: textColor }]}>{label}</Text>
         </Pressable>
     );
 }
@@ -311,6 +388,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginBottom: 10,
     },
+    
     title: {
         color: BLUE,
         fontSize: 20,
@@ -346,9 +424,10 @@ const styles = StyleSheet.create({
         borderColor: "#fff",
     },
     cameraPlusText: {
-        fontSize: 12,
+        fontSize: 14,
         color: BLUE,
         fontFamily: "Tajawal-Bold",
+        marginTop: -6,
     },
     sectionRow: {
         marginTop: 12,
@@ -446,15 +525,15 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
     },
     sendButton: {
-        width: 54,
-        height: 54,
-        borderRadius: 27,
+        width: 40,
+        height: 50,
+        borderRadius: 20,
         backgroundColor: YELLOW,
         justifyContent: "center",
         alignItems: "center",
-        shadowColor: "#000",
+        shadowColor: "#ffffffff",
         shadowOpacity: 0.25,
-        shadowRadius: 8,
+        shadowRadius: 6,
         shadowOffset: { width: 0, height: 4 },
         elevation: 6,
     },
@@ -462,4 +541,71 @@ const styles = StyleSheet.create({
         fontSize: 26,
         color: BLUE,
     },
+    photoOverlay: {
+  position: "absolute",
+  top: 0,
+  bottom: 0,
+  left: 0,
+  right: 0,
+  justifyContent: "flex-end",
+  backgroundColor: "rgba(0,0,0,0.45)",
+  zIndex: 999,
+},
+
+photoOverlayBg: {
+  flex: 1,
+},
+
+photoMenuBox: {
+  backgroundColor: "#123A7A",
+  padding: 20,
+  borderTopLeftRadius: 25,
+  borderTopRightRadius: 25,
+},
+
+photoMenuItem: {
+  flexDirection: "row-reverse",
+  alignItems: "center",
+  paddingVertical: 12,
+},
+
+photoMenuIcon: {
+  fontSize: 26,
+  marginLeft: 12,
+  color: "#FFD166",
+},
+
+photoMenuText: {
+  fontSize: 17,
+  color: "white",
+  fontFamily: "Tajawal-Bold",
+  textAlign: "left",
+},
+sendBtnWrapper: {
+    marginTop: 20,
+    alignItems: "center",
+    justifyContent: "center",
+},
+
+sendBtn: {
+    width: "85%",
+    backgroundColor: YELLOW,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+},
+
+sendBtnText: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: "Tajawal-Bold",
+    textAlign: "center",
+},
+
 });

@@ -28,6 +28,7 @@ function Slider(props: any) {
     // Slider is purely presentational; keep state for slider size only.
 
 
+
     const handleResponder = (evt: any) => {
         if (!width) return;
         const x = evt.nativeEvent.locationX;
@@ -92,11 +93,16 @@ const activateWarningMode = () => {
 
 // Audio Modi
 const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
-    // Sound / warning / navigation toggles (moved here from Slider)
+    // Sound / warning / navigation toggles
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [warningsEnabled, setWarningsEnabled] = useState(true);
     const [navigationEnabled, setNavigationEnabled] = useState(true);
     const [appVolume, setAppVolume] = useState(1.0);
+
+    // Individual warning toggles (moved out from Slider)
+    const [warnPothole, setWarnPothole] = useState(true);
+    const [warnAccident, setWarnAccident] = useState(true);
+    const [warnSpeed, setWarnSpeed] = useState(true);
 
     // Load saved settings on mount
     useEffect(() => {
@@ -269,7 +275,7 @@ async function playBeep(value: number) {
                     <View
                         style={[
                             styles.dot,
-                            { backgroundColor: "green" },
+                            { backgroundColor: "red" },
                             activeFilters.includes("speed") && styles.dotActive,
                         ]}
                     />
@@ -294,7 +300,7 @@ async function playBeep(value: number) {
                     <View
                         style={[
                             styles.dot,
-                            { backgroundColor: "red" },
+                            { backgroundColor: "green" },
                             activeFilters.includes("accident") && styles.dotActive,
                         ]}
                     />
@@ -439,66 +445,60 @@ async function playBeep(value: number) {
         </TouchableOpacity>
       </View>
 
-      {/* MODI / KACHELN */}
-      <View style={styles.modeRow}>
-        {/* System */}
-        <TouchableOpacity
-          style={[
-            styles.modeBox,
-            mode === "system" && styles.modeBoxActive,
-          ]}
-          onPress={() => setMode("system")}
-        >
-          <View style={styles.modeIconCircle}>
-            <Ionicons
-              name="sparkles"
-              size={24}
-              color={mode === "system" ? "#FFFFFF" : "#B0C4FF"}
-            />
-          </View>
-          <Text style={styles.modeText}>النظام</Text>
-        </TouchableOpacity>
+      {/* AUDIO MODES */}
+<View style={styles.modeRow}>
 
-        {/* Warnungen + Navi */}
-        <TouchableOpacity
-          style={[
+    {/* حفرة */}
+    <TouchableOpacity
+        style={[
             styles.modeBox,
-            warningsEnabled && navigationEnabled && styles.modeBoxActive,
-          ]}
-          onPress={activateWarningMode}
-        >
-          <View style={styles.modeIconCircle}>
-            <Ionicons
-              name="warning"
-              size={24}
-              color={
-                warningsEnabled && navigationEnabled ? "#FFFFFF" : "#FFD480"
-              }
-            />
-          </View>
-          <Text style={styles.modeText}>تحذيرات + الملاحة</Text>
-        </TouchableOpacity>
+            warnPothole && styles.modeBoxActive,
+        ]}
+        onPress={() => setWarnPothole(!warnPothole)}
+    >
+        <Ionicons
+            name="ellipse"
+            size={20}
+            color="yellow"
+        />
+        <Text style={styles.modeText}>حفرة</Text>
+    </TouchableOpacity>
 
-        {/* Ton an/aus */}
-        <TouchableOpacity
-          style={[
+    {/* حادث */}
+    <TouchableOpacity
+        style={[
             styles.modeBox,
-            soundEnabled && styles.modeBoxActive,
-          ]}
-          onPress={toggleSound}
-        >
-          <View style={styles.modeIconCircle}>
-            <Ionicons
-              name={soundEnabled ? "volume-high" : "volume-mute"}
-              size={24}
-              color={soundEnabled ? "#FFFFFF" : "#FF9E9E"}
-            />
-          </View>
-          <Text style={styles.modeText}>
-            {soundEnabled ? "الصوت مُفعل" : "الصوت مُغلق"}
-          </Text>
-        </TouchableOpacity>
-      </View>
+            warnAccident && styles.modeBoxActive,
+        ]}
+        onPress={() => setWarnAccident(!warnAccident)}
+    >
+        <Ionicons
+            name="ellipse"
+            size={20}
+            color="red"
+        />
+        <Text style={styles.modeText}>حادث</Text>
+    </TouchableOpacity>
+
+    {/* كاشف السرعة */}
+    <TouchableOpacity
+        style={[
+            styles.modeBox,
+            warnSpeed && styles.modeBoxActive,
+        ]}
+        onPress={() => setWarnSpeed(!warnSpeed)}
+    >
+        <Ionicons
+            name="ellipse"
+            size={20}
+            color="red"
+        />
+        <Text style={styles.modeText}>كاشف السرعة</Text>
+    </TouchableOpacity>
+
+</View>
+
+
 
       {/* Close */}
       <TouchableOpacity
