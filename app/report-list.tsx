@@ -35,8 +35,10 @@ const INITIAL_DATA = [
     {
         id: "1239878",
         date: "10.11.2024",
+        time: "٣:٥٢ م", 
         status: "مفتوح",
         title: "حفرة كبيرة في الشارع الرئيسي",
+        short:"حفرة كبيرة",
         description:
             "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
         image: require("../assets/images/example-report.jpg"),
@@ -45,8 +47,10 @@ const INITIAL_DATA = [
     {
         id: "1239878",
         date: "10.11.2024",
+        time: "٣:٥٢ م", 
         status: "مفتوح",
         title: "حفرة كبيرة في الشارع الرئيسي",
+        short:"حفرة كبيرة",
         description:
             "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
         image: require("../assets/images/example-report.jpg"),
@@ -55,8 +59,10 @@ const INITIAL_DATA = [
 {
         id: "1239878",
         date: "10.11.2024",
+        time: "٣:٥٢ م", 
         status: "مفتوح",
         title: "حفرة كبيرة في الشارع الرئيسي",
+        short:"حفرة كبيرة",
         description:
             "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
         image: require("../assets/images/example-report.jpg"),
@@ -65,8 +71,10 @@ const INITIAL_DATA = [
 {
         id: "1239878",
         date: "10.11.2024",
+        time: "٣:٥٢ م", 
         status: "مفتوح",
         title: "حفرة كبيرة في الشارع الرئيسي",
+        short:"حفرة كبيرة",
         description:
             "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
         image: require("../assets/images/example-report.jpg"),
@@ -75,8 +83,10 @@ const INITIAL_DATA = [
 {
         id: "1239878",
         date: "10.11.2024",
+        time: "٣:٥٢ م", 
         status: "مفتوح",
         title: "حفرة كبيرة في الشارع الرئيسي",
+        short:"حفرة كبيرة",
         description:
             "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
         image: require("../assets/images/example-report.jpg"),
@@ -312,6 +322,7 @@ function ReportCard({
                     <View style={{ alignItems: "flex-end" }}>
                         <Text style={styles.reportId}>{report.id}</Text>
                         <Text style={styles.reportDate}>{report.date}</Text>
+                        <Text style={styles.reportDate}>{report.time}</Text>
                     </View>
 
                     {/* linke Seite = Icon + Status (nebeneinander) */}
@@ -328,8 +339,9 @@ function ReportCard({
                         </View>
 
                         <Text style={[styles.statusText, { color: meta.color }]}>
-                            {report.status}
-                        </Text>
+                 {report.short}
+        
+                    </Text>
                     </View>
                 </View>
             </TouchableOpacity>

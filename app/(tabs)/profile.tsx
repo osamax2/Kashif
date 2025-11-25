@@ -210,12 +210,12 @@ const styles = StyleSheet.create({
         flexDirection: "row-reverse",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 20,
+        marginBottom:18,
     },
 
     headerTitle: {
         color: "#FFFFFF",
-        fontSize: 24,
+        fontSize: 22,
         fontFamily: "Tajawal-Bold",
         flex: 1,
         textAlign: "center",

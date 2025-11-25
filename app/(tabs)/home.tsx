@@ -188,12 +188,12 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         {
             id: "pothole",
             icon: require("../../assets/icons/pothole.png"),
-            offset: { top: 170, left: -180 },
+            offset: { top: 180, left: -190 },
         },
         {
             id: "accident",
             icon: require("../../assets/icons/accident.png"),
-            offset: { top: 100, left: -220 },
+            offset: { top: 120, left: -220 },
         },
         {
             id: "speed",
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
 
     fab: {
         position: "absolute",
-        bottom: 120,
+        bottom: 90,
         left: 15,
         width: 56,
         height: 56,
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     },
     soundButton: {
     position: "absolute",
-    bottom: 125,       // über dem unteren Menü
+    bottom: 570,       // über dem unteren Menü
     left: 22,         // gleiche Position wie der + Button
     width: 54,
     height: 54,
