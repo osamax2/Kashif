@@ -24,7 +24,7 @@ const INITIAL_NOTIFICATIONS = [
   { id: "1", type: "success", message: "تم إصلاح الحفرة رقم 23", time: "منذ لحظات" },
   { id: "2", type: "update", message: "تغيير حالة البلاغ رقم 551233", time: "قبل دقيقتين" },
   { id: "3", type: "warning", message: "بلاغك قيد المراجعة الآن", time: "اليوم 12:10" },
-  { id: "4", type: "points", message: "حصلت على +20 نقاط جديدة ⭐", time: "اليوم 10:40" },
+  { id: "4", type: "points", message: "حصلت على +20 نقاط جديدة 🏅", time: "اليوم 10:40" },
 ];
 
 export default function ModernNotifications() {
