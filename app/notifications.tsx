@@ -1,4 +1,6 @@
+import Header from "@/components/Header";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
     FlatList,
@@ -26,6 +28,7 @@ const INITIAL_NOTIFICATIONS = [
 ];
 
 export default function ModernNotifications() {
+  const router = useRouter();
   const [items, setItems] = useState(INITIAL_NOTIFICATIONS);
 
   const deleteItem = (id: string) => {
@@ -87,7 +90,7 @@ export default function ModernNotifications() {
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>الإشعارات</Text>
+      <Header title="الإشعارات" rightIcon="chevron-forward" onRightPress={() => router.back()} />
 
       <FlatList
         data={items}

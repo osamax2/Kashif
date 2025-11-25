@@ -146,7 +146,7 @@ export default function SettingsScreen() {
                 visible={languageSheet}
                 onClose={() => setLanguageSheet(false)}
                 options={["العربية", "English", "Deutsch", "Türkçe"]}
-                onSelect={(choice) => {
+                onSelect={(choice: string) => {
                     setSelectedLanguage(choice);
                     alert("تم اختيار اللغة: " + choice);
                 }}
@@ -238,7 +238,7 @@ export default function SettingsScreen() {
 
 
 /* COMPONENT: Switch Row */
-function SwitchRow({ label, value, onChange }) {
+function SwitchRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
     return (
         <View style={styles.switchRow}>
             <Text style={styles.switchText}>{label}</Text>

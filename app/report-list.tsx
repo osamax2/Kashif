@@ -1,4 +1,6 @@
 // app/(tabs)/reports.tsx
+import Header from "@/components/Header";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     Animated,
@@ -84,7 +86,7 @@ const INITIAL_DATA = [
 ];
 
 // kleine Komponente für die Prozent-Kreise
-function CircleStat({ percent, label, color }) {
+function CircleStat({ percent, label, color }: { percent: number; label: string; color: string }) {
     return (
         <View style={{ alignItems: "center", width: 100 }}>
             <View
@@ -119,6 +121,7 @@ function CircleStat({ percent, label, color }) {
 }
 
 export default function ReportsScreen() {
+    const router = useRouter();
     const [reports, setReports] = useState(INITIAL_DATA);
     const [selected, setSelected] = useState<any | null>(null);
     const [detailVisible, setDetailVisible] = useState(false);
@@ -155,13 +158,11 @@ export default function ReportsScreen() {
     return (
         <View style={styles.root}>
             {/* HEADER */}
-            <View style={styles.header}>
-            
-                <Text style={styles.headerTitle}>البلاغات المفتوحة</Text>
-
-                {/* Platzhalter links, damit Titel wirklich mittig ist */}
-                <View style={{ width: 40 }} />
-            </View>
+            <Header
+                title="البلاغات المفتوحة"
+                rightIcon="chevron-forward"
+                onRightPress={() => router.back()}
+            />
 
             
             

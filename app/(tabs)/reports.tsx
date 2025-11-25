@@ -155,7 +155,7 @@ export default function ReportsScreen() {
                     <Ionicons name="notifications" size={22} color={BLUE} />
                 </TouchableOpacity>
 
-                <Text style={styles.headerTitle}>البلاغات</Text>
+                <Text numberOfLines={1} style={styles.headerTitle}>البلاغات</Text>
 
                 {/* Back icon (wie im Profil) */}
                 <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
@@ -376,12 +376,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 20,
-        marginBottom: 4,
+        
     },
     headerTitle: {
         color: "#fff",
-        fontSize: 26,
+        fontSize: 24,
         fontFamily: "Tajawal-Bold",
+        flex: 1,
+        textAlign: "center",
     },
     bellBtn: {
         width: 44,
@@ -398,6 +400,10 @@ const styles = StyleSheet.create({
     },
     iconBtn: {
         padding: 6,
+        width: 44,
+        height: 44,
+        justifyContent: "center",
+        alignItems: "center",
     },
 
     listHeaderRow: {

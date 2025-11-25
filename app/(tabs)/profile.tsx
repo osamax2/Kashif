@@ -1,14 +1,17 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
-import React from "react";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-    I18nManager,
-    Linking,
+    Alert,
+    I18nManager, Image, Linking,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 
 I18nManager.allowRTL(true);
@@ -18,8 +21,63 @@ const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
 
 export default function ProfileScreen() {
+    const router = useRouter();
     const shareLink = "https://your-app-link.com"; // hier deinen echten Link eintragen
     const points = 340; // Beispielwert
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+
+// Bild laden beim Start
+useEffect(() => {
+    async function loadImage() {
+        const saved = await AsyncStorage.getItem("profileImage");
+        if (saved) setProfileImage(saved);
+    }
+    loadImage();
+}, []);
+
+// Bild speichern
+const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+    });
+
+    if (!result.canceled) {
+        const uri = result.assets[0].uri;
+        setProfileImage(uri);
+        await AsyncStorage.setItem("profileImage", uri);
+    }
+};
+
+const takePhoto = async () => {
+    let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+    });
+
+    if (!result.canceled) {
+        const uri = result.assets[0].uri;
+        setProfileImage(uri);
+        await AsyncStorage.setItem("profileImage", uri);
+    }
+};
+
+// Popup öffnen
+const changePhoto = () => {
+    // kleines Modal
+    Alert.alert(
+        "تغيير الصورة",
+        "اختر طريقة إضافة صورتك",
+        [
+            { text: "📷 التقاط صورة", onPress: takePhoto },
+            { text: "🖼️ اختيار من المعرض", onPress: pickImage },
+            { text: "إلغاء", style: "cancel" }
+        ]
+    );
+};
 
     const handleShareAchievement = async () => {
         // 1) Link kopieren
@@ -38,24 +96,39 @@ export default function ProfileScreen() {
     return (
         <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 40 }}>
             {/* HEADER */}
-            <View style={styles.headerRow}>
-                <TouchableOpacity style={styles.iconBtn}>
-                    <Ionicons name="settings-sharp" size={28} color={YELLOW} />
+            <View style={[styles.header, { marginTop: 40 }]}> 
+                <TouchableOpacity onPress={() => router.push('/settings')} style={styles.iconBtn}>
+                        <Ionicons name="settings-sharp" size={28} color={YELLOW} />
                 </TouchableOpacity>
+                    <Text numberOfLines={1} style={styles.headerTitle}>الملف الشخصي</Text>
 
-                <Text style={styles.headerTitle}>الملف الشخصي</Text>
-
-                <TouchableOpacity style={styles.iconBtn}>
-                    <Ionicons name="chevron-forward" size={30} color={YELLOW} />
-                </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+                        <Ionicons name="chevron-forward" size={30} color={YELLOW} />
+                    </TouchableOpacity>
             </View>
 
-            {/* LEVEL CIRCLE */}
-            <View style={styles.levelCircle}>
-                <Text style={styles.levelNumber}>4</Text>
-            </View>
+            <View style={styles.photoWrapper}>
+    <TouchableOpacity onPress={changePhoto}>
 
-            <Text style={styles.levelText}>محترف 🚀</Text>
+        {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profilePhoto} />
+        ) : (
+            <View style={styles.emptyPhoto}>
+                <Ionicons name="camera" size={36} color="#FFD166" />
+            </View>
+        )}
+
+        {/* kleiner Edit-Button */}
+        <View style={styles.editBadge}>
+            <Ionicons name="pencil" size={16} color="#0D2B66" />
+        </View>
+    </TouchableOpacity>
+</View>
+
+
+            {/* USERNAME */}
+            <Text style={styles.userName}>ماكس موستِرمان</Text>
+           
 
             {/* PROGRESS BAR */}
             <View style={styles.progressBar}>
@@ -63,11 +136,10 @@ export default function ProfileScreen() {
             </View>
 
             <Text style={styles.pointsText}>
-                340 نقطة <Text style={{ fontSize: 20 }}>🟡</Text>
+                340 نقطة <Text style={{ fontSize: 20 }}>🏅</Text>
             </Text>
-
-            {/* USERNAME */}
-            <Text style={styles.userName}>ماكس موستِرمان</Text>
+            <Text style={styles.levelText}>محترف 🚀</Text>
+        
 
             {/* STATS */}
             <View style={styles.statsRow}>
@@ -82,6 +154,7 @@ export default function ProfileScreen() {
                     <Text style={styles.statNumber}>4</Text>
                     <Text style={styles.statLabel}>المستوى</Text>
                 </View>
+
 
                 <View style={styles.statBox}>
                     <Ionicons name="bar-chart" size={28} color={YELLOW} />
@@ -108,7 +181,12 @@ export default function ProfileScreen() {
                 <Text style={styles.shareText}>شارك إنجازك</Text>
             </TouchableOpacity>
         </ScrollView>
+
+        
+
     );
+
+
 }
 
 const styles = StyleSheet.create({
@@ -127,14 +205,28 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
 
+    header: {
+        width: "100%",
+        flexDirection: "row-reverse",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 20,
+    },
+
     headerTitle: {
         color: "#FFFFFF",
         fontSize: 24,
         fontFamily: "Tajawal-Bold",
+        flex: 1,
+        textAlign: "center",
     },
 
     iconBtn: {
         padding: 6,
+        width: 44,
+        height: 44,
+        justifyContent: "center",
+        alignItems: "center",
     },
 
     levelCircle: {
@@ -181,7 +273,7 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 20,
         textAlign: "center",
-        marginBottom: 20,
+        marginBottom: 0,
         fontFamily: "Tajawal-Bold",
     },
 
@@ -190,7 +282,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         textAlign: "center",
         marginBottom: 8,
-        marginTop: -9,
+        marginTop: 9,
         fontFamily: "Tajawal-Bold",
     },
 
@@ -266,4 +358,41 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontFamily: "Tajawal-Bold",
     },
+    photoWrapper: {
+    alignSelf: "center",
+    marginTop: 10,
+},
+
+profilePhoto: {
+    width: 130,
+    height: 130,
+    borderRadius: 70,
+    borderWidth: 3,
+    borderColor: "#FFD166",
+},
+
+emptyPhoto: {
+    width: 130,
+    height: 130,
+    borderRadius: 70,
+    backgroundColor: "#2C4A87",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#FFD166",
+},
+
+editBadge: {
+    position: "absolute",
+    bottom: 5,
+    right: 5,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#FFD166",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 6,
+},
+
 });
