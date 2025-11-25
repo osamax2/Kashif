@@ -28,6 +28,8 @@ export default function SettingsScreen() {
     const [notifPoints, setNotifPoints] = useState(false);
     const [notifGeneral, setNotifGeneral] = useState(true);
     const [successVisible, setSuccessVisible] = useState(false);
+    const [nameModal, setNameModal] = useState(false);
+    const [name, setName] = useState("");
 
     const [languageSheet, setLanguageSheet] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState("العربية");
@@ -74,7 +76,15 @@ export default function SettingsScreen() {
     };
 
     return (
-        <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 60 }}>
+        <ScrollView
+    style={styles.root}
+    contentContainerStyle={{
+        paddingBottom: 120,
+        flexGrow: 1,
+    }}
+    showsVerticalScrollIndicator={false}
+>
+
             {/* Header */}
             <View style={styles.header}>
                 {/* Logout Icon – oben rechts (visuell) */}
@@ -98,6 +108,9 @@ export default function SettingsScreen() {
             {/* ACTIONS */}
             <View
                 style={styles.card}>
+                    <TouchableOpacity onPress={() => setNameModal(true)}>
+                    <Text style={styles.textItem}>تغيير الاسم</Text>
+                        </TouchableOpacity>
                 <TouchableOpacity onPress={() => setEmailModal(true)}>
                     <Text style={styles.textItem}>تغيير البريد الإلكتروني</Text>
                 </TouchableOpacity>
@@ -191,6 +204,18 @@ export default function SettingsScreen() {
                     setEmailModal(false);
                 }}
             />
+        <ChangeModal
+            visible={nameModal}
+                onClose={() => setNameModal(false)}
+        title="تغيير الاسم"
+        placeholder="اكتب اسمك الجديد"
+        value={name}
+        setValue={setName}
+            onSave={() => {
+            alert("تم تغيير الاسم 👍");
+            setNameModal(false);
+            }}
+                    />
 
             <ChangeModal
                 visible={passwordModal}
@@ -259,8 +284,9 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: BLUE,
         paddingHorizontal: 20,
-        paddingTop: 50,
+        paddingTop: 35,
         direction: "rtl",
+         minHeight: "100%",
     },
 
     header: {
@@ -269,6 +295,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 20,
+        
     },
 
     backIcon: {
