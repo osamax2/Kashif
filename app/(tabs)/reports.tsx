@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     root: {
         flex: 1,
         backgroundColor: BLUE,
-        paddingTop: Platform.OS === "ios" ? 48 : 32,
+        paddingTop: Platform.OS === "ios" ? 48 : 45,
     },
 
     /* HEADER */

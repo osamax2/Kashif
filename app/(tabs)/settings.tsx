@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: BLUE,
         paddingHorizontal: 20,
-        paddingTop: 35,
+        paddingTop: 45,
         direction: "rtl",
          minHeight: "100%",
     },
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     languageLabel: {
         color: "#FFFFFF",
         fontSize: 14,
-        fontFamily: "Tajawal-Bold",
+        fontFamily: "Tajawal-Medium",
         textAlign: "right",
     },
 

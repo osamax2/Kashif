@@ -136,16 +136,16 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: BLUE,
-    paddingHorizontal: 18,
-    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingTop: 40,
   },
 
   title: {
     color: "#fff",
-    fontSize: 26,
+    fontSize: 10,
     fontFamily: "Tajawal-Bold",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 25,
   },
 
   card: {
@@ -163,8 +163,8 @@ const styles = StyleSheet.create({
   },
 
   iconCircle: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",

@@ -195,6 +195,9 @@ const styles = StyleSheet.create({
         backgroundColor: BLUE,
         direction: "rtl",
         paddingHorizontal: 20,
+        paddingTop: 5,
+    
+         minHeight: "100%",
     },
 
     headerRow: {

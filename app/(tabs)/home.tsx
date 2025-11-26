@@ -21,40 +21,67 @@ import {
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
-function Slider(props: any) {
-    const { style, minimumValue = 0, maximumValue = 1, value = 0, onValueChange } = props;
+function Slider({ value = 0, minimumValue = 0, maximumValue = 1, onValueChange }: any) {
     const [width, setWidth] = useState(0);
-    const containerRef = useRef<any>(null);
-    // Slider is purely presentational; keep state for slider size only.
 
-
-
-    const handleResponder = (evt: any) => {
+    const handleTouch = (evt: any) => {
         if (!width) return;
-        const x = evt.nativeEvent.locationX;
-        let pct = x / width;
-        if (pct < 0) pct = 0;
-        if (pct > 1) pct = 1;
-        const newVal = minimumValue + pct * (maximumValue - minimumValue);
+        let x = evt.nativeEvent.locationX;
+        if (x < 0) x = 0;
+        if (x > width) x = width;
+
+        const newVal = minimumValue + (x / width) * (maximumValue - minimumValue);
         onValueChange && onValueChange(newVal);
     };
 
-    const filledPct = Math.max(0, Math.min(1, (value - minimumValue) / (maximumValue - minimumValue)));
+    const pct = (value - minimumValue) / (maximumValue - minimumValue);
 
     return (
         <View
-            ref={containerRef}
-            onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+            onLayout={e => setWidth(e.nativeEvent.layout.width)}
             onStartShouldSetResponder={() => true}
-            onResponderGrant={handleResponder}
-            onResponderMove={handleResponder}
-            style={[{ height: 36, borderRadius: 8, backgroundColor: props.maximumTrackTintColor || '#555', justifyContent: 'center' }, style]}
+            onResponderMove={handleTouch}
+            onResponderGrant={handleTouch}
+            style={{
+                height: 22,
+                borderRadius: 25,
+                backgroundColor: "rgba(255,255,255,0.15)",
+                justifyContent: "center",
+                paddingHorizontal: 2,
+            }}
         >
-            <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${filledPct * 100}%`, backgroundColor: props.minimumTrackTintColor || '#30D158', borderRadius: 8 }} />
-            <View style={{ position: 'absolute', left: `${Math.max(0, filledPct * 100 - 2)}%`, top: 6, width: 24, height: 24, borderRadius: 12, backgroundColor: props.thumbTintColor || '#30D158', elevation: 6 }} />
+            {/* Füllung */}
+            <View
+                style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: `${pct * 100}%`,
+                    backgroundColor: "#F4B400",
+                    borderRadius: 20,
+                }}
+            />
+
+            {/* Thumb */}
+            <View
+                style={{
+                    position: "absolute",
+                    left: pct * width - 14,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 19,
+                    backgroundColor: "#F4B400",
+                    shadowColor: "#F4B400",
+                    shadowOpacity: 0.5,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowRadius: 6,
+                }}
+            />
         </View>
     );
 }
+
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -72,7 +99,7 @@ export default function HomeScreen() {
     async function playTestSound() {
         // Use speech as a safe fallback when no audio file is available.
         try {
-            await Speech.speak("هذا اختبار للصوت", { language: "ar-SA", rate: 0.9 });
+            await Speech.speak("هذا اختبار ", { language: "ar-SA", rate: 0.9 });
         } catch (e) {
             console.warn("playTestSound (speech) failed", e);
         }
@@ -80,7 +107,7 @@ export default function HomeScreen() {
 
 const [audioVisible, setAudioVisible] = useState(false);
 const [volume, setVolume] = useState(0.6);
-const [sound, setSound] = useState<any>(null);
+
 const toggleSound = () => {
     setSoundEnabled(!soundEnabled);
 };
@@ -300,7 +327,7 @@ async function playBeep(value: number) {
                     <View
                         style={[
                             styles.dot,
-                            { backgroundColor: "green" },
+                            { backgroundColor: "#a7c8f9ff" },
                             activeFilters.includes("accident") && styles.dotActive,
                         ]}
                     />
@@ -427,7 +454,7 @@ async function playBeep(value: number) {
         <Text style={styles.audioLabel}>مستوى صوت التطبيق</Text>
 
         <Slider
-          style={{ width: "100%", height: 40 }}
+          style={{ width: "100%", height: 35 }}
           minimumValue={0}
           maximumValue={1}
           value={volume}
@@ -435,9 +462,9 @@ async function playBeep(value: number) {
             setVolume(v);
             setAppVolume(v);
           }}
-          minimumTrackTintColor="#30D158"
+          minimumTrackTintColor="#FFD166"
           maximumTrackTintColor="rgba(255,255,255,0.25)"
-          thumbTintColor="#30D158"
+          thumbTintColor="#FFD166"
         />
 
         <TouchableOpacity style={styles.testBtn} onPress={playTestSound}>
@@ -456,11 +483,9 @@ async function playBeep(value: number) {
         ]}
         onPress={() => setWarnPothole(!warnPothole)}
     >
-        <Ionicons
-            name="ellipse"
-            size={20}
-            color="yellow"
-        />
+         <View style={[styles.modeIconCircle]}>
+            <Ionicons name="alert-circle" size={26} color="yellow" />
+        </View>
         <Text style={styles.modeText}>حفرة</Text>
     </TouchableOpacity>
 
@@ -472,11 +497,9 @@ async function playBeep(value: number) {
         ]}
         onPress={() => setWarnAccident(!warnAccident)}
     >
-        <Ionicons
-            name="ellipse"
-            size={20}
-            color="red"
-        />
+        <View style={[styles.modeIconCircle]}>
+            <Ionicons name="warning" size={26} color="#a7c8f9ff" />
+        </View>
         <Text style={styles.modeText}>حادث</Text>
     </TouchableOpacity>
 
@@ -488,11 +511,9 @@ async function playBeep(value: number) {
         ]}
         onPress={() => setWarnSpeed(!warnSpeed)}
     >
-        <Ionicons
-            name="ellipse"
-            size={20}
-            color="red"
-        />
+        <View style={[styles.modeIconCircle]}>
+            <Ionicons name="speedometer" size={26} color="red" />
+        </View>
         <Text style={styles.modeText}>كاشف السرعة</Text>
     </TouchableOpacity>
 
@@ -518,7 +539,7 @@ async function playBeep(value: number) {
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: BLUE, direction: "rtl" },
+    root: { flex: 1, backgroundColor: BLUE, direction: "rtl" ,paddingTop: 13,},
 
     appbar: {
         height: Platform.OS === "ios" ? 80 : 80,
@@ -815,9 +836,9 @@ testBtn: {
   paddingHorizontal: 18,
   paddingVertical: 8,
   borderRadius: 999,
-  backgroundColor: "rgba(48,209,88,0.16)",
+  backgroundColor: "rgba(224, 224, 157, 0.16)",
   borderWidth: 1,
-  borderColor: "#30D158",
+  borderColor: "#F4B400",
 },
 
 testBtnText: {
@@ -830,53 +851,91 @@ testBtnText: {
 modeRow: {
     flexDirection: "row-reverse",
     justifyContent: "space-between",
-    marginBottom: 26,
+    width: "100%",
+    marginTop: 10,
+    marginBottom: 20,
 },
 
 modeBox: {
     width: "30%",
-    backgroundColor: "#2C2C2E",
-    borderRadius: 14,
+    backgroundColor: "#0F356B",
+    borderRadius: 25,
     paddingVertical: 18,
     alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+    shadowColor: "#000",
+    shadowOpacity: 0.22,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
+    bottom:18,
+    height: 150,   
 },
 
 modeBoxActive: {
-  backgroundColor: "rgba(10,132,255,0.35)",
-  borderColor: "#0A84FF",
-  shadowColor: "#000",
-  shadowOpacity: 0.3,
-  shadowOffset: { width: 0, height: 4 },
-  shadowRadius: 10,
-  elevation: 8,
+  borderColor: "#FFD166",
+    shadowColor: "#FFD166",
+    shadowOpacity: 0.45,
+    backgroundColor: "#17498F",
 },
 
 modeText: {
-    color: "#FFF",
-    marginTop: 6,
+     color: "#FFF",
+    fontSize: 14,             // ⭐ gleiche Schriftgröße für alle
+    marginTop: 9,
     fontFamily: "Tajawal-Medium",
+    textAlign: "center",
 },
 
 closeAudioBtn: {
     backgroundColor: "#F4B400",
     paddingVertical: 14,
     borderRadius: 12,
-},
-modeIconCircle: {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  alignItems: "center",
-  justifyContent: "center",
-  backgroundColor: "rgba(0,0,0,0.35)",
-  marginBottom: 6,
+    bottom: 25,
 },
 
+
 closeAudioText: {
-    color: "#0D2B66",
+    color: "#fff",
     textAlign: "center",
     fontSize: 18,
     fontFamily: "Tajawal-Bold",
+},
+/* ===== VARIANTE 1 DESIGN ===== */
+
+modeBoxV1: {
+    width: "30%",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 18,
+    paddingVertical: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+},
+
+modeBoxV1Active: {
+    backgroundColor: "rgba(255,209,102,0.25)",
+    borderColor: "#F4B400",
+    shadowColor: "#F4B400",
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
+},
+
+
+
+modeIconCircle: {
+   width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(0,0,0,0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: -13,
 },
 
 });
