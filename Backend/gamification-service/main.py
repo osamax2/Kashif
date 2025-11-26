@@ -1,0 +1,155 @@
+from fastapi import FastAPI, Depends, HTTPException, status, Header
+from sqlalchemy.orm import Session
+from typing import Annotated, List
+import models
+import schemas
+import crud
+from database import engine, get_db
+from rabbitmq_publisher import publish_event
+from rabbitmq_consumer import start_consumer
+import auth_client
+import logging
+import threading
+
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Gamification Service")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Start RabbitMQ consumer
+consumer_thread = threading.Thread(target=start_consumer, daemon=True)
+consumer_thread.start()
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "gamification"}
+
+
+async def get_current_user_id(authorization: Annotated[str, Header()]):
+    """Verify token with auth service"""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header"
+        )
+    token = authorization.replace("Bearer ", "")
+    user = await auth_client.verify_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    return user["id"]
+
+
+@app.get("/points/me", response_model=schemas.UserPoints)
+async def get_my_points(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get current user's total points"""
+    total_points = crud.get_user_total_points(db, user_id)
+    return {"user_id": user_id, "total_points": total_points}
+
+
+@app.get("/points/{user_id}", response_model=schemas.UserPoints)
+async def get_user_points(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get any user's total points (public)"""
+    total_points = crud.get_user_total_points(db, user_id)
+    return {"user_id": user_id, "total_points": total_points}
+
+
+@app.get("/transactions/me", response_model=List[schemas.PointTransaction])
+async def get_my_transactions(
+    skip: int = 0,
+    limit: int = 100,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get current user's point transaction history"""
+    transactions = crud.get_user_transactions(db, user_id, skip, limit)
+    return transactions
+
+
+@app.post("/points/award", response_model=schemas.PointTransaction)
+async def award_points(
+    award: schemas.PointAward,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Manually award points (admin only - should verify role)"""
+    transaction = crud.create_transaction(
+        db=db,
+        user_id=award.user_id,
+        points=award.points,
+        transaction_type="admin_award",
+        report_id=None,
+        description=award.description
+    )
+    
+    # Publish PointsAwarded event
+    try:
+        publish_event("points.awarded", {
+            "user_id": transaction.user_id,
+            "points": transaction.points,
+            "transaction_type": transaction.transaction_type,
+            "description": transaction.description
+        })
+    except Exception as e:
+        logger.error(f"Failed to publish PointsAwarded event: {e}")
+    
+    return transaction
+
+
+@app.post("/points/redeem", response_model=schemas.PointTransaction)
+async def redeem_points(
+    redemption: schemas.PointRedemption,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Redeem points for coupons/rewards"""
+    # Check if user has enough points
+    total_points = crud.get_user_total_points(db, user_id)
+    if total_points < redemption.points:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient points"
+        )
+    
+    # Create negative transaction for redemption
+    transaction = crud.create_transaction(
+        db=db,
+        user_id=user_id,
+        points=-redemption.points,
+        transaction_type="redemption",
+        report_id=None,
+        description=f"Redeemed for coupon {redemption.coupon_id}"
+    )
+    
+    # Publish PointsRedeemed event
+    try:
+        publish_event("points.redeemed", {
+            "user_id": user_id,
+            "points": redemption.points,
+            "coupon_id": redemption.coupon_id
+        })
+    except Exception as e:
+        logger.error(f"Failed to publish PointsRedeemed event: {e}")
+    
+    return transaction
+
+
+@app.get("/leaderboard", response_model=List[schemas.LeaderboardEntry])
+async def get_leaderboard(
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """Get points leaderboard"""
+    leaderboard = crud.get_leaderboard(db, limit)
+    return leaderboard
