@@ -60,10 +60,10 @@ async def create_report(
             "report_id": db_report.id,
             "user_id": db_report.user_id,
             "location": {
-                "latitude": db_report.latitude,
-                "longitude": db_report.longitude
+                "latitude": float(db_report.latitude),
+                "longitude": float(db_report.longitude)
             },
-            "category": db_report.category
+            "category_id": db_report.category_id
         })
         logger.info(f"Published ReportCreated event for report {db_report.id}")
     except Exception as e:
@@ -134,7 +134,7 @@ async def update_report_status(
     report = crud.update_report_status(
         db=db,
         report_id=report_id,
-        new_status=status_update.status,
+        new_status=status_update.status_id,
         comment=status_update.comment,
         updated_by=user_id
     )
@@ -149,8 +149,7 @@ async def update_report_status(
     try:
         publish_event("report.status_updated", {
             "report_id": report.id,
-            "old_status": report.status,
-            "new_status": status_update.status,
+            "new_status_id": status_update.status_id,
             "updated_by": user_id
         })
     except Exception as e:

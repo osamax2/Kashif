@@ -70,7 +70,8 @@ def login(
     access_token = auth.create_access_token(data={"sub": user.email, "user_id": user.id})
     refresh_token = auth.create_refresh_token(data={"sub": user.email, "user_id": user.id})
     
-    # Save refresh token to database
+    # Save access token and refresh token to database
+    crud.update_user_access_token(db, user.id, access_token)
     crud.create_refresh_token(db, user.id, refresh_token)
     
     return {
@@ -108,7 +109,8 @@ def refresh_token(token_data: schemas.RefreshTokenRequest, db: Session = Depends
     access_token = auth.create_access_token(data={"sub": user.email, "user_id": user.id})
     new_refresh_token = auth.create_refresh_token(data={"sub": user.email, "user_id": user.id})
     
-    # Revoke old refresh token and save new one
+    # Save access token, revoke old refresh token and save new one
+    crud.update_user_access_token(db, user.id, access_token)
     crud.revoke_refresh_token(db, token_data.refresh_token)
     crud.create_refresh_token(db, user.id, new_refresh_token)
     

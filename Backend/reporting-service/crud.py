@@ -10,11 +10,14 @@ def create_report(db: Session, report: schemas.ReportCreate, user_id: int):
         user_id=user_id,
         title=report.title,
         description=report.description,
-        category=report.category,
+        category_id=report.category_id,
+        status_id=1,  # Default to NEW status
         latitude=report.latitude,
         longitude=report.longitude,
-        address=report.address,
-        image_url=report.image_url
+        address_text=report.address_text,
+        severity_id=report.severity_id,
+        user_hide=False,
+        photo_urls=report.photo_urls
     )
     db.add(db_report)
     db.commit()
@@ -40,10 +43,10 @@ def get_reports(
     
     # Apply filters
     if status:
-        query = query.filter(models.Report.status == status)
+        query = query.filter(models.Report.status_id == status)
     
     if category:
-        query = query.filter(models.Report.category == category)
+        query = query.filter(models.Report.category_id == category)
     
     # Geo-location filter (simple distance calculation)
     if latitude is not None and longitude is not None and radius_km is not None:
@@ -79,18 +82,18 @@ def update_report_status(
     if not report:
         return None
     
-    old_status = report.status
+    old_status_id = report.status_id
     
     # Update report status
-    report.status = new_status
+    report.status_id = new_status
     
     # Create status history entry
     history = models.ReportStatusHistory(
         report_id=report_id,
-        old_status=old_status,
-        new_status=new_status,
-        comment=comment,
-        changed_by=updated_by
+        old_status_id=old_status_id,
+        new_status_id=new_status,
+        changed_by_user_id=updated_by,
+        comment=comment
     )
     db.add(history)
     
@@ -102,4 +105,4 @@ def update_report_status(
 def get_report_history(db: Session, report_id: int):
     return db.query(models.ReportStatusHistory).filter(
         models.ReportStatusHistory.report_id == report_id
-    ).order_by(models.ReportStatusHistory.changed_at.desc()).all()
+    ).order_by(models.ReportStatusHistory.created_at.desc()).all()

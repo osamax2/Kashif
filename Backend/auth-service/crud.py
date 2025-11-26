@@ -69,3 +69,14 @@ def revoke_refresh_token(db: Session, token: str):
         db_token.is_revoked = True
         db.commit()
     return db_token
+
+
+def update_user_access_token(db: Session, user_id: int, access_token: str):
+    """Update user's access token and last login timestamp"""
+    user = get_user(db, user_id)
+    if user:
+        user.access_token = access_token
+        user.last_login = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+    return user

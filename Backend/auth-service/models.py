@@ -20,6 +20,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    access_token = Column(String(255), nullable=True)  # Store current access token
     full_name = Column(String(150), nullable=False)
     phone = Column(String(30), nullable=True)
     role = Column(String(50), default="USER", nullable=False)  # USER, ADMIN
