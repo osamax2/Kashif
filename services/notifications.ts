@@ -2,25 +2,12 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import api from './api';
 
-// Conditionally import Notifications only if not in Expo Go
-let Notifications: any = null;
-try {
-  // This will work in development builds but may have limitations in Expo Go
-  Notifications = require('expo-notifications');
-  
-  // Configure notification handler only if available
-  if (Notifications && Notifications.setNotificationHandler) {
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-      }),
-    });
-  }
-} catch (error) {
-  console.log('Notifications not fully available in this environment');
-}
+// IMPORTANT: expo-notifications has been disabled for Expo Go SDK 53+ compatibility
+// To use push notifications, you need to create a development build
+// Read more: https://docs.expo.dev/develop/development-builds/introduction/
+
+// Notifications are disabled in this build
+const notificationsAvailable = false;
 
 export interface PushNotification {
   id: number;
@@ -41,46 +28,11 @@ class NotificationService {
    * Request permission and register device for push notifications
    */
   async registerForPushNotifications(): Promise<string | null> {
-    try {
-      // Check if running on physical device
-      if (!Device.isDevice) {
-        console.log('Push notifications only work on physical devices');
-        return null;
-      }
-
-      // Request permissions
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus !== 'granted') {
-        console.log('Failed to get push notification permissions');
-        return null;
-      }
-
-      // Configure Android channel
-      if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-          name: 'default',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#F4B400',
-        });
-      }
-
-      // Note: Expo push token registration is disabled for Expo Go
-      // Use development build for full push notification support
-      console.log('Local notifications configured successfully');
-      
-      return 'local-only';
-    } catch (error) {
-      console.error('Error registering for push notifications:', error);
-      return null;
-    }
+    // Push notifications are not available in Expo Go SDK 53+
+    // Use a development build for full push notification support
+    // Read more: https://docs.expo.dev/develop/development-builds/introduction/
+    console.log('Push notifications disabled - use development build');
+    return null;
   }
 
   /**
@@ -185,31 +137,10 @@ class NotificationService {
     onNotificationReceived?: (notification: any) => void,
     onNotificationTapped?: (response: any) => void
   ) {
-    if (!Notifications) {
-      console.log('Notifications not available - cannot setup listeners');
-      return () => {}; // Return empty cleanup function
-    }
-
-    // Handle notification received while app is in foreground
-    const receivedSubscription = Notifications.addNotificationReceivedListener((notification: any) => {
-      console.log('Notification received:', notification);
-      if (onNotificationReceived) {
-        onNotificationReceived(notification);
-      }
-    });
-
-    // Handle notification tapped
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
-      console.log('Notification tapped:', response);
-      if (onNotificationTapped) {
-        onNotificationTapped(response);
-      }
-    });
-
-    return () => {
-      receivedSubscription.remove();
-      responseSubscription.remove();
-    };
+    // Notification listeners are not available in Expo Go SDK 53+
+    // Use a development build for full push notification support
+    console.log('Notification listeners disabled - use development build');
+    return () => {}; // Return empty cleanup function
   }
 
   /**

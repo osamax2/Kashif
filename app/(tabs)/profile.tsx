@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { gamificationAPI, Level, lookupAPI, PointTransaction, reportingAPI } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -28,6 +29,7 @@ export default function ProfileScreen() {
     const router = useRouter();
     const { user, refreshUser } = useAuth();
     const { t, language } = useLanguage();
+    const { refreshKey } = useDataSync();
     const shareLink = "https://your-app-link.com"; // hier deinen echten Link eintragen
     const [profileImage, setProfileImage] = useState<string | null>(null);
     
@@ -41,10 +43,10 @@ export default function ProfileScreen() {
     const [nextLevel, setNextLevel] = useState<Level | null>(null);
     const [progressPercentage, setProgressPercentage] = useState(0);
 
-    // Load data from backend only on initial mount
+    // Load data from backend on mount and when refreshKey changes
     useEffect(() => {
         loadProfileData(true);
-    }, []);
+    }, [refreshKey]);
 
     // Refresh user data silently when screen comes into focus
     useFocusEffect(

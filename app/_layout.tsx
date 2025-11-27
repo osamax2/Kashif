@@ -7,6 +7,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { DataSyncProvider } from '@/contexts/DataSyncContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -58,9 +59,11 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <LanguageProvider>
                 <AuthProvider>
-                    <NotificationProvider>
-                        <RootLayoutNav />
-                    </NotificationProvider>
+                    <DataSyncProvider>
+                        <NotificationProvider>
+                            <RootLayoutNav />
+                        </NotificationProvider>
+                    </DataSyncProvider>
                 </AuthProvider>
             </LanguageProvider>
         </GestureHandlerRootView>
