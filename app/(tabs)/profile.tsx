@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { gamificationAPI, Level, lookupAPI, PointTransaction, reportingAPI } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
@@ -6,6 +7,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
     I18nManager, Image, Linking,
     ScrollView,
@@ -25,8 +27,71 @@ export default function ProfileScreen() {
     const router = useRouter();
     const { user } = useAuth();
     const shareLink = "https://your-app-link.com"; // hier deinen echten Link eintragen
-    const points = user?.total_points || 0; // Get points from user
     const [profileImage, setProfileImage] = useState<string | null>(null);
+    
+    // Backend data state
+    const [loading, setLoading] = useState(true);
+    const [transactions, setTransactions] = useState<PointTransaction[]>([]);
+    const [reportCount, setReportCount] = useState(0);
+    const [levels, setLevels] = useState<Level[]>([]);
+    const [currentLevel, setCurrentLevel] = useState<Level | null>(null);
+    const [nextLevel, setNextLevel] = useState<Level | null>(null);
+    const [progressPercentage, setProgressPercentage] = useState(0);
+
+    // Load data from backend
+    useEffect(() => {
+        loadProfileData();
+    }, [user]);
+
+    const loadProfileData = async () => {
+        if (!user) return;
+        
+        setLoading(true);
+        try {
+            // Load in parallel for better performance
+            const [transactionsData, reportsData, levelsData] = await Promise.all([
+                gamificationAPI.getMyTransactions(0, 5).catch(() => []),
+                reportingAPI.getMyReports(0, 1000).catch(() => []),
+                lookupAPI.getLevels().catch(() => [])
+            ]);
+
+            setTransactions(transactionsData);
+            setReportCount(reportsData.length);
+            setLevels(levelsData);
+
+            // Calculate current level and progress
+            if (levelsData.length > 0) {
+                const sortedLevels = [...levelsData].sort((a, b) => a.min_report_number - b.min_report_number);
+                
+                let current = sortedLevels[0];
+                let next = sortedLevels[1] || null;
+                
+                for (let i = 0; i < sortedLevels.length; i++) {
+                    if (reportsData.length >= sortedLevels[i].min_report_number) {
+                        current = sortedLevels[i];
+                        next = sortedLevels[i + 1] || null;
+                    }
+                }
+                
+                setCurrentLevel(current);
+                setNextLevel(next);
+
+                // Calculate progress to next level
+                if (next) {
+                    const currentMin = current.min_report_number;
+                    const nextMin = next.min_report_number;
+                    const progress = ((reportsData.length - currentMin) / (nextMin - currentMin)) * 100;
+                    setProgressPercentage(Math.min(Math.max(progress, 0), 100));
+                } else {
+                    setProgressPercentage(100);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading profile data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
 // Bild laden beim Start
 useEffect(() => {
@@ -82,6 +147,7 @@ const changePhoto = () => {
 };
 
     const handleShareAchievement = async () => {
+        const points = user?.total_points || 0;
         // 1) Link kopieren
         await Clipboard.setStringAsync(shareLink);
         alert("✔️ تم نسخ الرابط بنجاح!");
@@ -94,6 +160,51 @@ const changePhoto = () => {
             alert("❌ WhatsApp غير مثبت على هذا الجهاز");
         });
     };
+
+    // Helper function to get transaction icon
+    const getTransactionIcon = (type: string) => {
+        switch (type) {
+            case 'report_created':
+                return 'add-circle';
+            case 'report_resolved':
+                return 'checkmark-circle';
+            case 'report_verified':
+                return 'shield-checkmark';
+            case 'redemption':
+                return 'gift';
+            default:
+                return 'notifications';
+        }
+    };
+
+    // Helper function to get transaction text
+    const getTransactionText = (transaction: PointTransaction) => {
+        const points = transaction.points > 0 ? `+${transaction.points}` : transaction.points;
+        
+        switch (transaction.transaction_type) {
+            case 'report_created':
+                return `${points} بلاغ جديد`;
+            case 'report_resolved':
+                return `${points} تم الإصلاح`;
+            case 'report_verified':
+                return `${points} تم التحقق`;
+            case 'redemption':
+                return `${points} استبدال`;
+            default:
+                return `${points} ${transaction.description || 'نقاط'}`;
+        }
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={YELLOW} />
+                <Text style={{ color: '#FFFFFF', marginTop: 10, fontFamily: 'Tajawal-Regular' }}>
+                    جاري تحميل البيانات...
+                </Text>
+            </View>
+        );
+    }
 
     return (
         <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -135,33 +246,34 @@ const changePhoto = () => {
 
             {/* PROGRESS BAR */}
             <View style={styles.progressBar}>
-                <View style={styles.progressFill} />
+                <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
             </View>
 
             <Text style={styles.pointsText}>
-                340 نقطة <Text style={{ fontSize: 20 }}>🏅</Text>
+                {user?.total_points || 0} نقطة <Text style={{ fontSize: 20 }}>🏅</Text>
             </Text>
-            <Text style={styles.levelText}>محترف 🚀</Text>
+            <Text style={styles.levelText}>
+                {currentLevel?.name || 'مبتدئ'} {nextLevel ? `(${Math.round(progressPercentage)}% إلى ${nextLevel.name})` : '🚀'}
+            </Text>
         
 
             {/* STATS */}
             <View style={styles.statsRow}>
                 <View style={styles.statBox}>
                     <Ionicons name="star" size={28} color={YELLOW} />
-                    <Text style={styles.statNumber}>340</Text>
+                    <Text style={styles.statNumber}>{user?.total_points || 0}</Text>
                     <Text style={styles.statLabel}>النقاط</Text>
                 </View>
 
                 <View style={styles.statBox}>
                     <Ionicons name="rocket" size={28} color={YELLOW} />
-                    <Text style={styles.statNumber}>4</Text>
+                    <Text style={styles.statNumber}>{currentLevel?.id || 1}</Text>
                     <Text style={styles.statLabel}>المستوى</Text>
                 </View>
 
-
                 <View style={styles.statBox}>
                     <Ionicons name="bar-chart" size={28} color={YELLOW} />
-                    <Text style={styles.statNumber}>12</Text>
+                    <Text style={styles.statNumber}>{reportCount}</Text>
                     <Text style={styles.statLabel}>البلاغات</Text>
                 </View>
             </View>
@@ -169,15 +281,25 @@ const changePhoto = () => {
             {/* LAST POINTS */}
             <Text style={styles.lastPointsTitle}>آخر النقاط المكتسبة:</Text>
 
-            <View style={styles.pointsCard}>
-                <Ionicons style={styles.pointsCardIcon} name="notifications" size={22} color={YELLOW} />
-                <Text style={styles.pointsCardText}>+10 بلاغات جديدة</Text>
-            </View>
-
-            <View style={styles.pointsCard}>
-                <Ionicons style={styles.pointsCardIcon} name="hammer" size={22} color={YELLOW} />
-                <Text style={styles.pointsCardText}>+20 تم إصلاحها</Text>
-            </View>
+            {transactions.length > 0 ? (
+                transactions.map((transaction) => (
+                    <View key={transaction.id} style={styles.pointsCard}>
+                        <Ionicons 
+                            style={styles.pointsCardIcon} 
+                            name={getTransactionIcon(transaction.transaction_type)} 
+                            size={22} 
+                            color={transaction.points > 0 ? YELLOW : '#FF6B6B'} 
+                        />
+                        <Text style={styles.pointsCardText}>
+                            {getTransactionText(transaction)}
+                        </Text>
+                    </View>
+                ))
+            ) : (
+                <View style={styles.pointsCard}>
+                    <Text style={styles.pointsCardText}>لا توجد معاملات حتى الآن</Text>
+                </View>
+            )}
 
             {/* SHARE BUTTON – EINZIGER BUTTON */}
             <TouchableOpacity style={styles.shareBtn} onPress={handleShareAchievement}>
@@ -270,7 +392,6 @@ const styles = StyleSheet.create({
     },
 
     progressFill: {
-        width: "70%",
         height: "100%",
         backgroundColor: YELLOW,
     },

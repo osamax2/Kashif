@@ -217,4 +217,74 @@ export const logout = async (): Promise<void> => {
   await authAPI.logout();
 };
 
+// Gamification API
+export interface PointTransaction {
+  id: number;
+  user_id: number;
+  points: number;
+  transaction_type: string;
+  report_id?: number;
+  description?: string;
+  created_at: string;
+}
+
+export interface UserPoints {
+  user_id: number;
+  total_points: number;
+}
+
+export const gamificationAPI = {
+  // Get user's point transactions
+  getMyTransactions: async (skip: number = 0, limit: number = 10): Promise<PointTransaction[]> => {
+    const response = await api.get<PointTransaction[]>('/api/gamification/transactions/me', {
+      params: { skip, limit },
+    });
+    return response.data;
+  },
+
+  // Get user's total points
+  getMyPoints: async (): Promise<UserPoints> => {
+    const response = await api.get<UserPoints>('/api/gamification/points/me');
+    return response.data;
+  },
+};
+
+// Reporting API
+export interface Report {
+  id: number;
+  user_id: number;
+  latitude: number;
+  longitude: number;
+  category_id: number;
+  severity_id: number;
+  status_id: number;
+  description?: string;
+  image_urls?: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export const reportingAPI = {
+  // Get user's reports
+  getMyReports: async (skip: number = 0, limit: number = 100): Promise<Report[]> => {
+    const response = await api.get<Report[]>('/api/reports/me', {
+      params: { skip, limit },
+    });
+    return response.data;
+  },
+
+  // Get all reports (with filters)
+  getReports: async (params?: {
+    skip?: number;
+    limit?: number;
+    status_filter?: string;
+    category?: string;
+  }): Promise<Report[]> => {
+    const response = await api.get<Report[]>('/api/reports/', {
+      params,
+    });
+    return response.data;
+  },
+};
+
 export default api;
