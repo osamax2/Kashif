@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
@@ -24,6 +25,7 @@ const YELLOW = "#F4B400";
 
 export default function ModernNotifications() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const { notifications, loading, refreshNotifications, markAsRead, markAllAsRead } = useNotifications();
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -79,11 +81,19 @@ export default function ModernNotifications() {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (seconds < 60) return "منذ لحظات";
-    if (minutes < 60) return `قبل ${minutes} دقيقة`;
-    if (hours < 24) return `قبل ${hours} ساعة`;
-    if (days === 1) return "أمس";
-    return `قبل ${days} أيام`;
+    if (language === 'ar') {
+      if (seconds < 60) return "منذ لحظات";
+      if (minutes < 60) return `قبل ${minutes} دقيقة`;
+      if (hours < 24) return `قبل ${hours} ساعة`;
+      if (days === 1) return "أمس";
+      return `قبل ${days} أيام`;
+    } else {
+      if (seconds < 60) return "Just now";
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days === 1) return "Yesterday";
+      return `${days}d ago`;
+    }
   };
 
   const renderItem = ({ item }: { item: any }) => {

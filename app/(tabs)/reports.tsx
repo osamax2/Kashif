@@ -1,5 +1,6 @@
 // app/(tabs)/reports.tsx
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
     Category,
     lookupAPI,
@@ -33,15 +34,23 @@ const CARD_BORDER = "rgba(255,255,255,0.18)";
 const YELLOW = "#F4B400";
 
 // Status-Konfiguration: Icon + Farbe (wird aus Backend geladen)
-const getStatusMeta = (statusName: string): { icon: string; color: string } => {
-    const statusMap: { [key: string]: { icon: string; color: string } } = {
+const getStatusMeta = (statusName: string, language: string): { icon: string; color: string } => {
+    const statusMapAr: { [key: string]: { icon: string; color: string } } = {
         "مفتوح": { icon: "🔍", color: "#4DA3FF" },
         "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
         "قيد المعالجة": { icon: "🔧", color: "#FF9500" },
         "تم الإصلاح": { icon: "✔", color: "#4CD964" },
         "مرفوض": { icon: "✖", color: "#FF3B30" },
     };
-    return statusMap[statusName] || { icon: "📋", color: "#8E8E93" };
+    const statusMapEn: { [key: string]: { icon: string; color: string } } = {
+        "open": { icon: "🔍", color: "#4DA3FF" },
+        "under review": { icon: "⏳", color: "#FFD166" },
+        "in progress": { icon: "🔧", color: "#FF9500" },
+        "resolved": { icon: "✔", color: "#4CD964" },
+        "rejected": { icon: "✖", color: "#FF3B30" },
+    };
+    const statusMap = language === 'ar' ? statusMapAr : statusMapEn;
+    return statusMap[statusName.toLowerCase()] || { icon: "📋", color: "#8E8E93" };
 };
 
 // kleine Komponente für die Prozent-Kreise
@@ -88,6 +97,7 @@ function CircleStat({ percent, label, color }: CircleStatProps) {
 export default function ReportsScreen() {
     const router = useRouter();
     const { user } = useAuth();
+    const { t, language } = useLanguage();
     const [reports, setReports] = useState<Report[]>([]);
     const [statuses, setStatuses] = useState<ReportStatus[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -226,7 +236,8 @@ export default function ReportsScreen() {
                     index={index} 
                     statusName={statusName}
                     formattedDate={formatDate(item.created_at)}
-                    onPress={() => openDetails(item)} 
+                    onPress={() => openDetails(item)}
+                    language={language}
                 />
             </Swipeable>
         );
@@ -339,15 +350,15 @@ export default function ReportsScreen() {
                                     <Text
                                         style={[
                                             styles.modalStatusIcon,
-                                            { color: getStatusMeta(getStatusName(selected.status_id)).color },
+                                            { color: getStatusMeta(getStatusName(selected.status_id), language).color },
                                         ]}
                                     >
-                                        {getStatusMeta(getStatusName(selected.status_id)).icon}
+                                        {getStatusMeta(getStatusName(selected.status_id), language).icon}
                                     </Text>
                                     <Text
                                         style={[
                                             styles.modalStatusText,
-                                            { color: getStatusMeta(getStatusName(selected.status_id)).color },
+                                            { color: getStatusMeta(getStatusName(selected.status_id), language).color },
                                         ]}
                                     >
                                         {getStatusName(selected.status_id)}
@@ -429,12 +440,14 @@ function ReportCard({
                         statusName,
                         formattedDate,
                         onPress,
+                        language,
                     }: {
     report: Report;
     index: number;
     statusName: string;
     formattedDate: string;
     onPress: () => void;
+    language: string;
 }) {
     const anim = useRef(new Animated.Value(0)).current;
 
@@ -446,7 +459,7 @@ function ReportCard({
         }).start();
     }, []);
 
-    const meta = getStatusMeta(statusName);
+    const meta = getStatusMeta(statusName, language);
 
     return (
         <Animated.View

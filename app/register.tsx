@@ -14,6 +14,7 @@ import {
     View
 } from "react-native";
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { authAPI } from '../services/api';
 
 I18nManager.allowRTL(true);
@@ -22,6 +23,7 @@ I18nManager.forceRTL(true);
 export default function Register() {
     const router = useRouter();
     const { setUser } = useAuth();
+    const { t } = useLanguage();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
@@ -43,32 +45,32 @@ export default function Register() {
     const onSubmit = async () => {
         // Validation
         if (!fullName.trim()) {
-            Alert.alert('خطأ', 'الرجاء إدخال الاسم الكامل');
+            Alert.alert(t('errors.error'), t('errors.enterFullName'));
             return;
         }
 
         if (!email.trim()) {
-            Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني');
+            Alert.alert(t('errors.error'), t('errors.enterEmail'));
             return;
         }
 
         if (!validateEmail(email)) {
-            Alert.alert('خطأ', 'الرجاء إدخال بريد إلكتروني صحيح');
+            Alert.alert(t('errors.error'), t('errors.invalidEmailFormat'));
             return;
         }
 
         if (!password) {
-            Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور');
+            Alert.alert(t('errors.error'), t('errors.enterPassword'));
             return;
         }
 
         if (!validatePassword(password)) {
-            Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+            Alert.alert(t('errors.error'), t('errors.passwordMinLength'));
             return;
         }
 
         if (!tos) {
-            Alert.alert('خطأ', 'يجب الموافقة على شروط الاستخدام وسياسة الخصوصية');
+            Alert.alert(t('errors.error'), t('errors.mustAgreeToTerms'));
             return;
         }
 
@@ -98,11 +100,11 @@ export default function Register() {
             setUser(user);
 
             Alert.alert(
-                'تم التسجيل بنجاح',
-                'تم إنشاء حسابك بنجاح!',
+                t('auth.registrationSuccess'),
+                t('auth.accountCreated'),
                 [
                     {
-                        text: 'حسناً',
+                        text: t('auth.ok'),
                         // AuthContext will handle navigation
                     }
                 ]
@@ -112,13 +114,13 @@ export default function Register() {
             console.error('Registration error:', error);
 
             if (error.response?.status === 400) {
-                Alert.alert('خطأ', 'البريد الإلكتروني مسجل بالفعل');
+                Alert.alert(t('errors.error'), t('errors.emailAlreadyRegistered'));
             } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-                Alert.alert('خطأ', 'انتهت مهلة الاتصال. الرجاء المحاولة مرة أخرى');
+                Alert.alert(t('errors.error'), t('errors.connectionTimeout'));
             } else if (error.message?.includes('Network Error')) {
-                Alert.alert('خطأ في الاتصال', 'تعذر الاتصال بالخادم. الرجاء التحقق من الاتصال بالإنترنت');
+                Alert.alert(t('errors.error'), t('errors.connectionError'));
             } else {
-                Alert.alert('خطأ', error.response?.data?.detail || 'حدث خطأ أثناء التسجيل');
+                Alert.alert(t('errors.error'), error.response?.data?.detail || t('errors.registerError'));
             }
         } finally {
             setLoading(false);
@@ -127,15 +129,15 @@ export default function Register() {
 
     return (
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-            <Text style={styles.title}>إنشاء حساب جديد</Text>
+            <Text style={styles.title}>{t('auth.register')}</Text>
 
             <View style={styles.field}>
-                <Text style={styles.label}>الاسم الكامل</Text>
+                <Text style={styles.label}>{t('auth.fullName')}</Text>
                 <TextInput 
                     style={styles.input} 
                     value={fullName} 
                     onChangeText={setFullName} 
-                    placeholder="اكتب اسمك الكامل" 
+                    placeholder={t('auth.fullNamePlaceholder')} 
                     placeholderTextColor="#AAB3C0" 
                     textAlign="right" 
                     editable={!loading}
@@ -143,12 +145,12 @@ export default function Register() {
             </View>
 
             <View style={styles.field}>
-                <Text style={styles.label}>البريد الإلكتروني</Text>
+                <Text style={styles.label}>{t('auth.email')}</Text>
                 <TextInput 
                     style={styles.input} 
                     value={email} 
                     onChangeText={setEmail} 
-                    placeholder="example@email.com" 
+                    placeholder={t('auth.emailPlaceholder')} 
                     placeholderTextColor="#AAB3C0" 
                     textAlign="right"
                     keyboardType="email-address"
@@ -158,12 +160,12 @@ export default function Register() {
             </View>
 
             <View style={styles.field}>
-                <Text style={styles.label}>كلمة المرور</Text>
+                <Text style={styles.label}>{t('auth.password')}</Text>
                 <TextInput 
                     style={styles.input} 
                     value={password} 
                     onChangeText={setPassword} 
-                    placeholder="6 أحرف على الأقل" 
+                    placeholder={t('auth.passwordMinLength')} 
                     placeholderTextColor="#AAB3C0" 
                     secureTextEntry 
                     textAlign="right"
@@ -172,12 +174,12 @@ export default function Register() {
             </View>
 
             <View style={styles.field}>
-                <Text style={styles.label}>رقم الهاتف (اختياري)</Text>
+                <Text style={styles.label}>{t('auth.phoneOptional')}</Text>
                 <TextInput 
                     style={styles.input} 
                     value={phoneNumber} 
                     onChangeText={setPhoneNumber} 
-                    placeholder="+966 XX XXX XXXX" 
+                    placeholder={t('auth.phonePlaceholder')} 
                     placeholderTextColor="#AAB3C0" 
                     textAlign="right"
                     keyboardType="phone-pad"
@@ -186,11 +188,11 @@ export default function Register() {
             </View>
 
             <View style={styles.switchRow}>
-                <Text style={styles.switchText}>أوافق على شروط الاستخدام وسياسة الخصوصية</Text>
+                <Text style={styles.switchText}>{t('auth.agreeToTerms')}</Text>
                 <Switch value={tos} onValueChange={setTos} disabled={loading} />
             </View>
             <View style={styles.switchRow}>
-                <Text style={styles.switchText}>أرغب في استلام آخر الأخبار والعروض عبر البريد الإلكتروني</Text>
+                <Text style={styles.switchText}>{t('auth.receiveNews')}</Text>
                 <Switch value={news} onValueChange={setNews} disabled={loading} />
             </View>
 
@@ -202,7 +204,7 @@ export default function Register() {
                 {loading ? (
                     <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                    <Text style={styles.primaryText}>تسجيل حساب جديد</Text>
+                    <Text style={styles.primaryText}>{t('auth.createAccount')}</Text>
                 )}
             </TouchableOpacity>
 
@@ -212,7 +214,7 @@ export default function Register() {
                 onPress={() => router.back()}
                 disabled={loading}
             >
-                <Text style={styles.backToLogin}>لديك حساب؟ سجل الدخول</Text>
+                <Text style={styles.backToLogin}>{t('auth.alreadyHaveAccount')} {t('auth.login')}</Text>
             </TouchableOpacity>
         </ScrollView>
     );

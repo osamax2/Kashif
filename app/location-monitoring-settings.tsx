@@ -9,6 +9,7 @@ import {
     Text,
     View
 } from 'react-native';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const BLUE = '#0D2B66';
 const YELLOW = '#F4B400';
@@ -16,6 +17,7 @@ const WHITE = '#FFFFFF';
 const LIGHT_CARD = 'rgba(255,255,255,0.09)';
 
 export default function LocationMonitoringSettings() {
+  const { t } = useLanguage();
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [nearbyReports, setNearbyReports] = useState<any[]>([]);
 
@@ -46,15 +48,15 @@ export default function LocationMonitoringSettings() {
       if (success) {
         setIsMonitoring(true);
         Alert.alert(
-          'تم التفعيل',
-          'سيتم تنبيهك عند اقترابك من حفر على بعد 200 متر',
-          [{ text: 'حسناً' }]
+          t('locationMonitoring.activatedTitle'),
+          t('locationMonitoring.activatedMessage'),
+          [{ text: t('locationMonitoring.ok') }]
         );
       } else {
         Alert.alert(
-          'خطأ',
-          'فشل تفعيل مراقبة الموقع. تأكد من منح الأذونات اللازمة.',
-          [{ text: 'حسناً' }]
+          t('locationMonitoring.errorTitle'),
+          t('locationMonitoring.errorMessage'),
+          [{ text: t('locationMonitoring.ok') }]
         );
       }
     }
@@ -68,15 +70,15 @@ export default function LocationMonitoringSettings() {
           <Ionicons name="navigate-circle" size={48} color={YELLOW} />
         </View>
         
-        <Text style={styles.title}>مراقبة الطريق التلقائية</Text>
+        <Text style={styles.title}>{t('locationMonitoring.title')}</Text>
         <Text style={styles.description}>
-          احصل على تنبيهات عند اقترابك من حفر مُبلغ عنها على بعد 200 متر
+          {t('locationMonitoring.description')}
         </Text>
 
         {/* Toggle Switch */}
         <View style={styles.switchContainer}>
           <Text style={styles.switchLabel}>
-            {isMonitoring ? 'مفعّل' : 'غير مفعّل'}
+            {isMonitoring ? t('locationMonitoring.enabled') : t('locationMonitoring.disabled')}
           </Text>
           <Switch
             value={isMonitoring}
@@ -93,16 +95,16 @@ export default function LocationMonitoringSettings() {
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Ionicons name="location" size={24} color={YELLOW} />
-            <Text style={styles.statusTitle}>الحالة</Text>
+            <Text style={styles.statusTitle}>{t('locationMonitoring.status')}</Text>
           </View>
           
           <View style={styles.statusItem}>
-            <Text style={styles.statusLabel}>جاري المراقبة</Text>
+            <Text style={styles.statusLabel}>{t('locationMonitoring.monitoring')}</Text>
             <View style={styles.activeDot} />
           </View>
 
           <View style={styles.statusItem}>
-            <Text style={styles.statusLabel}>الحفر القريبة</Text>
+            <Text style={styles.statusLabel}>{t('locationMonitoring.nearbyPotholes')}</Text>
             <Text style={styles.statusValue}>{nearbyReports.length}</Text>
           </View>
         </View>
@@ -111,13 +113,13 @@ export default function LocationMonitoringSettings() {
       {/* Nearby Reports */}
       {isMonitoring && nearbyReports.length > 0 && (
         <View style={styles.reportsCard}>
-          <Text style={styles.reportsTitle}>حفر قريبة منك</Text>
+          <Text style={styles.reportsTitle}>{t('locationMonitoring.nearbyReportsTitle')}</Text>
           
           {nearbyReports.map((report, index) => (
             <View key={report.id} style={styles.reportItem}>
               <Ionicons name="warning" size={20} color="#EF4444" />
               <Text style={styles.reportText}>
-                حفرة على بعد {Math.round(report.distance || 0)} متر
+                {t('locationMonitoring.potholeDistance', { distance: Math.round(report.distance || 0) })}
               </Text>
             </View>
           ))}
@@ -126,14 +128,14 @@ export default function LocationMonitoringSettings() {
 
       {/* How it works */}
       <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>كيف يعمل؟</Text>
+        <Text style={styles.infoTitle}>{t('locationMonitoring.howItWorks')}</Text>
         
         <View style={styles.infoItem}>
           <View style={styles.infoIcon}>
             <Text style={styles.infoNumber}>1</Text>
           </View>
           <Text style={styles.infoText}>
-            نراقب موقعك في الخلفية أثناء القيادة
+            {t('locationMonitoring.step1')}
           </Text>
         </View>
 
@@ -142,7 +144,7 @@ export default function LocationMonitoringSettings() {
             <Text style={styles.infoNumber}>2</Text>
           </View>
           <Text style={styles.infoText}>
-            عند اقترابك من حفرة على بعد 200م، ستظهر شاشة تنبيه
+            {t('locationMonitoring.step2')}
           </Text>
         </View>
 
@@ -151,7 +153,7 @@ export default function LocationMonitoringSettings() {
             <Text style={styles.infoNumber}>3</Text>
           </View>
           <Text style={styles.infoText}>
-            يمكنك تأكيد وجود الحفرة والحصول على +5 نقاط
+            {t('locationMonitoring.step3')}
           </Text>
         </View>
       </View>
@@ -160,7 +162,7 @@ export default function LocationMonitoringSettings() {
       <View style={styles.privacyNote}>
         <Ionicons name="shield-checkmark" size={20} color={YELLOW} />
         <Text style={styles.privacyText}>
-          موقعك آمن ولن يتم مشاركته إلا لتحسين خدمة التنبيهات
+          {t('locationMonitoring.privacyNote')}
         </Text>
       </View>
     </ScrollView>

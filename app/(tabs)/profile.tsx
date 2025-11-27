@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { gamificationAPI, Level, lookupAPI, PointTransaction, reportingAPI } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -26,6 +27,7 @@ const YELLOW = "#F4B400";
 export default function ProfileScreen() {
     const router = useRouter();
     const { user, refreshUser } = useAuth();
+    const { t, language } = useLanguage();
     const shareLink = "https://your-app-link.com"; // hier deinen echten Link eintragen
     const [profileImage, setProfileImage] = useState<string | null>(null);
     
@@ -155,12 +157,12 @@ const takePhoto = async () => {
 const changePhoto = () => {
     // kleines Modal
     Alert.alert(
-        "تغيير الصورة",
-        "اختر طريقة إضافة صورتك",
+        t('profile.changePhoto'),
+        language === 'ar' ? 'اختر طريقة إضافة صورتك' : 'Choose how to add your photo',
         [
-            { text: "📷 التقاط صورة", onPress: takePhoto },
-            { text: "🖼️ اختيار من المعرض", onPress: pickImage },
-            { text: "إلغاء", style: "cancel" }
+            { text: t('profile.takePhoto'), onPress: takePhoto },
+            { text: t('profile.chooseFromGallery'), onPress: pickImage },
+            { text: t('common.cancel'), style: "cancel" }
         ]
     );
 };
@@ -169,14 +171,14 @@ const changePhoto = () => {
         const points = user?.total_points || 0;
         // 1) Link kopieren
         await Clipboard.setStringAsync(shareLink);
-        alert("✔️ تم نسخ الرابط بنجاح!");
+        alert(t('profile.linkCopied'));
 
         // 2) WhatsApp öffnen
-        const message = `🔥 إنجازي في كاشف:\nلقد حصلت على ${points} نقطة!\n\n${shareLink}`;
+        const message = t('profile.shareMessage', { points, link: shareLink });
         const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
 
         Linking.openURL(url).catch(() => {
-            alert("❌ WhatsApp غير مثبت على هذا الجهاز");
+            alert(t('profile.whatsappNotInstalled'));
         });
     };
 
@@ -202,15 +204,15 @@ const changePhoto = () => {
         
         switch (transaction.transaction_type) {
             case 'report_created':
-                return `${points} بلاغ جديد`;
+                return `${points} ${t('points.transactions.report_created')}`;
             case 'report_resolved':
-                return `${points} تم الإصلاح`;
+                return `${points} ${t('points.transactions.report_resolved')}`;
             case 'report_verified':
-                return `${points} تم التحقق`;
+                return `${points} ${t('points.transactions.report_verified')}`;
             case 'redemption':
-                return `${points} استبدال`;
+                return `${points} ${t('points.transactions.redemption')}`;
             default:
-                return `${points} ${transaction.description || 'نقاط'}`;
+                return `${points} ${transaction.description || t('profile.points')}`;
         }
     };
 
@@ -219,7 +221,7 @@ const changePhoto = () => {
             <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
                 <ActivityIndicator size="large" color={YELLOW} />
                 <Text style={{ color: '#FFFFFF', marginTop: 10, fontFamily: 'Tajawal-Regular' }}>
-                    جاري تحميل البيانات...
+                    {t('profile.loadingData')}
                 </Text>
             </View>
         );
@@ -232,7 +234,7 @@ const changePhoto = () => {
                 <TouchableOpacity onPress={() => router.push('/settings')} style={styles.iconBtn}>
                         <Ionicons name="settings-sharp" size={28} color={YELLOW} />
                 </TouchableOpacity>
-                    <Text numberOfLines={1} style={styles.headerTitle}>الملف الشخصي</Text>
+                    <Text numberOfLines={1} style={styles.headerTitle}>{t('profile.title')}</Text>
 
                     <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
                         <Ionicons name="chevron-forward" size={30} color={YELLOW} />
@@ -281,24 +283,24 @@ const changePhoto = () => {
                 <View style={styles.statBox}>
                     <Ionicons name="star" size={28} color={YELLOW} />
                     <Text style={styles.statNumber}>{user?.total_points || 0}</Text>
-                    <Text style={styles.statLabel}>النقاط</Text>
+                    <Text style={styles.statLabel}>{t('profile.points')}</Text>
                 </View>
 
                 <View style={styles.statBox}>
                     <Ionicons name="rocket" size={28} color={YELLOW} />
                     <Text style={styles.statNumber}>{currentLevel?.id || 1}</Text>
-                    <Text style={styles.statLabel}>المستوى</Text>
+                    <Text style={styles.statLabel}>{t('profile.level')}</Text>
                 </View>
 
                 <View style={styles.statBox}>
                     <Ionicons name="bar-chart" size={28} color={YELLOW} />
                     <Text style={styles.statNumber}>{reportCount}</Text>
-                    <Text style={styles.statLabel}>البلاغات</Text>
+                    <Text style={styles.statLabel}>{t('profile.reports')}</Text>
                 </View>
             </View>
 
             {/* LAST POINTS */}
-            <Text style={styles.lastPointsTitle}>آخر النقاط المكتسبة:</Text>
+            <Text style={styles.lastPointsTitle}>{t('profile.lastPoints')}</Text>
 
             {transactions.length > 0 ? (
                 transactions.map((transaction) => (
@@ -316,13 +318,13 @@ const changePhoto = () => {
                 ))
             ) : (
                 <View style={styles.pointsCard}>
-                    <Text style={styles.pointsCardText}>لا توجد معاملات حتى الآن</Text>
+                    <Text style={styles.pointsCardText}>{t('profile.noTransactions')}</Text>
                 </View>
             )}
 
             {/* SHARE BUTTON – EINZIGER BUTTON */}
             <TouchableOpacity style={styles.shareBtn} onPress={handleShareAchievement}>
-                <Text style={styles.shareText}>شارك إنجازك</Text>
+                <Text style={styles.shareText}>{t('profile.shareAchievement')}</Text>
             </TouchableOpacity>
         </ScrollView>
 

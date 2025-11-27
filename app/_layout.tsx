@@ -3,16 +3,13 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { ActivityIndicator, I18nManager, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
-// Force LTR globally (important!)
-I18nManager.allowRTL(false);
-I18nManager.forceRTL(false);
 
 export const unstable_settings = {
     initialRouteName: "index",
@@ -59,11 +56,13 @@ export default function RootLayout() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <AuthProvider>
-                <NotificationProvider>
-                    <RootLayoutNav />
-                </NotificationProvider>
-            </AuthProvider>
+            <LanguageProvider>
+                <AuthProvider>
+                    <NotificationProvider>
+                        <RootLayoutNav />
+                    </NotificationProvider>
+                </AuthProvider>
+            </LanguageProvider>
         </GestureHandlerRootView>
     );
 }
