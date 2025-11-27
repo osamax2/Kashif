@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
+import * as Speech from 'expo-speech';
 import * as TaskManager from 'expo-task-manager';
 import api from './api';
 
@@ -11,7 +12,20 @@ interface Report {
   latitude: number;
   longitude: number;
   status: string;
-  type: string;
+  category_id: number;
+  category?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface AlertSettings {
+  soundEnabled: boolean;
+  warnPothole: boolean;
+  warnAccident: boolean;
+  warnSpeed: boolean;
+  appVolume: number;
+  language: string;
 }
 
 class LocationMonitoringService {
@@ -19,6 +33,22 @@ class LocationMonitoringService {
   private currentLocation: Location.LocationObject | null = null;
   private nearbyReports: Report[] = [];
   private alertedReportIds: Set<number> = new Set();
+  private alertSettings: AlertSettings = {
+    soundEnabled: true,
+    warnPothole: true,
+    warnAccident: true,
+    warnSpeed: true,
+    appVolume: 1.0,
+    language: 'ar',
+  };
+
+  /**
+   * Update alert settings
+   */
+  updateSettings(settings: Partial<AlertSettings>) {
+    this.alertSettings = { ...this.alertSettings, ...settings };
+    console.log('🔧 Alert settings updated:', this.alertSettings);
+  }
 
   /**
    * Calculate distance between two coordinates in meters using Haversine formula
@@ -79,15 +109,23 @@ class LocationMonitoringService {
     try {
       const response = await api.get<Report[]>('/api/reports/', {
         params: {
-          latitude,
-          longitude,
-          radius_km: 1, // 1km radius
+          limit: 1000,
+          skip: 0,
         },
       });
 
-      return response.data.filter(
-        (report) => report.status === 'pending' || report.status === 'in_progress'
-      );
+      // Filter by distance manually since backend may not support radius param
+      return response.data.filter((report) => {
+        const distance = this.calculateDistance(
+          latitude,
+          longitude,
+          parseFloat(report.latitude.toString()),
+          parseFloat(report.longitude.toString())
+        );
+        
+        // Only include reports within 1km
+        return distance <= 1000;
+      });
     } catch (error: any) {
       // Silently handle 404 errors (endpoint not available)
       if (error?.response?.status !== 404) {
@@ -111,14 +149,19 @@ class LocationMonitoringService {
       const distance = this.calculateDistance(
         latitude,
         longitude,
-        report.latitude,
-        report.longitude
+        parseFloat(report.latitude.toString()),
+        parseFloat(report.longitude.toString())
       );
 
       // If within alert threshold and not already alerted
       if (distance <= ALERT_DISTANCE_THRESHOLD && !this.alertedReportIds.has(report.id)) {
-        this.alertedReportIds.add(report.id);
-        this.showAlert(report, Math.round(distance));
+        // Check if alerts are enabled for this category
+        const shouldAlert = this.shouldShowAlertForCategory(report.category_id);
+        
+        if (shouldAlert) {
+          this.alertedReportIds.add(report.id);
+          await this.showAlert(report, Math.round(distance));
+        }
       }
 
       // Reset alert if user moves away
@@ -129,18 +172,117 @@ class LocationMonitoringService {
   }
 
   /**
+   * Check if alert should be shown for this category
+   */
+  private shouldShowAlertForCategory(categoryId: number): boolean {
+    // Category IDs: 1 = Pothole, 2 = Accident, 3 = Speed Camera
+    switch (categoryId) {
+      case 1:
+        return this.alertSettings.warnPothole;
+      case 2:
+        return this.alertSettings.warnAccident;
+      case 3:
+        return this.alertSettings.warnSpeed;
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * Get alert message for category
+   */
+  private getAlertMessage(categoryId: number, distance: number): { title: string; message: string } {
+    const lang = this.alertSettings.language;
+    
+    switch (categoryId) {
+      case 1: // Pothole
+        return {
+          title: lang === 'ar' ? '⚠️ تحذير: حفرة في الطريق' : '⚠️ Warning: Pothole Ahead',
+          message: lang === 'ar' 
+            ? `يوجد حفرة على بعد ${distance} متر أمامك. كن حذراً!`
+            : `There is a pothole ${distance} meters ahead. Be careful!`,
+        };
+      case 2: // Accident
+        return {
+          title: lang === 'ar' ? '🚨 تحذير: حادث مروري' : '🚨 Warning: Traffic Accident',
+          message: lang === 'ar'
+            ? `يوجد حادث مروري على بعد ${distance} متر أمامك. خفف السرعة!`
+            : `There is a traffic accident ${distance} meters ahead. Slow down!`,
+        };
+      case 3: // Speed Camera
+        return {
+          title: lang === 'ar' ? '📷 تنبيه: كاشف سرعة' : '📷 Alert: Speed Camera',
+          message: lang === 'ar'
+            ? `يوجد كاشف سرعة على بعد ${distance} متر أمامك. التزم بالسرعة المحددة!`
+            : `There is a speed camera ${distance} meters ahead. Follow speed limit!`,
+        };
+      default:
+        return {
+          title: lang === 'ar' ? '⚠️ تحذير' : '⚠️ Warning',
+          message: lang === 'ar'
+            ? `يوجد تنبيه على بعد ${distance} متر أمامك`
+            : `Alert ${distance} meters ahead`,
+        };
+    }
+  }
+
+  /**
+   * Play voice warning
+   */
+  private async playVoiceWarning(categoryId: number, distance: number) {
+    if (!this.alertSettings.soundEnabled) return;
+
+    const lang = this.alertSettings.language;
+    let message = '';
+
+    switch (categoryId) {
+      case 1: // Pothole
+        message = lang === 'ar'
+          ? `تحذير! حفرة في الطريق على بعد ${distance} متر`
+          : `Warning! Pothole ahead at ${distance} meters`;
+        break;
+      case 2: // Accident
+        message = lang === 'ar'
+          ? `تحذير! حادث مروري على بعد ${distance} متر`
+          : `Warning! Traffic accident ahead at ${distance} meters`;
+        break;
+      case 3: // Speed Camera
+        message = lang === 'ar'
+          ? `تنبيه! كاشف سرعة على بعد ${distance} متر`
+          : `Alert! Speed camera ahead at ${distance} meters`;
+        break;
+    }
+
+    try {
+      await Speech.speak(message, {
+        language: lang === 'ar' ? 'ar-SA' : 'en-US',
+        rate: 0.9,
+        pitch: 1.0,
+        volume: this.alertSettings.appVolume,
+      });
+    } catch (error) {
+      console.error('Failed to play voice warning:', error);
+    }
+  }
+
+  /**
    * Show alert screen
    */
-  private showAlert(report: Report, distance: number) {
-    console.log(`Alert: Pothole detected ${distance}m ahead!`);
+  private async showAlert(report: Report, distance: number) {
+    const alertData = this.getAlertMessage(report.category_id, distance);
     
-    // Navigate to alert screen
+    console.log(`🚨 Alert: ${alertData.title} - ${distance}m ahead`);
+    
+    // Play voice warning
+    await this.playVoiceWarning(report.category_id, distance);
+    
+    // Navigate to alert screen with parameters
     router.push({
       pathname: '/alert-screen',
       params: {
-        reportId: report.id,
+        reportId: report.id.toString(),
         distance: distance.toString(),
-        type: report.type,
+        categoryId: report.category_id.toString(),
       },
     });
   }
@@ -252,6 +394,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
 
     if (location) {
       // Check proximity in background
+      console.log('📍 Background location update:', location.coords);
       await locationMonitoringService.checkProximityToReports(location);
     }
   }
