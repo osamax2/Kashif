@@ -324,7 +324,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         setSearchMarker({ latitude, longitude, title });
         setReportLocation({ latitude, longitude }); // Use search location for reports
         setMapRegion(newRegion);
-        setSearchListVisible(false); // Hide search list after selection
+        //setSearchListVisible(false); // Hide search list after selection
         
         // Animate map to location
         if (mapRef.current) {
@@ -425,7 +425,6 @@ async function playBeep(value: number) {
                     fetchDetails={true}
                     onPress={(data, details = null) => {
                         console.log('🔍 Search selected:', data.description);
-                      
                         if (details && details.geometry && details.geometry.location) {
                             const { lat, lng } = details.geometry.location;
                             console.log('📍 Coordinates:', lat, lng);
