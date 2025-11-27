@@ -2,9 +2,9 @@
 """
 Script to upload Backend changes to the server
 """
+import os
 import subprocess
 import sys
-import os
 
 # Server configuration
 SERVER_USER = "root"
