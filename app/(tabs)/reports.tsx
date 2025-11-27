@@ -1,5 +1,6 @@
 // app/(tabs)/reports.tsx
 import { useAuth } from "@/contexts/AuthContext";
+import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
     Category,
@@ -98,6 +99,7 @@ export default function ReportsScreen() {
     const router = useRouter();
     const { user } = useAuth();
     const { t, language } = useLanguage();
+    const { refreshKey } = useDataSync();
     const [reports, setReports] = useState<Report[]>([]);
     const [statuses, setStatuses] = useState<ReportStatus[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -116,7 +118,7 @@ export default function ReportsScreen() {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [refreshKey]);
 
     const loadData = async () => {
         try {

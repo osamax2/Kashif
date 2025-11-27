@@ -1,6 +1,7 @@
 // app/(tabs)/home.tsx
 import ReportDialog from "@/components/ReportDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, Severity } from "@/services/api";
 import locationMonitoringService from "@/services/location-monitoring";
@@ -95,8 +96,9 @@ I18nManager.forceRTL(true);
 const BLUE = "#0D2B66";
 
 export default function HomeScreen() {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const { t, language } = useLanguage();
+    const { reportCreated } = useDataSync();
     
     /** BACKEND DATA */
     const [reports, setReports] = useState<Report[]>([]);
@@ -175,12 +177,20 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     // Location monitoring state
     const [isMonitoringActive, setIsMonitoringActive] = useState(false);
 
-    // Load data on mount
+    // Load data on mount and when refreshKey changes
     useEffect(() => {
         loadData();
         requestLocation();
         loadSettings();
     }, []);
+    
+    // Reload data when refresh is triggered from other screens
+    const { refreshKey } = useDataSync();
+    useEffect(() => {
+        if (refreshKey > 0) {
+            loadData();
+        }
+    }, [refreshKey]);
     
     // Load backend data
     const loadData = async () => {
@@ -829,6 +839,12 @@ async function playBeep(value: number) {
                         await loadData();
                         
                         console.log('✅ Data reloaded, total reports:', reports.length);
+                        
+                        // Trigger app-wide refresh for profile and reports screens
+                        reportCreated();
+                        
+                        // Also refresh user data to update points
+                        await refreshUser();
                         
                         // Dialog will auto-close after showing success message
                         // The onClose() is called from ReportDialog.tsx after 1.5s
