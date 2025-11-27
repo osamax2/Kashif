@@ -106,3 +106,21 @@ def get_report_history(db: Session, report_id: int):
     return db.query(models.ReportStatusHistory).filter(
         models.ReportStatusHistory.report_id == report_id
     ).order_by(models.ReportStatusHistory.created_at.desc()).all()
+
+
+def get_categories(db: Session):
+    """Get all categories"""
+    return db.query(models.Category).order_by(models.Category.id).all()
+
+
+def get_statuses(db: Session):
+    """Get all report statuses"""
+    return db.query(models.ReportStatus).order_by(models.ReportStatus.id).all()
+
+
+def get_severities(db: Session, category_id: Optional[int] = None):
+    """Get all severities, optionally filtered by category"""
+    query = db.query(models.Severity)
+    if category_id:
+        query = query.filter(models.Severity.category_id == category_id)
+    return query.order_by(models.Severity.category_id, models.Severity.id).all()

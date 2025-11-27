@@ -28,6 +28,24 @@ def health_check():
     return {"status": "healthy", "service": "reporting"}
 
 
+@app.get("/categories", response_model=List[schemas.Category])
+def get_categories(db: Session = Depends(get_db)):
+    """Get all report categories"""
+    return crud.get_categories(db=db)
+
+
+@app.get("/statuses", response_model=List[schemas.ReportStatus])
+def get_statuses(db: Session = Depends(get_db)):
+    """Get all report statuses"""
+    return crud.get_statuses(db=db)
+
+
+@app.get("/severities", response_model=List[schemas.Severity])
+def get_severities(category_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get all severities, optionally filtered by category"""
+    return crud.get_severities(db=db, category_id=category_id)
+
+
 async def get_current_user_id(authorization: Annotated[str, Header()]):
     """Verify token with auth service and get user_id"""
     if not authorization.startswith("Bearer "):

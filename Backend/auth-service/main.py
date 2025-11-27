@@ -26,6 +26,12 @@ def health_check():
     return {"status": "healthy", "service": "auth"}
 
 
+@app.get("/levels", response_model=list[schemas.Level])
+def get_levels(db: Session = Depends(get_db)):
+    """Get all user levels"""
+    return crud.get_levels(db=db)
+
+
 @app.post("/register", response_model=schemas.User)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Check if user already exists

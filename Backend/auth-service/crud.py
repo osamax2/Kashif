@@ -80,3 +80,8 @@ def update_user_access_token(db: Session, user_id: int, access_token: str):
         db.commit()
         db.refresh(user)
     return user
+
+
+def get_levels(db: Session):
+    """Get all levels"""
+    return db.query(models.Level).order_by(models.Level.min_report_number).all()
