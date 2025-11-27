@@ -29,6 +29,7 @@ interface Props {
         notes: string;
         id: string;
         time: string;
+        photoUri?: string;
     }) => void;
 }
 
@@ -114,6 +115,7 @@ async function takePhoto() {
             notes,
             id,
             time,
+            photoUri: selectedImage || undefined,
         });
     };
 
