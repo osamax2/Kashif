@@ -1,6 +1,6 @@
 import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authAPI, logout as apiLogout, getStoredUser, isLoggedIn, User } from '../services/api';
+import { logout as apiLogout, authAPI, getStoredUser, isLoggedIn, User } from '../services/api';
 import notificationService from '../services/notifications';
 
 interface AuthContextType {
