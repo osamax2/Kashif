@@ -1,8 +1,9 @@
 """
 Seed data script to populate lookup tables with initial data
 """
-import psycopg2
 from datetime import datetime
+
+import psycopg2
 
 # Database connections
 DB_CONFIGS = {
@@ -205,4 +206,5 @@ if __name__ == "__main__":
     seed_severities()
     seed_coupon_categories()
     
+    print("\n✅ Database seeding completed!\n")
     print("\n✅ Database seeding completed!\n")

@@ -1,9 +1,10 @@
-from sqlalchemy.orm import Session
-from typing import Optional, List
-import models
-import schemas
 import secrets
 import string
+from typing import List, Optional
+
+import models
+import schemas
+from sqlalchemy.orm import Session
 
 
 def generate_redemption_code(length: int = 12) -> str:
@@ -94,4 +95,5 @@ def get_user_redemption(db: Session, user_id: int, coupon_id: int):
 def get_user_redemptions(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.CouponRedemption).filter(
         models.CouponRedemption.user_id == user_id
+    ).order_by(models.CouponRedemption.redeemed_at.desc()).offset(skip).limit(limit).all()
     ).order_by(models.CouponRedemption.redeemed_at.desc()).offset(skip).limit(limit).all()

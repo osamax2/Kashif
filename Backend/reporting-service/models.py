@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean, Numeric
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
 from database import Base
+from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer,
+                        Numeric, String, Text)
+from sqlalchemy.orm import relationship
 
 
 class Category(Base):
@@ -75,5 +77,7 @@ class ReportStatusHistory(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     report = relationship("Report", back_populates="status_history")
+    old_status = relationship("ReportStatus", foreign_keys=[old_status_id], back_populates="old_status_histories")
+    new_status = relationship("ReportStatus", foreign_keys=[new_status_id], back_populates="new_status_histories")
     old_status = relationship("ReportStatus", foreign_keys=[old_status_id], back_populates="old_status_histories")
     new_status = relationship("ReportStatus", foreign_keys=[new_status_id], back_populates="new_status_histories")

@@ -1,6 +1,7 @@
-from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class UserNotificationStatusBase(BaseModel):
@@ -52,4 +53,5 @@ class Notification(BaseModel):
     created_at: datetime
 
     class Config:
+        from_attributes = True
         from_attributes = True

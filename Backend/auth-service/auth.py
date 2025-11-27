@@ -1,10 +1,11 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import JWTError, jwt
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-import os
+
 import crud
+from fastapi import HTTPException, status
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
@@ -65,4 +66,5 @@ def get_current_user(token: str, db: Session):
     if user is None:
         raise credentials_exception
     
+    return user
     return user

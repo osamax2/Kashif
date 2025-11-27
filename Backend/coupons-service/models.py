@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
 from database import Base
+from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer,
+                        String, Text)
+from sqlalchemy.orm import relationship
 
 
 class Company(Base):
@@ -64,5 +66,7 @@ class CouponRedemption(Base):
     points_spent = Column(Integer, nullable=False)
     status = Column(String(50), default="PENDING", nullable=False)  # USED, CANCELED, PENDING
     redeemed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    coupon = relationship("Coupon", back_populates="redemptions")
 
     coupon = relationship("Coupon", back_populates="redemptions")

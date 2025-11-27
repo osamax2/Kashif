@@ -1,8 +1,9 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import Optional, List
+from typing import List, Optional
+
 import models
 import schemas
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 
 def create_transaction(
@@ -66,4 +67,5 @@ def get_leaderboard(db: Session, limit: int = 100) -> List[dict]:
             "rank": rank
         })
     
+    return leaderboard
     return leaderboard

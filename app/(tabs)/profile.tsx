@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
@@ -22,8 +23,9 @@ const YELLOW = "#F4B400";
 
 export default function ProfileScreen() {
     const router = useRouter();
+    const { user } = useAuth();
     const shareLink = "https://your-app-link.com"; // hier deinen echten Link eintragen
-    const points = 340; // Beispielwert
+    const points = user?.total_points || 0; // Get points from user
     const [profileImage, setProfileImage] = useState<string | null>(null);
 
 // Bild laden beim Start
@@ -127,7 +129,8 @@ const changePhoto = () => {
 
 
             {/* USERNAME */}
-            <Text style={styles.userName}>ماكس موستِرمان</Text>
+            <Text style={styles.userName}>{user?.full_name || 'مستخدم'}</Text>
+            <Text style={styles.userEmail}>{user?.email || ''}</Text>
            
 
             {/* PROGRESS BAR */}
@@ -287,6 +290,14 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         marginTop: 9,
         fontFamily: "Tajawal-Bold",
+    },
+
+    userEmail: {
+        color: "#BFD7EA",
+        fontSize: 14,
+        textAlign: "center",
+        marginBottom: 10,
+        fontFamily: "Tajawal-Regular",
     },
 
     statsRow: {

@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
 from database import Base
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
 
 
 class PointTransaction(Base):
@@ -13,4 +14,5 @@ class PointTransaction(Base):
     type = Column(String(50), nullable=False)  # REPORT_CREATED, CONFIRMATION, REDEMPTION, etc.
     points = Column(Integer, nullable=False)  # Positive for earning, negative for spending
     description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)

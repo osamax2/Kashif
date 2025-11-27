@@ -1,8 +1,9 @@
-import pika
 import json
-import os
 import logging
+import os
 from datetime import datetime
+
+import pika
 
 logger = logging.getLogger(__name__)
 
@@ -43,4 +44,5 @@ def publish_event(event_type: str, data: dict):
         
     except Exception as e:
         logger.error(f"Failed to publish event to RabbitMQ: {e}")
+        raise
         raise

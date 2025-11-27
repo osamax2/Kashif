@@ -1,6 +1,7 @@
-from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class PointTransaction(BaseModel):
@@ -38,4 +39,5 @@ class LeaderboardEntry(BaseModel):
     rank: int
 
     class Config:
+        from_attributes = True
         from_attributes = True

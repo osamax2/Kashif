@@ -1,8 +1,9 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
-from typing import Optional, List
+from typing import List, Optional
+
 import models
 import schemas
+from sqlalchemy import and_, func
+from sqlalchemy.orm import Session
 
 
 def create_report(db: Session, report: schemas.ReportCreate, user_id: int):
@@ -123,4 +124,5 @@ def get_severities(db: Session, category_id: Optional[int] = None):
     query = db.query(models.Severity)
     if category_id:
         query = query.filter(models.Severity.category_id == category_id)
+    return query.order_by(models.Severity.category_id, models.Severity.id).all()
     return query.order_by(models.Severity.category_id, models.Severity.id).all()

@@ -13,10 +13,12 @@ import {
   View
 } from "react-native";
 import RtlTextInput from '../components/ui/rtl-textinput';
+import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
 
 export default function Index() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,10 +47,13 @@ export default function Index() {
       console.log('Login successful:', response);
       
       // Get user profile
-      await authAPI.getProfile();
+      const user = await authAPI.getProfile();
       
-      // Navigate to home
-      router.replace('/(tabs)/home');
+      // Update auth context
+      setUser(user);
+      
+      // Navigate to home (AuthContext will handle this)
+      // router.replace('/(tabs)/home');
       
     } catch (error: any) {
       console.error('Login error:', error);

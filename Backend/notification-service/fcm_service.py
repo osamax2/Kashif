@@ -1,9 +1,10 @@
+import logging
+import os
+
+import crud
 import firebase_admin
 from firebase_admin import credentials, messaging
 from sqlalchemy.orm import Session
-import crud
-import logging
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -73,4 +74,5 @@ def send_push_notification(
         
     except Exception as e:
         logger.error(f"Failed to send push notification: {e}")
+        return None
         return None

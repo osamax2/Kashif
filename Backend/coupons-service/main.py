@@ -1,15 +1,16 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Header
-from sqlalchemy.orm import Session
-from typing import Annotated, List, Optional
-import models
-import schemas
-import crud
-from database import engine, get_db
-from rabbitmq_publisher import publish_event
-from rabbitmq_consumer import start_consumer
-import auth_client
 import logging
 import threading
+from typing import Annotated, List, Optional
+
+import auth_client
+import crud
+import models
+import schemas
+from database import engine, get_db
+from fastapi import Depends, FastAPI, Header, HTTPException, status
+from rabbitmq_consumer import start_consumer
+from rabbitmq_publisher import publish_event
+from sqlalchemy.orm import Session
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -190,4 +191,5 @@ async def get_my_redemptions(
     db: Session = Depends(get_db)
 ):
     """Get current user's coupon redemptions"""
+    return crud.get_user_redemptions(db=db, user_id=user_id, skip=skip, limit=limit)
     return crud.get_user_redemptions(db=db, user_id=user_id, skip=skip, limit=limit)

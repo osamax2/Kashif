@@ -1,7 +1,8 @@
-import pika
 import json
-import os
 import logging
+import os
+
+import pika
 
 logger = logging.getLogger(__name__)
 
@@ -53,4 +54,5 @@ def publish_event(event_type: str, data: dict):
         raise
 
 
+from datetime import datetime
 from datetime import datetime

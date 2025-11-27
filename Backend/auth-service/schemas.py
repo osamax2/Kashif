@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel, EmailStr
 
 
 class LevelBase(BaseModel):
@@ -52,4 +53,5 @@ class RefreshTokenRequest(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+    user_id: Optional[int] = None
     user_id: Optional[int] = None

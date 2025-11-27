@@ -1,10 +1,11 @@
-import pika
 import json
-import os
 import logging
-from database import SessionLocal
+import os
+
 import crud
 import fcm_service
+import pika
+from database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -205,4 +206,5 @@ def start_consumer():
         channel.start_consuming()
         
     except Exception as e:
+        logger.error(f"Failed to start RabbitMQ consumer: {e}")
         logger.error(f"Failed to start RabbitMQ consumer: {e}")

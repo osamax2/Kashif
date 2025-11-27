@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
 from database import Base
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,
+                        Text)
+from sqlalchemy.orm import relationship
 
 
 class UserNotificationStatus(Base):
@@ -34,5 +36,7 @@ class Notification(Base):
     type = Column(String(50), nullable=False)  # REPORT_UPDATE, POINTS_AWARDED, etc.
     related_report_id = Column(Integer, nullable=True)
     related_coupon_id = Column(Integer, nullable=True)
+    is_read = Column(Boolean, default=False, index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)
     is_read = Column(Boolean, default=False, index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)

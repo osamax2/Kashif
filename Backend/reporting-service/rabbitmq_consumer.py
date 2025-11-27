@@ -1,7 +1,8 @@
-import pika
 import json
-import os
 import logging
+import os
+
+import pika
 
 logger = logging.getLogger(__name__)
 
@@ -62,4 +63,5 @@ def start_consumer():
         channel.start_consuming()
         
     except Exception as e:
+        logger.error(f"Failed to start RabbitMQ consumer: {e}")
         logger.error(f"Failed to start RabbitMQ consumer: {e}")

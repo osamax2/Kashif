@@ -1,14 +1,15 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+import logging
 from typing import Annotated
+
+import auth
+import crud
 import models
 import schemas
-import crud
-import auth
 from database import engine, get_db
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from rabbitmq_publisher import publish_event
-import logging
+from sqlalchemy.orm import Session
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -168,4 +169,5 @@ def get_user(
             detail="User not found"
         )
     
+    return user
     return user

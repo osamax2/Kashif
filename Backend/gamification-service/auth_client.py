@@ -1,6 +1,7 @@
-import httpx
-import os
 import logging
+import os
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -23,4 +24,5 @@ async def verify_token(token: str):
                 
     except Exception as e:
         logger.error(f"Failed to verify token with auth service: {e}")
+        return None
         return None

@@ -5,7 +5,9 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 
+import { useAuth } from "@/contexts/AuthContext";
 import {
+    Alert,
     I18nManager,
     ScrollView,
     StyleSheet,
@@ -23,6 +25,7 @@ const YELLOW = "#F4B400";
 const CARD = "#133B7A";
 
 export default function SettingsScreen() {
+    const { user, logout } = useAuth();
     const [hideName, setHideName] = useState(false);
     const [notifReports, setNotifReports] = useState(true);
     const [notifPoints, setNotifPoints] = useState(false);
@@ -44,7 +47,25 @@ export default function SettingsScreen() {
 
     const router = useRouter();
 
-
+    const handleLogout = () => {
+        Alert.alert(
+            'تسجيل الخروج',
+            'هل أنت متأكد أنك تريد تسجيل الخروج؟',
+            [
+                {
+                    text: 'إلغاء',
+                    style: 'cancel',
+                },
+                {
+                    text: 'تسجيل الخروج',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await logout();
+                    },
+                },
+            ]
+        );
+    };
 
     const saveChanges = () => {
         // Beispiel: Daten sammeln
@@ -186,8 +207,14 @@ export default function SettingsScreen() {
                 />
             </View>
 
-            <TouchableOpacity style={styles.saveButton}onPress={saveChanges}>
+            <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
                 <Text style={styles.saveButtonText}>حفظ التغييرات</Text>
+            </TouchableOpacity>
+
+            {/* Logout Button */}
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Ionicons name="log-out-outline" size={22} color="#fff" style={{ marginLeft: 8 }} />
+                <Text style={styles.logoutButtonText}>تسجيل الخروج</Text>
             </TouchableOpacity>
 
 
@@ -417,6 +444,23 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontFamily: "Tajawal-Bold",
     },
+    
+    logoutButton: {
+        backgroundColor: "#DC2626",
+        paddingVertical: 14,
+        borderRadius: 10,
+        alignItems: "center",
+        marginTop: 16,
+        flexDirection: "row-reverse",
+        justifyContent: "center",
+    },
+
+    logoutButtonText: {
+        color: "#ffffff",
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+    },
+
     textItem: {
         color: "#fff",
         fontSize: 16,

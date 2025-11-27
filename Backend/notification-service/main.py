@@ -1,15 +1,16 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Header
-from sqlalchemy.orm import Session
-from typing import Annotated, List, Optional
-import models
-import schemas
-import crud
-from database import engine, get_db
-from rabbitmq_consumer import start_consumer
-import auth_client
-import fcm_service
 import logging
 import threading
+from typing import Annotated, List, Optional
+
+import auth_client
+import crud
+import fcm_service
+import models
+import schemas
+from database import engine, get_db
+from fastapi import Depends, FastAPI, Header, HTTPException, status
+from rabbitmq_consumer import start_consumer
+from sqlalchemy.orm import Session
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -160,4 +161,5 @@ async def send_notification(
     except Exception as e:
         logger.error(f"Failed to send push notification: {e}")
     
+    return db_notification
     return db_notification

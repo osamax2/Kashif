@@ -1,7 +1,8 @@
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 from main import app
-import json
 
 client = TestClient(app)
 
@@ -93,4 +94,5 @@ class TestAuthService:
 
 
 if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
     pytest.main([__file__, "-v"])

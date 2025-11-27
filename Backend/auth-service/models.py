@@ -1,7 +1,8 @@
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
 from database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
 
 class Level(Base):
@@ -46,4 +47,5 @@ class RefreshToken(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
 
+    user = relationship("User", back_populates="refresh_tokens")
     user = relationship("User", back_populates="refresh_tokens")

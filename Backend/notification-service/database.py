@@ -1,7 +1,8 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://notification_user:notification_pass@notification-db:5432/notification_db")
 
@@ -16,4 +17,5 @@ def get_db():
     try:
         yield db
     finally:
+        db.close()
         db.close()

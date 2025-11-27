@@ -1,15 +1,16 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Header
-from sqlalchemy.orm import Session
-from typing import Annotated, Optional, List
-import models
-import schemas
-import crud
-from database import engine, get_db
-from rabbitmq_publisher import publish_event
-from rabbitmq_consumer import start_consumer
-import auth_client
 import logging
 import threading
+from typing import Annotated, List, Optional
+
+import auth_client
+import crud
+import models
+import schemas
+from database import engine, get_db
+from fastapi import Depends, FastAPI, Header, HTTPException, status
+from rabbitmq_consumer import start_consumer
+from rabbitmq_publisher import publish_event
+from sqlalchemy.orm import Session
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -183,4 +184,5 @@ async def get_report_history(
 ):
     """Get status change history for a report"""
     history = crud.get_report_history(db=db, report_id=report_id)
+    return history
     return history

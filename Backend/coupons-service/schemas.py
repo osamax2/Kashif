@@ -1,6 +1,7 @@
-from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class CompanyBase(BaseModel):
@@ -79,4 +80,5 @@ class CouponRedemption(BaseModel):
     redeemed_at: datetime
 
     class Config:
+        from_attributes = True
         from_attributes = True

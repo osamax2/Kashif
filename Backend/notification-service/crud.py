@@ -1,7 +1,8 @@
-from sqlalchemy.orm import Session
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
+
 import models
+from sqlalchemy.orm import Session
 
 
 # Device Token CRUD
@@ -132,4 +133,5 @@ def get_unread_count(db: Session, user_id: int):
     return db.query(models.Notification).filter(
         models.Notification.user_id == user_id,
         models.Notification.is_read == False
+    ).count()
     ).count()

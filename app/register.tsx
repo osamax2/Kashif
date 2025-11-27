@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
 
 I18nManager.allowRTL(true);
@@ -20,6 +21,7 @@ I18nManager.forceRTL(true);
 
 export default function Register() {
     const router = useRouter();
+    const { setUser } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
@@ -74,14 +76,14 @@ export default function Register() {
 
         try {
             // Register user
-            const user = await authAPI.register({
+            const registeredUser = await authAPI.register({
                 email: email.trim(),
                 password: password,
                 full_name: fullName.trim(),
                 phone_number: phoneNumber.trim() || undefined,
             });
 
-            console.log('Registration successful:', user);
+            console.log('Registration successful:', registeredUser);
 
             // Auto-login after registration
             await authAPI.login({
@@ -90,7 +92,10 @@ export default function Register() {
             });
 
             // Get user profile
-            await authAPI.getProfile();
+            const user = await authAPI.getProfile();
+            
+            // Update auth context
+            setUser(user);
 
             Alert.alert(
                 'تم التسجيل بنجاح',
@@ -98,7 +103,7 @@ export default function Register() {
                 [
                     {
                         text: 'حسناً',
-                        onPress: () => router.replace('/(tabs)/home'),
+                        // AuthContext will handle navigation
                     }
                 ]
             );
