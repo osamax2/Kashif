@@ -425,6 +425,7 @@ async function playBeep(value: number) {
                     fetchDetails={true}
                     onPress={(data, details = null) => {
                         console.log('🔍 Search selected:', data.description);
+                        setSearchListVisible(false); // Hide list immediately on press
                         if (details && details.geometry && details.geometry.location) {
                             const { lat, lng } = details.geometry.location;
                             console.log('📍 Coordinates:', lat, lng);
@@ -451,7 +452,7 @@ async function playBeep(value: number) {
                         'administrative_area_level_3',
                     ]}
                     enablePoweredByContainer={false}
-                    keepResultsAfterBlur={true}
+                    keepResultsAfterBlur={false}
                     styles={{
                         container: {
                             flex: 0,
@@ -689,6 +690,7 @@ async function playBeep(value: number) {
             <ReportDialog
                 visible={reportType !== null}
                 type={reportType}
+                address={searchMarker?.title || "الموقع التلقائي"}
                 onClose={() => setReportType(null)}
                 onSubmit={async (data) => {
                     try {

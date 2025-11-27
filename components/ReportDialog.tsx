@@ -21,6 +21,7 @@ type ReportType = "pothole" | "accident" | "speed" | null;
 interface Props {
     visible: boolean;
     type: ReportType;              // "pothole" | "accident" | "speed"
+    address?: string;              // Dynamic address from search or GPS
     onClose: () => void;
     onSubmit?: (payload: {
         type: ReportType;
@@ -36,11 +37,12 @@ interface Props {
 export default function ReportDialog({
                                          visible,
                                          type,
+                                         address: initialAddress,
                                          onClose,
                                          onSubmit,
                                      }: Props) {
     const [severity, setSeverity] = useState<"low" | "medium" | "high">("low");
-    const [address, setAddress] = useState("شارع المزة، دمشق");
+    const [address, setAddress] = useState("");
     const [notes, setNotes] = useState("");
     const [successId, setSuccessId] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -87,6 +89,7 @@ async function takePhoto() {
     useEffect(() => {
         if (visible) {
             setSuccessId(null);
+            setAddress(initialAddress || "الموقع التلقائي");
             Animated.spring(slideAnim, {
                 toValue: 1,
                 useNativeDriver: true,
@@ -94,7 +97,7 @@ async function takePhoto() {
         } else {
             slideAnim.setValue(0);
         }
-    }, [visible]);
+    }, [visible, initialAddress]);
 
     const handleSend = async () => {
         const id = Math.floor(1000 + Math.random() * 9000).toString();
@@ -127,6 +130,7 @@ async function takePhoto() {
             // Reset form
             setSeverity('low');
             setNotes('');
+            setAddress('');
             setSelectedImage(null);
             setSuccessId(null);
         }, 2000);
