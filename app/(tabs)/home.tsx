@@ -409,6 +409,7 @@ async function playBeep(value: number) {
                 <GooglePlacesAutocomplete
                     placeholder="ابحث عن موقع أو شارع"
                     minLength={2}
+                    debounce={400}
                     listViewDisplayed='auto'
                     fetchDetails={true}
                     onPress={(data, details = null) => {
@@ -421,17 +422,25 @@ async function playBeep(value: number) {
                             console.warn('⚠️ No geometry details available');
                         }
                     }}
-                    onFail={(error) => console.error('❌ Places API Error:', error)}
+                    onFail={(error) => {
+                        console.error('❌ Places API Error:', error);
+                        console.error('Error details:', JSON.stringify(error, null, 2));
+                    }}
                     query={{
                         key: 'REMOVED_API_KEY',
                         language: 'ar',
                         components: 'country:sy',
+                        types: 'geocode',
                     }}
-                    requestUrl={{
-                        useOnPlatform: 'all',
-                        url: 'https://maps.googleapis.com/maps/api',
+                    GooglePlacesSearchQuery={{
+                        rankby: 'distance',
                     }}
+                    filterReverseGeocodingByTypes={[
+                        'locality',
+                        'administrative_area_level_3',
+                    ]}
                     enablePoweredByContainer={false}
+                    keepResultsAfterBlur={true}
                     styles={{
                         container: {
                             flex: 0,
@@ -688,6 +697,8 @@ async function playBeep(value: number) {
                         };
                         const severityId = severityMap[data.severity] || 1;
                         
+                        console.log('📤 Creating report:', { categoryId, severityId, location: userLocation });
+                        
                         // Create report
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole' 
@@ -704,13 +715,17 @@ async function playBeep(value: number) {
                             photo_urls: data.photoUri || undefined,
                         });
                         
-                        // Refresh reports
+                        console.log('✅ Report created:', newReport.id);
+                        
+                        // Refresh reports BEFORE closing dialog
                         await loadData();
                         
-                        alert('✅ تم إرسال البلاغ بنجاح!');
-                        setReportType(null);
+                        console.log('✅ Data reloaded, total reports:', reports.length);
+                        
+                        // Dialog will auto-close after showing success message
+                        // The onClose() is called from ReportDialog.tsx after 1.5s
                     } catch (error) {
-                        console.error('Error creating report:', error);
+                        console.error('❌ Error creating report:', error);
                         alert('❌ حدث خطأ أثناء إرسال البلاغ');
                     }
                 }}
