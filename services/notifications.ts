@@ -1,16 +1,26 @@
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import api from './api';
 
-// Configure notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+// Conditionally import Notifications only if not in Expo Go
+let Notifications: any = null;
+try {
+  // This will work in development builds but may have limitations in Expo Go
+  Notifications = require('expo-notifications');
+  
+  // Configure notification handler only if available
+  if (Notifications && Notifications.setNotificationHandler) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  }
+} catch (error) {
+  console.log('Notifications not fully available in this environment');
+}
 
 export interface PushNotification {
   id: number;
@@ -172,11 +182,16 @@ class NotificationService {
    * Setup notification listeners
    */
   setupNotificationListeners(
-    onNotificationReceived?: (notification: Notifications.Notification) => void,
-    onNotificationTapped?: (response: Notifications.NotificationResponse) => void
+    onNotificationReceived?: (notification: any) => void,
+    onNotificationTapped?: (response: any) => void
   ) {
+    if (!Notifications) {
+      console.log('Notifications not available - cannot setup listeners');
+      return () => {}; // Return empty cleanup function
+    }
+
     // Handle notification received while app is in foreground
-    const receivedSubscription = Notifications.addNotificationReceivedListener(notification => {
+    const receivedSubscription = Notifications.addNotificationReceivedListener((notification: any) => {
       console.log('Notification received:', notification);
       if (onNotificationReceived) {
         onNotificationReceived(notification);
@@ -184,7 +199,7 @@ class NotificationService {
     });
 
     // Handle notification tapped
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+    const responseSubscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
       console.log('Notification tapped:', response);
       if (onNotificationTapped) {
         onNotificationTapped(response);
