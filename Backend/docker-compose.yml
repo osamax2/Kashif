@@ -1,0 +1,186 @@
+services:
+  # Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: kashif-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: kashif
+      RABBITMQ_DEFAULT_PASS: kashif123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - kashif-network
+
+  # API Gateway (nginx)
+  api-gateway:
+    image: nginx:alpine
+    container_name: kashif-gateway
+    ports:
+      - "8000:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth-service
+      - reporting-service
+      - gamification-service
+      - coupons-service
+      - notification-service
+    networks:
+      - kashif-network
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: kashif-auth
+    environment:
+      DATABASE_URL: postgresql://kashif_auth:auth123@auth-db:5432/kashif_auth
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+    depends_on:
+      - auth-db
+      - rabbitmq
+    networks:
+      - kashif-network
+
+  auth-db:
+    image: postgres:15-alpine
+    container_name: kashif-auth-db
+    environment:
+      POSTGRES_DB: kashif_auth
+      POSTGRES_USER: kashif_auth
+      POSTGRES_PASSWORD: auth123
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    networks:
+      - kashif-network
+
+  # Reporting Service
+  reporting-service:
+    build:
+      context: ./reporting-service
+      dockerfile: Dockerfile
+    container_name: kashif-reporting
+    environment:
+      DATABASE_URL: postgresql://kashif_reports:report123@reporting-db:5432/kashif_reports
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      AUTH_SERVICE_URL: http://auth-service:8000
+    depends_on:
+      - reporting-db
+      - rabbitmq
+    networks:
+      - kashif-network
+
+  reporting-db:
+    image: postgres:15-alpine
+    container_name: kashif-reporting-db
+    environment:
+      POSTGRES_DB: kashif_reports
+      POSTGRES_USER: kashif_reports
+      POSTGRES_PASSWORD: report123
+    volumes:
+      - reporting_db_data:/var/lib/postgresql/data
+    networks:
+      - kashif-network
+
+  # Gamification Service
+  gamification-service:
+    build:
+      context: ./gamification-service
+      dockerfile: Dockerfile
+    container_name: kashif-gamification
+    environment:
+      DATABASE_URL: postgresql://kashif_gamif:gamif123@gamification-db:5432/kashif_gamification
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      AUTH_SERVICE_URL: http://auth-service:8000
+    depends_on:
+      - gamification-db
+      - rabbitmq
+    networks:
+      - kashif-network
+
+  gamification-db:
+    image: postgres:15-alpine
+    container_name: kashif-gamification-db
+    environment:
+      POSTGRES_DB: kashif_gamification
+      POSTGRES_USER: kashif_gamif
+      POSTGRES_PASSWORD: gamif123
+    volumes:
+      - gamification_db_data:/var/lib/postgresql/data
+    networks:
+      - kashif-network
+
+  # Coupons Service
+  coupons-service:
+    build:
+      context: ./coupons-service
+      dockerfile: Dockerfile
+    container_name: kashif-coupons
+    environment:
+      DATABASE_URL: postgresql://kashif_coupons:coupon123@coupons-db:5432/kashif_coupons
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      AUTH_SERVICE_URL: http://auth-service:8000
+    depends_on:
+      - coupons-db
+      - rabbitmq
+    networks:
+      - kashif-network
+
+  coupons-db:
+    image: postgres:15-alpine
+    container_name: kashif-coupons-db
+    environment:
+      POSTGRES_DB: kashif_coupons
+      POSTGRES_USER: kashif_coupons
+      POSTGRES_PASSWORD: coupon123
+    volumes:
+      - coupons_db_data:/var/lib/postgresql/data
+    networks:
+      - kashif-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: kashif-notification
+    environment:
+      DATABASE_URL: postgresql://kashif_notif:notif123@notification-db:5432/kashif_notifications
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      FIREBASE_CREDENTIALS_PATH: /app/firebase-credentials.json
+    depends_on:
+      - notification-db
+      - rabbitmq
+    networks:
+      - kashif-network
+
+  notification-db:
+    image: postgres:15-alpine
+    container_name: kashif-notification-db
+    environment:
+      POSTGRES_DB: kashif_notifications
+      POSTGRES_USER: kashif_notif
+      POSTGRES_PASSWORD: notif123
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+    networks:
+      - kashif-network
+
+volumes:
+  rabbitmq_data:
+  auth_db_data:
+  reporting_db_data:
+  gamification_db_data:
+  coupons_db_data:
+  notification_db_data:
+
+networks:
+  kashif-network:
+    driver: bridge

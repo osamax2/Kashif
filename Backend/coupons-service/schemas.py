@@ -1,0 +1,82 @@
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
+
+
+class CompanyBase(BaseModel):
+    name: str
+    logo_url: Optional[str] = None
+    description: Optional[str] = None
+    website_url: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+
+class CompanyCreate(CompanyBase):
+    pass
+
+
+class Company(CompanyBase):
+    id: int
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CouponCategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    icon_name: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class CouponCategoryCreate(CouponCategoryBase):
+    pass
+
+
+class CouponCategory(CouponCategoryBase):
+    id: int
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CouponBase(BaseModel):
+    company_id: int
+    coupon_category_id: Optional[int] = None
+    name: str
+    description: str
+    points_cost: int
+    image_url: Optional[str] = None
+    expiration_date: Optional[datetime] = None
+    max_usage_per_user: Optional[int] = None
+    total_available: Optional[int] = None
+
+
+class CouponCreate(CouponBase):
+    pass
+
+
+class Coupon(CouponBase):
+    id: int
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CouponRedemption(BaseModel):
+    id: int
+    user_id: int
+    coupon_id: int
+    points_spent: int
+    status: str
+    redeemed_at: datetime
+
+    class Config:
+        from_attributes = True
