@@ -153,10 +153,19 @@ export default function ReportsScreen() {
         let resolved = 0;
 
         reportsData.forEach(report => {
-            const statusName = statusMap.get(report.status_id);
-            if (statusName === "مفتوح") open++;
-            else if (statusName === "قيد المراجعة" || statusName === "قيد المعالجة") inProgress++;
-            else if (statusName === "تم الإصلاح") resolved++;
+            const statusName = (statusMap.get(report.status_id) || '').toLowerCase();
+            
+            // Support both Arabic and English status names
+            if (statusName === "مفتوح" || statusName === "open") {
+                open++;
+            } else if (
+                statusName === "قيد المراجعة" || statusName === "under review" ||
+                statusName === "قيد المعالجة" || statusName === "in progress"
+            ) {
+                inProgress++;
+            } else if (statusName === "تم الإصلاح" || statusName === "resolved") {
+                resolved++;
+            }
         });
 
         const total = reportsData.length || 1;
