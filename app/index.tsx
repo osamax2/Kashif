@@ -2,15 +2,15 @@ import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   I18nManager,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Alert,
-  ActivityIndicator
+  View
 } from "react-native";
 import RtlTextInput from '../components/ui/rtl-textinput';
 import { authAPI } from '../services/api';

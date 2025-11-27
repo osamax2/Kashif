@@ -1,18 +1,18 @@
 // app/register.tsx
-import React, { useState } from "react";
-import { 
-    I18nManager, 
-    ScrollView, 
-    StyleSheet, 
-    Text, 
-    TextInput, 
-    View, 
-    TouchableOpacity, 
-    Switch,
-    Alert,
-    ActivityIndicator 
-} from "react-native";
 import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    I18nManager,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from "react-native";
 import { authAPI } from '../services/api';
 
 I18nManager.allowRTL(true);
