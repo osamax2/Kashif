@@ -324,7 +324,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         setSearchMarker({ latitude, longitude, title });
         setReportLocation({ latitude, longitude }); // Use search location for reports
         setMapRegion(newRegion);
-        //setSearchListVisible(false); // Hide search list after selection
+        setSearchListVisible(false); // Hide search list after selection
         
         // Animate map to location
         if (mapRef.current) {
@@ -429,10 +429,11 @@ async function playBeep(value: number) {
                             const { lat, lng } = details.geometry.location;
                             console.log('📍 Coordinates:', lat, lng);
                             navigateToPlace(lat, lng, data.description);
-                            setSearchListVisible(false); // Hide list immediately on press
+                           
                         } else {
                             console.warn('⚠️ No geometry details available');
                         }
+                         setSearchListVisible(false); // Hide list immediately on press
                     }}
                     onFail={(error) => {
                         console.error('❌ Places API Error:', error);
