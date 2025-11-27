@@ -325,7 +325,6 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         
         setSearchMarker({ latitude, longitude, title });
         setReportLocation({ latitude, longitude }); // Use search location for reports
-        setMapRegion(newRegion);
         setSearchListVisible(false); // Hide search list after selection
         
         console.log('\u2705 Search marker set:', { latitude, longitude, title });
@@ -333,12 +332,15 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         console.log('\u2705 Search list hidden');
         
         // Animate map to location
-        if (mapRef.current) {
-            mapRef.current.animateToRegion(newRegion, 1000);
-            console.log('✅ Map animating to new region');
-        } else {
-            console.warn('⚠️ Map ref not available');
-        }
+        setTimeout(() => {
+            if (mapRef.current) {
+                console.log('🗺️ Map animation starting...');
+                mapRef.current.animateToRegion(newRegion, 1000);
+                console.log('✅ animateToRegion called');
+            } else {
+                console.error('❌ mapRef.current is NULL');
+            }
+        }, 150);
         
         Keyboard.dismiss();
     };
@@ -583,8 +585,7 @@ async function playBeep(value: number) {
                 <MapView
                     ref={mapRef}
                     style={StyleSheet.absoluteFill}
-                    region={mapRegion}
-                    onRegionChangeComplete={setMapRegion}
+                    initialRegion={mapRegion}
                     showsUserLocation={true}
                     showsMyLocationButton={true}
                 >
