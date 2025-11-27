@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
     Alert,
     I18nManager,
@@ -26,6 +27,7 @@ const CARD = "#133B7A";
 
 export default function SettingsScreen() {
     const { user, logout } = useAuth();
+    const { language, setLanguage, t } = useLanguage();
     const [hideName, setHideName] = useState(false);
     const [notifReports, setNotifReports] = useState(true);
     const [notifPoints, setNotifPoints] = useState(false);
@@ -35,7 +37,7 @@ export default function SettingsScreen() {
     const [name, setName] = useState("");
 
     const [languageSheet, setLanguageSheet] = useState(false);
-    const [selectedLanguage, setSelectedLanguage] = useState("العربية");
+    const selectedLanguage = language === 'ar' ? t('settings.languages.ar') : t('settings.languages.en');
 
     const [emailModal, setEmailModal] = useState(false);
     const [passwordModal, setPasswordModal] = useState(false);
@@ -49,15 +51,15 @@ export default function SettingsScreen() {
 
     const handleLogout = () => {
         Alert.alert(
-            'تسجيل الخروج',
-            'هل أنت متأكد أنك تريد تسجيل الخروج؟',
+            t('auth.logout'),
+            t('auth.logoutConfirm'),
             [
                 {
-                    text: 'إلغاء',
+                    text: t('common.cancel'),
                     style: 'cancel',
                 },
                 {
-                    text: 'تسجيل الخروج',
+                    text: t('auth.logout'),
                     style: 'destructive',
                     onPress: async () => {
                         await logout();
@@ -109,11 +111,11 @@ export default function SettingsScreen() {
             {/* Header */}
             <View style={styles.header}>
                 {/* Logout Icon – oben rechts (visuell) */}
-                <TouchableOpacity onPress={() => alert("تم تسجيل الخروج")} style={styles.iconBtn}>
+                <TouchableOpacity onPress={handleLogout} style={styles.iconBtn}>
                     <Ionicons name="log-out-outline" size={28} color={YELLOW} />
                 </TouchableOpacity>
 
-                <Text style={styles.headerTitle}>الإعدادات</Text>
+                <Text style={styles.headerTitle}>{t('settings.title')}</Text>
 
                 {/* Back icon (like profile) */}
                 <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
@@ -123,25 +125,25 @@ export default function SettingsScreen() {
 
             {/* USER ID */}
             <Text style={styles.userId}>
-                <Text style={{ color: "#ccc" }}>   رقم المستخدم: </Text>U-2025-143
+                <Text style={{ color: "#ccc" }}>   {t('profile.userId')} </Text>{user?.id ? `U-${user.id}` : 'U-2025-143'}
             </Text>
 
             {/* ACTIONS */}
             <View
                 style={styles.card}>
                     <TouchableOpacity onPress={() => setNameModal(true)}>
-                    <Text style={styles.textItem}>تغيير الاسم</Text>
+                    <Text style={styles.textItem}>{t('settings.changeName')}</Text>
                         </TouchableOpacity>
                 <TouchableOpacity onPress={() => setEmailModal(true)}>
-                    <Text style={styles.textItem}>تغيير البريد الإلكتروني</Text>
+                    <Text style={styles.textItem}>{t('settings.changeEmail')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => setPasswordModal(true)}>
-                    <Text style={styles.textItem}>تغيير كلمة المرور</Text>
+                    <Text style={styles.textItem}>{t('settings.changePassword')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => setPhoneModal(true)}>
-                    <Text style={styles.textItem}>تغيير رقم الموبايل</Text>
+                    <Text style={styles.textItem}>{t('settings.changePhone')}</Text>
                 </TouchableOpacity>
 
                 {/* Language */}
@@ -153,7 +155,7 @@ export default function SettingsScreen() {
                         <Text style={styles.languageValue}>{selectedLanguage}</Text>
                        
                     </View>
-                    <Text style={styles.languageLabel}>اللغة: </Text>
+                    <Text style={styles.languageLabel}>{t('settings.language')}: </Text>
 
                    
                 </TouchableOpacity>
@@ -161,13 +163,13 @@ export default function SettingsScreen() {
 
                 <SuccessModal
                     visible={successVisible}
-                    message="تم حفظ التغييرات بنجاح"
+                    message={t('settings.changesSaved')}
                     onClose={() => setSuccessVisible(false)}
                 />
 
                 {/* Hide name */}
                 <View style={styles.switchRow}>
-                    <Text style={styles.switchText}>إخفاء اسمي عن البلاغات العامة</Text>
+                    <Text style={styles.switchText}>{t('settings.hideName')}</Text>
                     <Switch
                         value={hideName}
                         onValueChange={setHideName}
@@ -179,42 +181,42 @@ export default function SettingsScreen() {
             <IOSActionSheet
                 visible={languageSheet}
                 onClose={() => setLanguageSheet(false)}
-                options={["العربية", "English", "Deutsch", "Türkçe"]}
-                onSelect={(choice: string) => {
-                    setSelectedLanguage(choice);
-                    alert("تم اختيار اللغة: " + choice);
+                options={[t('settings.languages.ar'), t('settings.languages.en')]}
+                onSelect={async (choice: string) => {
+                    const newLang = choice === 'العربية' || choice === t('settings.languages.ar') ? 'ar' : 'en';
+                    await setLanguage(newLang);
                 }}
             />
 
             {/* Notifications */}
-            <Text style={styles.sectionTitle}>   الإشعارات</Text>
+            <Text style={styles.sectionTitle}>   {t('settings.notifications')}</Text>
 
             <View style={styles.card}>
                 <SwitchRow
-                    label="إشعارات البلاغات"
+                    label={t('settings.notifReports')}
                     value={notifReports}
                     onChange={setNotifReports}
                 />
                 <SwitchRow
-                    label="إشعارات النقاط والمكافآت"
+                    label={t('settings.notifPoints')}
                     value={notifPoints}
                     onChange={setNotifPoints}
                 />
                 <SwitchRow
-                    label="إشعارات عامة"
+                    label={t('settings.notifGeneral')}
                     value={notifGeneral}
                     onChange={setNotifGeneral}
                 />
             </View>
 
             <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
-                <Text style={styles.saveButtonText}>حفظ التغييرات</Text>
+                <Text style={styles.saveButtonText}>{t('settings.saveChanges')}</Text>
             </TouchableOpacity>
 
             {/* Logout Button */}
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <Ionicons name="log-out-outline" size={22} color="#fff" style={{ marginLeft: 8 }} />
-                <Text style={styles.logoutButtonText}>تسجيل الخروج</Text>
+                <Text style={styles.logoutButtonText}>{t('auth.logout')}</Text>
             </TouchableOpacity>
 
 
@@ -222,24 +224,24 @@ export default function SettingsScreen() {
             <ChangeModal
                 visible={emailModal}
                 onClose={() => setEmailModal(false)}
-                title="تغيير البريد الإلكتروني"
-                placeholder="اكتب بريدك الجديد"
+                title={t('settings.changeEmail')}
+                placeholder={language === 'ar' ? 'اكتب بريدك الجديد' : 'Enter new email'}
                 value={email}
                 setValue={setEmail}
                 onSave={() => {
-                    alert("تم تغيير البريد الإلكتروني 👍");
+                    alert(t('common.success') + ' 👍');
                     setEmailModal(false);
                 }}
             />
         <ChangeModal
             visible={nameModal}
                 onClose={() => setNameModal(false)}
-        title="تغيير الاسم"
-        placeholder="اكتب اسمك الجديد"
+        title={t('settings.changeName')}
+        placeholder={language === 'ar' ? 'اكتب اسمك الجديد' : 'Enter new name'}
         value={name}
         setValue={setName}
             onSave={() => {
-            alert("تم تغيير الاسم 👍");
+            alert(t('common.success') + ' 👍');
             setNameModal(false);
             }}
                     />
@@ -247,12 +249,12 @@ export default function SettingsScreen() {
             <ChangeModal
                 visible={passwordModal}
                 onClose={() => setPasswordModal(false)}
-                title="تغيير كلمة المرور"
-                placeholder="اكتب كلمة المرور الجديدة"
+                title={t('settings.changePassword')}
+                placeholder={language === 'ar' ? 'اكتب كلمة المرور الجديدة' : 'Enter new password'}
                 value={password}
                 setValue={setPassword}
                 onSave={() => {
-                    alert("تم تغيير كلمة المرور 👍");
+                    alert(t('common.success') + ' 👍');
                     setPasswordModal(false);
                 }}
             />
@@ -260,12 +262,12 @@ export default function SettingsScreen() {
             <ChangeModal
                 visible={phoneModal}
                 onClose={() => setPhoneModal(false)}
-                title="تغيير رقم الموبايل"
-                placeholder="اكتب رقمك الجديد"
+                title={t('settings.changePhone')}
+                placeholder={language === 'ar' ? 'اكتب رقمك الجديد' : 'Enter new phone number'}
                 value={phone}
                 setValue={setPhone}
                 onSave={() => {
-                    alert("تم تغيير رقم الموبايل 👍");
+                    alert(t('common.success') + ' 👍');
                     setPhoneModal(false);
                 }}
             />

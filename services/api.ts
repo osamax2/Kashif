@@ -144,7 +144,22 @@ export const authAPI = {
   logout: async (): Promise<void> => {
     await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
   },
+
+  // Update user language preference
+  updateLanguagePreference: async (language: string): Promise<void> => {
+    await api.patch('/api/auth/me/language', { language });
+  },
+
+  // Update user profile
+  updateProfile: async (data: Partial<User>): Promise<User> => {
+    const response = await api.patch<User>('/api/auth/me', data);
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(response.data));
+    return response.data;
+  },
 };
+
+// User API - alias for authAPI
+export const userAPI = authAPI;
 
 // Lookup data API
 export interface Level {

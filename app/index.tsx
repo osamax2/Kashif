@@ -14,11 +14,13 @@ import {
 } from "react-native";
 import RtlTextInput from '../components/ui/rtl-textinput';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { authAPI } from '../services/api';
 
 export default function Index() {
   const router = useRouter();
   const { setUser } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,12 +29,12 @@ export default function Index() {
   const handleLogin = async () => {
     // Validation
     if (!email || !password) {
-      Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني وكلمة المرور');
+      Alert.alert(t('errors.error'), t('errors.enterEmailPassword'));
       return;
     }
 
     if (!email.includes('@')) {
-      Alert.alert('خطأ', 'الرجاء إدخال بريد إلكتروني صحيح');
+      Alert.alert(t('errors.error'), t('errors.invalidEmailFormat'));
       return;
     }
 
@@ -59,13 +61,13 @@ export default function Index() {
       console.error('Login error:', error);
       
       if (error.response?.status === 401) {
-        Alert.alert('خطأ', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+        Alert.alert(t('errors.error'), t('errors.invalidCredentials'));
       } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        Alert.alert('خطأ', 'انتهت مهلة الاتصال. الرجاء المحاولة مرة أخرى');
+        Alert.alert(t('errors.error'), t('errors.connectionTimeout'));
       } else if (error.message?.includes('Network Error')) {
-        Alert.alert('خطأ في الاتصال', 'تعذر الاتصال بالخادم. الرجاء التحقق من الاتصال بالإنترنت');
+        Alert.alert(t('errors.error'), t('errors.connectionError'));
       } else {
-        Alert.alert('خطأ', error.response?.data?.detail || 'حدث خطأ أثناء تسجيل الدخول');
+        Alert.alert(t('errors.error'), error.response?.data?.detail || t('errors.loginError'));
       }
     } finally {
       setLoading(false);
@@ -82,25 +84,25 @@ export default function Index() {
               resizeMode="contain"
           />
           <View style={styles.headerText}>
-            <Text style={styles.appName}>كاشف</Text>
-            <Text style={styles.appTag}>عينك على الطريق</Text>
+            <Text style={styles.appName}>{t('auth.appName')}</Text>
+            <Text style={styles.appTag}>{t('auth.appTagline')}</Text>
           </View>
         </View>
 
         {/* Card / Form area */}
         <View style={styles.card}>
-          <Text style={styles.title}>تسجيل الدخول</Text>
-          <Text style={styles.subtitle}>مرحباً بعودتك</Text>
+          <Text style={styles.title}>{t('auth.login')}</Text>
+          <Text style={styles.subtitle}>{t('auth.welcomeBack')}</Text>
 
           {/* Form (wraps email, password, buttons, links) */}
           <View style={styles.form}>
             {/* E-Mail */}
             <View style={styles.field}>
-              <Text style={styles.label}>البريد الإلكتروني</Text>
+              <Text style={styles.label}>{t('auth.email')}</Text>
               <RtlTextInput
                   value={email}
                   onChangeText={setEmail}
-                  placeholder="example@email.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   placeholderTextColor="#AAB3C0"
                   style={styles.inputUnderline}
                   textAlign="right"
@@ -109,14 +111,14 @@ export default function Index() {
 
             {/* Passwort */}
             <View style={styles.field}>
-              <Text style={styles.label}>كلمة المرور</Text>
+              <Text style={styles.label}>{t('auth.password')}</Text>
               <View style={styles.passwordContainer}>
                 <RtlTextInput
                     secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={setPassword}
                     style={styles.inputUnderline}
-                    placeholder="••••••••"
+                    placeholder={t('auth.passwordPlaceholder')}
                     placeholderTextColor="#AAB3C0"
                     textAlign="right"
                 />
@@ -143,12 +145,12 @@ export default function Index() {
               {loading ? (
                   <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                  <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
+                  <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
               )}
             </TouchableOpacity>
 
             {/* --- Social Login --- */}
-            <Text style={styles.orText}>أو سجل باستخدام</Text>
+            <Text style={styles.orText}>{t('auth.orLoginWith')}</Text>
 
             {/* WHATSAPP + GOOGLE */}
             <View style={styles.socialRow}>
@@ -171,7 +173,7 @@ export default function Index() {
             {/* Apple – zentriert */}
             <TouchableOpacity style={styles.appleButton}>
               <FontAwesome name="apple" size={24} color="#fff" style={{ marginLeft: -3 }} />
-              <Text style={styles.appleText}>تسجيل الدخول باستخدام Apple</Text>
+              <Text style={styles.appleText}>{t('auth.loginWithApple')}</Text>
             </TouchableOpacity>
 
 
@@ -181,12 +183,12 @@ export default function Index() {
               <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/register')}>
                 {/* plus-icon bleibt optional */}
                 { <FontAwesome name="plus-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} /> }
-                <Text style={styles.link}>أنشئ حسابًا جديدًا</Text>
+                <Text style={styles.link}>{t('auth.createNewAccount')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/forgot')}>
                 <FontAwesome name="question-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
-                <Text style={styles.link}>نسيت كلمة المرور؟</Text>
+                <Text style={styles.link}>{t('auth.forgotPassword')}</Text>
               </TouchableOpacity>
             </View>
           </View>

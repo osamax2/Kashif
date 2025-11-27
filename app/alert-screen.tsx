@@ -1,3 +1,4 @@
+import { useLanguage } from '@/contexts/LanguageContext';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Audio } from 'expo-av';
 import { useRouter } from 'expo-router';
@@ -22,6 +23,7 @@ const WHITE = '#FFFFFF';
 
 export default function AlertScreen() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [distance, setDistance] = useState(200);
   const pulseAnim = new Animated.Value(1);
   const scaleAnim = new Animated.Value(0.5);

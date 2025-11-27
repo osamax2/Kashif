@@ -1,6 +1,7 @@
 // app/(tabs)/home.tsx
 import ReportDialog from "@/components/ReportDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, Severity } from "@/services/api";
 import locationMonitoringService from "@/services/location-monitoring";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -95,6 +96,7 @@ const BLUE = "#0D2B66";
 
 export default function HomeScreen() {
     const { user } = useAuth();
+    const { t, language } = useLanguage();
     
     /** BACKEND DATA */
     const [reports, setReports] = useState<Report[]>([]);
@@ -134,7 +136,11 @@ export default function HomeScreen() {
     async function playTestSound() {
         // Use speech as a safe fallback when no audio file is available.
         try {
-            await Speech.speak("هذا اختبار ", { language: "ar-SA", rate: 0.9 });
+            await Speech.speak(t('home.testSoundText'), { 
+                language: language === 'ar' ? "ar-SA" : "en-US", 
+                rate: 0.9,
+                volume: appVolume
+            });
         } catch (e) {
             console.warn("playTestSound (speech) failed", e);
         }
@@ -444,30 +450,30 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     switch (type) {
         case "pothole":
             if (warnPothole) {
-                message = "تحذير! توجد حفرة أمامك";
+                message = t('home.warnPothole');
                 shouldSpeak = true;
             }
             break;
         case "accident":
             if (warnAccident) {
-                message = "تحذير! حادث على الطريق";
+                message = t('home.warnAccident');
                 shouldSpeak = true;
             }
             break;
         case "speed":
             if (warnSpeed) {
-                message = "احذر! كاميرا سرعة أمامك";
+                message = t('home.warnSpeed');
                 shouldSpeak = true;
             }
             break;
         default:
-            message = "تحذير!";
+            message = language === 'ar' ? 'تحذير!' : 'Warning!';
             shouldSpeak = true;
     }
 
     if (shouldSpeak) {
         await Speech.speak(message, {
-            language: "ar-SA",
+            language: language === 'ar' ? "ar-SA" : "en-US",
             rate: 0.9,
             pitch: 1.0,
             volume: appVolume,
@@ -488,13 +494,13 @@ async function playBeep(value: number) {
         <View style={styles.root}>
             {/* HEADER */}
             <View style={styles.appbar}>
-                <Text style={styles.title}>الرئيسية</Text>
+                <Text style={styles.title}>{t('home.title')}</Text>
             </View>
 
             {/* SUCHE */}
             <View style={styles.searchContainer}>
                 <GooglePlacesAutocomplete
-                    placeholder="ابحث عن موقع أو شارع"
+                    placeholder={language === 'ar' ? 'ابحث عن موقع أو شارع' : 'Search for location or street'}
                     minLength={2}
                     debounce={400}
                     listViewDisplayed={searchListVisible}
@@ -527,7 +533,7 @@ async function playBeep(value: number) {
                     }}
                     query={{
                         key: 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
-                        language: 'ar',
+                        language: language,
                         components: 'country:sy',
                     }}
                     enablePoweredByContainer={false}
@@ -698,7 +704,7 @@ async function playBeep(value: number) {
                                         latitude: lat,
                                         longitude: lng,
                                     }}
-                                    title={report.title || categories.find(c => c.id === report.category_id)?.name || 'بلاغ'}
+                                    title={report.title || categories.find(c => c.id === report.category_id)?.name || (language === 'ar' ? 'بلاغ' : 'Report')}
                                     description={report.description}
                                 >
                                     <View style={styles.marker}>
@@ -760,7 +766,7 @@ async function playBeep(value: number) {
             {/* INFO-BAR UNTEN */}
             <View style={styles.infoBar}>
                 <Text style={styles.infoText}>
-                    عدد البلاغات النشطة: {visibleMarkers.length} / {reports.length} 📘
+                    {language === 'ar' ? `عدد البلاغات النشطة: ${visibleMarkers.length} / ${reports.length} 📘` : `Active Reports: ${visibleMarkers.length} / ${reports.length} 📘`}
                 </Text>
             </View>
 
@@ -768,7 +774,7 @@ async function playBeep(value: number) {
             <ReportDialog
                 visible={reportType !== null}
                 type={reportType}
-                address={searchMarker?.title || "الموقع التلقائي"}
+                address={searchMarker?.title || (language === 'ar' ? 'الموقع التلقائي' : 'Auto Location')}
                 onClose={() => setReportType(null)}
                 onSubmit={async (data) => {
                     try {
@@ -776,7 +782,7 @@ async function playBeep(value: number) {
                         const locationToUse = reportLocation || userLocation;
                         
                         if (!locationToUse) {
-                            alert('يرجى تفعيل تحديد الموقع أو البحث عن موقع');
+                            alert(language === 'ar' ? 'يرجى تفعيل تحديد الموقع أو البحث عن موقع' : 'Please enable location or search for a location');
                             return;
                         }
                         
@@ -804,11 +810,11 @@ async function playBeep(value: number) {
                         // Create report
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole' 
-                                ? 'حفرة في الطريق' 
+                                ? (language === 'ar' ? 'حفرة في الطريق' : 'Pothole on Road')
                                 : data.type === 'accident'
-                                ? 'حادث مروري'
-                                : 'كاشف سرعة',
-                            description: data.notes || 'بلاغ جديد',
+                                ? (language === 'ar' ? 'حادث مروري' : 'Traffic Accident')
+                                : (language === 'ar' ? 'كاشف سرعة' : 'Speed Camera'),
+                            description: data.notes || (language === 'ar' ? 'بلاغ جديد' : 'New Report'),
                             category_id: categoryId,
                             latitude: locationToUse.latitude,
                             longitude: locationToUse.longitude,
@@ -828,7 +834,7 @@ async function playBeep(value: number) {
                         // The onClose() is called from ReportDialog.tsx after 1.5s
                     } catch (error) {
                         console.error('❌ Error creating report:', error);
-                        alert('❌ حدث خطأ أثناء إرسال البلاغ');
+                        alert(language === 'ar' ? '❌ حدث خطأ أثناء إرسال البلاغ' : '❌ Error submitting report');
                     }
                 }}
             />
@@ -845,11 +851,11 @@ async function playBeep(value: number) {
     <BlurView intensity={55} tint="dark" style={styles.audioSheet}>
       <View style={styles.audioSheetHandle} />
 
-      <Text style={styles.audioTitle}>إعدادات الصوت</Text>
+      <Text style={styles.audioTitle}>{t('home.soundSettings')}</Text>
 
       {/* Lautstärke + Test */}
       <View style={styles.volumeSection}>
-        <Text style={styles.audioLabel}>مستوى صوت التطبيق</Text>
+        <Text style={styles.audioLabel}>{t('home.volume')}</Text>
 
         <Slider
           style={{ width: "100%", height: 35 }}
@@ -866,7 +872,7 @@ async function playBeep(value: number) {
         />
 
         <TouchableOpacity style={styles.testBtn} onPress={playTestSound}>
-          <Text style={styles.testBtnText}>اختبار الصوت</Text>
+          <Text style={styles.testBtnText}>{t('home.testSound')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -890,7 +896,7 @@ async function playBeep(value: number) {
          <View style={[styles.modeIconCircle]}>
             <Ionicons name="alert-circle" size={26} color="yellow" />
         </View>
-        <Text style={styles.modeText}>حفرة</Text>
+        <Text style={styles.modeText}>{t('home.pothole')}</Text>
     </TouchableOpacity>
 
     {/* حادث */}
@@ -910,7 +916,7 @@ async function playBeep(value: number) {
         <View style={[styles.modeIconCircle]}>
             <Ionicons name="warning" size={26} color="#a7c8f9ff" />
         </View>
-        <Text style={styles.modeText}>حادث</Text>
+        <Text style={styles.modeText}>{t('home.accident')}</Text>
     </TouchableOpacity>
 
     {/* كاشف السرعة */}
@@ -930,7 +936,7 @@ async function playBeep(value: number) {
         <View style={[styles.modeIconCircle]}>
             <Ionicons name="speedometer" size={26} color="red" />
         </View>
-        <Text style={styles.modeText}>كاشف السرعة</Text>
+        <Text style={styles.modeText}>{t('home.speedCamera')}</Text>
     </TouchableOpacity>
 
 </View>
@@ -942,7 +948,7 @@ async function playBeep(value: number) {
         style={styles.closeAudioBtn}
         onPress={() => setAudioVisible(false)}
       >
-        <Text style={styles.closeAudioText}>إغلاق</Text>
+        <Text style={styles.closeAudioText}>{t('common.close')}</Text>
       </TouchableOpacity>
     </BlurView>
   </View>
