@@ -31,6 +31,7 @@ export default function ProfileScreen() {
     
     // Backend data state
     const [loading, setLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [transactions, setTransactions] = useState<PointTransaction[]>([]);
     const [reportCount, setReportCount] = useState(0);
     const [levels, setLevels] = useState<Level[]>([]);
@@ -38,22 +39,30 @@ export default function ProfileScreen() {
     const [nextLevel, setNextLevel] = useState<Level | null>(null);
     const [progressPercentage, setProgressPercentage] = useState(0);
 
-    // Load data from backend
+    // Load data from backend only on initial mount
     useEffect(() => {
-        loadProfileData();
-    }, [user]);
+        loadProfileData(true);
+    }, []);
 
-    // Refresh user data when screen comes into focus
+    // Refresh user data silently when screen comes into focus
     useFocusEffect(
         useCallback(() => {
+            // Refresh user data in background without showing loader
             refreshUser();
-        }, [refreshUser])
+            // Reload profile data silently
+            if (!isInitialLoad) {
+                loadProfileData(false);
+            }
+        }, [refreshUser, isInitialLoad])
     );
 
-    const loadProfileData = async () => {
+    const loadProfileData = async (showLoader: boolean = false) => {
         if (!user) return;
         
-        setLoading(true);
+        if (showLoader) {
+            setLoading(true);
+        }
+        
         try {
             // Load in parallel for better performance
             const [transactionsData, reportsData, levelsData] = await Promise.all([
@@ -96,7 +105,10 @@ export default function ProfileScreen() {
         } catch (error) {
             console.error('Error loading profile data:', error);
         } finally {
-            setLoading(false);
+            if (showLoader) {
+                setLoading(false);
+                setIsInitialLoad(false);
+            }
         }
     };
 
