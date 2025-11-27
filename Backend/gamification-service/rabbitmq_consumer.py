@@ -27,7 +27,7 @@ def handle_report_created(event_data):
         
         if user_id and report_id:
             points = POINTS_CONFIG["report_created"]
-            crud.create_transaction(
+            transaction = crud.create_transaction(
                 db=db,
                 user_id=user_id,
                 points=points,
@@ -36,6 +36,19 @@ def handle_report_created(event_data):
                 description=f"Created report #{report_id}"
             )
             logger.info(f"Awarded {points} points to user {user_id} for creating report {report_id}")
+            
+            # Publish event to update user's total_points in auth service
+            from rabbitmq_publisher import publish_event
+            try:
+                publish_event("points.transaction.created", {
+                    "user_id": user_id,
+                    "points": points,
+                    "transaction_id": transaction.id,
+                    "transaction_type": "REPORT_CREATED"
+                })
+                logger.info(f"Published points.transaction.created event for user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to publish points transaction event: {e}")
         
         db.close()
         
@@ -54,7 +67,7 @@ def handle_report_resolved(event_data):
         
         if user_id and report_id:
             points = POINTS_CONFIG["report_resolved"]
-            crud.create_transaction(
+            transaction = crud.create_transaction(
                 db=db,
                 user_id=user_id,
                 points=points,
@@ -63,6 +76,19 @@ def handle_report_resolved(event_data):
                 description=f"Report #{report_id} was resolved"
             )
             logger.info(f"Awarded {points} points to user {user_id} for resolved report {report_id}")
+            
+            # Publish event to update user's total_points in auth service
+            from rabbitmq_publisher import publish_event
+            try:
+                publish_event("points.transaction.created", {
+                    "user_id": user_id,
+                    "points": points,
+                    "transaction_id": transaction.id,
+                    "transaction_type": "CONFIRMATION"
+                })
+                logger.info(f"Published points.transaction.created event for user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to publish points transaction event: {e}")
         
         db.close()
         

@@ -86,4 +86,15 @@ def update_user_access_token(db: Session, user_id: int, access_token: str):
 def get_levels(db: Session):
     """Get all levels"""
     return db.query(models.Level).order_by(models.Level.min_report_number).all()
-    return db.query(models.Level).order_by(models.Level.min_report_number).all()
+
+
+def update_user_total_points(db: Session, user_id: int, points_to_add: int):
+    """Update user's total_points by adding points"""
+    user = get_user(db, user_id)
+    if user:
+        user.total_points = (user.total_points or 0) + points_to_add
+        db.commit()
+        db.refresh(user)
+        return user
+    return None
+

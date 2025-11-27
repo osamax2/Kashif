@@ -1,4 +1,5 @@
 import logging
+import threading
 from typing import Annotated
 
 import auth
@@ -8,6 +9,7 @@ import schemas
 from database import engine, get_db
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
 from sqlalchemy.orm import Session
 
@@ -20,6 +22,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Start RabbitMQ consumer in background thread
+consumer_thread = threading.Thread(target=start_consumer, daemon=True)
+consumer_thread.start()
 
 
 @app.get("/health")
