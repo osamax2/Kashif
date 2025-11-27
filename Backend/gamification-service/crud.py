@@ -68,4 +68,16 @@ def get_leaderboard(db: Session, limit: int = 100) -> List[dict]:
         })
     
     return leaderboard
-    return leaderboard
+
+
+def get_confirmation_transaction(
+    db: Session,
+    user_id: int,
+    report_id: int
+) -> Optional[models.PointTransaction]:
+    """Check if user already confirmed this report"""
+    return db.query(models.PointTransaction).filter(
+        models.PointTransaction.user_id == user_id,
+        models.PointTransaction.report_id == report_id,
+        models.PointTransaction.type == "REPORT_CONFIRMED"
+    ).first()

@@ -154,4 +154,52 @@ async def get_leaderboard(
     """Get points leaderboard"""
     leaderboard = crud.get_leaderboard(db, limit)
     return leaderboard
-    return leaderboard
+
+
+@app.post("/confirm-report/{report_id}")
+async def confirm_report(
+    report_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Award 20 points for confirming a report exists"""
+    # Check if user already confirmed this report
+    existing_confirmation = crud.get_confirmation_transaction(db, user_id, report_id)
+    if existing_confirmation:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already confirmed this report"
+        )
+    
+    # Award 20 points for confirmation
+    CONFIRMATION_POINTS = 20
+    transaction = crud.create_transaction(
+        db=db,
+        user_id=user_id,
+        points=CONFIRMATION_POINTS,
+        transaction_type="REPORT_CONFIRMED",
+        report_id=report_id,
+        description=f"Confirmed report #{report_id}"
+    )
+    
+    logger.info(f"Awarded {CONFIRMATION_POINTS} points to user {user_id} for confirming report {report_id}")
+    
+    # Publish event to update auth service
+    try:
+        publish_event("points.transaction.created", {
+            "user_id": user_id,
+            "points": CONFIRMATION_POINTS,
+            "transaction_type": "REPORT_CONFIRMED",
+            "report_id": report_id,
+            "transaction_id": transaction.id
+        })
+        logger.info(f"Published points.transaction.created event for user {user_id}")
+    except Exception as e:
+        logger.error(f"Failed to publish points.transaction.created event: {e}")
+    
+    return {
+        "points": CONFIRMATION_POINTS,
+        "message": "Report confirmed successfully. You earned 20 points!",
+        "transaction_id": transaction.id,
+        "total_points": crud.get_user_total_points(db, user_id)
+    }

@@ -1,9 +1,12 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { gamificationAPI } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Audio } from 'expo-av';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Animated,
     Dimensions,
     I18nManager,
@@ -24,11 +27,56 @@ const WHITE = '#FFFFFF';
 export default function AlertScreen() {
   const router = useRouter();
   const { t, language } = useLanguage();
-  const [distance, setDistance] = useState(200);
+  const { refreshUser } = useAuth();
+  const { reportId, distance: initialDistance, categoryId } = useLocalSearchParams<{
+    reportId: string;
+    distance: string;
+    categoryId: string;
+  }>();
+  
+  const [distance, setDistance] = useState(parseInt(initialDistance || '200'));
+  const [isConfirming, setIsConfirming] = useState(false);
+  const categoryIdNum = parseInt(categoryId || '1');
   const pulseAnim = new Animated.Value(1);
   const scaleAnim = new Animated.Value(0.5);
   const rotateAnim = new Animated.Value(0);
   const roadAnim = new Animated.Value(0);
+
+  // Get alert data based on category
+  const getAlertData = () => {
+    switch (categoryIdNum) {
+      case 1: // Pothole
+        return {
+          icon: 'warning' as const,
+          iconColor: DESTRUCTIVE_RED,
+          title: language === 'ar' ? '⚠️ تحذير!' : '⚠️ Warning!',
+          subtitle: language === 'ar' ? 'حفرة في الأمام' : 'Pothole Ahead',
+        };
+      case 2: // Accident
+        return {
+          icon: 'alert-circle' as const,
+          iconColor: DESTRUCTIVE_RED,
+          title: language === 'ar' ? '🚨 تحذير!' : '🚨 Warning!',
+          subtitle: language === 'ar' ? 'حادث مروري في الأمام' : 'Traffic Accident Ahead',
+        };
+      case 3: // Speed Camera
+        return {
+          icon: 'speedometer' as const,
+          iconColor: DESTRUCTIVE_RED,
+          title: language === 'ar' ? '📷 تنبيه!' : '📷 Alert!',
+          subtitle: language === 'ar' ? 'كاشف سرعة في الأمام' : 'Speed Camera Ahead',
+        };
+      default:
+        return {
+          icon: 'warning' as const,
+          iconColor: DESTRUCTIVE_RED,
+          title: language === 'ar' ? '⚠️ تحذير!' : '⚠️ Warning!',
+          subtitle: language === 'ar' ? 'حفرة في الأمام' : 'Pothole Ahead',
+        };
+    }
+  };
+
+  const alertData = getAlertData();
 
   useEffect(() => {
     // Initial scale animation
@@ -116,15 +164,16 @@ export default function AlertScreen() {
 
   const playAlertSound = async () => {
     try {
+      // Try to play alert sound if it exists
+      // If the sound file doesn't exist, this will silently fail
       const { sound } = await Audio.Sound.createAsync(
-        require('../assets/sounds/alert.mp3'), // You need to add this file
-        { shouldPlay: true, volume: 1.0 },
-        null,
-        false
+        require('../assets/sounds/alert.mp3'),
+        { shouldPlay: true, volume: 1.0 }
       );
       await sound.playAsync();
     } catch (error) {
-      console.log('Error playing sound:', error);
+      // Silently ignore if sound file doesn't exist
+      console.log('Alert sound not available, skipping audio');
     }
   };
 
@@ -132,10 +181,36 @@ export default function AlertScreen() {
     router.back();
   };
 
-  const handleConfirm = () => {
-    // TODO: Add 5 points to user
-    // TODO: Confirm pothole exists
-    router.back();
+  const handleConfirm = async () => {
+    if (!reportId || isConfirming) return;
+    
+    try {
+      setIsConfirming(true);
+      
+      // Call API to confirm report and award 20 points
+      const result = await gamificationAPI.confirmReport(parseInt(reportId));
+      
+      console.log('✅ Report confirmed:', result.message, `+${result.points} points`);
+      
+      // Refresh user data to update points
+      await refreshUser();
+      
+      // Show success message briefly before closing
+      // You could add a success animation here if desired
+      setTimeout(() => {
+        router.back();
+      }, 500);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to confirm report:', error);
+      
+      // Show error message
+      const errorMessage = error?.response?.data?.detail || 
+        (language === 'ar' ? 'فشل تأكيد البلاغ' : 'Failed to confirm report');
+      
+      alert(errorMessage);
+      setIsConfirming(false);
+    }
   };
 
   const rotateInterpolate = rotateAnim.interpolate({
@@ -189,13 +264,13 @@ export default function AlertScreen() {
           ]}
         >
           <View style={styles.iconCircle}>
-            <Ionicons name="warning" size={96} color={DESTRUCTIVE_RED} />
+            <Ionicons name={alertData.icon} size={96} color={alertData.iconColor} />
           </View>
         </Animated.View>
 
         {/* Alert Text */}
-        <Text style={styles.mainTitle}>⚠️ تحذير!</Text>
-        <Text style={styles.subtitle}>حفرة في الأمام</Text>
+        <Text style={styles.mainTitle}>{alertData.title}</Text>
+        <Text style={styles.subtitle}>{alertData.subtitle}</Text>
 
         {/* Distance Indicator */}
         <Animated.View
@@ -208,9 +283,11 @@ export default function AlertScreen() {
         >
           <View style={styles.distanceContent}>
             <Ionicons name="navigate" size={24} color={WHITE} style={styles.navigationIcon} />
-            <Text style={styles.distanceText}>{distance}م</Text>
+            <Text style={styles.distanceText}>{distance}{language === 'ar' ? 'م' : 'm'}</Text>
           </View>
-          <Text style={styles.warningText}>إبطئ السرعة وكن حذراً</Text>
+          <Text style={styles.warningText}>
+            {language === 'ar' ? 'إبطئ السرعة وكن حذراً' : 'Slow down and be careful'}
+          </Text>
         </Animated.View>
 
         {/* Action Buttons */}
@@ -219,9 +296,18 @@ export default function AlertScreen() {
             style={styles.confirmButton}
             onPress={handleConfirm}
             activeOpacity={0.8}
+            disabled={isConfirming}
           >
-            <Ionicons name="checkmark-circle" size={20} color={DESTRUCTIVE_RED} />
-            <Text style={styles.confirmButtonText}>شكراً للتأكيد (+5 نقاط)</Text>
+            {isConfirming ? (
+              <ActivityIndicator size="small" color={DESTRUCTIVE_RED} />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={20} color={DESTRUCTIVE_RED} />
+                <Text style={styles.confirmButtonText}>
+                  {language === 'ar' ? 'شكراً للتأكيد (+20 نقطة)' : 'Thanks for confirming (+20 points)'}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -229,7 +315,9 @@ export default function AlertScreen() {
             onPress={handleDismiss}
             activeOpacity={0.7}
           >
-            <Text style={styles.dismissButtonText}>تجاهل</Text>
+            <Text style={styles.dismissButtonText}>
+              {language === 'ar' ? 'تجاهل' : 'Dismiss'}
+            </Text>
           </TouchableOpacity>
         </View>
       </Animated.View>

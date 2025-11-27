@@ -295,13 +295,23 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     warnSpeed,
                 };
                 await AsyncStorage.setItem("audioSettings", JSON.stringify(settings));
+                
+                // Update location monitoring service with new settings
+                locationMonitoringService.updateSettings({
+                    soundEnabled,
+                    warnPothole,
+                    warnAccident,
+                    warnSpeed,
+                    appVolume,
+                    language,
+                });
             } catch (e) {
                 console.warn('Failed to save audio settings', e);
             }
         };
 
         saveSettings();
-    }, [soundEnabled, warningsEnabled, navigationEnabled, appVolume, warnPothole, warnAccident, warnSpeed]);
+    }, [soundEnabled, warningsEnabled, navigationEnabled, appVolume, warnPothole, warnAccident, warnSpeed, language]);
 
 
     /** Dialog-Typ (welcher Meldungs-Typ wird erstellt?) */

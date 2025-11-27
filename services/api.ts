@@ -269,6 +269,14 @@ export const gamificationAPI = {
     const response = await api.get<UserPoints>('/api/gamification/points/me');
     return response.data;
   },
+
+  // Confirm report existence (award 20 points)
+  confirmReport: async (reportId: number): Promise<{ points: number; message: string }> => {
+    const response = await api.post<{ points: number; message: string }>(
+      `/api/gamification/confirm-report/${reportId}`
+    );
+    return response.data;
+  },
 };
 
 // Reporting API
