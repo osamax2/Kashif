@@ -169,10 +169,10 @@ export default function ReportsScreen() {
                     color: "#FFD166",
                     fontSize: 18,
                     fontFamily: "Tajawal-Bold",
-                    marginTop: 10,
-                    marginBottom: 10,
+                    marginTop: 18,
+                    marginBottom: 19,
                     textAlign: "right",
-                    paddingHorizontal: 20,
+                    paddingHorizontal: 29,
                 }}
             >
                 <Text style={styles.listHeaderText}>إحصائيات بلاغاتي</Text>
@@ -365,7 +365,7 @@ function ReportCard({
 
 const styles = StyleSheet.create({
     root: {
-        flex: 1,
+        flex: 2,
         backgroundColor: BLUE,
         paddingTop: Platform.OS === "ios" ? 48 : 45,
     },
@@ -417,6 +417,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: "Tajawal-Bold",
         textAlign: "left",
+        paddingHorizontal: 10,
     },
 
     /* Card / Glass */

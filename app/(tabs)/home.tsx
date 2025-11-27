@@ -539,7 +539,7 @@ async function playBeep(value: number) {
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: BLUE, direction: "rtl" ,paddingTop: 13,},
+    root: { flex: 1, backgroundColor: BLUE, direction: "rtl" ,paddingTop: 12,},
 
     appbar: {
         height: Platform.OS === "ios" ? 80 : 80,
@@ -730,7 +730,7 @@ sliderLabel: {
 
 fakeSlider: {
     width: "100%",
-    height: 8,
+    height: 5,
     borderRadius: -6,
     backgroundColor: "#555",
 },
@@ -871,7 +871,7 @@ modeBox: {
     shadowRadius: 8,
     elevation: 6,
     bottom:18,
-    height: 150,   
+    height: 125,   
 },
 
 modeBoxActive: {
