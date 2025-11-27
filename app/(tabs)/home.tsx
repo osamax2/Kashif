@@ -314,6 +314,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     
     // Navigate to selected place
     const navigateToPlace = (latitude: number, longitude: number, title: string) => {
+        console.log('\ud83e\uddedNavigating to place:', { latitude, longitude, title });
+        
         const newRegion = {
             latitude,
             longitude,
@@ -324,11 +326,18 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         setSearchMarker({ latitude, longitude, title });
         setReportLocation({ latitude, longitude }); // Use search location for reports
         setMapRegion(newRegion);
-        //setSearchListVisible(false); // Hide search list after selection
+        setSearchListVisible(false); // Hide search list after selection
+        
+        console.log('\u2705 Search marker set:', { latitude, longitude, title });
+        console.log('\u2705 Report location updated to search location');
+        console.log('\u2705 Search list hidden');
         
         // Animate map to location
         if (mapRef.current) {
             mapRef.current.animateToRegion(newRegion, 1000);
+            console.log('✅ Map animating to new region');
+        } else {
+            console.warn('⚠️ Map ref not available');
         }
         
         Keyboard.dismiss();
@@ -425,15 +434,17 @@ async function playBeep(value: number) {
                     fetchDetails={true}
                     onPress={(data, details = null) => {
                         console.log('🔍 Search selected:', data.description);
+                        console.log('🔍 Details available:', details ? 'YES' : 'NO');
+                        
+                        setSearchListVisible(false); // Hide list immediately
+                        
                         if (details && details.geometry && details.geometry.location) {
                             const { lat, lng } = details.geometry.location;
                             console.log('📍 Coordinates:', lat, lng);
                             navigateToPlace(lat, lng, data.description);
-                           
                         } else {
                             console.warn('⚠️ No geometry details available');
                         }
-                        // setSearchListVisible(false); // Hide list immediately on press
                     }}
                     onFail={(error) => {
                         console.error('❌ Places API Error:', error);
