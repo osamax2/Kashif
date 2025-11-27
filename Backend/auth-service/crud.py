@@ -31,7 +31,8 @@ def create_user(db: Session, user: schemas.UserCreate):
         hashed_password=hashed_password,
         full_name=user.full_name,
         phone=user.phone,
-        role=user.role
+        role=user.role,
+        language=user.language if hasattr(user, 'language') else 'ar'
     )
     db.add(db_user)
     db.commit()
@@ -93,6 +94,17 @@ def update_user_total_points(db: Session, user_id: int, points_to_add: int):
     user = get_user(db, user_id)
     if user:
         user.total_points = (user.total_points or 0) + points_to_add
+        db.commit()
+        db.refresh(user)
+        return user
+    return None
+
+
+def update_user_language(db: Session, user_id: int, language: str):
+    """Update user's language preference"""
+    user = get_user(db, user_id)
+    if user:
+        user.language = language
         db.commit()
         db.refresh(user)
         return user

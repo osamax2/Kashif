@@ -21,6 +21,7 @@ class UserBase(BaseModel):
     full_name: str
     phone: Optional[str] = None
     role: str = "USER"
+    language: str = "ar"  # ar or en
 
 
 class UserCreate(UserBase):
@@ -33,6 +34,7 @@ class User(UserBase):
     image_url: Optional[str] = None
     level_id: Optional[int] = None
     status: str
+    language: str
     last_login: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
@@ -54,4 +56,7 @@ class RefreshTokenRequest(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     user_id: Optional[int] = None
-    user_id: Optional[int] = None
+
+
+class LanguageUpdate(BaseModel):
+    language: str  # ar or en

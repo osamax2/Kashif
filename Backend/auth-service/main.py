@@ -176,4 +176,42 @@ def get_user(
         )
     
     return user
-    return user
+
+
+@app.patch("/me/language")
+def update_language_preference(
+    language_data: schemas.LanguageUpdate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """
+    Update user's language preference.
+    
+    Request body:
+    {
+        "language": "ar"  // or "en"
+    }
+    """
+    # Verify token and get current user
+    current_user = auth.get_current_user(token, db)
+    
+    # Validate language
+    if language_data.language not in ['ar', 'en']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid language. Must be 'ar' or 'en'"
+        )
+    
+    # Update user's language
+    updated_user = crud.update_user_language(db, current_user.id, language_data.language)
+    
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update language preference"
+        )
+    
+    return {
+        "message": "Language preference updated successfully",
+        "language": updated_user.language
+    }

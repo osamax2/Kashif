@@ -29,6 +29,7 @@ class User(Base):
     image_url = Column(String(255), nullable=True)
     level_id = Column(Integer, ForeignKey("levels.id"), nullable=True)
     status = Column(String(50), default="ACTIVE", nullable=False)  # ACTIVE, BANNED
+    language = Column(String(2), default="ar", nullable=False)  # ar or en
     last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
