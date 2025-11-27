@@ -206,10 +206,17 @@ export const isLoggedIn = async (): Promise<boolean> => {
   return !!token;
 };
 
-// Helper function to get stored user
+// Helper function to get stored user (fetches fresh data from server)
 export const getStoredUser = async (): Promise<User | null> => {
-  const userStr = await AsyncStorage.getItem(USER_KEY);
-  return userStr ? JSON.parse(userStr) : null;
+  try {
+    // Try to get fresh data from server first
+    const user = await authAPI.getProfile();
+    return user;
+  } catch (error) {
+    // Fallback to cached data if server request fails
+    const userStr = await AsyncStorage.getItem(USER_KEY);
+    return userStr ? JSON.parse(userStr) : null;
+  }
 };
 
 // Logout helper

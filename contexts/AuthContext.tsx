@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   setUser: () => {},
   logout: async () => {},
+  refreshUser: async () => {},
 });
 
 export function useAuth() {
@@ -76,6 +78,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const storedUser = await getStoredUser();
+      setUser(storedUser);
+    } catch (error) {
+      console.error('Refresh user error:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -84,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         setUser,
         logout,
+        refreshUser,
       }}
     >
       {children}
