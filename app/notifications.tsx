@@ -1,16 +1,18 @@
 import Header from "@/components/Header";
+import { useNotifications } from "@/contexts/NotificationContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
-    FlatList,
-    I18nManager,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  I18nManager,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -20,84 +22,124 @@ const LIGHT_CARD = "rgba(255,255,255,0.09)";
 const BORDER = "rgba(255,255,255,0.18)";
 const YELLOW = "#F4B400";
 
-const INITIAL_NOTIFICATIONS = [
-  { id: "1", type: "success", message: "تم إصلاح الحفرة رقم 23", time: "منذ لحظات" },
-  { id: "2", type: "update", message: "تغيير حالة البلاغ رقم 551233", time: "قبل دقيقتين" },
-  { id: "3", type: "warning", message: "بلاغك قيد المراجعة الآن", time: "اليوم 12:10" },
-  { id: "4", type: "points", message: "حصلت على +20 نقاط جديدة 🏅", time: "اليوم 10:40" },
-];
-
 export default function ModernNotifications() {
   const router = useRouter();
-  const [items, setItems] = useState(INITIAL_NOTIFICATIONS);
+  const { notifications, loading, refreshNotifications, markAsRead, markAllAsRead } = useNotifications();
+  const [refreshing, setRefreshing] = React.useState(false);
 
-  const deleteItem = (id: string) => {
-    setItems((prev) => prev.filter((n) => n.id !== id));
+  useEffect(() => {
+    refreshNotifications();
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshNotifications();
+    setRefreshing(false);
   };
 
-  const clearAll = () => {
-    setItems([]);
+  const handleNotificationPress = async (notification: any) => {
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
+
+    // Navigate based on notification type
+    if (notification.related_report_id) {
+      router.push(`/report-details?id=${notification.related_report_id}` as any);
+    }
+  };
+
+  const clearAll = async () => {
+    await markAllAsRead();
   };
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "success":
+      case "report_status_updated":
+      case "report_resolved":
         return { icon: "checkmark-circle", color: "#4ADE80" };
-      case "warning":
-        return { icon: "warning", color: "#FACC15" };
-      case "update":
+      case "report_in_progress":
         return { icon: "sync", color: "#60A5FA" };
-      case "points":
+      case "report_rejected":
+        return { icon: "close-circle", color: "#EF4444" };
+      case "points_earned":
         return { icon: "star", color: "#F4B400" };
+      case "achievement":
+        return { icon: "trophy", color: "#F4B400" };
       default:
         return { icon: "notifications", color: "#FFD166" };
     }
   };
 
-  const renderDelete = (id: string) => (
-    <View style={styles.deleteBox}>
-      <Ionicons name="trash" size={26} color="#fff" />
-    </View>
-  );
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-  const renderItem = ({ item }: { item: (typeof INITIAL_NOTIFICATIONS)[number] }) => {
+    if (seconds < 60) return "منذ لحظات";
+    if (minutes < 60) return `قبل ${minutes} دقيقة`;
+    if (hours < 24) return `قبل ${hours} ساعة`;
+    if (days === 1) return "أمس";
+    return `قبل ${days} أيام`;
+  };
+
+  const renderItem = ({ item }: { item: any }) => {
     const meta = getIcon(item.type);
 
     return (
-      <Swipeable
-        renderRightActions={() => renderDelete(item.id)}
-        renderLeftActions={() => renderDelete(item.id)}
-        overshootLeft={false}
-        overshootRight={false}
-        onSwipeableRightOpen={() => deleteItem(item.id)}
-        onSwipeableLeftOpen={() => deleteItem(item.id)}
-      >
-        <View style={styles.card}>
+      <TouchableOpacity onPress={() => handleNotificationPress(item)} activeOpacity={0.8}>
+        <View style={[styles.card, !item.is_read && styles.unreadCard]}>
           <View style={[styles.iconCircle, { backgroundColor: meta.color + "22" }]}>
             <Ionicons name={meta.icon as any} size={26} color={meta.color} />
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.msg}>{item.message}</Text>
-            <Text style={styles.time}>{item.time}</Text>
+            <Text style={[styles.msg, !item.is_read && styles.unreadText]}>{item.title}</Text>
+            {item.body && <Text style={styles.body}>{item.body}</Text>}
+            <Text style={styles.time}>{formatTime(item.created_at)}</Text>
           </View>
+
+          {!item.is_read && <View style={styles.unreadDot} />}
         </View>
-      </Swipeable>
+      </TouchableOpacity>
     );
   };
 
-  const hasNotifications = items.length > 0;
+  const hasNotifications = notifications.length > 0;
+  const hasUnread = notifications.some(n => !n.is_read);
+
+  if (loading && notifications.length === 0) {
+    return (
+      <View style={styles.root}>
+        <Header title="الإشعارات" rightIcon="chevron-forward" onRightPress={() => router.back()} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={YELLOW} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
       <Header title="الإشعارات" rightIcon="chevron-forward" onRightPress={() => router.back()} />
 
       <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
+        data={notifications}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 80 }}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={YELLOW}
+            colors={[YELLOW]}
+          />
+        }
         ListEmptyComponent={() => (
           <View style={styles.emptyBox}>
             <Ionicons name="checkmark-circle" size={50} color={YELLOW} />
@@ -110,24 +152,21 @@ export default function ModernNotifications() {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* 🔥 Neuer Button „مسح كل الإشعارات“ */}
-      <TouchableOpacity
-        style={[
-          styles.clearButton,
-          !hasNotifications && styles.clearButtonDisabled,
-        ]}
-        disabled={!hasNotifications}
-        onPress={clearAll}
-        activeOpacity={0.9}
-      >
-        <Ionicons
-          name="trash-outline"
-          size={20}
-          color={hasNotifications ? BLUE : "#666"}
-          style={{ marginLeft: 6 }}
-        />
-        <Text style={styles.clearButtonText}>مسح كل الإشعارات</Text>
-      </TouchableOpacity>
+      {hasUnread && (
+        <TouchableOpacity
+          style={styles.clearButton}
+          onPress={clearAll}
+          activeOpacity={0.9}
+        >
+          <Ionicons
+            name="checkmark-done-outline"
+            size={20}
+            color={BLUE}
+            style={{ marginLeft: 6 }}
+          />
+          <Text style={styles.clearButtonText}>تعليم الكل كمقروء</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -140,12 +179,10 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
 
-  title: {
-    color: "#fff",
-    fontSize: 10,
-    fontFamily: "Tajawal-Bold",
-    textAlign: "center",
-    marginBottom: 25,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   card: {
@@ -160,6 +197,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
+  },
+
+  unreadCard: {
+    backgroundColor: "rgba(244, 180, 0, 0.1)",
+    borderColor: "rgba(244, 180, 0, 0.3)",
   },
 
   iconCircle: {
@@ -179,6 +221,18 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
 
+  unreadText: {
+    fontFamily: "Tajawal-Bold",
+  },
+
+  body: {
+    color: "#B9CBF2",
+    fontSize: 14,
+    fontFamily: "Tajawal-Regular",
+    marginBottom: 4,
+    textAlign: "left",
+  },
+
   time: {
     color: "#B9CBF2",
     fontSize: 13,
@@ -186,13 +240,12 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
 
-  deleteBox: {
-    width: 80,
-    backgroundColor: "#E35151",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 16,
-    marginVertical: 6,
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: YELLOW,
+    marginRight: 8,
   },
 
   emptyBox: {
@@ -231,10 +284,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
-  },
-
-  clearButtonDisabled: {
-    opacity: 0.5,
   },
 
   clearButtonText: {
