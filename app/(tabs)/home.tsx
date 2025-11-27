@@ -121,7 +121,15 @@ export default function HomeScreen() {
         longitude: number;
         title: string;
     } | null>(null);
+    
+    /** REPORT LOCATION - either from search or GPS */
+    const [reportLocation, setReportLocation] = useState<{
+        latitude: number;
+        longitude: number;
+    } | null>(null);
+    
     const mapRef = useRef<MapView>(null);
+    const [searchListVisible, setSearchListVisible] = useState(false);
     async function playTestSound() {
         // Use speech as a safe fallback when no audio file is available.
         try {
@@ -217,6 +225,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             };
             
             setUserLocation(userCoords);
+            setReportLocation(userCoords); // Use GPS as default report location
             setMapRegion({
                 ...userCoords,
                 latitudeDelta: 0.05,
@@ -313,7 +322,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         };
         
         setSearchMarker({ latitude, longitude, title });
+        setReportLocation({ latitude, longitude }); // Use search location for reports
         setMapRegion(newRegion);
+        setSearchListVisible(false); // Hide search list after selection
         
         // Animate map to location
         if (mapRef.current) {
@@ -410,7 +421,7 @@ async function playBeep(value: number) {
                     placeholder="ابحث عن موقع أو شارع"
                     minLength={2}
                     debounce={400}
-                    listViewDisplayed='auto'
+                    listViewDisplayed={searchListVisible}
                     fetchDetails={true}
                     onPress={(data, details = null) => {
                         console.log('🔍 Search selected:', data.description);
@@ -499,6 +510,13 @@ async function playBeep(value: number) {
                     textInputProps={{
                         placeholderTextColor: '#D3DDF1',
                         returnKeyType: 'search',
+                        onChangeText: (text) => {
+                            if (text.length >= 2) {
+                                setSearchListVisible(true);
+                            } else {
+                                setSearchListVisible(false);
+                            }
+                        },
                     }}
                     renderRightButton={() => (
                         <View style={styles.searchIconContainer}>
@@ -674,8 +692,11 @@ async function playBeep(value: number) {
                 onClose={() => setReportType(null)}
                 onSubmit={async (data) => {
                     try {
-                        if (!userLocation) {
-                            alert('يرجى تفعيل تحديد الموقع');
+                        // Use reportLocation (search or GPS) for the report
+                        const locationToUse = reportLocation || userLocation;
+                        
+                        if (!locationToUse) {
+                            alert('يرجى تفعيل تحديد الموقع أو البحث عن موقع');
                             return;
                         }
                         
@@ -697,7 +718,8 @@ async function playBeep(value: number) {
                         };
                         const severityId = severityMap[data.severity] || 1;
                         
-                        console.log('📤 Creating report:', { categoryId, severityId, location: userLocation });
+                        const locationSource = searchMarker ? 'search' : 'GPS';
+                        console.log(`📤 Creating report at ${locationSource}:`, { categoryId, severityId, location: locationToUse });
                         
                         // Create report
                         const newReport = await reportingAPI.createReport({
@@ -708,8 +730,8 @@ async function playBeep(value: number) {
                                 : 'كاشف سرعة',
                             description: data.notes || 'بلاغ جديد',
                             category_id: categoryId,
-                            latitude: userLocation.latitude,
-                            longitude: userLocation.longitude,
+                            latitude: locationToUse.latitude,
+                            longitude: locationToUse.longitude,
                             address_text: data.address,
                             severity_id: severityId,
                             photo_urls: data.photoUri || undefined,
