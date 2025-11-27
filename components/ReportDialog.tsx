@@ -29,6 +29,7 @@ interface Props {
         notes: string;
         id: string;
         time: string;
+        photoUri?: string;
     }) => void;
 }
 
@@ -95,7 +96,7 @@ async function takePhoto() {
         }
     }, [visible]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         const id = Math.floor(1000 + Math.random() * 9000).toString();
         const time = new Date().toLocaleString("ar-SY", {
             hour: "2-digit",
@@ -107,14 +108,28 @@ async function takePhoto() {
 
         setSuccessId(id);
 
-        onSubmit?.({
-            type,
-            severity,
-            address,
-            notes,
-            id,
-            time,
-        });
+        // Call onSubmit and wait for completion
+        if (onSubmit) {
+            await onSubmit({
+                type,
+                severity,
+                address,
+                notes,
+                id,
+                time,
+                photoUri: selectedImage || undefined,
+            });
+        }
+        
+        // Close dialog after a short delay to show success message
+        setTimeout(() => {
+            onClose();
+            // Reset form
+            setSeverity('low');
+            setNotes('');
+            setSelectedImage(null);
+            setSuccessId(null);
+        }, 2000);
     };
 
     const titleByType: Record<Exclude<ReportType, null>, string> = {

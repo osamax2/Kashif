@@ -1,9 +1,12 @@
 // app/(tabs)/home.tsx
 import ReportDialog from "@/components/ReportDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { Category, lookupAPI, Report, reportingAPI, ReportStatus, Severity } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 // Lightweight local Slider fallback to avoid dependency on @react-native-community/slider
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
+import * as Location from "expo-location";
 import * as Speech from "expo-speech";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -11,14 +14,15 @@ import {
     Animated,
     I18nManager,
     Image,
+    Keyboard,
     Platform,
     Pressable,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import MapView, { Marker } from "react-native-maps";
 
 function Slider({ value = 0, minimumValue = 0, maximumValue = 1, onValueChange }: any) {
@@ -89,13 +93,35 @@ I18nManager.forceRTL(true);
 const BLUE = "#0D2B66";
 
 export default function HomeScreen() {
-    /** MARKER-DATEN */
-    const allMarkers = [
-        { id: 1, type: "pothole", coord: { latitude: 40.418, longitude: -3.703 } },
-        { id: 2, type: "accident", coord: { latitude: 40.417, longitude: -3.705 } },
-        { id: 3, type: "speed", coord: { latitude: 40.414, longitude: -3.708 } },
-        { id: 4, type: "pothole", coord: { latitude: 40.411, longitude: -3.699 } },
-    ];
+    const { user } = useAuth();
+    
+    /** BACKEND DATA */
+    const [reports, setReports] = useState<Report[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [severities, setSeverities] = useState<Severity[]>([]);
+    const [statuses, setStatuses] = useState<ReportStatus[]>([]);
+    const [loading, setLoading] = useState(true);
+    
+    /** USER LOCATION */
+    const [userLocation, setUserLocation] = useState<{
+        latitude: number;
+        longitude: number;
+    } | null>(null);
+    
+    const [mapRegion, setMapRegion] = useState({
+        latitude: 33.5138,
+        longitude: 36.2765,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
+    });
+    
+    /** SEARCH */
+    const [searchMarker, setSearchMarker] = useState<{
+        latitude: number;
+        longitude: number;
+        title: string;
+    } | null>(null);
+    const mapRef = useRef<MapView>(null);
     async function playTestSound() {
         // Use speech as a safe fallback when no audio file is available.
         try {
@@ -131,26 +157,92 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     const [warnAccident, setWarnAccident] = useState(true);
     const [warnSpeed, setWarnSpeed] = useState(true);
 
-    // Load saved settings on mount
+    // Load data on mount
     useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const s = await AsyncStorage.getItem("audioSettings");
-                if (s) {
-                    const settings = JSON.parse(s);
-                    setSoundEnabled(!!settings.soundEnabled);
-                    setWarningsEnabled(!!settings.warningsEnabled);
-                    setNavigationEnabled(!!settings.navigationEnabled);
-                    setAppVolume(typeof settings.appVolume === 'number' ? settings.appVolume : 1.0);
-                    if (typeof settings.appVolume === 'number') setVolume(settings.appVolume);
-                }
-            } catch (e) {
-                console.warn('Failed to load audio settings', e);
-            }
-        };
-
+        loadData();
+        requestLocation();
         loadSettings();
     }, []);
+    
+    // Load backend data
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const [reportsData, categoriesData, severitiesData, statusesData] = await Promise.all([
+                reportingAPI.getReports({ limit: 10000, skip: 0 }).catch((err) => {
+                    console.error('Failed to load reports:', err);
+                    return [];
+                }),
+                lookupAPI.getCategories().catch((err) => {
+                    console.error('Failed to load categories:', err);
+                    return [];
+                }),
+                lookupAPI.getSeverities().catch((err) => {
+                    console.error('Failed to load severities:', err);
+                    return [];
+                }),
+                lookupAPI.getStatuses().catch((err) => {
+                    console.error('Failed to load statuses:', err);
+                    return [];
+                }),
+            ]);
+            
+            console.log(`✅ Loaded ${reportsData.length} reports from backend`);
+            console.log(`✅ Loaded ${categoriesData.length} categories`);
+            
+            setReports(reportsData);
+            setCategories(categoriesData);
+            setSeverities(severitiesData);
+            setStatuses(statusesData);
+        } catch (error) {
+            console.error('❌ Error loading data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    // Request user location
+    const requestLocation = async () => {
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Location permission denied');
+                return;
+            }
+            
+            const location = await Location.getCurrentPositionAsync({});
+            const userCoords = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            };
+            
+            setUserLocation(userCoords);
+            setMapRegion({
+                ...userCoords,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+            });
+        } catch (error) {
+            console.error('Error getting location:', error);
+        }
+    };
+
+    // Load saved settings
+    const loadSettings = async () => {
+        try {
+            const s = await AsyncStorage.getItem("audioSettings");
+            if (s) {
+                const settings = JSON.parse(s);
+                setSoundEnabled(!!settings.soundEnabled);
+                setWarningsEnabled(!!settings.warningsEnabled);
+                setNavigationEnabled(!!settings.navigationEnabled);
+                setAppVolume(typeof settings.appVolume === 'number' ? settings.appVolume : 1.0);
+                if (typeof settings.appVolume === 'number') setVolume(settings.appVolume);
+            }
+        } catch (e) {
+            console.warn('Failed to load audio settings', e);
+        }
+    };
 
     // Persist settings when changed
     useEffect(() => {
@@ -173,21 +265,63 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     >(null);
 
     /** MULTI-FILTER */
-    const [activeFilters, setActiveFilters] = useState<string[]>([]);
+    const [activeFilters, setActiveFilters] = useState<number[]>([]);
     
 
-    const toggleFilter = (type: string) => {
+    const toggleFilter = (categoryId: number) => {
         setActiveFilters((prev) =>
-            prev.includes(type)
-                ? prev.filter((f) => f !== type) // ausschalten
-                : [...prev, type] // hinzufügen
+            prev.includes(categoryId)
+                ? prev.filter((f) => f !== categoryId)
+                : [...prev, categoryId]
         );
     };
 
     const visibleMarkers =
         activeFilters.length === 0
-            ? allMarkers
-            : allMarkers.filter((m) => activeFilters.includes(m.type));
+            ? reports
+            : reports.filter((r) => activeFilters.includes(r.category_id));
+    
+    // Debug logging
+    useEffect(() => {
+        console.log(`📍 Total reports: ${reports.length}`);
+        console.log(`📍 Visible markers: ${visibleMarkers.length}`);
+        console.log(`🔍 Active filters: ${activeFilters.length}`);
+    }, [reports.length, visibleMarkers.length, activeFilters.length]);
+    
+    // Helper functions
+    const getCategoryByName = (name: string): Category | undefined => {
+        return categories.find(c => c.name === name);
+    };
+    
+    const getCategoryIcon = (categoryId: number): string => {
+        const category = categories.find(c => c.id === categoryId);
+        if (!category) return "📍";
+        
+        if (category.name.includes("حفرة")) return "⚠️";
+        if (category.name.includes("حادث")) return "🚨";
+        if (category.name.includes("كاشف") || category.name.includes("سرعة")) return "📷";
+        return "📍";
+    };
+    
+    // Navigate to selected place
+    const navigateToPlace = (latitude: number, longitude: number, title: string) => {
+        const newRegion = {
+            latitude,
+            longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        };
+        
+        setSearchMarker({ latitude, longitude, title });
+        setMapRegion(newRegion);
+        
+        // Animate map to location
+        if (mapRef.current) {
+            mapRef.current.animateToRegion(newRegion, 1000);
+        }
+        
+        Keyboard.dismiss();
+    };
 
     /** RADIAL-MENÜ beim +-Button */
     const [menuOpen, setMenuOpen] = useState(false);
@@ -271,112 +405,215 @@ async function playBeep(value: number) {
             </View>
 
             {/* SUCHE */}
-            <View style={styles.searchRow}>
-                <TextInput
+            <View style={styles.searchContainer}>
+                <GooglePlacesAutocomplete
                     placeholder="ابحث عن موقع أو شارع"
-                    placeholderTextColor="#D3DDF1"
-                    style={styles.searchInput}
-                    textAlign="right"
+                    minLength={2}
+                    debounce={400}
+                    listViewDisplayed='auto'
+                    fetchDetails={true}
+                    onPress={(data, details = null) => {
+                        console.log('🔍 Search selected:', data.description);
+                        if (details && details.geometry && details.geometry.location) {
+                            const { lat, lng } = details.geometry.location;
+                            console.log('📍 Coordinates:', lat, lng);
+                            navigateToPlace(lat, lng, data.description);
+                        } else {
+                            console.warn('⚠️ No geometry details available');
+                        }
+                    }}
+                    onFail={(error) => {
+                        console.error('❌ Places API Error:', error);
+                        console.error('Error details:', JSON.stringify(error, null, 2));
+                    }}
+                    query={{
+                        key: 'REMOVED_API_KEY',
+                        language: 'ar',
+                        components: 'country:sy',
+                        types: 'geocode',
+                    }}
+                    GooglePlacesSearchQuery={{
+                        rankby: 'distance',
+                    }}
+                    filterReverseGeocodingByTypes={[
+                        'locality',
+                        'administrative_area_level_3',
+                    ]}
+                    enablePoweredByContainer={false}
+                    keepResultsAfterBlur={true}
+                    styles={{
+                        container: {
+                            flex: 0,
+                            zIndex: 1000,
+                            elevation: 1000,
+                        },
+                        textInputContainer: {
+                            backgroundColor: '#2C4A87',
+                            borderRadius: 10,
+                            paddingHorizontal: 10,
+                            height: 40,
+                            flexDirection: 'row-reverse',
+                        },
+                        textInput: {
+                            backgroundColor: 'transparent',
+                            color: '#fff',
+                            fontSize: 16,
+                            textAlign: 'right',
+                            height: 40,
+                            paddingRight: 35,
+                            fontFamily: 'Tajawal-Regular',
+                        },
+                        listView: {
+                            backgroundColor: '#2C4A87',
+                            borderRadius: 10,
+                            marginTop: 5,
+                            maxHeight: 200,
+                            position: 'absolute',
+                            top: 45,
+                            left: 0,
+                            right: 0,
+                        },
+                        row: {
+                            backgroundColor: '#2C4A87',
+                            padding: 13,
+                            height: 44,
+                            flexDirection: 'row-reverse',
+                        },
+                        separator: {
+                            height: 0.5,
+                            backgroundColor: 'rgba(255,255,255,0.2)',
+                        },
+                        description: {
+                            color: '#fff',
+                            fontSize: 14,
+                            textAlign: 'right',
+                            fontFamily: 'Tajawal-Regular',
+                        },
+                        predefinedPlacesDescription: {
+                            color: '#FFD166',
+                        },
+                        poweredContainer: {
+                            display: 'none',
+                        },
+                    }}
+                    textInputProps={{
+                        placeholderTextColor: '#D3DDF1',
+                        returnKeyType: 'search',
+                    }}
+                    renderRightButton={() => (
+                        <View style={styles.searchIconContainer}>
+                            <Text style={styles.searchIcon}>🔍</Text>
+                        </View>
+                    )}
                 />
-                <Text style={styles.searchIcon}>🔍</Text>
             </View>
 
             {/* FILTER-LEISTE (ALLE 3 KLICKBAR, MULTI-SELECT) */}
             <View style={styles.categoriesRow}>
-                {/* كاشف السرعة */}
-                <TouchableOpacity
-                    style={[
-                        styles.categoryItem,
-                        activeFilters.includes("speed") && styles.categoryItemActive,
-                    ]}
-                    onPress={() => toggleFilter("speed")}
-                >
-                    <Text
-                        style={[
-                            styles.categoryText,
-                            activeFilters.includes("speed") && styles.categoryTextActive,
-                        ]}
-                    >
-                        كاشف السرعة
-                    </Text>
-                    <View
-                        style={[
-                            styles.dot,
-                            { backgroundColor: "red" },
-                            activeFilters.includes("speed") && styles.dotActive,
-                        ]}
-                    />
-                </TouchableOpacity>
-
-                {/* حادث */}
-                <TouchableOpacity
-                    style={[
-                        styles.categoryItem,
-                        activeFilters.includes("accident") && styles.categoryItemActive,
-                    ]}
-                    onPress={() => toggleFilter("accident")}
-                >
-                    <Text
-                        style={[
-                            styles.categoryText,
-                            activeFilters.includes("accident") && styles.categoryTextActive,
-                        ]}
-                    >
-                        حادث
-                    </Text>
-                    <View
-                        style={[
-                            styles.dot,
-                            { backgroundColor: "#a7c8f9ff" },
-                            activeFilters.includes("accident") && styles.dotActive,
-                        ]}
-                    />
-                </TouchableOpacity>
-
-                {/* حفرة */}
-                <TouchableOpacity
-                    style={[
-                        styles.categoryItem,
-                        activeFilters.includes("pothole") && styles.categoryItemActive,
-                    ]}
-                    onPress={() => toggleFilter("pothole")}
-                >
-                    <Text
-                        style={[
-                            styles.categoryText,
-                            activeFilters.includes("pothole") && styles.categoryTextActive,
-                        ]}
-                    >
-                        حفرة
-                    </Text>
-                    <View
-                        style={[
-                            styles.dot,
-                            { backgroundColor: "gold" },
-                            activeFilters.includes("pothole") && styles.dotActive,
-                        ]}
-                    />
-                </TouchableOpacity>
+                {categories.slice(0, 3).map((category) => {
+                    const isActive = activeFilters.includes(category.id);
+                    const color = category.name.includes("كاشف") || category.name.includes("سرعة") 
+                        ? "red" 
+                        : category.name.includes("حادث")
+                        ? "#a7c8f9ff"
+                        : "gold";
+                    
+                    return (
+                        <TouchableOpacity
+                            key={category.id}
+                            style={[
+                                styles.categoryItem,
+                                isActive && styles.categoryItemActive,
+                            ]}
+                            onPress={() => toggleFilter(category.id)}
+                        >
+                            <Text
+                                style={[
+                                    styles.categoryText,
+                                    isActive && styles.categoryTextActive,
+                                ]}
+                            >
+                                {category.name}
+                            </Text>
+                            <View
+                                style={[
+                                    styles.dot,
+                                    { backgroundColor: color },
+                                    isActive && styles.dotActive,
+                                ]}
+                            />
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
 
             {/* KARTE */}
             <View style={styles.mapContainer}>
                 <MapView
+                    ref={mapRef}
                     style={StyleSheet.absoluteFill}
-                    initialRegion={{
-                        latitude: 33.5138,
-                        longitude: 36.2765,
-                        latitudeDelta: 0.2,
-                        longitudeDelta: 0.2,
-                    }}
+                    region={mapRegion}
+                    onRegionChangeComplete={setMapRegion}
+                    showsUserLocation={true}
+                    showsMyLocationButton={true}
                 >
-                    {visibleMarkers.map((m) => (
-                        <Marker key={m.id} coordinate={m.coord}>
-                            <View style={styles.marker}>
-                                <Text style={{ fontSize: 18 }}>⚠️</Text>
+                    {/* Search Result Marker */}
+                    {searchMarker && (
+                        <Marker
+                            coordinate={{
+                                latitude: searchMarker.latitude,
+                                longitude: searchMarker.longitude,
+                            }}
+                            title={searchMarker.title}
+                            pinColor="green"
+                        >
+                            <View style={styles.searchMarker}>
+                                <Text style={{ fontSize: 24 }}>📍</Text>
                             </View>
                         </Marker>
-                    ))}
+                    )}
+                    
+                    {/* User Location Marker */}
+                    {userLocation && (
+                        <Marker
+                            coordinate={userLocation}
+                            title="موقعك"
+                            pinColor="blue"
+                        />
+                    )}
+                    
+                    {/* Report Markers */}
+                    {visibleMarkers.map((report) => {
+                        try {
+                            const lat = parseFloat(report.latitude.toString());
+                            const lng = parseFloat(report.longitude.toString());
+                            
+                            // Validiere Koordinaten
+                            if (isNaN(lat) || isNaN(lng)) {
+                                console.warn(`⚠️ Invalid coordinates for report ${report.id}`);
+                                return null;
+                            }
+                            
+                            return (
+                                <Marker 
+                                    key={`report-${report.id}`}
+                                    coordinate={{
+                                        latitude: lat,
+                                        longitude: lng,
+                                    }}
+                                    title={report.title || categories.find(c => c.id === report.category_id)?.name || 'بلاغ'}
+                                    description={report.description}
+                                >
+                                    <View style={styles.marker}>
+                                        <Text style={{ fontSize: 18 }}>{getCategoryIcon(report.category_id)}</Text>
+                                    </View>
+                                </Marker>
+                            );
+                        } catch (error) {
+                            console.error(`❌ Error rendering marker for report ${report.id}:`, error);
+                            return null;
+                        }
+                    })}
                 </MapView>
 
                 {/* FAB */}
@@ -425,7 +662,9 @@ async function playBeep(value: number) {
 
             {/* INFO-BAR UNTEN */}
             <View style={styles.infoBar}>
-                <Text style={styles.infoText}>عدد البلاغات النشطة: 42 📘</Text>
+                <Text style={styles.infoText}>
+                    عدد البلاغات النشطة: {visibleMarkers.length} / {reports.length} 📘
+                </Text>
             </View>
 
             {/* MELDUNGS-DIALOG */}
@@ -433,6 +672,63 @@ async function playBeep(value: number) {
                 visible={reportType !== null}
                 type={reportType}
                 onClose={() => setReportType(null)}
+                onSubmit={async (data) => {
+                    try {
+                        if (!userLocation) {
+                            alert('يرجى تفعيل تحديد الموقع');
+                            return;
+                        }
+                        
+                        // Map report type to category
+                        let categoryId = 1;
+                        if (reportType === 'pothole') {
+                            categoryId = getCategoryByName('حفرة')?.id || 1;
+                        } else if (reportType === 'accident') {
+                            categoryId = getCategoryByName('حادث')?.id || 2;
+                        } else if (reportType === 'speed') {
+                            categoryId = getCategoryByName('كاشف سرعة')?.id || 3;
+                        }
+                        
+                        // Map severity to severity_id
+                        const severityMap: { [key: string]: number } = {
+                            low: 1,
+                            medium: 2,
+                            high: 3,
+                        };
+                        const severityId = severityMap[data.severity] || 1;
+                        
+                        console.log('📤 Creating report:', { categoryId, severityId, location: userLocation });
+                        
+                        // Create report
+                        const newReport = await reportingAPI.createReport({
+                            title: data.type === 'pothole' 
+                                ? 'حفرة في الطريق' 
+                                : data.type === 'accident'
+                                ? 'حادث مروري'
+                                : 'كاشف سرعة',
+                            description: data.notes || 'بلاغ جديد',
+                            category_id: categoryId,
+                            latitude: userLocation.latitude,
+                            longitude: userLocation.longitude,
+                            address_text: data.address,
+                            severity_id: severityId,
+                            photo_urls: data.photoUri || undefined,
+                        });
+                        
+                        console.log('✅ Report created:', newReport.id);
+                        
+                        // Refresh reports BEFORE closing dialog
+                        await loadData();
+                        
+                        console.log('✅ Data reloaded, total reports:', reports.length);
+                        
+                        // Dialog will auto-close after showing success message
+                        // The onClose() is called from ReportDialog.tsx after 1.5s
+                    } catch (error) {
+                        console.error('❌ Error creating report:', error);
+                        alert('❌ حدث خطأ أثناء إرسال البلاغ');
+                    }
+                }}
             />
             {/* AUDIO BOTTOM SHEET */}
 {audioVisible && (
@@ -550,18 +846,27 @@ const styles = StyleSheet.create({
     },
     title: { color: "#fff", fontSize: 24, fontFamily: "Tajawal-Bold" },
 
-    searchRow: {
-        flexDirection: "row-reverse",
-        alignItems: "center",
+    searchContainer: {
         marginHorizontal: 15,
         marginTop: 10,
-        backgroundColor: "#2C4A87",
-        borderRadius: 10,
-        paddingHorizontal: 10,
-        height: 40,
+        zIndex: 1000,
+        elevation: 1000,
     },
-    searchInput: { flex: 1, color: "#fff", fontSize: 16 },
-    searchIcon: { color: "#FFD166", fontSize: 18, marginHorizontal: 6 },
+    searchIconContainer: {
+        position: 'absolute',
+        right: 10,
+        top: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    searchIcon: { color: "#FFD166", fontSize: 18 },
+    searchMarker: {
+        backgroundColor: "#4CD964",
+        padding: 4,
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
 
     mapContainer: {
         flex: 1,
