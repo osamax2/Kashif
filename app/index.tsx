@@ -8,14 +8,65 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Alert,
+  ActivityIndicator
 } from "react-native";
 import RtlTextInput from '../components/ui/rtl-textinput';
-//router.replace("/(tabs)/home");
+import { authAPI } from '../services/api';
+
 export default function Index() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLogin = async () => {
+    // Validation
+    if (!email || !password) {
+      Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني وكلمة المرور');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      Alert.alert('خطأ', 'الرجاء إدخال بريد إلكتروني صحيح');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const response = await authAPI.login({
+        username: email,
+        password: password,
+      });
+
+      console.log('Login successful:', response);
+      
+      // Get user profile
+      await authAPI.getProfile();
+      
+      // Navigate to home
+      router.replace('/(tabs)/home');
+      
+    } catch (error: any) {
+      console.error('Login error:', error);
+      
+      if (error.response?.status === 401) {
+        Alert.alert('خطأ', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+      } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        Alert.alert('خطأ', 'انتهت مهلة الاتصال. الرجاء المحاولة مرة أخرى');
+      } else if (error.message?.includes('Network Error')) {
+        Alert.alert('خطأ في الاتصال', 'تعذر الاتصال بالخادم. الرجاء التحقق من الاتصال بالإنترنت');
+      } else {
+        Alert.alert('خطأ', error.response?.data?.detail || 'حدث خطأ أثناء تسجيل الدخول');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header (logo + app name) */}
@@ -56,7 +107,7 @@ export default function Index() {
               <Text style={styles.label}>كلمة المرور</Text>
               <View style={styles.passwordContainer}>
                 <RtlTextInput
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={setPassword}
                     style={styles.inputUnderline}
@@ -64,17 +115,31 @@ export default function Index() {
                     placeholderTextColor="#AAB3C0"
                     textAlign="right"
                 />
-
+                <TouchableOpacity
+                    style={styles.eyeTouch}
+                    onPress={() => setShowPassword(!showPassword)}
+                >
+                  <FontAwesome
+                      name={showPassword ? "eye" : "eye-slash"}
+                      size={18}
+                      color="#AAB3C0"
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 
-            {/* Index-Button */}
+            {/* Login-Button */}
             <TouchableOpacity
-                style={styles.loginButton}
+                style={[styles.loginButton, loading && { opacity: 0.6 }]}
                 activeOpacity={0.9}
-                onPress={() => router.replace('/(tabs)/home')} // ← wichtig: replace
+                onPress={handleLogin}
+                disabled={loading}
             >
-              <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
+              {loading ? (
+                  <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                  <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
+              )}
             </TouchableOpacity>
 
             {/* --- Social Login --- */}

@@ -1,7 +1,19 @@
 // app/register.tsx
 import React, { useState } from "react";
-import { I18nManager, ScrollView, StyleSheet, Text, TextInput, View, TouchableOpacity, Switch } from "react-native";
+import { 
+    I18nManager, 
+    ScrollView, 
+    StyleSheet, 
+    Text, 
+    TextInput, 
+    View, 
+    TouchableOpacity, 
+    Switch,
+    Alert,
+    ActivityIndicator 
+} from "react-native";
 import { useRouter } from "expo-router";
+import { authAPI } from '../services/api';
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -10,14 +22,102 @@ export default function Register() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [firstName, setFirstName] = useState("");
-    const [dept, setDept] = useState("");
-    const [tos, setTos] = useState(true);
-    const [news, setNews] = useState(true);
+    const [fullName, setFullName] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [tos, setTos] = useState(false);
+    const [news, setNews] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const onSubmit = () => {
-        // TODO: Registrierung-API
-        router.replace("/(tabs)"); // nach erfolgreicher Registrierung in die App
+    const validateEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const validatePassword = (password: string) => {
+        // At least 6 characters
+        return password.length >= 6;
+    };
+
+    const onSubmit = async () => {
+        // Validation
+        if (!fullName.trim()) {
+            Alert.alert('خطأ', 'الرجاء إدخال الاسم الكامل');
+            return;
+        }
+
+        if (!email.trim()) {
+            Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني');
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            Alert.alert('خطأ', 'الرجاء إدخال بريد إلكتروني صحيح');
+            return;
+        }
+
+        if (!password) {
+            Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور');
+            return;
+        }
+
+        if (!validatePassword(password)) {
+            Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+            return;
+        }
+
+        if (!tos) {
+            Alert.alert('خطأ', 'يجب الموافقة على شروط الاستخدام وسياسة الخصوصية');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            // Register user
+            const user = await authAPI.register({
+                email: email.trim(),
+                password: password,
+                full_name: fullName.trim(),
+                phone_number: phoneNumber.trim() || undefined,
+            });
+
+            console.log('Registration successful:', user);
+
+            // Auto-login after registration
+            await authAPI.login({
+                username: email.trim(),
+                password: password,
+            });
+
+            // Get user profile
+            await authAPI.getProfile();
+
+            Alert.alert(
+                'تم التسجيل بنجاح',
+                'تم إنشاء حسابك بنجاح!',
+                [
+                    {
+                        text: 'حسناً',
+                        onPress: () => router.replace('/(tabs)/home'),
+                    }
+                ]
+            );
+
+        } catch (error: any) {
+            console.error('Registration error:', error);
+
+            if (error.response?.status === 400) {
+                Alert.alert('خطأ', 'البريد الإلكتروني مسجل بالفعل');
+            } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+                Alert.alert('خطأ', 'انتهت مهلة الاتصال. الرجاء المحاولة مرة أخرى');
+            } else if (error.message?.includes('Network Error')) {
+                Alert.alert('خطأ في الاتصال', 'تعذر الاتصال بالخادم. الرجاء التحقق من الاتصال بالإنترنت');
+            } else {
+                Alert.alert('خطأ', error.response?.data?.detail || 'حدث خطأ أثناء التسجيل');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -25,44 +125,90 @@ export default function Register() {
             <Text style={styles.title}>إنشاء حساب جديد</Text>
 
             <View style={styles.field}>
+                <Text style={styles.label}>الاسم الكامل</Text>
+                <TextInput 
+                    style={styles.input} 
+                    value={fullName} 
+                    onChangeText={setFullName} 
+                    placeholder="اكتب اسمك الكامل" 
+                    placeholderTextColor="#AAB3C0" 
+                    textAlign="right" 
+                    editable={!loading}
+                />
+            </View>
+
+            <View style={styles.field}>
                 <Text style={styles.label}>البريد الإلكتروني</Text>
-                <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="اكتب بريدك الإلكتروني" placeholderTextColor="#AAB3C0" textAlign="right" />
+                <TextInput 
+                    style={styles.input} 
+                    value={email} 
+                    onChangeText={setEmail} 
+                    placeholder="example@email.com" 
+                    placeholderTextColor="#AAB3C0" 
+                    textAlign="right"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    editable={!loading}
+                />
             </View>
 
             <View style={styles.field}>
                 <Text style={styles.label}>كلمة المرور</Text>
-                <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="اكتب كلمة المرور" placeholderTextColor="#AAB3C0" secureTextEntry textAlign="right" />
+                <TextInput 
+                    style={styles.input} 
+                    value={password} 
+                    onChangeText={setPassword} 
+                    placeholder="6 أحرف على الأقل" 
+                    placeholderTextColor="#AAB3C0" 
+                    secureTextEntry 
+                    textAlign="right"
+                    editable={!loading}
+                />
             </View>
 
             <View style={styles.field}>
-                <Text style={styles.label}>الاسم</Text>
-                <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="اكتب اسمك الأول" placeholderTextColor="#AAB3C0" textAlign="right" />
-            </View>
-
-            <View style={styles.field}>
-                <Text style={styles.label}>اسم العائلة</Text>
-                <TextInput style={styles.input} value={dept} onChangeText={setDept} placeholder="اكتب الكنية" placeholderTextColor="#AAB3C0" textAlign="right" />
+                <Text style={styles.label}>رقم الهاتف (اختياري)</Text>
+                <TextInput 
+                    style={styles.input} 
+                    value={phoneNumber} 
+                    onChangeText={setPhoneNumber} 
+                    placeholder="+966 XX XXX XXXX" 
+                    placeholderTextColor="#AAB3C0" 
+                    textAlign="right"
+                    keyboardType="phone-pad"
+                    editable={!loading}
+                />
             </View>
 
             <View style={styles.switchRow}>
                 <Text style={styles.switchText}>أوافق على شروط الاستخدام وسياسة الخصوصية</Text>
-                <Switch value={tos} onValueChange={setTos} />
+                <Switch value={tos} onValueChange={setTos} disabled={loading} />
             </View>
             <View style={styles.switchRow}>
                 <Text style={styles.switchText}>أرغب في استلام آخر الأخبار والعروض عبر البريد الإلكتروني</Text>
-                <Switch value={news} onValueChange={setNews} />
+                <Switch value={news} onValueChange={setNews} disabled={loading} />
             </View>
 
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push("/home")}>
-                <Text style={styles.primaryText}>تسجيل حساب جديد</Text>
+            <TouchableOpacity 
+                style={[styles.primaryBtn, loading && { opacity: 0.6 }]} 
+                onPress={onSubmit}
+                disabled={loading}
+            >
+                {loading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                    <Text style={styles.primaryText}>تسجيل حساب جديد</Text>
+                )}
             </TouchableOpacity>
 
-            {/* Unten: zurück zum Index – zentriert */}
-            <TouchableOpacity style={{ width: "100%", alignItems: "center", marginTop: 20 }} onPress={() => router.back("/index")}>
+            {/* Unten: zurück zum Login – zentriert */}
+            <TouchableOpacity 
+                style={{ width: "100%", alignItems: "center", marginTop: 20 }} 
+                onPress={() => router.back()}
+                disabled={loading}
+            >
                 <Text style={styles.backToLogin}>لديك حساب؟ سجل الدخول</Text>
             </TouchableOpacity>
-
-
         </ScrollView>
     );
 }
