@@ -408,23 +408,35 @@ async function playBeep(value: number) {
             <View style={styles.searchContainer}>
                 <GooglePlacesAutocomplete
                     placeholder="ابحث عن موقع أو شارع"
+                    minLength={2}
+                    listViewDisplayed='auto'
+                    fetchDetails={true}
                     onPress={(data, details = null) => {
-                        if (details) {
+                        console.log('🔍 Search selected:', data.description);
+                        if (details && details.geometry && details.geometry.location) {
                             const { lat, lng } = details.geometry.location;
+                            console.log('📍 Coordinates:', lat, lng);
                             navigateToPlace(lat, lng, data.description);
+                        } else {
+                            console.warn('⚠️ No geometry details available');
                         }
                     }}
+                    onFail={(error) => console.error('❌ Places API Error:', error)}
                     query={{
                         key: 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
                         language: 'ar',
                         components: 'country:sy',
                     }}
-                    fetchDetails={true}
+                    requestUrl={{
+                        useOnPlatform: 'all',
+                        url: 'https://maps.googleapis.com/maps/api',
+                    }}
                     enablePoweredByContainer={false}
                     styles={{
                         container: {
                             flex: 0,
-                            zIndex: 1,
+                            zIndex: 1000,
+                            elevation: 1000,
                         },
                         textInputContainer: {
                             backgroundColor: '#2C4A87',
@@ -440,12 +452,17 @@ async function playBeep(value: number) {
                             textAlign: 'right',
                             height: 40,
                             paddingRight: 35,
+                            fontFamily: 'Tajawal-Regular',
                         },
                         listView: {
                             backgroundColor: '#2C4A87',
                             borderRadius: 10,
                             marginTop: 5,
                             maxHeight: 200,
+                            position: 'absolute',
+                            top: 45,
+                            left: 0,
+                            right: 0,
                         },
                         row: {
                             backgroundColor: '#2C4A87',
@@ -461,10 +478,18 @@ async function playBeep(value: number) {
                             color: '#fff',
                             fontSize: 14,
                             textAlign: 'right',
+                            fontFamily: 'Tajawal-Regular',
                         },
                         predefinedPlacesDescription: {
                             color: '#FFD166',
                         },
+                        poweredContainer: {
+                            display: 'none',
+                        },
+                    }}
+                    textInputProps={{
+                        placeholderTextColor: '#D3DDF1',
+                        returnKeyType: 'search',
                     }}
                     renderRightButton={() => (
                         <View style={styles.searchIconContainer}>
@@ -810,6 +835,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 15,
         marginTop: 10,
         zIndex: 1000,
+        elevation: 1000,
     },
     searchIconContainer: {
         position: 'absolute',

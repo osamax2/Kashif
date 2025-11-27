@@ -117,6 +117,16 @@ async function takePhoto() {
             time,
             photoUri: selectedImage || undefined,
         });
+        
+        // Close dialog after a short delay to show success message
+        setTimeout(() => {
+            onClose();
+            // Reset form
+            setSeverity('low');
+            setNotes('');
+            setSelectedImage(null);
+            setSuccessId(null);
+        }, 1500);
     };
 
     const titleByType: Record<Exclude<ReportType, null>, string> = {
