@@ -1,5 +1,3 @@
-import * as Device from 'expo-device';
-import { Platform } from 'react-native';
 import api from './api';
 
 // IMPORTANT: expo-notifications has been disabled for Expo Go SDK 53+ compatibility
