@@ -80,18 +80,26 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setNotifications(data);
       await updateUnreadCount();
     } catch (error) {
-      console.error('Failed to refresh notifications:', error);
+      // Silently handle - notifications endpoint may not be available yet
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
   }, [isAuthenticated]);
 
   const updateUnreadCount = async () => {
+    if (!isAuthenticated) {
+      setUnreadCount(0);
+      return;
+    }
+    
     try {
       const count = await notificationService.getUnreadCount();
       setUnreadCount(count);
     } catch (error) {
-      console.error('Failed to update unread count:', error);
+      // Silently handle - notifications endpoint may not be available yet
+      setUnreadCount(0);
     }
   };
 

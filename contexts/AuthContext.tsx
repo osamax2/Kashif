@@ -1,6 +1,6 @@
 import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { logout as apiLogout, getStoredUser, isLoggedIn, User } from '../services/api';
+import { authAPI, logout as apiLogout, getStoredUser, isLoggedIn, User } from '../services/api';
 import notificationService from '../services/notifications';
 
 interface AuthContextType {
@@ -78,9 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const registerPushNotifications = async () => {
     try {
+      // Push notifications are disabled in Expo Go - will work in development build
       await notificationService.registerForPushNotifications();
     } catch (error) {
-      console.error('Failed to register for push notifications:', error);
+      // Silently fail - notifications not available in Expo Go
     }
   };
 
@@ -98,10 +99,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const storedUser = await getStoredUser();
-      setUser(storedUser);
+      // Fetch fresh user data from server to get updated points
+      const freshUser = await authAPI.getProfile();
+      setUser(freshUser);
+      console.log('✅ User data refreshed from server:', freshUser.total_points, 'points');
     } catch (error) {
       console.error('Refresh user error:', error);
+      // Fallback to stored user if server request fails
+      try {
+        const storedUser = await getStoredUser();
+        setUser(storedUser);
+      } catch (e) {
+        console.error('Failed to get stored user:', e);
+      }
     }
   };
 
