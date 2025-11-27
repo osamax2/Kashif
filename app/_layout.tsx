@@ -7,6 +7,7 @@ import { ActivityIndicator, I18nManager, View } from 'react-native';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 // Force LTR globally (important!)
@@ -59,7 +60,9 @@ export default function RootLayout() {
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <AuthProvider>
-                <RootLayoutNav />
+                <NotificationProvider>
+                    <RootLayoutNav />
+                </NotificationProvider>
             </AuthProvider>
         </GestureHandlerRootView>
     );

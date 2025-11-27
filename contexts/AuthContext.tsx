@@ -1,6 +1,7 @@
 import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { logout as apiLogout, getStoredUser, isLoggedIn, User } from '../services/api';
+import notificationService from '../services/notifications';
 
 interface AuthContextType {
   user: User | null;
@@ -35,6 +36,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
+  // Register for push notifications when user logs in
+  useEffect(() => {
+    if (user) {
+      registerPushNotifications();
+    }
+  }, [user]);
+
   // Protect routes
   useEffect(() => {
     if (loading) return;
@@ -68,8 +76,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const registerPushNotifications = async () => {
+    try {
+      await notificationService.registerForPushNotifications();
+    } catch (error) {
+      console.error('Failed to register for push notifications:', error);
+    }
+  };
+
   const logout = async () => {
     try {
+      // Unregister device before logout
+      await notificationService.unregisterDevice();
       await apiLogout();
       setUser(null);
       router.replace('/');

@@ -2,6 +2,7 @@
 import ReportDialog from "@/components/ReportDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, Severity } from "@/services/api";
+import locationMonitoringService from "@/services/location-monitoring";
 import Ionicons from "@expo/vector-icons/Ionicons";
 // Lightweight local Slider fallback to avoid dependency on @react-native-community/slider
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -164,6 +165,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     const [warnPothole, setWarnPothole] = useState(true);
     const [warnAccident, setWarnAccident] = useState(true);
     const [warnSpeed, setWarnSpeed] = useState(true);
+    
+    // Location monitoring state
+    const [isMonitoringActive, setIsMonitoringActive] = useState(false);
 
     // Load data on mount
     useEffect(() => {
@@ -247,7 +251,15 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 setNavigationEnabled(!!settings.navigationEnabled);
                 setAppVolume(typeof settings.appVolume === 'number' ? settings.appVolume : 1.0);
                 if (typeof settings.appVolume === 'number') setVolume(settings.appVolume);
+                
+                // Load alert type settings
+                setWarnPothole(settings.warnPothole !== false);
+                setWarnAccident(settings.warnAccident !== false);
+                setWarnSpeed(settings.warnSpeed !== false);
             }
+            
+            // Check if monitoring is active
+            setIsMonitoringActive(locationMonitoringService.isActive());
         } catch (e) {
             console.warn('Failed to load audio settings', e);
         }
@@ -257,7 +269,15 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     useEffect(() => {
         const saveSettings = async () => {
             try {
-                const settings = { soundEnabled, warningsEnabled, navigationEnabled, appVolume };
+                const settings = { 
+                    soundEnabled, 
+                    warningsEnabled, 
+                    navigationEnabled, 
+                    appVolume,
+                    warnPothole,
+                    warnAccident,
+                    warnSpeed,
+                };
                 await AsyncStorage.setItem("audioSettings", JSON.stringify(settings));
             } catch (e) {
                 console.warn('Failed to save audio settings', e);
@@ -265,7 +285,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         };
 
         saveSettings();
-    }, [soundEnabled, warningsEnabled, navigationEnabled, appVolume]);
+    }, [soundEnabled, warningsEnabled, navigationEnabled, appVolume, warnPothole, warnAccident, warnSpeed]);
 
 
     /** Dialog-Typ (welcher Meldungs-Typ wird erstellt?) */
@@ -366,6 +386,29 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             );
         }
     };
+    
+    // Toggle monitoring when any alert type changes
+    useEffect(() => {
+        const updateMonitoring = async () => {
+            const anyAlertEnabled = warnPothole || warnAccident || warnSpeed;
+            
+            if (anyAlertEnabled && !isMonitoringActive) {
+                // Start monitoring
+                const success = await locationMonitoringService.startMonitoring();
+                if (success) {
+                    setIsMonitoringActive(true);
+                    console.log('✅ Location monitoring started');
+                }
+            } else if (!anyAlertEnabled && isMonitoringActive) {
+                // Stop monitoring if all alerts disabled
+                await locationMonitoringService.stopMonitoring();
+                setIsMonitoringActive(false);
+                console.log('🛑 Location monitoring stopped');
+            }
+        };
+        
+        updateMonitoring();
+    }, [warnPothole, warnAccident, warnSpeed]);
 
     // Position des FAB (für Icons)
     const [fabPos, setFabPos] = useState({ x: 0, y: 0 });
@@ -396,25 +439,40 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     if (!soundEnabled) return;
 
     let message = "";
+    let shouldSpeak = false;
+    
     switch (type) {
         case "pothole":
-            message = "تحذير! توجد حفرة أمامك";
+            if (warnPothole) {
+                message = "تحذير! توجد حفرة أمامك";
+                shouldSpeak = true;
+            }
             break;
         case "accident":
-            message = "تحذير! حادث على الطريق";
+            if (warnAccident) {
+                message = "تحذير! حادث على الطريق";
+                shouldSpeak = true;
+            }
             break;
         case "speed":
-            message = "احذر! كاميرا سرعة أمامك";
+            if (warnSpeed) {
+                message = "احذر! كاميرا سرعة أمامك";
+                shouldSpeak = true;
+            }
             break;
         default:
             message = "تحذير!";
+            shouldSpeak = true;
     }
 
-    await Speech.speak(message, {
-        language: "ar-SA",
-        rate: 0.9,
-        pitch: 1.0,
-    });
+    if (shouldSpeak) {
+        await Speech.speak(message, {
+            language: "ar-SA",
+            rate: 0.9,
+            pitch: 1.0,
+            volume: appVolume,
+        });
+    }
 }
 async function playBeep(value: number) {
     setAppVolume(value);
@@ -821,7 +879,13 @@ async function playBeep(value: number) {
             styles.modeBox,
             warnPothole && styles.modeBoxActive,
         ]}
-        onPress={() => setWarnPothole(!warnPothole)}
+        onPress={async () => {
+            const newValue = !warnPothole;
+            setWarnPothole(newValue);
+            if (newValue && soundEnabled) {
+                await speakWarning('pothole');
+            }
+        }}
     >
          <View style={[styles.modeIconCircle]}>
             <Ionicons name="alert-circle" size={26} color="yellow" />
@@ -835,7 +899,13 @@ async function playBeep(value: number) {
             styles.modeBox,
             warnAccident && styles.modeBoxActive,
         ]}
-        onPress={() => setWarnAccident(!warnAccident)}
+        onPress={async () => {
+            const newValue = !warnAccident;
+            setWarnAccident(newValue);
+            if (newValue && soundEnabled) {
+                await speakWarning('accident');
+            }
+        }}
     >
         <View style={[styles.modeIconCircle]}>
             <Ionicons name="warning" size={26} color="#a7c8f9ff" />
@@ -849,7 +919,13 @@ async function playBeep(value: number) {
             styles.modeBox,
             warnSpeed && styles.modeBoxActive,
         ]}
-        onPress={() => setWarnSpeed(!warnSpeed)}
+        onPress={async () => {
+            const newValue = !warnSpeed;
+            setWarnSpeed(newValue);
+            if (newValue && soundEnabled) {
+                await speakWarning('speed');
+            }
+        }}
     >
         <View style={[styles.modeIconCircle]}>
             <Ionicons name="speedometer" size={26} color="red" />
