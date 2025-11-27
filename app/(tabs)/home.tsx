@@ -334,13 +334,20 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         // Animate map to location
         setTimeout(() => {
             if (mapRef.current) {
-                console.log('🗺️ Map animation starting...');
-                mapRef.current.animateToRegion(newRegion, 1000);
-                console.log('✅ animateToRegion called');
+                console.log('🗺️ Animating to:', { latitude, longitude });
+                try {
+                    mapRef.current.animateCamera({
+                        center: { latitude, longitude },
+                        zoom: 15,
+                    }, { duration: 1000 });
+                    console.log('✅ Camera animated');
+                } catch (error) {
+                    console.error('❌ Animation error:', error);
+                }
             } else {
-                console.error('❌ mapRef.current is NULL');
+                console.error('❌ mapRef is NULL');
             }
-        }, 150);
+        }, 200);
         
         Keyboard.dismiss();
     };
@@ -435,36 +442,36 @@ async function playBeep(value: number) {
                     listViewDisplayed={searchListVisible}
                     fetchDetails={true}
                     onPress={(data, details = null) => {
-                        console.log('🔍 Search selected:', data.description);
-                        console.log('🔍 Details available:', details ? 'YES' : 'NO');
+                        console.log('🔍 ===== SEARCH PRESS EVENT =====');
+                        console.log('🔍 Description:', data.description);
+                        console.log('🔍 Place ID:', data.place_id);
+                        console.log('🔍 Details object:', JSON.stringify(details, null, 2));
                         
-                        setSearchListVisible(false); // Hide list immediately
+                        setSearchListVisible(false);
                         
-                        if (details && details.geometry && details.geometry.location) {
+                        if (details?.geometry?.location) {
                             const { lat, lng } = details.geometry.location;
-                            console.log('📍 Coordinates:', lat, lng);
+                            console.log('📍 Using lat:', lat, 'lng:', lng);
+                            navigateToPlace(lat, lng, data.description);
+                        } else if (details?.geometry?.location?.lat && details?.geometry?.location?.lng) {
+                            // Alternative structure
+                            const lat = details.geometry.location.lat;
+                            const lng = details.geometry.location.lng;
+                            console.log('📍 Using alt structure - lat:', lat, 'lng:', lng);
                             navigateToPlace(lat, lng, data.description);
                         } else {
-                            console.warn('⚠️ No geometry details available');
+                            console.error('❌ No coordinates found in details!');
+                            console.error('Details structure:', details);
                         }
                     }}
                     onFail={(error) => {
                         console.error('❌ Places API Error:', error);
-                        console.error('Error details:', JSON.stringify(error, null, 2));
                     }}
                     query={{
                         key: 'REMOVED_API_KEY',
                         language: 'ar',
                         components: 'country:sy',
-                        types: 'geocode',
                     }}
-                    GooglePlacesSearchQuery={{
-                        rankby: 'distance',
-                    }}
-                    filterReverseGeocodingByTypes={[
-                        'locality',
-                        'administrative_area_level_3',
-                    ]}
                     enablePoweredByContainer={false}
                     keepResultsAfterBlur={false}
                     styles={{
