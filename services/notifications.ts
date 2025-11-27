@@ -1,11 +1,19 @@
+import * as Notifications from 'expo-notifications';
 import api from './api';
 
-// IMPORTANT: expo-notifications has been disabled for Expo Go SDK 53+ compatibility
-// To use push notifications, you need to create a development build
-// Read more: https://docs.expo.dev/develop/development-builds/introduction/
+// Push notifications are now enabled for production builds
+const notificationsAvailable = true;
 
-// Notifications are disabled in this build
-const notificationsAvailable = false;
+// Configure notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export interface PushNotification {
   id: number;
@@ -26,11 +34,42 @@ class NotificationService {
    * Request permission and register device for push notifications
    */
   async registerForPushNotifications(): Promise<string | null> {
-    // Push notifications are not available in Expo Go SDK 53+
-    // Use a development build for full push notification support
-    // Read more: https://docs.expo.dev/develop/development-builds/introduction/
-    console.log('Push notifications disabled - use development build');
-    return null;
+    if (!notificationsAvailable) {
+      console.log('Push notifications not available');
+      return null;
+    }
+
+    try {
+      // Request permissions
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        console.log('Push notification permission denied');
+        return null;
+      }
+
+      // Get push token
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId: '4a35de96-9bb2-48bc-a43d-46a0a52ba959', // Your Expo project ID
+      });
+      
+      this.expoPushToken = tokenData.data;
+      console.log('Push token obtained:', this.expoPushToken);
+
+      // Register with backend
+      await this.registerDeviceToken(this.expoPushToken);
+      
+      return this.expoPushToken;
+    } catch (error) {
+      console.error('Failed to register for push notifications:', error);
+      return null;
+    }
   }
 
   /**
@@ -135,10 +174,28 @@ class NotificationService {
     onNotificationReceived?: (notification: any) => void,
     onNotificationTapped?: (response: any) => void
   ) {
-    // Notification listeners are not available in Expo Go SDK 53+
-    // Use a development build for full push notification support
-    console.log('Notification listeners disabled - use development build');
-    return () => {}; // Return empty cleanup function
+    if (!notificationsAvailable) {
+      console.log('Notification listeners not available');
+      return () => {};
+    }
+
+    // Listen for notifications received while app is in foreground
+    const notificationListener = Notifications.addNotificationReceivedListener((notification) => {
+      console.log('Notification received:', notification);
+      onNotificationReceived?.(notification);
+    });
+
+    // Listen for notifications tapped by user
+    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log('Notification tapped:', response);
+      onNotificationTapped?.(response);
+    });
+
+    // Return cleanup function
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    };
   }
 
   /**

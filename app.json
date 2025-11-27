@@ -20,6 +20,8 @@
       }
     },
     "android": {
+      "package": "com.kashif.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -33,7 +35,8 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION"
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS"
       ],
       "config": {
         "googleMaps": {
@@ -64,7 +67,6 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#F4B400",
-          "sounds": ["./assets/notification-sound.wav"],
           "mode": "production"
         }
       ]
