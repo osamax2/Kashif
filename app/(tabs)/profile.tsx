@@ -4,8 +4,8 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -25,7 +25,7 @@ const YELLOW = "#F4B400";
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const shareLink = "https://your-app-link.com"; // hier deinen echten Link eintragen
     const [profileImage, setProfileImage] = useState<string | null>(null);
     
@@ -42,6 +42,13 @@ export default function ProfileScreen() {
     useEffect(() => {
         loadProfileData();
     }, [user]);
+
+    // Refresh user data when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            refreshUser();
+        }, [refreshUser])
+    );
 
     const loadProfileData = async () => {
         if (!user) return;
