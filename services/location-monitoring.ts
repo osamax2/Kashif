@@ -77,19 +77,22 @@ class LocationMonitoringService {
    */
   private async fetchNearbyReports(latitude: number, longitude: number): Promise<Report[]> {
     try {
-      const response = await api.get<Report[]>('/api/reporting/nearby', {
+      const response = await api.get<Report[]>('/api/reports/', {
         params: {
           latitude,
           longitude,
-          radius: 1000, // 1km radius
+          radius_km: 1, // 1km radius
         },
       });
 
       return response.data.filter(
         (report) => report.status === 'pending' || report.status === 'in_progress'
       );
-    } catch (error) {
-      console.error('Failed to fetch nearby reports:', error);
+    } catch (error: any) {
+      // Silently handle 404 errors (endpoint not available)
+      if (error?.response?.status !== 404) {
+        console.error('Failed to fetch nearby reports:', error);
+      }
       return [];
     }
   }

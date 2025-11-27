@@ -52,13 +52,6 @@ class NotificationService {
         return null;
       }
 
-      // Get Expo push token
-      const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: 'your-expo-project-id', // Replace with your Expo project ID
-      });
-
-      this.expoPushToken = tokenData.data;
-
       // Configure Android channel
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
@@ -69,10 +62,11 @@ class NotificationService {
         });
       }
 
-      // Register token with backend
-      await this.registerDeviceToken(this.expoPushToken);
-
-      return this.expoPushToken;
+      // Note: Expo push token registration is disabled for Expo Go
+      // Use development build for full push notification support
+      console.log('Local notifications configured successfully');
+      
+      return 'local-only';
     } catch (error) {
       console.error('Error registering for push notifications:', error);
       return null;
@@ -81,14 +75,16 @@ class NotificationService {
 
   /**
    * Register device token with backend
+   * Note: Currently disabled as notification service endpoints are not yet implemented
    */
   private async registerDeviceToken(token: string): Promise<void> {
     try {
-      await api.post('/api/notification/register-device', {
-        token,
-        device_type: Platform.OS,
-      });
-      console.log('Device token registered successfully');
+      // TODO: Implement when notification service backend is ready
+      // await api.post('/api/notifications/register-device', {
+      //   token,
+      //   device_type: Platform.OS,
+      // });
+      console.log('Device token registration skipped - backend not available');
     } catch (error) {
       console.error('Failed to register device token:', error);
     }
@@ -101,7 +97,8 @@ class NotificationService {
     if (!this.expoPushToken) return;
 
     try {
-      await api.delete(`/api/notification/unregister-device/${this.expoPushToken}`);
+      // TODO: Implement when notification service backend is ready
+      // await api.delete(`/api/notifications/unregister-device/${this.expoPushToken}`);
       this.expoPushToken = null;
       console.log('Device token unregistered');
     } catch (error) {
@@ -114,11 +111,15 @@ class NotificationService {
    */
   async getNotifications(skip: number = 0, limit: number = 100, unreadOnly: boolean = false): Promise<PushNotification[]> {
     try {
-      const response = await api.get<PushNotification[]>('/api/notification/', {
+      const response = await api.get<PushNotification[]>('/api/notifications/', {
         params: { skip, limit, unread_only: unreadOnly },
       });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // Silently return empty array if endpoint not available (404)
+      if (error?.response?.status === 404) {
+        return [];
+      }
       console.error('Failed to fetch notifications:', error);
       return [];
     }
@@ -129,9 +130,11 @@ class NotificationService {
    */
   async markAsRead(notificationId: number): Promise<void> {
     try {
-      await api.patch(`/api/notification/${notificationId}/read`);
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      await api.patch(`/api/notifications/${notificationId}/read`);
+    } catch (error: any) {
+      if (error?.response?.status !== 404) {
+        console.error('Failed to mark notification as read:', error);
+      }
     }
   }
 
@@ -140,9 +143,11 @@ class NotificationService {
    */
   async markAllAsRead(): Promise<void> {
     try {
-      await api.post('/api/notification/mark-all-read');
-    } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
+      await api.post('/api/notifications/mark-all-read');
+    } catch (error: any) {
+      if (error?.response?.status !== 404) {
+        console.error('Failed to mark all notifications as read:', error);
+      }
     }
   }
 
@@ -151,9 +156,13 @@ class NotificationService {
    */
   async getUnreadCount(): Promise<number> {
     try {
-      const response = await api.get<{ unread_count: number }>('/api/notification/unread-count');
+      const response = await api.get<{ unread_count: number }>('/api/notifications/unread-count');
       return response.data.unread_count;
-    } catch (error) {
+    } catch (error: any) {
+      // Silently return 0 if endpoint not available
+      if (error?.response?.status === 404) {
+        return 0;
+      }
       console.error('Failed to get unread count:', error);
       return 0;
     }
