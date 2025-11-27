@@ -1,8 +1,18 @@
 // app/(tabs)/reports.tsx
+import { useAuth } from "@/contexts/AuthContext";
+import {
+    Category,
+    lookupAPI,
+    Report,
+    reportingAPI,
+    ReportStatus,
+    Severity
+} from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+    ActivityIndicator,
     Animated,
     FlatList,
     Image,
@@ -22,48 +32,17 @@ const CARD_BG = "rgba(255,255,255,0.06)";
 const CARD_BORDER = "rgba(255,255,255,0.18)";
 const YELLOW = "#F4B400";
 
-// Status-Konfiguration: Icon + Farbe
-const STATUS_META: {
-    [key: string]: { icon: string; color: string };
-} = {
-    "مفتوح": { icon: "🔍", color: "#4DA3FF" },
-    "تم الإصلاح": { icon: "✔", color: "#4CD964" },
-    "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
+// Status-Konfiguration: Icon + Farbe (wird aus Backend geladen)
+const getStatusMeta = (statusName: string): { icon: string; color: string } => {
+    const statusMap: { [key: string]: { icon: string; color: string } } = {
+        "مفتوح": { icon: "🔍", color: "#4DA3FF" },
+        "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
+        "قيد المعالجة": { icon: "🔧", color: "#FF9500" },
+        "تم الإصلاح": { icon: "✔", color: "#4CD964" },
+        "مرفوض": { icon: "✖", color: "#FF3B30" },
+    };
+    return statusMap[statusName] || { icon: "📋", color: "#8E8E93" };
 };
-
-// Beispiel-Daten
-const INITIAL_DATA = [
-    {
-        id: "1239878",
-        date: "10.11.2024",
-        status: "مفتوح",
-        title: "حفرة كبيرة في الشارع الرئيسي",
-        description:
-            "حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم.",
-        image: require("../../assets/images/example-report.jpg"),
-
-    },
-    {
-        id: "6676434",
-        date: "12.05.2022",
-        status: "تم الإصلاح",
-        title: "إشارة مرور معطلة",
-        description:
-            "إشارة المرور عند التقاطع الرئيسي كانت متوقفة عن العمل، وتم إصلاحها من قبل البلدية.",
-        image: require("../../assets/images/example-report.jpg"),
-
-    },
-    {
-        id: "1234567",
-        date: "01.12.2021",
-        status: "قيد المراجعة",
-        title: "كاميرا سرعة غير واضحة",
-        description:
-            "كاميرا السرعة الجديدة لا تظهر بشكل واضح للسائقين، وتم إرسال البلاغ للمراجعة.",
-        image: require("../../assets/images/example-report.jpg"),
-        alignItems: "left",
-    },
-];
 
 // kleine Komponente für die Prozent-Kreise
 type CircleStatProps = {
@@ -108,11 +87,81 @@ function CircleStat({ percent, label, color }: CircleStatProps) {
 
 export default function ReportsScreen() {
     const router = useRouter();
-    const [reports, setReports] = useState(INITIAL_DATA);
-    const [selected, setSelected] = useState<any | null>(null);
+    const { user } = useAuth();
+    const [reports, setReports] = useState<Report[]>([]);
+    const [statuses, setStatuses] = useState<ReportStatus[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [severities, setSeverities] = useState<Severity[]>([]);
+    const [selected, setSelected] = useState<Report | null>(null);
     const [detailVisible, setDetailVisible] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
-    const openDetails = (report: any) => {
+    // Statistiken
+    const [stats, setStats] = useState({
+        open: 0,
+        inProgress: 0,
+        resolved: 0,
+    });
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            // Parallel laden für bessere Performance
+            const [reportsData, statusesData, categoriesData, severitiesData] = await Promise.all([
+                reportingAPI.getMyReports(0, 1000).catch(() => []),
+                lookupAPI.getStatuses().catch(() => []),
+                lookupAPI.getCategories().catch(() => []),
+                lookupAPI.getSeverities().catch(() => []),
+            ]);
+
+            setReports(reportsData);
+            setStatuses(statusesData);
+            setCategories(categoriesData);
+            setSeverities(severitiesData);
+
+            // Statistiken berechnen
+            calculateStats(reportsData, statusesData);
+        } catch (error) {
+            console.error('Error loading reports:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const calculateStats = (reportsData: Report[], statusesData: ReportStatus[]) => {
+        const statusMap = new Map(statusesData.map(s => [s.id, s.name]));
+        
+        let open = 0;
+        let inProgress = 0;
+        let resolved = 0;
+
+        reportsData.forEach(report => {
+            const statusName = statusMap.get(report.status_id);
+            if (statusName === "مفتوح") open++;
+            else if (statusName === "قيد المراجعة" || statusName === "قيد المعالجة") inProgress++;
+            else if (statusName === "تم الإصلاح") resolved++;
+        });
+
+        const total = reportsData.length || 1;
+        setStats({
+            open: Math.round((open / total) * 100),
+            inProgress: Math.round((inProgress / total) * 100),
+            resolved: Math.round((resolved / total) * 100),
+        });
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await loadData();
+        setRefreshing(false);
+    };
+
+    const openDetails = (report: Report) => {
         setSelected(report);
         setDetailVisible(true);
     };
@@ -122,9 +171,45 @@ export default function ReportsScreen() {
         setSelected(null);
     };
 
+    const getStatusName = (statusId: number): string => {
+        const status = statuses.find(s => s.id === statusId);
+        return status?.name || "غير معروف";
+    };
+
+    const getCategoryName = (categoryId: number): string => {
+        const category = categories.find(c => c.id === categoryId);
+        return category?.name || "غير معروف";
+    };
+
+    const getSeverityName = (severityId: number): string => {
+        const severity = severities.find(s => s.id === severityId);
+        return severity?.name || "غير معروف";
+    };
+
+    const formatDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ar-SY', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={YELLOW} />
+                <Text style={{ color: '#FFFFFF', marginTop: 10, fontFamily: 'Tajawal-Regular' }}>
+                    جاري تحميل البلاغات...
+                </Text>
+            </View>
+        );
+    }
 
 
-    const renderReport = ({ item, index }: { item: any; index: number }) => {
+
+    const renderReport = ({ item, index }: { item: Report; index: number }) => {
+        const statusName = getStatusName(item.status_id);
         return (
             <Swipeable
                 overshootLeft={false}
@@ -134,9 +219,15 @@ export default function ReportsScreen() {
                         <Text style={styles.swipeText}>ℹ️ تفاصيل</Text>
                     </View>
                 )}
-                onSwipeableRightOpen={() => router.push("/report-list")}
+                onSwipeableRightOpen={() => openDetails(item)}
             >
-                <ReportCard report={item} index={index} onPress={() => router.push("/report-list")} />
+                <ReportCard 
+                    report={item} 
+                    index={index} 
+                    statusName={statusName}
+                    formattedDate={formatDate(item.created_at)}
+                    onPress={() => openDetails(item)} 
+                />
             </Swipeable>
         );
     };
@@ -187,9 +278,9 @@ export default function ReportsScreen() {
                     marginBottom: 10,
                 }}
             >
-                <CircleStat percent={90} label="البلاغات المقترحة" color="#7A8BFF" />
-                <CircleStat percent={40} label="البلاغات قيد المعالجة" color="#FF7777" />
-                <CircleStat percent={64} label="تم إصلاحها" color="#4ADE80" />
+                <CircleStat percent={stats.open} label="البلاغات المفتوحة" color="#4DA3FF" />
+                <CircleStat percent={stats.inProgress} label="قيد المعالجة" color="#FFD166" />
+                <CircleStat percent={stats.resolved} label="تم إصلاحها" color="#4CD964" />
             </View>
 
             {/* Überschrift Liste */}
@@ -198,13 +289,27 @@ export default function ReportsScreen() {
             </View>
 
             {/* LISTE */}
-            <FlatList
-                data={reports}
-                keyExtractor={(item, index) => `${item.id}-${index}`}
-                renderItem={renderReport}
-                contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
-                showsVerticalScrollIndicator={false}
-            />
+            {reports.length > 0 ? (
+                <FlatList
+                    data={reports}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={renderReport}
+                    contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
+                    showsVerticalScrollIndicator={false}
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                />
+            ) : (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 }}>
+                    <Ionicons name="document-text-outline" size={64} color="rgba(255,255,255,0.3)" />
+                    <Text style={{ color: '#FFFFFF', fontSize: 18, marginTop: 16, fontFamily: 'Tajawal-Regular' }}>
+                        لا توجد بلاغات حتى الآن
+                    </Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 8, fontFamily: 'Tajawal-Regular' }}>
+                        قم بإنشاء بلاغ جديد من الخريطة
+                    </Text>
+                </View>
+            )}
 
             {/* DETAILS-POPUP */}
             <Modal visible={detailVisible} transparent animationType="slide">
@@ -213,28 +318,39 @@ export default function ReportsScreen() {
                         {selected && (
                             <>
                                 {/* Bild */}
-                                <Image source={selected.image} style={styles.modalImage} />
+                                {selected.photo_urls ? (
+                                    <Image 
+                                        source={{ uri: selected.photo_urls.split(',')[0] }} 
+                                        style={styles.modalImage} 
+                                    />
+                                ) : (
+                                    <View style={[styles.modalImage, { backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' }]}>
+                                        <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.3)" />
+                                    </View>
+                                )}
 
                                 {/* Titel */}
-                                <Text style={styles.modalTitle}>{selected.title}</Text>
+                                <Text style={styles.modalTitle}>
+                                    {selected.title || getCategoryName(selected.category_id)}
+                                </Text>
 
                                 {/* Status */}
                                 <View style={styles.modalStatusRow}>
                                     <Text
                                         style={[
                                             styles.modalStatusIcon,
-                                            { color: STATUS_META[selected.status].color },
+                                            { color: getStatusMeta(getStatusName(selected.status_id)).color },
                                         ]}
                                     >
-                                        {STATUS_META[selected.status].icon}
+                                        {getStatusMeta(getStatusName(selected.status_id)).icon}
                                     </Text>
                                     <Text
                                         style={[
                                             styles.modalStatusText,
-                                            { color: STATUS_META[selected.status].color },
+                                            { color: getStatusMeta(getStatusName(selected.status_id)).color },
                                         ]}
                                     >
-                                        {selected.status}
+                                        {getStatusName(selected.status_id)}
                                     </Text>
                                 </View>
 
@@ -244,9 +360,26 @@ export default function ReportsScreen() {
                                         رقم البلاغ: {selected.id}
                                     </Text>
                                     <Text style={styles.modalMetaText}>
-                                        التاريخ: {selected.date}
+                                        التاريخ: {formatDate(selected.created_at)}
                                     </Text>
                                 </View>
+
+                                {/* Kategorie + Schweregrad */}
+                                <View style={styles.modalMetaRow}>
+                                    <Text style={styles.modalMetaText}>
+                                        الفئة: {getCategoryName(selected.category_id)}
+                                    </Text>
+                                    <Text style={styles.modalMetaText}>
+                                        الخطورة: {getSeverityName(selected.severity_id)}
+                                    </Text>
+                                </View>
+
+                                {/* Adresse */}
+                                {selected.address_text && (
+                                    <Text style={[styles.modalMetaText, { marginBottom: 10 }]}>
+                                        📍 {selected.address_text}
+                                    </Text>
+                                )}
 
                                 {/* Beschreibung */}
                                 <Text style={styles.modalDescription}>
@@ -258,14 +391,17 @@ export default function ReportsScreen() {
                                     <MapView
                                         style={styles.miniMap}
                                         initialRegion={{
-                                            latitude: 33.5138,
-                                            longitude: 36.2765,
+                                            latitude: parseFloat(selected.latitude.toString()),
+                                            longitude: parseFloat(selected.longitude.toString()),
                                             latitudeDelta: 0.01,
                                             longitudeDelta: 0.01,
                                         }}
                                     >
                                         <Marker
-                                            coordinate={{ latitude: 33.5138, longitude: 36.2765 }}
+                                            coordinate={{ 
+                                                latitude: parseFloat(selected.latitude.toString()), 
+                                                longitude: parseFloat(selected.longitude.toString()) 
+                                            }}
                                         >
                                             <Text style={{ fontSize: 28 }}>📍</Text>
                                         </Marker>
@@ -290,10 +426,14 @@ export default function ReportsScreen() {
 function ReportCard({
                         report,
                         index,
+                        statusName,
+                        formattedDate,
                         onPress,
                     }: {
-    report: any;
+    report: Report;
     index: number;
+    statusName: string;
+    formattedDate: string;
     onPress: () => void;
 }) {
     const anim = useRef(new Animated.Value(0)).current;
@@ -306,7 +446,7 @@ function ReportCard({
         }).start();
     }, []);
 
-    const meta = STATUS_META[report.status];
+    const meta = getStatusMeta(statusName);
 
     return (
         <Animated.View
@@ -334,8 +474,8 @@ function ReportCard({
                 >
                     {/* rechte Seite = ID + Datum (untereinander) */}
                     <View style={{ alignItems: "flex-end" }}>
-                        <Text style={styles.reportId}>{report.id}</Text>
-                        <Text style={styles.reportDate}>{report.date}</Text>
+                        <Text style={styles.reportId}>#{report.id}</Text>
+                        <Text style={styles.reportDate}>{formattedDate}</Text>
                     </View>
 
                     {/* linke Seite = Icon + Status (nebeneinander) */}
@@ -352,7 +492,7 @@ function ReportCard({
                         </View>
 
                         <Text style={[styles.statusText, { color: meta.color }]}>
-                            {report.status}
+                            {statusName}
                         </Text>
                     </View>
                 </View>

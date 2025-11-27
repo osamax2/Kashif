@@ -258,16 +258,45 @@ export interface Report {
   category_id: number;
   severity_id: number;
   status_id: number;
-  description?: string;
-  image_urls?: string[];
+  title?: string;
+  description: string;
+  photo_urls?: string;
+  address_text?: string;
+  user_hide: boolean;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
+}
+
+export interface ReportCreate {
+  title?: string;
+  description: string;
+  category_id: number;
+  latitude: number;
+  longitude: number;
+  address_text?: string;
+  severity_id: number;
+  photo_urls?: string;
+}
+
+export interface ReportStatusUpdate {
+  status_id: number;
+  comment?: string;
+}
+
+export interface ReportStatusHistory {
+  id: number;
+  report_id: number;
+  old_status_id?: number;
+  new_status_id: number;
+  changed_by_user_id: number;
+  comment?: string;
+  created_at: string;
 }
 
 export const reportingAPI = {
   // Get user's reports
   getMyReports: async (skip: number = 0, limit: number = 100): Promise<Report[]> => {
-    const response = await api.get<Report[]>('/api/reports/me', {
+    const response = await api.get<Report[]>('/api/reports/my-reports', {
       params: { skip, limit },
     });
     return response.data;
@@ -279,10 +308,37 @@ export const reportingAPI = {
     limit?: number;
     status_filter?: string;
     category?: string;
+    latitude?: number;
+    longitude?: number;
+    radius_km?: number;
   }): Promise<Report[]> => {
     const response = await api.get<Report[]>('/api/reports/', {
       params,
     });
+    return response.data;
+  },
+
+  // Get single report
+  getReport: async (reportId: number): Promise<Report> => {
+    const response = await api.get<Report>(`/api/reports/${reportId}`);
+    return response.data;
+  },
+
+  // Create new report
+  createReport: async (report: ReportCreate): Promise<Report> => {
+    const response = await api.post<Report>('/api/reports/', report);
+    return response.data;
+  },
+
+  // Update report status
+  updateReportStatus: async (reportId: number, statusUpdate: ReportStatusUpdate): Promise<Report> => {
+    const response = await api.patch<Report>(`/api/reports/${reportId}/status`, statusUpdate);
+    return response.data;
+  },
+
+  // Get report status history
+  getReportHistory: async (reportId: number): Promise<ReportStatusHistory[]> => {
+    const response = await api.get<ReportStatusHistory[]>(`/api/reports/${reportId}/history`);
     return response.data;
   },
 };
