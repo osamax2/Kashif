@@ -218,4 +218,20 @@
     "connectionError": "Could not connect to server. Please check your internet connection",
     "error": "Error"
   }
+  ,
+  "coupons": {
+    "c1": {
+      "title": "1,000 EXTRA Points",
+      "desc": "Earn 1,000 extra points on online purchases of €30 or more at 700+ participating stores.",
+      "validText": "Valid until 01.12.2025",
+      "pointsLabel": "+1000"
+    },
+    "c2": {
+      "title": "45X Extra Points",
+      "desc": "Earn 45x points on selected BLACK WEEK online offers.",
+      "validText": "Valid until 28.11.2025",
+      "pointsLabel": "x45"
+    },
+    "activate": "Activate now"
+  }
 }

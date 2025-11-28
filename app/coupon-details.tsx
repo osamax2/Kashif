@@ -1,12 +1,23 @@
+import { useLanguage } from "@/contexts/LanguageContext";
+import { COUPONS } from "@/data/coupons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 const PRIMARY = "#0D2B66";  // Blau
 const YELLOW = "#F4B400";   // Gelb
 
 export default function CouponDetails() {
   const { id } = useLocalSearchParams();
-    return (
+  const { t } = useLanguage();
+  const coupon = COUPONS.find((c) => c.id === id) ?? COUPONS[0];
+
+  const title = t(`coupons.${coupon.id}.title`);
+  const desc = t(`coupons.${coupon.id}.desc`);
+  const validText = t(`coupons.${coupon.id}.validText`);
+  const pointsLabel = t(`coupons.${coupon.id}.pointsLabel`);
+
+  return (
     <View style={styles.root}>
       {/* HEADER */}
      <View style={styles.header}>
@@ -27,27 +38,22 @@ export default function CouponDetails() {
         {/* COUPON CARD */}
         <View style={styles.card}>
           <View style={styles.cardTop}>
-            <Image
-              source={require("../assets/icons/speed.png")}
-              style={styles.cardIcon}
-            />
+            <Image source={coupon.image} style={styles.cardIcon} />
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>١٠٠٠ نقطة EXTRA</Text>
-              <Text style={styles.cardDesc}>
-                على الشراء أونلاين بقيمة ٣٠€ من أكثر من ٧٠٠ متجر
-              </Text>
-              <Text style={styles.cardDate}>صالح حتى ٠١.١٢.٢٠٢٥</Text>
+              <Text style={styles.cardTitle}>{title}</Text>
+              <Text style={styles.cardDesc}>{desc}</Text>
+              <Text style={styles.cardDate}>{validText}</Text>
             </View>
           </View>
 
           <TouchableOpacity style={styles.activateBtn}>
-            <Text style={styles.activateText}>تفعيل الآن</Text>
+            <Text style={styles.activateText}>{t('coupons.activate')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* VALID DATE SECTION */}
-        <Text style={styles.sectionGrey}>صالح حتى: ٠١.١٢.٢٠٢٥، الساعة ٢٣:٥٩</Text>
+        <Text style={styles.sectionGrey}>{validText}</Text>
 
         {/* OFFER SECTION */}
         <Text style={styles.sectionTitle}>العرض</Text>
