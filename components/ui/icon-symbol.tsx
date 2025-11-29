@@ -21,6 +21,7 @@ const MAPPING = {
   'chart.bar.fill': 'insert-chart',
   'person.crop.circle': 'account-circle',
   'gearshape.fill': 'settings',
+  'tag.fill': 'local-offer',
 } as IconMapping;
 
 /**
