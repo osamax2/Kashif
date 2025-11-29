@@ -1,15 +1,15 @@
 // app/(tabs)/coupons.tsx
 import CouponCard from "@/components/CouponCard";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCoupons } from "@/hooks/useCoupons";
-import { useAuth } from "@/contexts/AuthContext";
 import { couponsAPI, type Coupon } from "@/services/coupons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
   ActivityIndicator,
+  Alert,
   Animated,
   RefreshControl,
   ScrollView,
