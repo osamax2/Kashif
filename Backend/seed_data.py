@@ -1,30 +1,30 @@
 """
 Seed data script to populate lookup tables with initial data
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import psycopg2
 
 # Database connections
 DB_CONFIGS = {
     'auth': {
-        'dbname': 'auth_db',
-        'user': 'kashif_user',
-        'password': 'kashif_password',
+        'dbname': 'kashif_auth',
+        'user': 'kashif_auth',
+        'password': 'auth123',
         'host': 'kashif-auth-db',
         'port': 5432
     },
     'reporting': {
-        'dbname': 'reporting_db',
-        'user': 'kashif_user',
-        'password': 'kashif_password',
+        'dbname': 'kashif_reports',
+        'user': 'kashif_reports',
+        'password': 'report123',
         'host': 'kashif-reporting-db',
         'port': 5432
     },
     'coupons': {
-        'dbname': 'coupons_db',
-        'user': 'kashif_user',
-        'password': 'kashif_password',
+        'dbname': 'kashif_coupons',
+        'user': 'kashif_coupons',
+        'password': 'coupon123',
         'host': 'kashif-coupons-db',
         'port': 5432
     }
@@ -197,6 +197,91 @@ def seed_coupon_categories():
         conn.close()
 
 
+def seed_coupon_companies():
+    """Seed Companies table in coupons database"""
+    conn = psycopg2.connect(**DB_CONFIGS['coupons'])
+    cur = conn.cursor()
+
+    now = datetime.utcnow()
+    companies = [
+        (1, 'RoadStop Cafe', 'Specialty coffee stops for drivers on the go.',
+         'https://images.pexels.com/photos/3184183/pexels-photo-3184183.jpeg',
+         'https://roadstop.example.com', '+966 500 000 111', 'Riyadh, Saudi Arabia', 'ACTIVE', now),
+        (2, 'QuickShine Car Wash', 'Express detailing and car wash services across the kingdom.',
+         'https://images.pexels.com/photos/9796/car-vehicle-vintage-blue.jpg',
+         'https://quickshine.example.com', '+966 500 000 222', 'Jeddah, Saudi Arabia', 'ACTIVE', now),
+        (3, 'AutoCare Plus', 'Certified maintenance and tire rotation workshops.',
+         'https://images.pexels.com/photos/4489709/pexels-photo-4489709.jpeg',
+         'https://autocareplus.example.com', '+966 500 000 333', 'Dammam, Saudi Arabia', 'ACTIVE', now)
+    ]
+
+    try:
+        for company in companies:
+            cur.execute(
+                """
+                INSERT INTO companies (id, name, description, logo_url, website_url, phone, address, status, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """,
+                company,
+            )
+
+        conn.commit()
+        print("✓ Coupon companies seeded successfully")
+    except Exception as e:
+        print(f"✗ Error seeding coupon companies: {e}")
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+
+
+def seed_coupons():
+    """Seed Coupons table with sample data"""
+    conn = psycopg2.connect(**DB_CONFIGS['coupons'])
+    cur = conn.cursor()
+
+    now = datetime.utcnow()
+    coupons = [
+        (1001, 1, 1, 'Free Coffee Upgrade',
+         'Enjoy a complimentary upgrade to any specialty coffee size at RoadStop Cafe locations.',
+         750, now + timedelta(days=45),
+         'https://images.pexels.com/photos/977876/pexels-photo-977876.jpeg', 1, 250, 'ACTIVE', now),
+        (1002, 2, 2, '50% Off Premium Wash',
+         'Get 50% off a premium exterior wash at participating QuickShine Car Wash branches.',
+         1200, now + timedelta(days=14),
+         'https://images.pexels.com/photos/899239/pexels-photo-899239.jpeg', 2, 120, 'ACTIVE', now),
+        (1003, 3, 5, '10% Off Tire Rotation',
+         'Save 10% on wheel alignment and tire rotation services at AutoCare Plus workshops.',
+         1800, now - timedelta(days=7),
+         'https://images.pexels.com/photos/3804155/pexels-photo-3804155.jpeg', 1, 0, 'EXPIRED', now)
+    ]
+
+    try:
+        for coupon in coupons:
+            cur.execute(
+                """
+                INSERT INTO coupons (
+                    id, company_id, coupon_category_id, name, description,
+                    points_cost, expiration_date, image_url, max_usage_per_user,
+                    total_available, status, created_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """,
+                coupon,
+            )
+
+        conn.commit()
+        print("✓ Coupons seeded successfully")
+    except Exception as e:
+        print(f"✗ Error seeding coupons: {e}")
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+
+
 if __name__ == "__main__":
     print("\n🌱 Seeding database with initial data...\n")
     
@@ -205,6 +290,8 @@ if __name__ == "__main__":
     seed_report_statuses()
     seed_severities()
     seed_coupon_categories()
+    seed_coupon_companies()
+    seed_coupons()
     
     print("\n✅ Database seeding completed!\n")
     print("\n✅ Database seeding completed!\n")

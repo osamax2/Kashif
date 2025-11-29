@@ -1,81 +1,161 @@
+import CouponCard from "@/components/CouponCard";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { COUPONS } from "@/data/coupons";
+import { couponsAPI, isCouponExpired, type Coupon } from "@/services/coupons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const PRIMARY = "#0D2B66";  // Blau
 const YELLOW = "#F4B400";   // Gelb
 
 export default function CouponDetails() {
-  const { id } = useLocalSearchParams();
-  const { t } = useLanguage();
-  const coupon = COUPONS.find((c) => c.id === id) ?? COUPONS[0];
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { t, language } = useLanguage();
+  const [coupon, setCoupon] = useState<Coupon | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const title = t(`coupons.${coupon.id}.title`);
-  const desc = t(`coupons.${coupon.id}.desc`);
-  const validText = t(`coupons.${coupon.id}.validText`);
-  const pointsLabel = t(`coupons.${coupon.id}.pointsLabel`);
+  useEffect(() => {
+    const fetchCoupon = async () => {
+      if (!id) {
+        setError(t("coupons.details.missingId"));
+        setLoading(false);
+        return;
+      }
+
+      const couponId = Number(id);
+      if (!Number.isFinite(couponId)) {
+        setError(t("coupons.details.notFound"));
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const data = await couponsAPI.getCoupon(couponId);
+        setCoupon(data);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to load coupon", err);
+        setError(t("coupons.details.loadError"));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCoupon();
+  }, [id, t]);
+
+  const validText = useMemo(() => {
+    if (!coupon?.expiration_date) {
+      return t("coupons.noExpiry");
+    }
+
+    try {
+      const formatter = new Intl.DateTimeFormat(language === "ar" ? "ar-SA" : "en-US", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+      const formattedDate = formatter.format(new Date(coupon.expiration_date));
+      return t("coupons.validUntil", { date: formattedDate });
+    } catch (error) {
+      console.warn("Failed to format coupon expiration date", error);
+      return t("coupons.validUntil", { date: coupon.expiration_date });
+    }
+  }, [coupon?.expiration_date, language, t]);
+
+  const pointsLabel = useMemo(() => {
+    if (!coupon) {
+      return "";
+    }
+
+    const formattedPoints = Number.isFinite(coupon.points_cost)
+      ? coupon.points_cost.toLocaleString(language === "ar" ? "ar-SA" : "en-US")
+      : "0";
+    return t("coupons.pointsLabel", { points: formattedPoints });
+  }, [coupon, language, t]);
+
+  if (loading) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <ActivityIndicator size="large" color={YELLOW} />
+        <Text style={styles.loadingText}>{t("coupons.loading")}</Text>
+      </View>
+    );
+  }
+
+  if (error || !coupon) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <Text style={styles.errorText}>{error ?? t("coupons.details.notFound")}</Text>
+      </View>
+    );
+  }
+
+  const isRTL = language === "ar";
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, isRTL ? styles.directionRTL : styles.directionLTR]}>
       {/* HEADER */}
-     <View style={styles.header}>
-  <TouchableOpacity
-    onPress={() => router.back()}
-    style={styles.headerIcon}
-  >
-    <Ionicons name="arrow-forward" size={26} color={PRIMARY} />
-  </TouchableOpacity>
+      <View style={[styles.header, isRTL ? styles.headerRTL : styles.headerLTR]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerIcon}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.back")}
+        >
+          <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={PRIMARY} />
+        </TouchableOpacity>
 
-  <Text style={styles.headerTitle}>تفاصيل القسيمة</Text>
+        <Text style={styles.headerTitle}>{t("coupons.details.title")}</Text>
 
-  {/* Platzhalter, damit der Titel zentriert bleibt */}
-  <View style={{ width: 30 }} />
-</View>
+        <View style={styles.headerSpacer} />
+      </View>
 
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         {/* COUPON CARD */}
-        <View style={styles.card}>
-          <View style={styles.cardTop}>
-            <Image source={coupon.image} style={styles.cardIcon} />
-
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{title}</Text>
-              <Text style={styles.cardDesc}>{desc}</Text>
-              <Text style={styles.cardDate}>{validText}</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.activateBtn}>
-            <Text style={styles.activateText}>{t('coupons.activate')}</Text>
-          </TouchableOpacity>
-        </View>
+        <CouponCard coupon={coupon} showActivateButton={false} />
 
         {/* VALID DATE SECTION */}
         <Text style={styles.sectionGrey}>{validText}</Text>
 
         {/* OFFER SECTION */}
-        <Text style={styles.sectionTitle}>العرض</Text>
-        <Text style={styles.sectionText}>
-          ١٠٠٠ نقطة EXTRA عند التسوق عبر الإنترنت من قيمة ٣٠€ في أكثر من ٧٠٠ متجر.
-        </Text>
+        <Text style={styles.sectionTitle}>{t("coupons.details.offerTitle")}</Text>
+        <Text style={styles.sectionText}>{coupon.description}</Text>
 
         {/* INFO SECTION */}
-        <Text style={styles.sectionTitle}>معلومات مهمة</Text>
+        <Text style={styles.sectionTitle}>{t("coupons.details.infoTitle")}</Text>
         <Text style={styles.sectionText}>
-          قم بتفعيل القسيمة الآن واحصل على ١٠٠٠ نقطة إضافية عند شراء بقيمة ٣٠€.
-        </Text>
-        <Text style={styles.sectionText}>
-          يُرجى قراءة الشروط الخاصة بالمتاجر الغير مشاركة.
+          {t("coupons.details.pointsCost", { points: pointsLabel })}
         </Text>
 
         {/* NOTES SECTION */}
-        <Text style={styles.sectionTitle}>يرجى الانتباه</Text>
-        <Text style={styles.sectionText}>
-          * بعض الفئات مستثناة من النقاط الإضافية.  
-          * لن يتم احتساب النقاط عند إرجاع الطلب.
-        </Text>
+        {coupon.max_usage_per_user != null && (
+          <View>
+            <Text style={styles.sectionTitle}>{t("coupons.details.usageLimitTitle")}</Text>
+            <Text style={styles.sectionText}>
+              {t("coupons.details.usageLimit", { count: coupon.max_usage_per_user })}
+            </Text>
+          </View>
+        )}
+
+        {coupon.total_available != null && (
+          <View>
+            <Text style={styles.sectionTitle}>{t("coupons.details.totalAvailableTitle")}</Text>
+            <Text style={styles.sectionText}>
+              {t("coupons.details.totalAvailable", { count: coupon.total_available })}
+            </Text>
+          </View>
+        )}
+
+        {isCouponExpired(coupon) && (
+          <View style={styles.warningBox}>
+            <Ionicons name="warning" size={18} color="#FF453A" />
+            <Text style={styles.warningText}>{t("coupons.status.expired")}</Text>
+          </View>
+        )}
 
         <View style={{ height: 120 }} />
       </ScrollView>
@@ -90,12 +170,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F7F7F7",
     paddingTop: 40,
+  },
+  directionRTL: {
     direction: "rtl",
+  },
+  directionLTR: {
+    direction: "ltr",
   },
 
   /* HEADER */
   header: {
-    flexDirection: "row-reverse",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 10,
@@ -103,66 +187,43 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: "space-between",
   },
+  headerRTL: {
+    flexDirection: "row-reverse",
+  },
+  headerLTR: {
+    flexDirection: "row",
+  },
   headerTitle: {
     fontSize: 22,
     color: PRIMARY,
     fontFamily: "Tajawal-Bold",
   },
-
-  /* CARD */
-  card: {
-    backgroundColor: "#FFF",
-    margin: 16,
-    padding: 18,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 4,
-  },
-
-  cardTop: {
-    flexDirection: "row-reverse",
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(13,43,102,0.08)",
   },
-
-  cardIcon: {
-    width: 60,
-    height: 60,
-    marginLeft: 12,
+  headerSpacer: {
+    width: 40,
+    height: 40,
   },
-
-  cardTitle: {
+  loadingText: {
     color: PRIMARY,
-    fontSize: 22,
+    marginTop: 16,
     fontFamily: "Tajawal-Bold",
   },
-
-  cardDesc: {
-    color: "#333",
-    fontSize: 15,
-    marginTop: 4,
-  },
-
-  cardDate: {
-    color: "#555",
-    fontSize: 13,
-    marginTop: 6,
-  },
-
-  activateBtn: {
-    backgroundColor: YELLOW,
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginTop: 18,
-    alignItems: "center",
-  },
-
-  activateText: {
-    color: PRIMARY,
-    fontSize: 18,
+  errorText: {
+    color: "#FF6B6B",
     fontFamily: "Tajawal-Bold",
+    textAlign: "center",
+    fontSize: 16,
+  },
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   /* SECTIONS */
@@ -189,7 +250,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     lineHeight: 24,
   },
-  headerIcon: {
-  padding: 6,
-},
+  warningBox: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(255,69,58,0.15)",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+  warningText: {
+    color: "#FF453A",
+    fontFamily: "Tajawal-Bold",
+    fontSize: 15,
+  },
 });
