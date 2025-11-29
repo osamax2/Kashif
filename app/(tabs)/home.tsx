@@ -94,6 +94,8 @@ I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 const BLUE = "#0D2B66";
+const DEFAULT_REPORT_LIMIT = 200;
+const REPORT_RADIUS_KM = 25;
 
 const PLACES_AUTOCOMPLETE_STYLES = {
     container: {
@@ -244,7 +246,6 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
 
     // Load data on mount and when refreshKey changes
     useEffect(() => {
-        loadData();
         requestLocation();
         loadSettings();
     }, []);
@@ -253,16 +254,30 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     const { refreshKey } = useDataSync();
     useEffect(() => {
         if (refreshKey > 0) {
-            loadData();
+            loadData(userLocation ?? undefined);
         }
-    }, [refreshKey]);
+    }, [refreshKey, userLocation]);
     
     // Load backend data
-    const loadData = async () => {
+    const loadData = async (location?: { latitude: number; longitude: number }) => {
         try {
             setLoading(true);
+            const reportParams: {
+                skip: number;
+                limit?: number;
+                latitude?: number;
+                longitude?: number;
+                radius_km?: number;
+            } = { skip: 0, limit: DEFAULT_REPORT_LIMIT };
+
+            if (location?.latitude != null && location?.longitude != null) {
+                reportParams.latitude = location.latitude;
+                reportParams.longitude = location.longitude;
+                reportParams.radius_km = REPORT_RADIUS_KM;
+            }
+
             const [reportsData, categoriesData, severitiesData, statusesData] = await Promise.all([
-                reportingAPI.getReports({ limit: 10000, skip: 0 }).catch((err) => {
+                reportingAPI.getReports(reportParams).catch((err) => {
                     console.error('Failed to load reports:', err);
                     return [];
                 }),
@@ -280,7 +295,13 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 }),
             ]);
             
-            console.log(`✅ Loaded ${reportsData.length} reports from backend`);
+            if (location) {
+                console.log(
+                    `✅ Loaded ${reportsData.length} nearby reports within ${REPORT_RADIUS_KM}km`,
+                );
+            } else {
+                console.log(`✅ Loaded ${reportsData.length} reports (default scope)`);
+            }
             console.log(`✅ Loaded ${categoriesData.length} categories`);
             
             setReports(reportsData);
@@ -300,6 +321,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 console.log('Location permission denied');
+                await loadData();
                 return;
             }
             
@@ -316,8 +338,11 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
             });
+
+            await loadData(userCoords);
         } catch (error) {
             console.error('Error getting location:', error);
+            await loadData();
         }
     };
 
@@ -897,7 +922,7 @@ async function playBeep(value: number) {
                         console.log('✅ Report created:', newReport.id);
                         
                         // Refresh reports BEFORE closing dialog
-                        await loadData();
+                        await loadData(locationToUse);
                         
                         console.log('✅ Data reloaded, total reports:', reports.length);
                         
