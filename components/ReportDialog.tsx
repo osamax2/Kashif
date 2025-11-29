@@ -12,6 +12,7 @@ import {
     TextInput,
     View,
 } from "react-native";
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 const BLUE = "#0D2B66";
 const LIGHT_CARD = "#E6F0FF";
 const YELLOW = "#F4B400";
@@ -31,6 +32,8 @@ interface Props {
         id: string;
         time: string;
         photoUri?: string;
+        latitude?: number;
+        longitude?: number;
     }) => void;
 }
 
@@ -47,6 +50,12 @@ export default function ReportDialog({
     const [successId, setSuccessId] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [photoMenu, setPhotoMenu] = useState(false);
+    const [selectedPlace, setSelectedPlace] = useState<{
+        lat: number;
+        lng: number;
+        address: string;
+    } | null>(null);
+    const [showPlacesInput, setShowPlacesInput] = useState(false);
 
     const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -90,6 +99,8 @@ async function takePhoto() {
         if (visible) {
             setSuccessId(null);
             setAddress(initialAddress || "الموقع التلقائي");
+            setSelectedPlace(null);
+            setShowPlacesInput(false);
             Animated.spring(slideAnim, {
                 toValue: 1,
                 useNativeDriver: true,
@@ -111,16 +122,26 @@ async function takePhoto() {
 
         setSuccessId(id);
 
+        // Verwende selectedPlace wenn vorhanden, sonst initialAddress (GPS)
+        const finalAddress = selectedPlace 
+            ? selectedPlace.address 
+            : (initialAddress || "الموقع التلقائي");
+
         // Call onSubmit and wait for completion
         if (onSubmit) {
             await onSubmit({
                 type,
                 severity,
-                address,
+                address: finalAddress,
                 notes,
                 id,
                 time,
                 photoUri: selectedImage || undefined,
+                // Füge Koordinaten hinzu wenn aus Google Places
+                ...(selectedPlace && {
+                    latitude: selectedPlace.lat,
+                    longitude: selectedPlace.lng,
+                }),
             });
         }
         
@@ -254,17 +275,104 @@ async function takePhoto() {
                         <Text style={styles.sectionLabel}>الموقع:</Text>
                     </View>
 
-                    <Pressable style={styles.addressRow}>
-                        <TextInput
-                            value={address}
-                            onChangeText={setAddress}
-                            style={styles.addressInput}
-                            placeholder="أدخل العنوان"
-                            placeholderTextColor="#567"
-                            textAlign="right"
-                        />
-                        <Text style={styles.pinIcon}>📍</Text>
-                    </Pressable>
+                    {!showPlacesInput ? (
+                        <Pressable 
+                            style={styles.addressRow}
+                            onPress={() => setShowPlacesInput(true)}
+                        >
+                            <Text style={styles.addressInput}>
+                                {selectedPlace ? selectedPlace.address : (initialAddress || "الموقع التلقائي")}
+                            </Text>
+                            <Text style={styles.pinIcon}>📍</Text>
+                        </Pressable>
+                    ) : (
+                        <View style={styles.placesContainer}>
+                            <GooglePlacesAutocomplete
+                                placeholder='ابحث عن موقع'
+                                minLength={2}
+                                listViewDisplayed='auto'
+                                fetchDetails={true}
+                                renderDescription={(row) => row.description}
+                                onPress={(data, details = null) => {
+                                    if (details) {
+                                        setSelectedPlace({
+                                            lat: details.geometry.location.lat,
+                                            lng: details.geometry.location.lng,
+                                            address: data.description,
+                                        });
+                                        setAddress(data.description);
+                                        setShowPlacesInput(false);
+                                    }
+                                }}
+                                query={{
+                                    key: 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
+                                    language: 'ar',
+                                }}
+                                textInputProps={{
+                                    autoFocus: true,
+                                    returnKeyType: 'search',
+                                }}
+                                styles={{
+                                    container: {
+                                        flex: 0,
+                                    },
+                                    textInputContainer: {
+                                        backgroundColor: '#F5F7FF',
+                                        borderRadius: 14,
+                                        paddingHorizontal: 10,
+                                    },
+                                    textInput: {
+                                        height: 40,
+                                        color: BLUE,
+                                        fontSize: 14,
+                                        fontFamily: 'Tajawal-Regular',
+                                        textAlign: 'right',
+                                        backgroundColor: 'transparent',
+                                    },
+                                    predefinedPlacesDescription: {
+                                        color: '#1faadb',
+                                        fontFamily: 'Tajawal-Regular',
+                                    },
+                                    listView: {
+                                        backgroundColor: 'white',
+                                        borderRadius: 10,
+                                        marginTop: 4,
+                                    },
+                                    row: {
+                                        backgroundColor: 'white',
+                                        padding: 13,
+                                        height: 'auto',
+                                        flexDirection: 'row-reverse',
+                                    },
+                                    separator: {
+                                        height: 0.5,
+                                        backgroundColor: '#c8c7cc',
+                                    },
+                                    description: {
+                                        fontFamily: 'Tajawal-Regular',
+                                        textAlign: 'right',
+                                    },
+                                    loader: {
+                                        flexDirection: 'row',
+                                        justifyContent: 'flex-end',
+                                        height: 20,
+                                    },
+                                }}
+                                enablePoweredByContainer={false}
+                                nearbyPlacesAPI='GooglePlacesSearch'
+                                debounce={400}
+                            />
+                            <Pressable 
+                                onPress={() => {
+                                    setShowPlacesInput(false);
+                                    setSelectedPlace(null);
+                                }}
+                                style={styles.cancelSearchBtn}
+                            >
+                                <Text style={styles.cancelSearchText}>إلغاء</Text>
+                            </Pressable>
+                        </View>
+                    )}
 
                     {/* Weitere Infos */}
                     <View style={styles.sectionRow}>
@@ -489,6 +597,20 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: "Tajawal-Regular",
         textAlign: "left",
+    },
+    placesContainer: {
+        zIndex: 1000,
+        elevation: 1000,
+    },
+    cancelSearchBtn: {
+        marginTop: 8,
+        padding: 8,
+        alignItems: 'center',
+    },
+    cancelSearchText: {
+        color: BLUE,
+        fontSize: 14,
+        fontFamily: 'Tajawal-Bold',
     },
     pinIcon: {
         fontSize: 20,
