@@ -95,6 +95,62 @@ I18nManager.forceRTL(true);
 
 const BLUE = "#0D2B66";
 
+const PLACES_AUTOCOMPLETE_STYLES = {
+    container: {
+        flex: 0,
+        zIndex: 1000,
+        elevation: 1000,
+    },
+    textInputContainer: {
+        backgroundColor: '#2C4A87',
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        height: 40,
+        flexDirection: 'row-reverse',
+    },
+    textInput: {
+        backgroundColor: 'transparent',
+        color: '#fff',
+        fontSize: 16,
+        textAlign: 'right',
+        height: 40,
+        paddingRight: 35,
+        fontFamily: 'Tajawal-Regular',
+    },
+    listView: {
+        backgroundColor: '#2C4A87',
+        borderRadius: 10,
+        marginTop: 5,
+        maxHeight: 200,
+        position: 'absolute',
+        top: 45,
+        left: 0,
+        right: 0,
+    },
+    row: {
+        backgroundColor: '#2C4A87',
+        padding: 13,
+        height: 44,
+        flexDirection: 'row-reverse',
+    },
+    separator: {
+        height: 0.5,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    description: {
+        color: '#fff',
+        fontSize: 14,
+        textAlign: 'right',
+        fontFamily: 'Tajawal-Regular',
+    },
+    predefinedPlacesDescription: {
+        color: '#FFD166',
+    },
+    poweredContainer: {
+        display: 'none',
+    },
+} as const;
+
 export default function HomeScreen() {
     const { user, refreshUser } = useAuth();
     const { t, language } = useLanguage();
@@ -134,7 +190,16 @@ export default function HomeScreen() {
     } | null>(null);
     
     const mapRef = useRef<MapView>(null);
-    const [searchListVisible, setSearchListVisible] = useState(false);
+    const googlePlacesRef = useRef<any>(null);
+    const lastSelectedCoords = useRef<{
+        latitude: number;
+        longitude: number;
+        title: string;
+    } | null>(null);
+    const [searchText, setSearchText] = useState('');
+    const [forceHideSuggestions, setForceHideSuggestions] = useState(false);
+
+    
     async function playTestSound() {
         // Use speech as a safe fallback when no audio file is available.
         try {
@@ -371,29 +436,31 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         
         setSearchMarker({ latitude, longitude, title });
         setReportLocation({ latitude, longitude }); // Use search location for reports
-        setSearchListVisible(false); // Hide search list after selection
+        setMapRegion(newRegion); // Update map region state
         
         console.log('\u2705 Search marker set:', { latitude, longitude, title });
         console.log('\u2705 Report location updated to search location');
-        console.log('\u2705 Search list hidden');
+        console.log('\u2705 Map region updated');
         
         // Animate map to location
-        setTimeout(() => {
-            if (mapRef.current) {
-                console.log('🗺️ Animating to:', { latitude, longitude });
-                try {
-                    mapRef.current.animateCamera({
-                        center: { latitude, longitude },
-                        zoom: 15,
-                    }, { duration: 1000 });
-                    console.log('✅ Camera animated');
-                } catch (error) {
-                    console.error('❌ Animation error:', error);
-                }
-            } else {
-                console.error('❌ mapRef is NULL');
+        if (mapRef.current) {
+            console.log('🗺️ Animating to:', newRegion);
+            try {
+                mapRef.current.animateToRegion(newRegion, 1000);
+                console.log('✅ Map animated successfully');
+                
+                // Remove the search marker after animation completes
+                setTimeout(() => {
+                    setSearchMarker(null);
+                    console.log('🗑️ Search marker removed');
+                }, 2000); // 2 seconds after animation
+                
+            } catch (error) {
+                console.error('❌ Animation error:', error);
             }
-        }, 200);
+        } else {
+            console.warn('⚠️ mapRef is not ready yet');
+        }
         
         Keyboard.dismiss();
     };
@@ -520,32 +587,40 @@ async function playBeep(value: number) {
             {/* SUCHE */}
             <View style={styles.searchContainer}>
                 <GooglePlacesAutocomplete
+                    ref={googlePlacesRef}
                     placeholder={language === 'ar' ? 'ابحث عن موقع أو شارع' : 'Search for location or street'}
                     minLength={2}
                     debounce={400}
-                    listViewDisplayed={searchListVisible}
                     fetchDetails={true}
                     onPress={(data, details = null) => {
                         console.log('🔍 ===== SEARCH PRESS EVENT =====');
                         console.log('🔍 Description:', data.description);
                         console.log('🔍 Place ID:', data.place_id);
-                        console.log('🔍 Details object:', JSON.stringify(details, null, 2));
-                        
-                        setSearchListVisible(false);
-                        
+
+                        const description = data.description ?? '';
+
+                        setSearchText(description);
+                        setForceHideSuggestions(true);
+
+                        if (googlePlacesRef.current?.setAddressText) {
+                            googlePlacesRef.current.setAddressText(description);
+                        }
+
+                        googlePlacesRef.current?.blur?.();
+                        Keyboard.dismiss();
+
                         if (details?.geometry?.location) {
                             const { lat, lng } = details.geometry.location;
-                            console.log('📍 Using lat:', lat, 'lng:', lng);
-                            navigateToPlace(lat, lng, data.description);
-                        } else if (details?.geometry?.location?.lat && details?.geometry?.location?.lng) {
-                            // Alternative structure
-                            const lat = details.geometry.location.lat;
-                            const lng = details.geometry.location.lng;
-                            console.log('📍 Using alt structure - lat:', lat, 'lng:', lng);
-                            navigateToPlace(lat, lng, data.description);
+                            lastSelectedCoords.current = {
+                                latitude: lat,
+                                longitude: lng,
+                                title: description,
+                            };
+                            console.log('🧭 Coordinates received:', { lat, lng });
+                            navigateToPlace(lat, lng, description);
                         } else {
-                            console.error('❌ No coordinates found in details!');
-                            console.error('Details structure:', details);
+                            lastSelectedCoords.current = null;
+                            console.warn('⚠️ No geometry details returned for selected place');
                         }
                     }}
                     onFail={(error) => {
@@ -558,69 +633,32 @@ async function playBeep(value: number) {
                     }}
                     enablePoweredByContainer={false}
                     keepResultsAfterBlur={false}
-                    styles={{
-                        container: {
-                            flex: 0,
-                            zIndex: 1000,
-                            elevation: 1000,
-                        },
-                        textInputContainer: {
-                            backgroundColor: '#2C4A87',
-                            borderRadius: 10,
-                            paddingHorizontal: 10,
-                            height: 40,
-                            flexDirection: 'row-reverse',
-                        },
-                        textInput: {
-                            backgroundColor: 'transparent',
-                            color: '#fff',
-                            fontSize: 16,
-                            textAlign: 'right',
-                            height: 40,
-                            paddingRight: 35,
-                            fontFamily: 'Tajawal-Regular',
-                        },
-                        listView: {
-                            backgroundColor: '#2C4A87',
-                            borderRadius: 10,
-                            marginTop: 5,
-                            maxHeight: 200,
-                            position: 'absolute',
-                            top: 45,
-                            left: 0,
-                            right: 0,
-                        },
-                        row: {
-                            backgroundColor: '#2C4A87',
-                            padding: 13,
-                            height: 44,
-                            flexDirection: 'row-reverse',
-                        },
-                        separator: {
-                            height: 0.5,
-                            backgroundColor: 'rgba(255,255,255,0.2)',
-                        },
-                        description: {
-                            color: '#fff',
-                            fontSize: 14,
-                            textAlign: 'right',
-                            fontFamily: 'Tajawal-Regular',
-                        },
-                        predefinedPlacesDescription: {
-                            color: '#FFD166',
-                        },
-                        poweredContainer: {
-                            display: 'none',
-                        },
-                    }}
+                    listViewDisplayed={forceHideSuggestions ? false : undefined}
+                    styles={PLACES_AUTOCOMPLETE_STYLES}
                     textInputProps={{
                         placeholderTextColor: '#D3DDF1',
                         returnKeyType: 'search',
-                        onChangeText: (text) => {
-                            if (text.length >= 2) {
-                                setSearchListVisible(true);
+                        value: searchText,
+                        onChangeText: (text: string) => {
+                            setSearchText(text);
+                            setForceHideSuggestions(false);
+                        },
+                        onFocus: () => {
+                            setForceHideSuggestions(false);
+                        },
+                        onSubmitEditing: () => {
+                            console.log('⏎ ENTER/SEARCH pressed');
+                            setForceHideSuggestions(true);
+                            const coords = lastSelectedCoords.current;
+                            if (coords) {
+                                console.log('🗺️ Navigating to saved coordinates:', coords);
+                                navigateToPlace(
+                                    coords.latitude,
+                                    coords.longitude,
+                                    coords.title
+                                );
                             } else {
-                                setSearchListVisible(false);
+                                console.log('⚠️ No coordinates selected yet');
                             }
                         },
                     }}
@@ -798,8 +836,21 @@ async function playBeep(value: number) {
                 onClose={() => setReportType(null)}
                 onSubmit={async (data) => {
                     try {
-                        // Use reportLocation (search or GPS) for the report
-                        const locationToUse = reportLocation || userLocation;
+                        // Use coordinates from Google Places if available, otherwise use reportLocation or GPS
+                        let locationToUse;
+                        
+                        if (data.latitude && data.longitude) {
+                            // User selected a place from Google Places in the dialog
+                            locationToUse = {
+                                latitude: data.latitude,
+                                longitude: data.longitude,
+                            };
+                            console.log('📍 Using Google Places coordinates from dialog:', locationToUse);
+                        } else {
+                            // Fallback to search marker location or GPS
+                            locationToUse = reportLocation || userLocation;
+                            console.log('📍 Using GPS/search coordinates:', locationToUse);
+                        }
                         
                         if (!locationToUse) {
                             alert(language === 'ar' ? 'يرجى تفعيل تحديد الموقع أو البحث عن موقع' : 'Please enable location or search for a location');
@@ -824,7 +875,7 @@ async function playBeep(value: number) {
                         };
                         const severityId = severityMap[data.severity] || 1;
                         
-                        const locationSource = searchMarker ? 'search' : 'GPS';
+                        const locationSource = data.latitude && data.longitude ? 'Google Places' : (searchMarker ? 'search' : 'GPS');
                         console.log(`📤 Creating report at ${locationSource}:`, { categoryId, severityId, location: locationToUse });
                         
                         // Create report
