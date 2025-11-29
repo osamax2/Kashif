@@ -217,21 +217,52 @@
     "connectionTimeout": "انتهت مهلة الاتصال. الرجاء المحاولة مرة أخرى",
     "connectionError": "تعذر الاتصال بالخادم. الرجاء التحقق من الاتصال بالإنترنت",
     "error": "خطأ"
-  }
-  ,
+  },
   "coupons": {
-    "c1": {
-      "title": "1.000 نقطة EXTRA",
-      "desc": "على الشراء أونلاين بقيمة 30€ من أكثر من 700 متجر مشارك.",
-      "validText": "صالح حتى 01.12.2025",
-      "pointsLabel": "+1000"
+    "screenTitle": "القسائم",
+    "tabs": {
+      "active": "متاحة",
+      "inactive": "منتهية"
     },
-    "c2": {
-      "title": "45X نقاط إضافية",
-      "desc": "على التسوّق عبر الانترنت وعروض BLACK WEEK المختارة.",
-      "validText": "صالح حتى 28.11.2025",
-      "pointsLabel": "x45"
+    "searchPlaceholder": "ابحث عن قسيمة",
+    "loading": "جاري جلب القسائم...",
+    "empty": "لا توجد قسائم حالياً",
+    "loadError": "تعذر تحميل القسائم. اسحب للتحديث.",
+    "badgeLabel": "عرض حصري",
+    "pointsLabel": "{{points}} نقطة",
+    "noExpiry": "بدون تاريخ انتهاء",
+    "validUntil": "صالح حتى {{date}}",
+    "status": {
+      "active": "مفعّلة",
+      "expired": "منتهية",
+      "available": "غير مفعّلة"
     },
-    "activate": "تفعيل الآن"
+    "redeemButton": "استبدل الآن",
+    "viewDetails": "عرض التفاصيل",
+    "redeemInsufficientLabel": "تحتاج إلى {{points}} حتى تتمكن من الاستبدال.",
+    "redeem": {
+      "loginRequired": "يرجى تسجيل الدخول لاستبدال المكافآت.",
+      "confirmTitle": "تأكيد الاستبدال؟",
+      "confirmMessage": "هل ترغب في استبدال هذه المكافأة مقابل {{points}} نقطة؟",
+      "confirmAction": "تأكيد",
+      "successTitle": "تم الاستبدال",
+      "successMessage": "تم إضافة المكافأة إلى حسابك.",
+      "errorMessage": "تعذر استبدال هذه المكافأة حالياً. حاول لاحقاً.",
+      "insufficientTitle": "النقاط غير كافية",
+      "insufficientMessage": "تحتاج إلى {{required}} نقطة، لديك فقط {{current}} نقطة."
+    },
+    "details": {
+      "title": "تفاصيل القسيمة",
+      "missingId": "معرّف القسيمة غير موجود",
+      "loadError": "تعذر تحميل هذه القسيمة. الرجاء المحاولة لاحقاً.",
+      "notFound": "القسيمة غير موجودة",
+      "pointsCost": "النقاط المطلوبة: {{points}}",
+      "offerTitle": "العرض",
+      "infoTitle": "معلومات مهمة",
+      "usageLimitTitle": "حد الاستخدام",
+      "usageLimit": "يمكن لكل مستخدم الاستبدال {{count}} مرة.",
+      "totalAvailableTitle": "الكمية الإجمالية",
+      "totalAvailable": "متوفر {{count}} قسيمة."
+    }
   }
 }

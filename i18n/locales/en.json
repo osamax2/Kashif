@@ -217,21 +217,52 @@
     "connectionTimeout": "Connection timeout. Please try again",
     "connectionError": "Could not connect to server. Please check your internet connection",
     "error": "Error"
-  }
-  ,
+  },
   "coupons": {
-    "c1": {
-      "title": "1,000 EXTRA Points",
-      "desc": "Earn 1,000 extra points on online purchases of €30 or more at 700+ participating stores.",
-      "validText": "Valid until 01.12.2025",
-      "pointsLabel": "+1000"
+    "screenTitle": "Rewards",
+    "tabs": {
+      "active": "Available",
+      "inactive": "Expired"
     },
-    "c2": {
-      "title": "45X Extra Points",
-      "desc": "Earn 45x points on selected BLACK WEEK online offers.",
-      "validText": "Valid until 28.11.2025",
-      "pointsLabel": "x45"
+    "searchPlaceholder": "Search for coupons",
+    "loading": "Fetching coupons...",
+    "empty": "No coupons found",
+    "loadError": "We couldn't load coupons. Pull to refresh.",
+    "badgeLabel": "Exclusive offer",
+    "pointsLabel": "{{points}} pts",
+    "noExpiry": "No expiration date",
+    "validUntil": "Valid until {{date}}",
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "available": "Inactive"
     },
-    "activate": "Activate now"
+    "redeemButton": "Redeem now",
+    "viewDetails": "View details",
+    "redeemInsufficientLabel": "You need {{points}} to redeem this reward.",
+    "redeem": {
+      "loginRequired": "Please log in to redeem rewards.",
+      "confirmTitle": "Redeem reward?",
+      "confirmMessage": "Redeem this reward for {{points}} points?",
+      "confirmAction": "Redeem",
+      "successTitle": "Redeemed!",
+      "successMessage": "The reward has been added to your account.",
+      "errorMessage": "We couldn't redeem this reward right now. Please try again later.",
+      "insufficientTitle": "Not enough points",
+      "insufficientMessage": "You need {{required}} points but only have {{current}}."
+    },
+    "details": {
+      "title": "Coupon details",
+      "missingId": "Coupon ID missing",
+      "loadError": "We couldn't load this coupon. Try again later.",
+      "notFound": "Coupon not found",
+      "pointsCost": "Points required: {{points}}",
+      "offerTitle": "Offer",
+      "infoTitle": "Important information",
+      "usageLimitTitle": "Usage limit",
+      "usageLimit": "Each user can redeem {{count}} time(s).",
+      "totalAvailableTitle": "Total availability",
+      "totalAvailable": "{{count}} coupons available."
+    }
   }
 }

@@ -1,37 +1,102 @@
 // components/CouponCard.tsx
 import { useLanguage } from "@/contexts/LanguageContext";
+import { isCouponActive, isCouponExpired, type Coupon } from "@/services/coupons";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import type { Coupon } from "../data/coupons";
+import React, { useMemo } from "react";
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const PRIMARY = "#0D2B66";
 const YELLOW = "#F4B400";
+const FALLBACK_IMAGE = require("@/assets/icons/pothole.png");
 
 type Props = {
   coupon: Coupon;
   onPress?: () => void;
   showActivateButton?: boolean;
+  onRedeem?: (coupon: Coupon) => void;
+  isRedeeming?: boolean;
+  canRedeem?: boolean;
+  showInsufficientMessage?: boolean;
 };
 
-export default function CouponCard({ coupon, onPress, showActivateButton = true }: Props) {
-  const { t } = useLanguage();
+export default function CouponCard({
+  coupon,
+  onPress,
+  showActivateButton = true,
+  onRedeem,
+  isRedeeming = false,
+  canRedeem = true,
+  showInsufficientMessage = true,
+}: Props) {
+  const { t, language } = useLanguage();
 
-  const title = t(`coupons.${coupon.id}.title`);
-  const desc = t(`coupons.${coupon.id}.desc`);
-  const validText = t(`coupons.${coupon.id}.validText`);
-  const pointsLabel = t(`coupons.${coupon.id}.pointsLabel`);
+  const active = isCouponActive(coupon);
+  const expired = isCouponExpired(coupon);
+
+  const statusConfig = useMemo(() => {
+    if (active) {
+      return {
+        backgroundColor: "rgba(76,217,100,0.16)",
+        color: "#4CD964",
+        icon: "checkmark-circle" as const,
+        label: t("coupons.status.active"),
+      };
+    }
+
+    if (expired) {
+      return {
+        backgroundColor: "rgba(255,69,58,0.16)",
+        color: "#FF453A",
+        icon: "close-circle" as const,
+        label: t("coupons.status.expired"),
+      };
+    }
+
+    return {
+      backgroundColor: "rgba(255,255,255,0.16)",
+      color: "#FFFFFF",
+      icon: "time" as const,
+      label: t("coupons.status.available"),
+    };
+  }, [active, expired, t]);
+
+  const pointsLabel = useMemo(() => {
+    const formattedPoints = Number.isFinite(coupon.points_cost)
+      ? coupon.points_cost.toLocaleString(language === "ar" ? "ar-SA" : "en-US")
+      : "0";
+    return t("coupons.pointsLabel", { points: formattedPoints });
+  }, [coupon.points_cost, language, t]);
+
+  const validText = useMemo(() => {
+    if (!coupon.expiration_date) {
+      return t("coupons.noExpiry");
+    }
+
+    try {
+      const formatter = new Intl.DateTimeFormat(language === "ar" ? "ar-SA" : "en-US", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+      const formattedDate = formatter.format(new Date(coupon.expiration_date));
+      return t("coupons.validUntil", { date: formattedDate });
+    } catch (error) {
+      console.warn("Failed to format coupon expiration date", error);
+      return t("coupons.validUntil", { date: coupon.expiration_date });
+    }
+  }, [coupon.expiration_date, language, t]);
+
+  const imageSource = coupon.image_url
+    ? { uri: coupon.image_url }
+    : FALLBACK_IMAGE;
+
+  const redeemDisabled = !active || !onRedeem || isRedeeming || !canRedeem;
 
   return (
     <TouchableOpacity
-      activeOpacity={0.9}
+      activeOpacity={onPress ? 0.9 : 1}
       onPress={onPress}
+      disabled={!onPress}
       style={styles.cardOuter}
     >
       <View style={styles.cardInner}>
@@ -39,33 +104,28 @@ export default function CouponCard({ coupon, onPress, showActivateButton = true 
         <View style={styles.badgeRow}>
           <View style={styles.badgeLeft}>
             <Ionicons name="gift" size={18} color={PRIMARY} />
-            <Text style={styles.badgeText}>عرض نقاط</Text>
+            <Text style={styles.badgeText}>{t("coupons.badgeLabel")}</Text>
           </View>
 
-          {coupon.isActive ? (
-            <View style={[styles.statusPill, { backgroundColor: "rgba(76,217,100,0.16)" }]}>
-              <Ionicons name="checkmark-circle" size={16} color="#4CD964" />
-              <Text style={[styles.statusText, { color: "#4CD964" }]}>مفعّل</Text>
-            </View>
-          ) : (
-            <View style={[styles.statusPill, { backgroundColor: "rgba(255,255,255,0.16)" }]}>
-              <Ionicons name="time" size={16} color="#FFF" />
-              <Text style={[styles.statusText, { color: "#FFF" }]}>متاح</Text>
-            </View>
-          )}
+          <View
+            style={[styles.statusPill, { backgroundColor: statusConfig.backgroundColor }]}
+          >
+            <Ionicons name={statusConfig.icon} size={16} color={statusConfig.color} />
+            <Text style={[styles.statusText, { color: statusConfig.color }]}>{statusConfig.label}</Text>
+          </View>
         </View>
 
         {/* Inhalt */}
         <View style={styles.mainRow}>
-          <Image source={coupon.image} style={styles.icon} />
+          <Image source={imageSource} style={styles.icon} resizeMode="cover" />
 
           <View style={{ flex: 1 }}>
             <Text style={styles.pointsLabel}>{pointsLabel}</Text>
             <Text style={styles.title} numberOfLines={2}>
-              {title}
+              {coupon.name}
             </Text>
             <Text style={styles.desc} numberOfLines={2}>
-              {desc}
+              {coupon.description}
             </Text>
 
             <View style={styles.validRow}>
@@ -84,12 +144,35 @@ export default function CouponCard({ coupon, onPress, showActivateButton = true 
 
             <View style={{ flex: 1 }} />
 
-            <View style={styles.button}>
-              <Text style={styles.buttonText}>
-                {coupon.isActive ? t('common.yes') : t('coupons.activate')}
-              </Text>
-            </View>
+            {active ? (
+              <TouchableOpacity
+                style={[styles.button, redeemDisabled && styles.buttonDisabled]}
+                activeOpacity={0.9}
+                onPress={() => onRedeem?.(coupon)}
+                disabled={redeemDisabled}
+              >
+                {isRedeeming ? (
+                  <ActivityIndicator size="small" color={PRIMARY} />
+                ) : (
+                  <Text style={[styles.buttonText, redeemDisabled && styles.buttonTextDisabled]}>
+                    {t("coupons.redeemButton")}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View style={[styles.button, styles.buttonDisabled]}>
+                <Text style={[styles.buttonText, styles.buttonTextDisabled]}>
+                  {t("coupons.viewDetails")}
+                </Text>
+              </View>
+            )}
           </View>
+        )}
+
+        {showActivateButton && active && !canRedeem && showInsufficientMessage && (
+          <Text style={styles.pointsWarning}>
+            {t("coupons.redeemInsufficientLabel", { points: pointsLabel })}
+          </Text>
         )}
       </View>
     </TouchableOpacity>
@@ -210,5 +293,19 @@ const styles = StyleSheet.create({
     color: PRIMARY,
     fontSize: 15,
     fontFamily: "Tajawal-Bold",
+  },
+  buttonDisabled: {
+    backgroundColor: "rgba(244, 180, 0, 0.24)",
+    opacity: 0.8,
+  },
+  buttonTextDisabled: {
+    color: "rgba(13,43,102,0.6)",
+  },
+  pointsWarning: {
+    color: "#FF6B6B",
+    fontFamily: "Tajawal-Bold",
+    fontSize: 13,
+    textAlign: "right",
+    marginTop: 8,
   },
 });

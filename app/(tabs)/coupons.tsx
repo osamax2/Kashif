@@ -1,71 +1,124 @@
 // app/(tabs)/coupons.tsx
 import CouponCard from "@/components/CouponCard";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { COUPONS, type Coupon } from "@/data/coupons";
+import { useCoupons } from "@/hooks/useCoupons";
+import { useAuth } from "@/contexts/AuthContext";
+import { couponsAPI, type Coupon } from "@/services/coupons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ActivityIndicator,
+  Animated,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const PRIMARY = "#0D2B66";
 const YELLOW = "#F4B400";
 
 export default function CouponsScreen() {
-  const [activeTab, setActiveTab] = useState<"inactive" | "active">("inactive");
-  const [search, setSearch] = useState("");
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const { t } = useLanguage();
-
+  const { t, locale } = useLanguage();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { user, refreshUser } = useAuth();
+  const [redeemingId, setRedeemingId] = useState<number | null>(null);
 
-  // "Live" Laden simulieren
+  const {
+    filteredCoupons,
+    activeTab,
+    setActiveTab,
+    search,
+    setSearch,
+    loading,
+    refreshing,
+    error,
+    onRefresh,
+    refetch,
+  } = useCoupons({ initialTab: "active" });
+
+  const userPoints = user?.total_points ?? 0;
+
   useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => {
-      setCoupons(COUPONS);
-      setLoading(false);
+    if (loading) {
+      return;
+    }
 
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-      }).start();
-    }, 700);
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [loading, filteredCoupons.length, fadeAnim]);
 
-    return () => clearTimeout(t);
-  }, []);
+  const handleRedeem = useCallback(
+    (coupon: Coupon) => {
+      if (!user) {
+        Alert.alert(t("common.error"), t("coupons.redeem.loginRequired"));
+        return;
+      }
 
-  const filtered = coupons.filter((c) => {
-    const matchesTab = activeTab === "active" ? c.isActive : !c.isActive;
+      if (coupon.points_cost > userPoints) {
+        Alert.alert(
+          t("coupons.redeem.insufficientTitle"),
+          t("coupons.redeem.insufficientMessage", {
+            required: coupon.points_cost.toLocaleString(locale ?? "en-US"),
+            current: userPoints.toLocaleString(locale ?? "en-US"),
+          })
+        );
+        return;
+      }
 
-    // resolve localized strings for search
-    const title = t(`coupons.${c.id}.title`);
-    const desc = t(`coupons.${c.id}.desc`);
+      const executeRedeem = async () => {
+        try {
+          setRedeemingId(coupon.id);
+          await couponsAPI.redeemCoupon(coupon.id);
+          await Promise.all([refreshUser(), refetch()]);
+          Alert.alert(t("coupons.redeem.successTitle"), t("coupons.redeem.successMessage"));
+        } catch (err) {
+          console.error("Failed to redeem coupon", err);
+          Alert.alert(t("common.error"), t("coupons.redeem.errorMessage"));
+        } finally {
+          setRedeemingId(null);
+        }
+      };
 
-    const matchesSearch =
-      search.trim().length === 0 ||
-      title.includes(search) ||
-      desc.includes(search);
+      Alert.alert(
+        t("coupons.redeem.confirmTitle"),
+        t("coupons.redeem.confirmMessage", {
+          points: coupon.points_cost.toLocaleString(locale ?? "en-US"),
+        }),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("coupons.redeem.confirmAction"),
+            onPress: () => {
+              executeRedeem().catch((err) => console.error("Redeem coupon error", err));
+            },
+          },
+        ]
+      );
+    },
+    [user, userPoints, t, refreshUser, refetch, locale]
+  );
 
-    return matchesTab && matchesSearch;
-  });
+  const canRedeemMap = useMemo(() => {
+    return new Map<number, boolean>(
+      filteredCoupons.map((coupon) => [coupon.id, !user || userPoints >= coupon.points_cost])
+    );
+  }, [filteredCoupons, user, userPoints]);
 
   return (
     <View style={styles.root}>
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>القسائم</Text>
+        <Text style={styles.headerTitle}>{t("coupons.screenTitle")}</Text>
       </View>
 
       {/* Tabs */}
@@ -83,7 +136,7 @@ export default function CouponsScreen() {
               activeTab === "inactive" && styles.tabTextActive,
             ]}
           >
-            غير مفعّل
+            {t("coupons.tabs.inactive")}
           </Text>
         </TouchableOpacity>
 
@@ -100,7 +153,7 @@ export default function CouponsScreen() {
               activeTab === "active" && styles.tabTextActive,
             ]}
           >
-            مفعّل
+            {t("coupons.tabs.active")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -111,18 +164,24 @@ export default function CouponsScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="بحث عن قسيمة"
+          placeholder={t("coupons.searchPlaceholder")}
           placeholderTextColor="#9BB1D8"
           style={styles.searchInput}
           textAlign="right"
         />
       </View>
 
+      {error && !loading && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
       {/* Inhalt */}
       {loading ? (
         <View style={styles.loadingBox}>
           <ActivityIndicator size="large" color={YELLOW} />
-          <Text style={styles.loadingText}>يتم تحميل القسائم...</Text>
+          <Text style={styles.loadingText}>{t("coupons.loading")}</Text>
         </View>
       ) : (
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
@@ -130,20 +189,32 @@ export default function CouponsScreen() {
             style={{ marginTop: 12 }}
             contentContainerStyle={{ paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={YELLOW}
+                colors={[YELLOW]}
+              />
+            }
           >
-            {filtered.map((c) => (
+            {filteredCoupons.map((c) => (
               <CouponCard
                 key={c.id}
                 coupon={c}
                 onPress={() =>
-                  router.push({ pathname: "/coupon-details", params: { id: c.id } })
+                  router.push({ pathname: "/coupon-details", params: { id: String(c.id) } })
                 }
+                onRedeem={handleRedeem}
+                isRedeeming={redeemingId === c.id}
+                canRedeem={canRedeemMap.get(c.id) ?? true}
+                showInsufficientMessage={!!user}
               />
             ))}
 
-            {filtered.length === 0 && (
+            {filteredCoupons.length === 0 && (
               <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>لا توجد قسائم في هذا القسم</Text>
+                <Text style={styles.emptyText}>{t("coupons.empty")}</Text>
               </View>
             )}
           </ScrollView>
@@ -217,6 +288,19 @@ const styles = StyleSheet.create({
     color: "#E3ECFF",
     marginTop: 10,
     fontFamily: "Tajawal-Regular",
+  },
+  errorBox: {
+    marginTop: 12,
+    backgroundColor: "rgba(255, 107, 107, 0.16)",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  errorText: {
+    color: "#ffc1c1",
+    fontFamily: "Tajawal-Regular",
+    textAlign: "center",
+    fontSize: 13,
   },
   emptyBox: {
     marginTop: 40,
