@@ -282,6 +282,125 @@ def seed_coupons():
         conn.close()
 
 
+def seed_sample_reports():
+    """Seed sample reports in the reporting database"""
+    import random
+    
+    conn = psycopg2.connect(**DB_CONFIGS['reporting'])
+    cur = conn.cursor()
+    
+    # Sample report data
+    reports_data = [
+        (1, 1, 1, 2, 'Pothole on King Fahd Road', 'Large pothole causing traffic issues', 24.7136, 46.6753, False, None),
+        (2, 1, 2, 3, 'Broken Street Light', 'Street light not working at intersection', 24.7256, 46.6853, False, None),
+        (1, 2, 1, 5, 'Illegal Dumping Site', 'Garbage dumped near residential area', 24.7036, 46.6653, False, None),
+        (3, 2, 3, 4, 'Air Quality Issue', 'Excessive smoke from factory', 24.7336, 46.6953, False, None),
+        (2, 3, 1, 8, 'Damaged Pedestrian Crossing', 'Faded crossing marks creating safety hazard', 24.7436, 46.7053, False, None),
+        (1, 3, 2, 7, 'Missing Road Sign', 'Stop sign fallen down', 24.7536, 46.7153, False, None),
+        (3, 1, 3, 1, 'Sidewalk Crack Repaired', 'Sidewalk has been fixed', 24.7636, 46.7253, False, None),
+        (2, 4, 1, 10, 'Bus Stop Shelter Damaged', 'Glass broken at bus stop', 24.7736, 46.7353, False, None),
+        (1, 1, 2, 3, 'Road Surface Deterioration', 'Multiple potholes on highway', 24.7836, 46.7453, False, None),
+        (3, 2, 1, 4, 'Tree Trimming Needed', 'Overgrown trees blocking road signs', 24.7936, 46.7553, False, None),
+        (2, 3, 3, 9, 'Unsafe Construction Site', 'Construction barriers moved creating danger', 24.8036, 46.7653, False, None),
+        (1, 4, 1, 11, 'Streetlight Outage Cluster', 'Multiple streetlights out in neighborhood', 24.8136, 46.7753, False, None),
+        (3, 1, 2, 2, 'Drainage System Blocked', 'Storm drain clogged causing flooding risk', 24.8236, 46.7853, False, None),
+        (2, 2, 1, 6, 'Waste Container Overflowing', 'Public bin needs emptying urgently', 24.8336, 46.7953, False, None),
+        (1, 5, 1, 13, 'Park Bench Vandalized', 'Graffiti on park furniture', 24.8436, 46.8053, False, None)
+    ]
+    
+    try:
+        # Insert reports with timestamps from the past 30 days
+        for i, report_data in enumerate(reports_data):
+            days_ago = random.randint(0, 30)
+            created_at = datetime.now() - timedelta(days=days_ago)
+            
+            cur.execute("""
+                INSERT INTO reports (
+                    user_id, category_id, status_id, severity_id, title, description,
+                    latitude, longitude, user_hide, photo_urls, created_at, updated_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING
+            """, (
+                report_data[0], report_data[1], report_data[2], report_data[3],
+                report_data[4], report_data[5], report_data[6], report_data[7],
+                report_data[8], report_data[9], created_at, created_at
+            ))
+        
+        conn.commit()
+        print(f"✓ {len(reports_data)} sample reports seeded successfully")
+    except Exception as e:
+        print(f"✗ Error seeding sample reports: {e}")
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+
+
+def seed_admin_user():
+    """Create an admin user in the auth database"""
+    from passlib.context import CryptContext
+    
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
+    conn = psycopg2.connect(**DB_CONFIGS['auth'])
+    cur = conn.cursor()
+    
+    # Admin user details
+    email = "admin@kashif.com"
+    password = "Admin@123"  # Change this password after first login!
+    hashed_password = pwd_context.hash(password)
+    full_name = "System Administrator"
+    phone = "+966500000000"
+    
+    try:
+        # Check if admin user already exists
+        cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+        existing_user = cur.fetchone()
+        
+        if existing_user:
+            # Update existing user to ADMIN role
+            cur.execute("""
+                UPDATE users 
+                SET role = 'ADMIN',
+                    status = 'ACTIVE',
+                    updated_at = %s
+                WHERE email = %s
+                RETURNING id
+            """, (datetime.now(), email))
+            user_id = cur.fetchone()[0]
+            print(f"✓ Existing user '{email}' updated to ADMIN role (ID: {user_id})")
+        else:
+            # Create new admin user
+            cur.execute("""
+                INSERT INTO users (
+                    email, hashed_password, full_name, phone, 
+                    role, status, level_id, total_points, 
+                    language, created_at, updated_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                email, hashed_password, full_name, phone,
+                'ADMIN', 'ACTIVE', 1, 0, 'ar',
+                datetime.now(), datetime.now()
+            ))
+            user_id = cur.fetchone()[0]
+            print(f"✓ Admin user created successfully (ID: {user_id})")
+        
+        conn.commit()
+        print(f"  Email: {email}")
+        print(f"  Password: {password}")
+        print(f"  ⚠️  CHANGE THIS PASSWORD AFTER FIRST LOGIN!")
+        
+    except Exception as e:
+        print(f"✗ Error creating admin user: {e}")
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+
+
 if __name__ == "__main__":
     print("\n🌱 Seeding database with initial data...\n")
     
@@ -289,9 +408,10 @@ if __name__ == "__main__":
     seed_categories()
     seed_report_statuses()
     seed_severities()
+    seed_sample_reports()
     seed_coupon_categories()
     seed_coupon_companies()
     seed_coupons()
+    seed_admin_user()
     
-    print("\n✅ Database seeding completed!\n")
     print("\n✅ Database seeding completed!\n")

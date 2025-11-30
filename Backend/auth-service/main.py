@@ -8,6 +8,7 @@ import models
 import schemas
 from database import engine, get_db
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
@@ -17,6 +18,15 @@ from sqlalchemy.orm import Session
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Auth Service")
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for admin panel
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -152,6 +162,27 @@ def logout(
     return {"message": "Logged out successfully"}
 
 
+@app.get("/users", response_model=list[schemas.User])
+def get_all_users(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """Get all users - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can list all users
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    users = crud.get_users(db, skip=skip, limit=limit)
+    return users
+
+
 @app.get("/users/{user_id}", response_model=schemas.User)
 def get_user(
     user_id: int,
@@ -176,6 +207,33 @@ def get_user(
         )
     
     return user
+
+
+@app.patch("/users/{user_id}", response_model=schemas.User)
+def update_user(
+    user_id: int,
+    user_update: schemas.UserUpdate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Update user - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can update users
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    updated_user = crud.update_user(db, user_id, user_update)
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return updated_user
 
 
 @app.patch("/me/language")

@@ -24,6 +24,11 @@ def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
 
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    """Get all users with pagination"""
+    return db.query(models.User).offset(skip).limit(limit).all()
+
+
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = get_password_hash(user.password)
     db_user = models.User(
@@ -109,4 +114,28 @@ def update_user_language(db: Session, user_id: int, language: str):
         db.refresh(user)
         return user
     return None
+
+
+def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
+    """Update user fields (admin only)"""
+    user = get_user(db, user_id)
+    if not user:
+        return None
+    
+    # Update only provided fields
+    if user_update.full_name is not None:
+        user.full_name = user_update.full_name
+    if user_update.phone is not None:
+        user.phone = user_update.phone
+    if user_update.role is not None:
+        user.role = user_update.role
+    if user_update.status is not None:
+        user.status = user_update.status
+    if user_update.language is not None:
+        user.language = user_update.language
+    
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    return user
 

@@ -8,13 +8,23 @@ import models
 import schemas
 from database import engine, get_db
 from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
 from sqlalchemy.orm import Session
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Coupons Service")
+app = FastAPI(title="Coupons Service", redirect_slashes=False)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -67,6 +77,33 @@ async def get_companies(
     return crud.get_companies(db=db, skip=skip, limit=limit)
 
 
+@app.patch("/companies/{company_id}", response_model=schemas.Company)
+async def update_company(
+    company_id: int,
+    company_update: schemas.CompanyUpdate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Update a company (admin only)"""
+    company = crud.update_company(db=db, company_id=company_id, company_update=company_update)
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return company
+
+
+@app.delete("/companies/{company_id}", response_model=schemas.Company)
+async def delete_company(
+    company_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Delete a company (soft delete, admin only)"""
+    company = crud.delete_company(db=db, company_id=company_id)
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return company
+
+
 # Category endpoints
 @app.post("/categories", response_model=schemas.CouponCategory)
 async def create_category(
@@ -84,6 +121,33 @@ async def get_categories(
 ):
     """Get all categories"""
     return crud.get_categories(db=db)
+
+
+@app.patch("/categories/{category_id}", response_model=schemas.CouponCategory)
+async def update_category(
+    category_id: int,
+    category_update: schemas.CouponCategoryUpdate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Update a category (admin only)"""
+    category = crud.update_category(db=db, category_id=category_id, category_update=category_update)
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return category
+
+
+@app.delete("/categories/{category_id}", response_model=schemas.CouponCategory)
+async def delete_category(
+    category_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Delete a category (soft delete, admin only)"""
+    category = crud.delete_category(db=db, category_id=category_id)
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return category
 
 
 # Coupon endpoints
@@ -128,6 +192,39 @@ async def get_coupon(
             detail="Coupon not found"
         )
     return coupon
+
+
+@app.patch("/{coupon_id}", response_model=schemas.Coupon)
+async def update_coupon(
+    coupon_id: int,
+    coupon_update: schemas.CouponUpdate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Update coupon details (admin only)"""
+    updated_coupon = crud.update_coupon(db=db, coupon_id=coupon_id, coupon_update=coupon_update)
+    if not updated_coupon:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Coupon not found"
+        )
+    return updated_coupon
+
+
+@app.delete("/{coupon_id}", response_model=schemas.Coupon)
+async def delete_coupon(
+    coupon_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Soft delete coupon (admin only)"""
+    deleted_coupon = crud.delete_coupon(db=db, coupon_id=coupon_id)
+    if not deleted_coupon:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Coupon not found"
+        )
+    return deleted_coupon
 
 
 @app.post("/{coupon_id}/redeem", response_model=schemas.CouponRedemption)
@@ -191,5 +288,4 @@ async def get_my_redemptions(
     db: Session = Depends(get_db)
 ):
     """Get current user's coupon redemptions"""
-    return crud.get_user_redemptions(db=db, user_id=user_id, skip=skip, limit=limit)
     return crud.get_user_redemptions(db=db, user_id=user_id, skip=skip, limit=limit)

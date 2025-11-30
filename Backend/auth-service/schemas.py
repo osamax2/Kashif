@@ -60,3 +60,12 @@ class TokenData(BaseModel):
 
 class LanguageUpdate(BaseModel):
     language: str  # ar or en
+
+
+class UserUpdate(BaseModel):
+    """Schema for updating user by admin"""
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    role: Optional[str] = None
+    status: Optional[str] = None
+    language: Optional[str] = None
