@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { GET as ProxyGET, POST as ProxyPOST, PUT as ProxyPUT, DELETE as ProxyDELETE } from '../[...path]/route';
+import { DELETE as ProxyDELETE, GET as ProxyGET, POST as ProxyPOST, PUT as ProxyPUT } from '../[...path]/route';
 
 // Re-export all methods from the proxy with 'reports' as the path
 export async function GET(request: NextRequest) {

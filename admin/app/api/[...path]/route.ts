@@ -45,8 +45,8 @@ export async function PATCH(
 async function proxyRequest(request: NextRequest, path: string[]) {
   try {
     const pathString = path.join('/');
-    // Add trailing slash for consistency with backend
-    const url = `${BACKEND_URL}/api/${pathString}/`;
+    // Build URL - NO trailing slash (backend doesn't use them)
+    const url = `${BACKEND_URL}/api/${pathString}`;
     const searchParams = request.nextUrl.searchParams.toString();
     const fullUrl = searchParams ? `${url}?${searchParams}` : url;
 

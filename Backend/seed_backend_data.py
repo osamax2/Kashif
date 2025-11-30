@@ -1,6 +1,7 @@
-import psycopg2
-from datetime import datetime, timedelta
 import random
+from datetime import datetime, timedelta
+
+import psycopg2
 
 # Database connections
 connections = {
@@ -254,4 +255,5 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"✗ Coupons seeding failed: {e}")
     
+    print("Done!")
     print("Done!")

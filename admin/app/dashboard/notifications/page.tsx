@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Send, Bell } from 'lucide-react';
 import { notificationsAPI } from '@/lib/api';
+import { Bell, Send } from 'lucide-react';
+import { useState } from 'react';
 
 export default function NotificationsPage() {
   const [form, setForm] = useState({

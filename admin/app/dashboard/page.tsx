@@ -1,8 +1,8 @@
 'use client';
 
+import { couponsAPI, reportsAPI, usersAPI } from '@/lib/api';
+import { FileText, Gift, TrendingUp, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Users, FileText, Gift, TrendingUp } from 'lucide-react';
-import { usersAPI, reportsAPI, couponsAPI, analyticsAPI } from '@/lib/api';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({

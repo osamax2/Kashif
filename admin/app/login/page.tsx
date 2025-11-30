@@ -1,8 +1,8 @@
 'use client';
 
+import { authAPI } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
-import { authAPI } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
