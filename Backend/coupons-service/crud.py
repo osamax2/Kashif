@@ -28,6 +28,35 @@ def get_companies(db: Session, skip: int = 0, limit: int = 100):
     ).offset(skip).limit(limit).all()
 
 
+def get_company(db: Session, company_id: int):
+    return db.query(models.Company).filter(models.Company.id == company_id).first()
+
+
+def update_company(db: Session, company_id: int, company_update: schemas.CompanyUpdate):
+    company = get_company(db, company_id)
+    if not company:
+        return None
+    
+    update_data = company_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(company, field, value)
+    
+    db.commit()
+    db.refresh(company)
+    return company
+
+
+def delete_company(db: Session, company_id: int):
+    company = get_company(db, company_id)
+    if not company:
+        return None
+    
+    company.status = "DELETED"
+    db.commit()
+    db.refresh(company)
+    return company
+
+
 # Category CRUD
 def create_category(db: Session, category: schemas.CouponCategoryCreate):
     db_category = models.CouponCategory(**category.dict())
@@ -39,6 +68,35 @@ def create_category(db: Session, category: schemas.CouponCategoryCreate):
 
 def get_categories(db: Session):
     return db.query(models.CouponCategory).all()
+
+
+def get_category(db: Session, category_id: int):
+    return db.query(models.CouponCategory).filter(models.CouponCategory.id == category_id).first()
+
+
+def update_category(db: Session, category_id: int, category_update: schemas.CouponCategoryUpdate):
+    category = get_category(db, category_id)
+    if not category:
+        return None
+    
+    update_data = category_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(category, field, value)
+    
+    db.commit()
+    db.refresh(category)
+    return category
+
+
+def delete_category(db: Session, category_id: int):
+    category = get_category(db, category_id)
+    if not category:
+        return None
+    
+    category.status = "DELETED"
+    db.commit()
+    db.refresh(category)
+    return category
 
 
 # Coupon CRUD
@@ -72,6 +130,34 @@ def get_coupons(
     return query.order_by(models.Coupon.created_at.desc()).offset(skip).limit(limit).all()
 
 
+def update_coupon(db: Session, coupon_id: int, coupon_update: schemas.CouponUpdate):
+    """Update coupon fields (admin only)"""
+    coupon = get_coupon(db, coupon_id)
+    if not coupon:
+        return None
+    
+    # Update only provided fields
+    update_data = coupon_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(coupon, field, value)
+    
+    db.commit()
+    db.refresh(coupon)
+    return coupon
+
+
+def delete_coupon(db: Session, coupon_id: int):
+    """Soft delete coupon by setting status to DELETED"""
+    coupon = get_coupon(db, coupon_id)
+    if not coupon:
+        return None
+    
+    coupon.status = "DELETED"
+    db.commit()
+    db.refresh(coupon)
+    return coupon
+
+
 # Redemption CRUD
 def create_redemption(db: Session, user_id: int, coupon_id: int, points_spent: int):
     db_redemption = models.CouponRedemption(
@@ -95,5 +181,4 @@ def get_user_redemption(db: Session, user_id: int, coupon_id: int):
 def get_user_redemptions(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.CouponRedemption).filter(
         models.CouponRedemption.user_id == user_id
-    ).order_by(models.CouponRedemption.redeemed_at.desc()).offset(skip).limit(limit).all()
     ).order_by(models.CouponRedemption.redeemed_at.desc()).offset(skip).limit(limit).all()
