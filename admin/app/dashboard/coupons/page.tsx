@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Plus, Building2, Tag } from 'lucide-react';
 import { couponsAPI } from '@/lib/api';
+import { Building2, Plus, Tag } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface Coupon {
   id: number;

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Trophy, TrendingUp } from 'lucide-react';
-import { analyticsAPI, reportsAPI, couponsAPI } from '@/lib/api';
+import { analyticsAPI, couponsAPI, reportsAPI } from '@/lib/api';
 import { LeaderboardEntry } from '@/lib/types';
+import { TrendingUp, Trophy } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function AnalyticsPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);

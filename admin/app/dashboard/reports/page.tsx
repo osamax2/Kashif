@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Search, MapPin } from 'lucide-react';
 import { reportsAPI } from '@/lib/api';
 import { Report } from '@/lib/types';
+import { MapPin, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);

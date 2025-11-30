@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Search, Award, Ban } from 'lucide-react';
 import { usersAPI } from '@/lib/api';
 import { User } from '@/lib/types';
+import { Award, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
