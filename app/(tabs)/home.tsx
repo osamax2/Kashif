@@ -442,9 +442,11 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         const category = categories.find(c => c.id === categoryId);
         if (!category) return "📍";
         
-        if (category.name.includes("حفرة")) return "⚠️";
-        if (category.name.includes("حادث")) return "🚨";
-        if (category.name.includes("كاشف") || category.name.includes("سرعة")) return "📷";
+        const name = category.name_ar || category.name_en || category.name || "";
+        
+        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "⚠️";
+        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "🚨";
+        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "📷";
         return "📍";
     };
     
@@ -699,11 +701,17 @@ async function playBeep(value: number) {
             <View style={styles.categoriesRow}>
                 {categories.slice(0, 3).map((category) => {
                     const isActive = activeFilters.includes(category.id);
-                    const color = category.name.includes("كاشف") || category.name.includes("سرعة") 
-                        ? "red" 
-                        : category.name.includes("حادث")
-                        ? "#a7c8f9ff"
-                        : "gold";
+                    // Use color from database, fallback to default colors
+                    const color = category.color || (
+                        category.name_ar?.includes("كاشف") || category.name_ar?.includes("سرعة") || category.name_en?.includes("Speed")
+                            ? "#00FF00" // Green for speed camera
+                            : category.name_ar?.includes("حادث") || category.name_en?.includes("Accident")
+                            ? "#FF0000" // Red for accident
+                            : "#FFD700" // Yellow/Gold for pothole
+                    );
+                    
+                    // Display Arabic name if available, otherwise English
+                    const displayName = category.name_ar || category.name_en || category.name;
                     
                     return (
                         <TouchableOpacity
@@ -720,7 +728,7 @@ async function playBeep(value: number) {
                                     isActive && styles.categoryTextActive,
                                 ]}
                             >
-                                {category.name}
+                                {displayName}
                             </Text>
                             <View
                                 style={[
@@ -981,7 +989,7 @@ async function playBeep(value: number) {
       {/* AUDIO MODES */}
 <View style={styles.modeRow}>
 
-    {/* حفرة */}
+    {/* حفرة - Yellow */}
     <TouchableOpacity
         style={[
             styles.modeBox,
@@ -996,12 +1004,12 @@ async function playBeep(value: number) {
         }}
     >
          <View style={[styles.modeIconCircle]}>
-            <Ionicons name="alert-circle" size={26} color="yellow" />
+            <Ionicons name="alert-circle" size={26} color="#FFD700" />
         </View>
         <Text style={styles.modeText}>{t('home.pothole')}</Text>
     </TouchableOpacity>
 
-    {/* حادث */}
+    {/* حادث - Red */}
     <TouchableOpacity
         style={[
             styles.modeBox,
@@ -1016,12 +1024,12 @@ async function playBeep(value: number) {
         }}
     >
         <View style={[styles.modeIconCircle]}>
-            <Ionicons name="warning" size={26} color="#a7c8f9ff" />
+            <Ionicons name="warning" size={26} color="#FF0000" />
         </View>
         <Text style={styles.modeText}>{t('home.accident')}</Text>
     </TouchableOpacity>
 
-    {/* كاشف السرعة */}
+    {/* كاشف السرعة - Green */}
     <TouchableOpacity
         style={[
             styles.modeBox,
@@ -1036,7 +1044,7 @@ async function playBeep(value: number) {
         }}
     >
         <View style={[styles.modeIconCircle]}>
-            <Ionicons name="speedometer" size={26} color="red" />
+            <Ionicons name="speedometer" size={26} color="#00FF00" />
         </View>
         <Text style={styles.modeText}>{t('home.speedCamera')}</Text>
     </TouchableOpacity>
