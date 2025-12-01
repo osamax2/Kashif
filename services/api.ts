@@ -171,6 +171,9 @@ export interface Level {
 export interface Category {
   id: number;
   name: string;
+  name_ar?: string;
+  name_en?: string;
+  color?: string;
   description?: string;
 }
 
