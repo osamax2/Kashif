@@ -18,6 +18,7 @@ import {
     I18nManager,
     Image,
     Keyboard,
+    PanResponder,
     Platform,
     Pressable,
     StyleSheet,
@@ -33,7 +34,8 @@ function Slider({ value = 0, minimumValue = 0, maximumValue = 1, onValueChange }
 
     const handleTouch = (evt: any) => {
         if (!width) return;
-        let x = evt.nativeEvent.locationX;
+        // Calculate from right side - right is 0, left is max
+        let x = width - evt.nativeEvent.locationX;
         if (x < 0) x = 0;
         if (x > width) x = width;
 
@@ -52,12 +54,12 @@ function Slider({ value = 0, minimumValue = 0, maximumValue = 1, onValueChange }
             style={{
                 height: 22,
                 borderRadius: 25,
-                backgroundColor: "rgba(255,255,255,0.15)",
+                backgroundColor: "rgba(128, 128, 128, 0.3)",
                 justifyContent: "center",
                 paddingHorizontal: 2,
             }}
         >
-            {/* Füllung */}
+            {/* Füllung - fills from left based on value */}
             <View
                 style={{
                     position: "absolute",
@@ -70,14 +72,14 @@ function Slider({ value = 0, minimumValue = 0, maximumValue = 1, onValueChange }
                 }}
             />
 
-            {/* Thumb */}
+            {/* Thumb - positioned from left */}
             <View
                 style={{
                     position: "absolute",
                     left: pct * width - 14,
                     width: 28,
                     height: 28,
-                    borderRadius: 19,
+                    borderRadius: 14,
                     backgroundColor: "#F4B400",
                     shadowColor: "#F4B400",
                     shadowOpacity: 0.5,
@@ -217,6 +219,7 @@ export default function HomeScreen() {
 
 const [audioVisible, setAudioVisible] = useState(false);
 const [volume, setVolume] = useState(0.6);
+const audioSheetY = useRef(new Animated.Value(0)).current;
 
 const toggleSound = () => {
     setSoundEnabled(!soundEnabled);
@@ -243,6 +246,40 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     
     // Location monitoring state
     const [isMonitoringActive, setIsMonitoringActive] = useState(false);
+    
+    // PanResponder for swipe-to-dismiss audio sheet
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: (_, gestureState) => {
+                return Math.abs(gestureState.dy) > 5;
+            },
+            onPanResponderMove: (_, gestureState) => {
+                if (gestureState.dy > 0) {
+                    audioSheetY.setValue(gestureState.dy);
+                }
+            },
+            onPanResponderRelease: (_, gestureState) => {
+                if (gestureState.dy > 100) {
+                    // Swipe down threshold reached - close sheet
+                    Animated.timing(audioSheetY, {
+                        toValue: 500,
+                        duration: 200,
+                        useNativeDriver: true,
+                    }).start(() => {
+                        setAudioVisible(false);
+                        audioSheetY.setValue(0);
+                    });
+                } else {
+                    // Snap back
+                    Animated.spring(audioSheetY, {
+                        toValue: 0,
+                        useNativeDriver: true,
+                    }).start();
+                }
+            },
+        })
+    ).current;
 
     // Load data on mount and when refreshKey changes
     useEffect(() => {
@@ -958,8 +995,16 @@ async function playBeep(value: number) {
     />
 
     {/* GLASS-SHEET */}
-    <BlurView intensity={55} tint="dark" style={styles.audioSheet}>
-      <View style={styles.audioSheetHandle} />
+    <Animated.View 
+      style={[
+        styles.audioSheetContainer,
+        { transform: [{ translateY: audioSheetY }] }
+      ]}
+    >
+      <BlurView intensity={55} tint="light" style={styles.audioSheet}>
+        <View {...panResponder.panHandlers} style={styles.audioSheetHandleArea}>
+          <View style={styles.audioSheetHandle} />
+        </View>
 
       <Text style={styles.audioTitle}>{t('home.soundSettings')}</Text>
 
@@ -1060,7 +1105,8 @@ async function playBeep(value: number) {
       >
         <Text style={styles.closeAudioText}>{t('common.close')}</Text>
       </TouchableOpacity>
-    </BlurView>
+      </BlurView>
+    </Animated.View>
   </View>
 )}
 
@@ -1230,7 +1276,7 @@ bottomOverlay: {
 
 overlayBackground: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
 },
 
 bottomSheet: {
@@ -1273,7 +1319,7 @@ fakeSlider: {
     width: "100%",
     height: 5,
     borderRadius: -6,
-    backgroundColor: "#555",
+    backgroundColor: "#ffffffff",
 },
 
 fakeSliderFill: {
@@ -1330,31 +1376,40 @@ audioOverlay: {
 
 audioOverlayBg: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+},
+
+audioSheetContainer: {
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    overflow: "hidden",
 },
 
 audioSheet: {
-    backgroundColor: "#1C1C1E",
+    backgroundColor: "#FFFFFF",
     padding: 20,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingBottom: 40,
-    overflow: "hidden",
+    paddingBottom: Platform.OS === "ios" ? 90 : 85,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: "rgba(0, 0, 0, 0.1)",
+},
+
+audioSheetHandleArea: {
+    paddingVertical: 10,
+    marginHorizontal: -20,
+    marginTop: -20,
+    marginBottom: 10,
+    alignItems: "center",
 },
 
 audioSheetHandle: {
     width: 45,
     height: 5,
-    backgroundColor: "#666",
+    backgroundColor: "#000000",
     borderRadius: 3,
-    alignSelf: "center",
-    marginBottom: 18,
 },
 
 audioTitle: {
-    color: "#FFF",
+    color: "#000000",
     fontSize: 22,
     textAlign: "center",
     marginBottom: 20,
@@ -1365,7 +1420,7 @@ volumeSection: {
 },
 
 audioLabel: {
-    color: "#EEE",
+    color: "#000000",
     fontSize: 16,
     marginBottom: 8,
     fontFamily: "Tajawal-Regular",
@@ -1383,7 +1438,7 @@ testBtn: {
 },
 
 testBtnText: {
-    color: "#FFF",
+    color: "#000000",
     fontSize: 16,
     textAlign: "center",
     fontFamily: "Tajawal-Bold",
@@ -1411,7 +1466,6 @@ modeBox: {
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
     elevation: 6,
-    bottom:18,
     height: 125,   
 },
 
@@ -1423,9 +1477,10 @@ modeBoxActive: {
 },
 
 modeText: {
-     color: "#FFF",
-    fontSize: 14,             // ⭐ gleiche Schriftgröße für alle
+    color: "#ffffffff",
+    fontSize: 14,
     marginTop: 9,
+    paddingTop: 4,
     fontFamily: "Tajawal-Medium",
     textAlign: "center",
 },
@@ -1434,12 +1489,11 @@ closeAudioBtn: {
     backgroundColor: "#F4B400",
     paddingVertical: 14,
     borderRadius: 12,
-    bottom: 25,
+    marginTop: 20,
 },
 
-
 closeAudioText: {
-    color: "#fff",
+    color: "#000000",
     textAlign: "center",
     fontSize: 18,
     fontFamily: "Tajawal-Bold",
@@ -1448,7 +1502,7 @@ closeAudioText: {
 
 modeBoxV1: {
     width: "30%",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
     borderRadius: 18,
     paddingVertical: 5,
     alignItems: "center",

@@ -7,6 +7,9 @@ from pydantic import BaseModel
 
 class CategoryBase(BaseModel):
     name: str
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    color: Optional[str] = None
     description: Optional[str] = None
 
 
@@ -55,6 +58,18 @@ class ReportBase(BaseModel):
 
 class ReportCreate(ReportBase):
     pass
+
+
+class ReportUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category_id: Optional[int] = None
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+    address_text: Optional[str] = None
+    severity_id: Optional[int] = None
+    status_id: Optional[int] = None
+    photo_urls: Optional[str] = None
 
 
 class Report(ReportBase):

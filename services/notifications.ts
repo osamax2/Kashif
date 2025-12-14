@@ -1,8 +1,10 @@
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import api from './api';
 
-// Push notifications are now enabled for production builds
-const notificationsAvailable = true;
+// Push notifications are only available in standalone builds, not Expo Go
+const isExpoGo = Constants.appOwnership === 'expo';
+const notificationsAvailable = !isExpoGo;
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -35,7 +37,7 @@ class NotificationService {
    */
   async registerForPushNotifications(): Promise<string | null> {
     if (!notificationsAvailable) {
-      console.log('Push notifications not available');
+      console.log('⚠️ Push notifications not available in Expo Go - use a development build for testing');
       return null;
     }
 
@@ -54,9 +56,11 @@ class NotificationService {
         return null;
       }
 
-      // Get push token
+      // Get push token with project ID from app.json
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      
       const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: '4a35de96-9bb2-48bc-a43d-46a0a52ba959', // Your Expo project ID
+        projectId: projectId,
       });
       
       this.expoPushToken = tokenData.data;

@@ -11,6 +11,9 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
+    name_ar = Column(String(100), nullable=True)
+    name_en = Column(String(100), nullable=True)
+    color = Column(String(7), nullable=True)
     description = Column(Text, nullable=True)
 
     reports = relationship("Report", back_populates="category")
