@@ -124,8 +124,9 @@ export default function ReportsScreen() {
         try {
             setLoading(true);
             // Parallel laden für bessere Performance
+            // Lade ALLE Berichte aus der Datenbank (höheres Limit für vollständige Statistiken)
             const [reportsData, statusesData, categoriesData, severitiesData] = await Promise.all([
-                reportingAPI.getMyReports(0, 1000).catch(() => []),
+                reportingAPI.getMyReports(0, 10000).catch(() => []),
                 lookupAPI.getStatuses().catch(() => []),
                 lookupAPI.getCategories().catch(() => []),
                 lookupAPI.getSeverities().catch(() => []),
@@ -146,33 +147,81 @@ export default function ReportsScreen() {
     };
 
     const calculateStats = (reportsData: Report[], statusesData: ReportStatus[]) => {
+        // Erstelle Status-Map für schnellen Lookup
         const statusMap = new Map(statusesData.map(s => [s.id, s.name]));
         
         let open = 0;
         let inProgress = 0;
         let resolved = 0;
+        let other = 0;
 
+        // Zähle alle Berichte nach Status (direkt aus der Datenbank)
         reportsData.forEach(report => {
             const statusName = (statusMap.get(report.status_id) || '').toLowerCase();
             
-            // Support both Arabic and English status names
-            if (statusName === "مفتوح" || statusName === "open") {
+            // Support Arabic, English and database status names (flexible matching)
+            if (
+                statusName.includes("مفتوح") || 
+                statusName.includes("open") || 
+                statusName.includes("new") ||
+                statusName === "مفتوح" ||
+                statusName === "open" ||
+                statusName === "new"
+            ) {
                 open++;
             } else if (
-                statusName === "قيد المراجعة" || statusName === "under review" ||
-                statusName === "قيد المعالجة" || statusName === "in progress"
+                statusName.includes("قيد المراجعة") || 
+                statusName.includes("قيد المعالجة") || 
+                statusName.includes("under review") ||
+                statusName.includes("in progress") ||
+                statusName.includes("in_progress") ||
+                statusName.includes("being handled") ||
+                statusName === "قيد المراجعة" ||
+                statusName === "قيد المعالجة" ||
+                statusName === "under review" ||
+                statusName === "in progress" ||
+                statusName === "in_progress"
             ) {
                 inProgress++;
-            } else if (statusName === "تم الإصلاح" || statusName === "resolved") {
+            } else if (
+                statusName.includes("تم الإصلاح") || 
+                statusName.includes("resolved") ||
+                statusName.includes("completed") ||
+                statusName === "تم الإصلاح" ||
+                statusName === "resolved" ||
+                statusName === "completed"
+            ) {
                 resolved++;
+            } else {
+                other++;
             }
         });
 
         const total = reportsData.length || 1;
+        
+        // Berechne Prozentsätze basierend auf ALLEN Berichten aus der Datenbank
         setStats({
             open: Math.round((open / total) * 100),
             inProgress: Math.round((inProgress / total) * 100),
             resolved: Math.round((resolved / total) * 100),
+        });
+        
+        // Debug-Log für Entwicklung - zeigt alle Status-Namen aus DB
+        const statusBreakdown = reportsData.reduce((acc: any, report) => {
+            const statusName = statusMap.get(report.status_id) || 'unknown';
+            acc[statusName] = (acc[statusName] || 0) + 1;
+            return acc;
+        }, {});
+        
+        console.log('📊 Statistiken aus Datenbank:', {
+            total: reportsData.length,
+            statusBreakdown,
+            counts: { open, inProgress, resolved, other },
+            percentages: {
+                open: Math.round((open / total) * 100),
+                inProgress: Math.round((inProgress / total) * 100),
+                resolved: Math.round((resolved / total) * 100),
+            }
         });
     };
 
