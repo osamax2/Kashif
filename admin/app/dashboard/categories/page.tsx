@@ -10,6 +10,7 @@ interface Category {
   id: number;
   name: string;
   description?: string;
+  status: string;
   created_at: string;
 }
 
@@ -35,7 +36,11 @@ export default function CategoriesPage() {
     try {
       setLoading(true);
       const data = await couponsAPI.getCategories();
-      setCategories(Array.isArray(data) ? data : []);
+      // Filter out deleted categories
+      const activeCategories = Array.isArray(data) 
+        ? data.filter(cat => cat.status !== 'DELETED') 
+        : [];
+      setCategories(activeCategories);
     } catch (error) {
       console.error('Failed to load categories:', error);
     } finally {
