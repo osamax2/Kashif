@@ -134,4 +134,3 @@ def get_unread_count(db: Session, user_id: int):
         models.Notification.user_id == user_id,
         models.Notification.is_read == False
     ).count()
-    ).count()
