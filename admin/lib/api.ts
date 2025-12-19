@@ -110,6 +110,14 @@ export const reportsAPI = {
     return response.data;
   },
   
+  updateReportStatus: async (reportId: number, data: { status_id: number; admin_comment?: string }) => {
+    const response = await api.patch(`/api/reports/${reportId}/status`, {
+      status_id: data.status_id,
+      comment: data.admin_comment || ''
+    });
+    return response.data;
+  },
+  
   deleteReport: async (reportId: number) => {
     const response = await api.delete(`/api/reports/${reportId}`);
     return response.data;
