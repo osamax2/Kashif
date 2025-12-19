@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'http://kashif-gateway:80';
+// Connect to backend via internal Docker network
+const BACKEND_URL = 'http://87.106.51.243:8000';
 
 export async function GET(
   request: NextRequest,
