@@ -6,4 +6,6 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
