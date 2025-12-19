@@ -66,14 +66,14 @@ def seed_reports():
     
     # Insert categories
     categories = [
-        ('Infrastructure', 'البنية التحتية', 'Roads, bridges, public facilities'),
-        ('Environment', 'البيئة', 'Pollution, waste management'),
-        ('Safety', 'السلامة', 'Public safety concerns')
+        ('Infrastructure', 'Infrastructure', 'البنية التحتية', 'Roads, bridges, public facilities'),
+        ('Environment', 'Environment', 'البيئة', 'Pollution, waste management'),
+        ('Safety', 'Safety', 'السلامة', 'Public safety concerns')
     ]
     
     for cat in categories:
         cur.execute(
-            "INSERT INTO categories (name_en, name_ar, description) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+            "INSERT INTO categories (name, name_en, name_ar, description) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
             cat
         )
     
@@ -181,7 +181,7 @@ def seed_coupons():
     
     for company in companies:
         cur.execute(
-            "INSERT INTO companies (name, description, logo_url, website) VALUES (%s, %s, %s, %s)",
+            "INSERT INTO companies (name, description, logo_url, website_url, status, created_at) VALUES (%s, %s, %s, %s, 'ACTIVE', NOW())",
             company
         )
     
