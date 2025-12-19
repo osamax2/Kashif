@@ -9,6 +9,7 @@ export default function NotificationsPage() {
     user_id: '',
     title: '',
     body: '',
+    type: 'GENERAL',
     data: '{}',
   });
   const [sending, setSending] = useState(false);
@@ -28,11 +29,12 @@ export default function NotificationsPage() {
         user_id: parseInt(form.user_id),
         title: form.title,
         body: form.body,
+        type: form.type,
         data: parsedData,
       });
 
       alert('Notification sent successfully!');
-      setForm({ user_id: '', title: '', body: '', data: '{}' });
+      setForm({ user_id: '', title: '', body: '', type: 'GENERAL', data: '{}' });
     } catch (error) {
       console.error('Failed to send notification:', error);
       alert('Failed to send notification');
@@ -98,6 +100,22 @@ export default function NotificationsPage() {
                 rows={4}
                 placeholder="Notification message"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Type
+              </label>
+              <select
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              >
+                <option value="GENERAL">General</option>
+                <option value="REPORT_STATUS">Report Status</option>
+                <option value="COUPON">Coupon</option>
+                <option value="ACHIEVEMENT">Achievement</option>
+              </select>
             </div>
 
             <div>

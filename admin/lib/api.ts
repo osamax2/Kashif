@@ -210,7 +210,9 @@ export const couponsAPI = {
 // Notifications
 export const notificationsAPI = {
   sendNotification: async (data: any) => {
-    const response = await api.post('/api/notifications/send', data);
+    // Remove 'data' field as backend expects type, not data
+    const { data: _, ...notificationData } = data;
+    const response = await api.post('/api/notifications/send', notificationData);
     return response.data;
   },
 };
