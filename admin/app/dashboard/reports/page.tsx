@@ -73,7 +73,7 @@ export default function ReportsPage() {
       const status = statuses.find((s) => s.name === newStatus);
       if (!status) return;
       
-      await reportsAPI.updateReport(selectedReport.id, {
+      await reportsAPI.updateReportStatus(selectedReport.id, {
         status_id: status.id,
         admin_comment: comment,
       });
