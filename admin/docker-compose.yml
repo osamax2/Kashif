@@ -6,6 +6,10 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks:
+      - backend_kashif-network
     restart: unless-stopped
+
+networks:
+  backend_kashif-network:
+    external: true
