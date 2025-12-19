@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel Frontend Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e40af;
+        }
+        h2 {
+            color: #3b82f6;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #10b981;
+        }
+        .success:hover {
+            background: #059669;
+        }
+        .danger {
+            background: #ef4444;
+        }
+        .danger:hover {
+            background: #dc2626;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .result {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid #3b82f6;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            border-left-color: #ef4444;
+            color: #dc2626;
+        }
+        label {
+            font-weight: bold;
+            color: #334155;
+            display: block;
+            margin-top: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Kashif Admin Panel - Frontend Test</h1>
+    <p>Testing Categories and Notifications functionality</p>
+
+    <div class="container">
+        <h2>1. Login Status</h2>
+        <div id="loginStatus">Not logged in</div>
+        <button onclick="login()">Login as Admin</button>
+        <button onclick="logout()" class="danger">Logout</button>
+    </div>
+
+    <div class="test-grid">
+        <div class="container">
+            <h2>2. Test Categories</h2>
+            
+            <h3>Create Category</h3>
+            <label>Name:</label>
+            <input type="text" id="catName" placeholder="e.g., Test Category" value="Frontend Test">
+            
+            <label>Description:</label>
+            <input type="text" id="catDesc" placeholder="e.g., Created from test" value="Created from frontend test">
+            
+            <label>Icon:</label>
+            <input type="text" id="catIcon" placeholder="e.g., star" value="star">
+            
+            <label>Sort Order:</label>
+            <input type="number" id="catSort" value="99">
+            
+            <button onclick="createCategory()" class="success">Create Category</button>
+            <button onclick="getCategories()">Get All Categories</button>
+            
+            <h3>Update/Delete Category</h3>
+            <label>Category ID:</label>
+            <input type="number" id="catId" placeholder="Enter category ID" value="9">
+            
+            <button onclick="updateCategory()">Update Category</button>
+            <button onclick="deleteCategory()" class="danger">Delete Category</button>
+            
+            <div id="categoryResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="container">
+            <h2>3. Test Notifications</h2>
+            
+            <label>User ID:</label>
+            <input type="number" id="notifUserId" placeholder="e.g., 2" value="2">
+            
+            <label>Title:</label>
+            <input type="text" id="notifTitle" placeholder="e.g., Test Notification" value="Test from Frontend">
+            
+            <label>Body:</label>
+            <textarea id="notifBody" rows="3" placeholder="Notification message">This is a test notification sent from the frontend test page.</textarea>
+            
+            <label>Type:</label>
+            <select id="notifType">
+                <option value="GENERAL">General</option>
+                <option value="REPORT_STATUS">Report Status</option>
+                <option value="COUPON">Coupon</option>
+                <option value="ACHIEVEMENT">Achievement</option>
+            </select>
+            
+            <button onclick="sendNotification()" class="success">Send Notification</button>
+            
+            <div id="notificationResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>4. Test Results Summary</h2>
+        <div id="testSummary">
+            Run tests above to see results...
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';  // Using Next.js proxy
+        let token = localStorage.getItem('admin_token');
+        
+        function updateLoginStatus() {
+            const status = document.getElementById('loginStatus');
+            if (token) {
+                status.innerHTML = '<span class="status success">✓ Logged in</span>';
+            } else {
+                status.innerHTML = '<span class="status error">✗ Not logged in</span>';
+            }
+        }
+        
+        async function login() {
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', 'admin@kashif.com');
+                formData.append('password', 'admin123');
+                
+                const response = await fetch('/api/auth/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.access_token) {
+                    token = data.access_token;
+                    localStorage.setItem('admin_token', token);
+                    updateLoginStatus();
+                    showResult('loginStatus', 'Login successful!', false);
+                } else {
+                    showResult('loginStatus', 'Login failed: ' + JSON.stringify(data), true);
+                }
+            } catch (error) {
+                showResult('loginStatus', 'Login error: ' + error.message, true);
+            }
+        }
+        
+        function logout() {
+            token = null;
+            localStorage.removeItem('admin_token');
+            updateLoginStatus();
+        }
+        
+        function showResult(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            el.textContent = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+            el.style.display = 'block';
+            if (isError) {
+                el.classList.add('error');
+            } else {
+                el.classList.remove('error');
+            }
+        }
+        
+        async function createCategory() {
+            if (!token) {
+                alert('Please login first!');
+                return;
+            }
+            
+            try {
+                const data = {
+                    name: document.getElementById('catName').value,
+                    description: document.getElementById('catDesc').value,
+                    icon_name: document.getElementById('catIcon').value,
+                    sort_order: parseInt(document.getElementById('catSort').value)
+                };
+                
+                const response = await fetch('/api/coupons/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showResult('categoryResult', '✓ Category created:\n' + JSON.stringify(result, null, 2), false);
+                
+                // Update category ID field with new ID
+                if (result.id) {
+                    document.getElementById('catId').value = result.id;
+                }
+            } catch (error) {
+                showResult('categoryResult', '✗ Error: ' + error.message, true);
+            }
+        }
+        
+        async function getCategories() {
+            try {
+                const response = await fetch('/api/coupons/categories', {
+                    headers: token ? {'Authorization': `Bearer ${token}`} : {}
+                });
+                
+                const result = await response.json();
+                showResult('categoryResult', `✓ Found ${result.length} categories:\n` + JSON.stringify(result, null, 2), false);
+            } catch (error) {
+                showResult('categoryResult', '✗ Error: ' + error.message, true);
+            }
+        }
+        
+        async function updateCategory() {
+            if (!token) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const id = document.getElementById('catId').value;
+            if (!id) {
+                alert('Please enter category ID!');
+                return;
+            }
+            
+            try {
+                const data = {
+                    name: document.getElementById('catName').value + ' (Updated)',
+                    description: document.getElementById('catDesc').value + ' - Updated at ' + new Date().toLocaleTimeString()
+                };
+                
+                const response = await fetch(`/api/coupons/categories/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showResult('categoryResult', '✓ Category updated:\n' + JSON.stringify(result, null, 2), false);
+            } catch (error) {
+                showResult('categoryResult', '✗ Error: ' + error.message, true);
+            }
+        }
+        
+        async function deleteCategory() {
+            if (!token) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const id = document.getElementById('catId').value;
+            if (!id) {
+                alert('Please enter category ID!');
+                return;
+            }
+            
+            if (!confirm(`Delete category ${id}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/coupons/categories/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = await response.json();
+                showResult('categoryResult', '✓ Category deleted:\n' + JSON.stringify(result, null, 2), false);
+            } catch (error) {
+                showResult('categoryResult', '✗ Error: ' + error.message, true);
+            }
+        }
+        
+        async function sendNotification() {
+            if (!token) {
+                alert('Please login first!');
+                return;
+            }
+            
+            try {
+                const data = {
+                    user_id: parseInt(document.getElementById('notifUserId').value),
+                    title: document.getElementById('notifTitle').value,
+                    body: document.getElementById('notifBody').value,
+                    type: document.getElementById('notifType').value
+                };
+                
+                const response = await fetch('/api/notifications/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showResult('notificationResult', '✓ Notification sent:\n' + JSON.stringify(result, null, 2), false);
+            } catch (error) {
+                showResult('notificationResult', '✗ Error: ' + error.message, true);
+            }
+        }
+        
+        // Initialize
+        updateLoginStatus();
+    </script>
+</body>
+</html>
