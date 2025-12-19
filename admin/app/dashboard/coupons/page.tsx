@@ -22,6 +22,8 @@ interface Coupon {
 
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -43,6 +45,8 @@ export default function CouponsPage() {
 
   useEffect(() => {
     loadCoupons();
+    loadCompanies();
+    loadCategories();
   }, []);
 
   const loadCoupons = async () => {
@@ -54,6 +58,24 @@ export default function CouponsPage() {
       console.error('Failed to load coupons:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCompanies = async () => {
+    try {
+      const data = await couponsAPI.getCompanies();
+      setCompanies(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load companies:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const data = await couponsAPI.getCategories();
+      setCategories(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
     }
   };
 
@@ -274,7 +296,12 @@ export default function CouponsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Coupon</h2>
-            <CouponForm formData={formData} setFormData={setFormData} />
+            <CouponForm 
+              formData={formData} 
+              setFormData={setFormData}
+              companies={companies}
+              categories={categories}
+            />
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => {
@@ -301,7 +328,12 @@ export default function CouponsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Edit Coupon</h2>
-            <CouponForm formData={formData} setFormData={setFormData} />
+            <CouponForm 
+              formData={formData} 
+              setFormData={setFormData}
+              companies={companies}
+              categories={categories}
+            />
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => {
@@ -355,7 +387,7 @@ export default function CouponsPage() {
   );
 }
 
-function CouponForm({ formData, setFormData }: any) {
+function CouponForm({ formData, setFormData, companies, categories }: any) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
@@ -392,24 +424,36 @@ function CouponForm({ formData, setFormData }: any) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Company ID *</label>
-        <input
-          type="number"
+        <label className="block text-sm font-medium text-gray-700 mb-2">Company *</label>
+        <select
           value={formData.company_id}
           onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
           required
-        />
+        >
+          <option value="">Select a company...</option>
+          {companies.map((company: any) => (
+            <option key={company.id} value={company.id}>
+              {company.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Category ID</label>
-        <input
-          type="number"
+        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+        <select
           value={formData.coupon_category_id}
           onChange={(e) => setFormData({ ...formData, coupon_category_id: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-        />
+        >
+          <option value="">Select a category...</option>
+          {categories.map((category: any) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
