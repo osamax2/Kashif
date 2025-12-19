@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Direct connection to backend gateway
-const API_BASE_URL = 'http://87.106.51.243:8000';
+// Use Next.js API proxy to avoid firewall/CORS issues
+const API_BASE_URL = '';
 
-console.log('API Base URL:', API_BASE_URL);
+console.log('API Base URL:', API_BASE_URL || 'Using Next.js proxy /api/*');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
