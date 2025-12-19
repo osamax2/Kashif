@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'http://87.106.51.243:8000';
+const BACKEND_URL = 'http://kashif-gateway';
 
 export async function GET(
   request: NextRequest,
