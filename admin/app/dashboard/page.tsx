@@ -60,9 +60,31 @@ export default function DashboardPage() {
       console.log('Reports response:', reportsRes);
       console.log('Coupons response:', couponsRes);
 
-      const users = usersRes.status === 'fulfilled' && Array.isArray(usersRes.value) ? usersRes.value : [];
-      const reports = reportsRes.status === 'fulfilled' && Array.isArray(reportsRes.value) ? reportsRes.value : [];
-      const coupons = couponsRes.status === 'fulfilled' && Array.isArray(couponsRes.value) ? couponsRes.value : [];
+      // Handle different API response formats (array or { items: [...] } or { data: [...] })
+      const extractArray = (result: PromiseSettledResult<any>): any[] => {
+        if (result.status !== 'fulfilled') return [];
+        const value = result.value;
+        if (Array.isArray(value)) return value;
+        if (value?.items && Array.isArray(value.items)) return value.items;
+        if (value?.data && Array.isArray(value.data)) return value.data;
+        if (value?.users && Array.isArray(value.users)) return value.users;
+        if (value?.reports && Array.isArray(value.reports)) return value.reports;
+        if (value?.coupons && Array.isArray(value.coupons)) return value.coupons;
+        return [];
+      };
+
+      const users = extractArray(usersRes);
+      const reports = extractArray(reportsRes);
+      const coupons = extractArray(couponsRes);
+
+      console.log('Extracted arrays:', { 
+        usersCount: users.length, 
+        reportsCount: reports.length, 
+        couponsCount: coupons.length,
+        usersSample: users.slice(0, 2),
+        reportsSample: reports.slice(0, 2),
+        couponsSample: coupons.slice(0, 2)
+      });
 
       // Count active users (users with status ACTIVE)
       const activeUsers = users.filter((u: any) => u.status === 'ACTIVE').length;
