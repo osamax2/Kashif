@@ -2,8 +2,15 @@ from datetime import datetime
 
 from database import Base
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer,
-                        Numeric, String, Text)
+                        Numeric, String, Text, Enum)
 from sqlalchemy.orm import relationship
+import enum
+
+
+class ConfirmationStatus(enum.Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    EXPIRED = "expired"
 
 
 class Category(Base):
@@ -59,6 +66,11 @@ class Report(Base):
     severity_id = Column(Integer, ForeignKey("severities.id"), nullable=False)
     user_hide = Column(Boolean, default=False, nullable=False)
     photo_urls = Column(Text, nullable=True)  # JSON array as text or comma-separated
+    # New fields for confirmation system
+    confirmation_status = Column(String(20), default="pending", nullable=False, index=True)  # pending, confirmed, expired
+    confirmed_by_user_id = Column(Integer, nullable=True)  # User who confirmed this report
+    confirmed_at = Column(DateTime, nullable=True)  # When the report was confirmed
+    points_awarded = Column(Boolean, default=False, nullable=False)  # Whether points have been awarded
     created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -66,6 +78,7 @@ class Report(Base):
     status = relationship("ReportStatus", back_populates="reports")
     severity = relationship("Severity", back_populates="reports")
     status_history = relationship("ReportStatusHistory", back_populates="report")
+    confirmations = relationship("ReportConfirmation", back_populates="report")
 
 
 class ReportStatusHistory(Base):
@@ -84,3 +97,19 @@ class ReportStatusHistory(Base):
     new_status = relationship("ReportStatus", foreign_keys=[new_status_id], back_populates="new_status_histories")
     old_status = relationship("ReportStatus", foreign_keys=[old_status_id], back_populates="old_status_histories")
     new_status = relationship("ReportStatus", foreign_keys=[new_status_id], back_populates="new_status_histories")
+
+
+class ReportConfirmation(Base):
+    """Tracks confirmations/verifications of reports by other users"""
+    __tablename__ = "report_confirmations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
+    user_id = Column(Integer, nullable=False, index=True)  # User who confirmed
+    confirmation_type = Column(String(30), nullable=False)  # "still_there", "similar_report", "auto_match"
+    latitude = Column(Numeric(9, 6), nullable=True)  # Location of confirmer (for similar_report)
+    longitude = Column(Numeric(9, 6), nullable=True)
+    points_awarded = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    report = relationship("Report", back_populates="confirmations")

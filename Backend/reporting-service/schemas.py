@@ -77,6 +77,10 @@ class Report(ReportBase):
     user_id: int
     status_id: int
     user_hide: bool
+    confirmation_status: str = "pending"  # pending, confirmed, expired
+    confirmed_by_user_id: Optional[int] = None
+    confirmed_at: Optional[datetime] = None
+    points_awarded: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -100,4 +104,31 @@ class ReportStatusHistory(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ReportConfirmation(BaseModel):
+    id: int
+    report_id: int
+    user_id: int
+    confirmation_type: str
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+    points_awarded: bool
+    created_at: datetime
+
+    class Config:
         from_attributes = True
+
+
+class ConfirmReportRequest(BaseModel):
+    """Request to confirm a report exists (Still There button)"""
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+
+
+class ConfirmReportResponse(BaseModel):
+    """Response after confirming a report"""
+    success: bool
+    message: str
+    report_confirmed: bool
+    points_awarded: int
