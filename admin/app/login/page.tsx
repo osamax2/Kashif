@@ -1,11 +1,14 @@
 'use client';
 
 import { authAPI } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t, isRTL } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +32,7 @@ export default function LoginPage() {
       console.log('Profile:', profile);
       
       if (profile.role !== 'ADMIN' && profile.role !== 'COMPANY') {
-        setError('Access denied. Admin or Company role required.');
+        setError(t.errors.unauthorized);
         localStorage.removeItem('admin_token');
         return;
       }
@@ -41,7 +44,7 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
-      const errorMsg = err.response?.data?.detail || err.message || 'Login failed. Please check your credentials.';
+      const errorMsg = err.response?.data?.detail || err.message || t.auth.invalidCredentials;
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -49,65 +52,50 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-blue-900">
-      {/* Cache bust: v2 - API Proxy enabled */}
-      
-      {/* Dev Mode: API Status Indicator */}
-      <div className="fixed top-4 right-4 bg-white px-4 py-2 rounded-lg shadow-lg text-xs">
-        <div className="font-mono">
-          <div className="text-gray-500">API Mode:</div>
-          <div className="font-bold text-green-600">Next.js Proxy</div>
-          <div className="text-gray-400 mt-1">v2.0</div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-blue-900" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Language Switcher */}
+      <div className={`fixed top-4 ${isRTL ? 'left-4' : 'right-4'}`}>
+        <LanguageSwitcher variant="button" />
       </div>
       
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">Kashif Admin</h1>
-          <p className="text-gray-600">Sign in to manage the platform</p>
+      <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md mx-4 sm:mx-0">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-2">{t.auth.loginTitle}</h1>
+          <p className="text-gray-600 text-sm sm:text-base">{t.auth.loginSubtitle}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+            <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+              {t.auth.email}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+              className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition ${isRTL ? 'text-right' : ''}`}
               placeholder="admin@kashif.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
+            <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+              {t.auth.password}
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+              className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition ${isRTL ? 'text-right' : ''}`}
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className={`bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm ${isRTL ? 'text-right' : ''}`}>
               {error}
-              {error.includes('Network Error') || error.includes('CORS') ? (
-                <div className="mt-2 pt-2 border-t border-red-200 text-xs">
-                  <strong>🔧 Cache Problem detected!</strong>
-                  <br />
-                  Press <kbd className="bg-red-100 px-1 rounded">Cmd+Shift+R</kbd> (Mac) 
-                  or <kbd className="bg-red-100 px-1 rounded">Ctrl+Shift+R</kbd> (Windows)
-                  to reload without cache.
-                </div>
-              ) : null}
             </div>
           )}
 
@@ -116,12 +104,12 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-primary hover:bg-blue-900 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t.common.loading : t.auth.login}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Admin access only</p>
+          <p>{isRTL ? 'وصول المشرفين فقط' : 'Admin access only'}</p>
         </div>
       </div>
     </div>

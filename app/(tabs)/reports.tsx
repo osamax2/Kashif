@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Animated,
     FlatList,
     Image,
@@ -33,6 +34,22 @@ const BLUE = "#0D2B66";
 const CARD_BG = "rgba(255,255,255,0.06)";
 const CARD_BORDER = "rgba(255,255,255,0.18)";
 const YELLOW = "#F4B400";
+const PENDING_COLOR = "#FF9500";
+const CONFIRMED_COLOR = "#4CD964";
+
+// Confirmation Status Meta
+const getConfirmationMeta = (status: string): { icon: string; color: string; label: string; labelAr: string } => {
+    switch (status) {
+        case 'pending':
+            return { icon: "⏳", color: PENDING_COLOR, label: "Pending", labelAr: "قيد الانتظار" };
+        case 'confirmed':
+            return { icon: "✓", color: CONFIRMED_COLOR, label: "Confirmed", labelAr: "مؤكد" };
+        case 'expired':
+            return { icon: "✗", color: "#FF3B30", label: "Expired", labelAr: "منتهي" };
+        default:
+            return { icon: "?", color: "#8E8E93", label: "Unknown", labelAr: "غير معروف" };
+    }
+};
 
 // Status-Konfiguration: Icon + Farbe (wird aus Backend geladen)
 const getStatusMeta = (statusName: string, language: string): { icon: string; color: string } => {
@@ -101,6 +118,7 @@ export default function ReportsScreen() {
     const { t, language } = useLanguage();
     const { refreshKey } = useDataSync();
     const [reports, setReports] = useState<Report[]>([]);
+    const [pendingNearby, setPendingNearby] = useState<Report[]>([]);
     const [statuses, setStatuses] = useState<ReportStatus[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [severities, setSeverities] = useState<Severity[]>([]);
@@ -108,6 +126,8 @@ export default function ReportsScreen() {
     const [detailVisible, setDetailVisible] = useState(false);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [confirming, setConfirming] = useState(false);
+    const [showPendingTab, setShowPendingTab] = useState(false);
 
     // Statistiken
     const [stats, setStats] = useState({
@@ -229,6 +249,39 @@ export default function ReportsScreen() {
         setRefreshing(true);
         await loadData();
         setRefreshing(false);
+    };
+
+    // Confirm a pending report ("Still There" button)
+    const handleConfirmReport = async (reportId: number) => {
+        if (confirming) return;
+        
+        try {
+            setConfirming(true);
+            const result = await reportingAPI.confirmReport(reportId);
+            
+            if (result.success) {
+                // Show success message
+                Alert.alert(
+                    language === 'ar' ? 'تم التأكيد!' : 'Confirmed!',
+                    language === 'ar' 
+                        ? `تم تأكيد البلاغ! حصلت على ${result.points_awarded} نقاط`
+                        : `Report confirmed! You earned ${result.points_awarded} points`
+                );
+                
+                // Reload data to reflect changes
+                await loadData();
+                closeDetails();
+            }
+        } catch (error: any) {
+            console.error('Error confirming report:', error);
+            const errorMsg = error?.response?.data?.detail || 'Error confirming report';
+            Alert.alert(
+                language === 'ar' ? 'خطأ' : 'Error',
+                language === 'ar' ? 'حدث خطأ أثناء تأكيد البلاغ' : errorMsg
+            );
+        } finally {
+            setConfirming(false);
+        }
     };
 
     const openDetails = (report: Report) => {
@@ -479,10 +532,67 @@ export default function ReportsScreen() {
                                     </MapView>
                                 </View>
 
-                                {/* Close Button */}
-                                <Pressable style={styles.modalButton} onPress={closeDetails}>
-                                    <Text style={styles.modalButtonText}>إغلاق</Text>
-                                </Pressable>
+                                {/* Confirmation Status Badge */}
+                                {selected.confirmation_status && (
+                                    <View style={[
+                                        styles.confirmationStatusContainer,
+                                        { backgroundColor: getConfirmationMeta(selected.confirmation_status).color + "22" }
+                                    ]}>
+                                        <Text style={[
+                                            styles.confirmationStatusText,
+                                            { color: getConfirmationMeta(selected.confirmation_status).color }
+                                        ]}>
+                                            {getConfirmationMeta(selected.confirmation_status).icon} {
+                                                language === 'ar' 
+                                                    ? getConfirmationMeta(selected.confirmation_status).labelAr 
+                                                    : getConfirmationMeta(selected.confirmation_status).label
+                                            }
+                                        </Text>
+                                        {selected.confirmation_status === 'pending' && selected.user_id === user?.id && (
+                                            <Text style={styles.pendingHintText}>
+                                                {language === 'ar' 
+                                                    ? 'في انتظار تأكيد من مستخدم آخر'
+                                                    : 'Waiting for confirmation from another user'
+                                                }
+                                            </Text>
+                                        )}
+                                    </View>
+                                )}
+
+                                {/* Buttons Row */}
+                                <View style={styles.modalButtonsRow}>
+                                    {/* Still There Button - only show for pending reports NOT owned by current user */}
+                                    {selected.confirmation_status === 'pending' && selected.user_id !== user?.id && (
+                                        <Pressable 
+                                            style={[styles.stillThereButton, confirming && styles.buttonDisabled]} 
+                                            onPress={() => handleConfirmReport(selected.id)}
+                                            disabled={confirming}
+                                        >
+                                            {confirming ? (
+                                                <ActivityIndicator size="small" color="#FFFFFF" />
+                                            ) : (
+                                                <Text style={styles.stillThereButtonText}>
+                                                    {language === 'ar' ? '✓ لا يزال موجوداً' : '✓ Still There'}
+                                                </Text>
+                                            )}
+                                        </Pressable>
+                                    )}
+                                    
+                                    {/* Close Button */}
+                                    <Pressable 
+                                        style={[
+                                            styles.modalButton, 
+                                            selected.confirmation_status === 'pending' && selected.user_id !== user?.id 
+                                                ? { flex: 1 } 
+                                                : { flex: 1 }
+                                        ]} 
+                                        onPress={closeDetails}
+                                    >
+                                        <Text style={styles.modalButtonText}>
+                                            {language === 'ar' ? 'إغلاق' : 'Close'}
+                                        </Text>
+                                    </Pressable>
+                                </View>
                             </>
                         )}
                     </View>
@@ -549,6 +659,24 @@ function ReportCard({
                     <View style={{ alignItems: "flex-end" }}>
                         <Text style={styles.reportId}>#{report.id}</Text>
                         <Text style={styles.reportDate}>{formattedDate}</Text>
+                        {/* Confirmation Status Badge */}
+                        {report.confirmation_status && (
+                            <View style={[
+                                styles.confirmationBadge,
+                                { backgroundColor: getConfirmationMeta(report.confirmation_status).color + "22" }
+                            ]}>
+                                <Text style={[
+                                    styles.confirmationBadgeText,
+                                    { color: getConfirmationMeta(report.confirmation_status).color }
+                                ]}>
+                                    {getConfirmationMeta(report.confirmation_status).icon} {
+                                        language === 'ar' 
+                                            ? getConfirmationMeta(report.confirmation_status).labelAr 
+                                            : getConfirmationMeta(report.confirmation_status).label
+                                    }
+                                </Text>
+                            </View>
+                        )}
                     </View>
 
                     {/* linke Seite = Icon + Status (nebeneinander) */}
@@ -679,6 +807,18 @@ const styles = StyleSheet.create({
         color: "#fff",
     },
 
+    confirmationBadge: {
+        marginTop: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 10,
+    },
+
+    confirmationBadgeText: {
+        fontSize: 11,
+        fontFamily: "Tajawal-Bold",
+    },
+
     cardLeft: {
         alignItems: "flex-start",
     },
@@ -799,6 +939,49 @@ const styles = StyleSheet.create({
 
     miniMap: {
         flex: 1,
+    },
+
+    confirmationStatusContainer: {
+        padding: 10,
+        borderRadius: 12,
+        marginBottom: 12,
+        alignItems: 'center',
+    },
+
+    confirmationStatusText: {
+        fontSize: 16,
+        fontFamily: "Tajawal-Bold",
+    },
+
+    pendingHintText: {
+        color: "rgba(255,255,255,0.6)",
+        fontSize: 12,
+        fontFamily: "Tajawal-Regular",
+        marginTop: 4,
+    },
+
+    modalButtonsRow: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+
+    stillThereButton: {
+        backgroundColor: "#4CD964",
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 16,
+        alignItems: "center",
+        flex: 1,
+    },
+
+    stillThereButtonText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontFamily: "Tajawal-Bold",
+    },
+
+    buttonDisabled: {
+        opacity: 0.6,
     },
 
     modalButton: {

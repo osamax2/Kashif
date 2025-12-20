@@ -1,6 +1,7 @@
 'use client';
 
 import { couponsAPI } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
 import { Building2, Plus, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -29,6 +30,7 @@ interface UserProfile {
 }
 
 export default function CouponsPage() {
+  const { t, isRTL } = useLanguage();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -250,30 +252,30 @@ export default function CouponsPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Coupons</h1>
-          <p className="text-gray-600 mt-2">
-            {isCompanyUser ? 'Manage your company\'s coupons' : 'Manage coupons and rewards'}
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className={`mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+        <div className={isRTL ? 'text-right' : ''}>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.nav.coupons}</h1>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">
+            {isCompanyUser ? t.coupons.companySubtitle : t.coupons.subtitle}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className={`flex flex-wrap gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
           {!isCompanyUser && (
             <>
               <Link
                 href="/dashboard/companies"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
               >
-                <Building2 className="w-5 h-5" />
-                Companies
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden xs:inline">{t.nav.companies}</span>
               </Link>
               <Link
                 href="/dashboard/categories"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
               >
-                <Tag className="w-5 h-5" />
-                Categories
+                <Tag className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden xs:inline">{t.nav.categories}</span>
               </Link>
             </>
           )}
@@ -282,17 +284,18 @@ export default function CouponsPage() {
               resetForm();
               setShowCreateModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition"
+            className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
           >
-            <Plus className="w-5 h-5" />
-            Create Coupon
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">{t.coupons.createCoupon}</span>
+            <span className="xs:hidden">{isRTL ? 'إضافة' : 'Add'}</span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {coupons.map((coupon) => (
-          <div key={coupon.id} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition">
+          <div key={coupon.id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition">
             {coupon.image_url && (
               <img
                 src={coupon.image_url}
@@ -300,31 +303,31 @@ export default function CouponsPage() {
                 className="w-full h-40 object-cover rounded-lg mb-4"
               />
             )}
-            <h3 className="font-semibold text-gray-900 text-lg mb-2">{coupon.name}</h3>
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{coupon.description}</p>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-yellow-600 font-bold">{coupon.points_cost} Points</span>
+            <h3 className={`font-semibold text-gray-900 text-lg mb-2 ${isRTL ? 'text-right' : ''}`}>{coupon.name}</h3>
+            <p className={`text-gray-600 text-sm mb-3 line-clamp-2 ${isRTL ? 'text-right' : ''}`}>{coupon.description}</p>
+            <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <span className="text-yellow-600 font-bold">{coupon.points_cost} {t.coupons.points}</span>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                 coupon.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
               }`}>
                 {coupon.status}
               </span>
             </div>
-            <div className="flex gap-2">
+            <div className={`flex flex-col xs:flex-row gap-2 ${isRTL ? 'xs:flex-row-reverse' : ''}`}>
               <button
                 onClick={() => handleEdit(coupon)}
-                className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                className="flex-1 px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-700 transition"
               >
-                Edit
+                {t.common.edit}
               </button>
               <button
                 onClick={() => {
                   setSelectedCoupon(coupon);
                   setShowDeleteModal(true);
                 }}
-                className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition"
+                className="flex-1 px-3 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 transition"
               >
-                Delete
+                {t.common.delete}
               </button>
             </div>
           </div>
@@ -333,23 +336,25 @@ export default function CouponsPage() {
 
       {coupons.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No coupons found</p>
+          <p className="text-gray-500">{t.coupons.noCouponsFound}</p>
         </div>
       )}
 
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Coupon</h2>
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.coupons.createNewCoupon}</h2>
             <CouponForm 
               formData={formData} 
               setFormData={setFormData}
               companies={companies}
               categories={categories}
               isCompanyUser={isCompanyUser}
+              t={t}
+              isRTL={isRTL}
             />
-            <div className="flex gap-3 mt-6">
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowCreateModal(false);
@@ -357,13 +362,13 @@ export default function CouponsPage() {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleCreate}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
               >
-                Create Coupon
+                {t.coupons.createCoupon}
               </button>
             </div>
           </div>
@@ -373,16 +378,18 @@ export default function CouponsPage() {
       {/* Edit Modal */}
       {showEditModal && selectedCoupon && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Edit Coupon</h2>
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.coupons.editCoupon}</h2>
             <CouponForm 
               formData={formData} 
               setFormData={setFormData}
               companies={companies}
               categories={categories}
               isCompanyUser={isCompanyUser}
+              t={t}
+              isRTL={isRTL}
             />
-            <div className="flex gap-3 mt-6">
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowEditModal(false);
@@ -390,13 +397,13 @@ export default function CouponsPage() {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleUpdate}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
               >
-                Save Changes
+                {t.users.saveChanges}
               </button>
             </div>
           </div>
@@ -406,12 +413,12 @@ export default function CouponsPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedCoupon && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-4">Delete Coupon</h2>
-            <p className="text-gray-700 mb-6">
-              Are you sure you want to delete <strong>{selectedCoupon.name}</strong>? This action cannot be undone.
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-red-600 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.coupons.deleteCoupon}</h2>
+            <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
+              {t.coupons.confirmDelete} <strong>{selectedCoupon.name}</strong>?
             </p>
-            <div className="flex gap-3">
+            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
@@ -419,13 +426,13 @@ export default function CouponsPage() {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleDelete}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                Delete
+                {t.common.delete}
               </button>
             </div>
           </div>
@@ -435,37 +442,37 @@ export default function CouponsPage() {
   );
 }
 
-function CouponForm({ formData, setFormData, companies, categories, isCompanyUser }: any) {
+function CouponForm({ formData, setFormData, companies, categories, isCompanyUser, t, isRTL }: any) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.couponName} *</label>
         <input
           type="text"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
           required
         />
       </div>
       
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Points Cost *</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.pointsCost} *</label>
         <input
           type="number"
           value={formData.points_cost}
           onChange={(e) => setFormData({ ...formData, points_cost: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
           required
         />
       </div>
 
       <div className="md:col-span-2">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.couponDescription} *</label>
         <textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
           rows={3}
           required
         />
@@ -474,14 +481,14 @@ function CouponForm({ formData, setFormData, companies, categories, isCompanyUse
       {/* Only show company dropdown for ADMIN users */}
       {!isCompanyUser && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Company *</label>
+          <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.couponCompany} *</label>
           <select
             value={formData.company_id}
             onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
             required
           >
-            <option value="">Select a company...</option>
+            <option value="">{t.coupons.selectCompany}</option>
             {companies.map((company: any) => (
               <option key={company.id} value={company.id}>
                 {company.name}
@@ -492,13 +499,13 @@ function CouponForm({ formData, setFormData, companies, categories, isCompanyUse
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.category}</label>
         <select
           value={formData.coupon_category_id}
           onChange={(e) => setFormData({ ...formData, coupon_category_id: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
         >
-          <option value="">Select a category...</option>
+          <option value="">{t.coupons.selectCategory}</option>
           {categories.map((category: any) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -508,55 +515,55 @@ function CouponForm({ formData, setFormData, companies, categories, isCompanyUse
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.imageUrl}</label>
         <input
           type="url"
           value={formData.image_url}
           onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
           placeholder="https://example.com/image.jpg"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Expiration Date</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.expirationDate}</label>
         <input
           type="date"
           value={formData.expiration_date}
           onChange={(e) => setFormData({ ...formData, expiration_date: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Max Usage Per User</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.maxUsagePerUser}</label>
         <input
           type="number"
           value={formData.max_usage_per_user}
           onChange={(e) => setFormData({ ...formData, max_usage_per_user: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Total Available</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.totalAvailable}</label>
         <input
           type="number"
           value={formData.total_available}
           onChange={(e) => setFormData({ ...formData, total_available: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.common.status}</label>
         <select
           value={formData.status}
           onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
         >
-          <option value="ACTIVE">Active</option>
-          <option value="INACTIVE">Inactive</option>
+          <option value="ACTIVE">{t.common.active}</option>
+          <option value="INACTIVE">{t.common.inactive}</option>
         </select>
       </div>
     </div>

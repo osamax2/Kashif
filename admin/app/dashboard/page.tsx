@@ -1,12 +1,14 @@
 'use client';
 
 import { couponsAPI, reportsAPI, usersAPI } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
 import { FileText, Gift, TrendingUp, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { t, isRTL } = useLanguage();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -88,28 +90,28 @@ export default function DashboardPage() {
 
   const cards = [
     {
-      title: 'Total Users',
+      title: t.dashboard.totalUsers,
       value: stats.totalUsers,
       icon: Users,
       color: 'bg-blue-500',
       href: '/dashboard/users',
     },
     {
-      title: 'Total Reports',
+      title: t.dashboard.totalReports,
       value: stats.totalReports,
       icon: FileText,
       color: 'bg-green-500',
       href: '/dashboard/reports',
     },
     {
-      title: 'Total Coupons',
+      title: t.dashboard.totalCoupons,
       value: stats.totalCoupons,
       icon: Gift,
       color: 'bg-purple-500',
       href: '/dashboard/coupons',
     },
     {
-      title: 'Active Users',
+      title: t.dashboard.activeUsers,
       value: stats.totalRedemptions,
       icon: TrendingUp,
       color: 'bg-yellow-500',
@@ -129,40 +131,33 @@ export default function DashboardPage() {
   if (userRole === 'COMPANY') {
     return (
       <div>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">
-            Welcome to Kashif Admin Panel
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.dashboard.companyDashboard}</h1>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">
+            {t.dashboard.companyWelcome}
             {companyName && <span className="font-semibold"> - {companyName}</span>}
           </p>
         </div>
 
         {/* Company User - Only Coupons Access */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Your Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">{t.common.actions}</h2>
+          <div className="grid grid-cols-1 gap-4">
             <a
               href="/dashboard/coupons"
-              className="block p-6 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition"
+              className="block p-4 sm:p-6 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition"
             >
-              <div className="flex items-center gap-4">
-                <div className="bg-purple-500 p-3 rounded-lg">
-                  <Gift className="w-6 h-6 text-white" />
+              <div className={`flex items-center gap-3 sm:gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="bg-purple-500 p-2 sm:p-3 rounded-lg">
+                  <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">Manage Coupons</h3>
-                  <p className="text-sm text-gray-600 mt-1">Create and edit coupons for your company</p>
+                <div className={isRTL ? 'text-right' : ''}>
+                  <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{t.dashboard.manageCoupons}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">{t.coupons.title}</p>
                 </div>
               </div>
             </a>
           </div>
-        </div>
-
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-blue-800 text-sm">
-            <strong>Note:</strong> As a company user, you can only manage coupons for your assigned company. 
-            Contact an administrator if you need additional access.
-          </p>
         </div>
       </div>
     );
@@ -171,25 +166,25 @@ export default function DashboardPage() {
   // Admin Dashboard - full view
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome to Kashif Admin Panel</p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.dashboard.title}</h1>
+        <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.dashboard.welcome}</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {cards.map((card) => (
           <div
             key={card.title}
-            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition"
+            className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`${card.color} p-3 rounded-lg`}>
-                <card.icon className="w-6 h-6 text-white" />
+            <div className={`flex items-center justify-between mb-3 sm:mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className={`${card.color} p-2 sm:p-3 rounded-lg`}>
+                <card.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
             </div>
-            <h3 className="text-gray-600 text-sm font-medium">{card.title}</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">
+            <h3 className={`text-gray-600 text-xs sm:text-sm font-medium ${isRTL ? 'text-right' : ''}`}>{card.title}</h3>
+            <p className={`text-xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2 ${isRTL ? 'text-right' : ''}`}>
               {card.value.toLocaleString()}
             </p>
           </div>
@@ -197,29 +192,29 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <h2 className={`text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 ${isRTL ? 'text-right' : ''}`}>{t.dashboard.quickStats}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <a
             href="/dashboard/users"
-            className="block p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
+            className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
           >
-            <h3 className="font-semibold text-gray-900">Manage Users</h3>
-            <p className="text-sm text-gray-600 mt-1">View and manage user accounts</p>
+            <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.users.title}</h3>
+            <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.users}</p>
           </a>
           <a
             href="/dashboard/reports"
-            className="block p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
+            className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
           >
-            <h3 className="font-semibold text-gray-900">Moderate Reports</h3>
-            <p className="text-sm text-gray-600 mt-1">Review and update report statuses</p>
+            <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.reports.title}</h3>
+            <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.reports}</p>
           </a>
           <a
             href="/dashboard/coupons"
-            className="block p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
+            className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
           >
-            <h3 className="font-semibold text-gray-900">Manage Coupons</h3>
-            <p className="text-sm text-gray-600 mt-1">Create and edit coupons</p>
+            <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.coupons.title}</h3>
+            <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.coupons}</p>
           </a>
         </div>
       </div>
