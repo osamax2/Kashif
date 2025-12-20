@@ -1,8 +1,8 @@
 'use client';
 
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { authAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 

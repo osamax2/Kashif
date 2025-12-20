@@ -1,2 +1,3 @@
-export { LanguageProvider, useLanguage, translations } from './LanguageContext';
+export { LanguageProvider, translations, useLanguage } from './LanguageContext';
 export type { Language, TranslationKeys } from './LanguageContext';
+
