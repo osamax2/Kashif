@@ -37,6 +37,7 @@ def create_user(db: Session, user: schemas.UserCreate):
         full_name=user.full_name,
         phone=user.phone,
         role=user.role,
+        company_id=user.company_id if hasattr(user, 'company_id') else None,
         language=user.language if hasattr(user, 'language') else 'ar'
     )
     db.add(db_user)
@@ -129,6 +130,8 @@ def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
         user.phone = user_update.phone
     if user_update.role is not None:
         user.role = user_update.role
+    if user_update.company_id is not None:
+        user.company_id = user_update.company_id
     if user_update.status is not None:
         user.status = user_update.status
     if user_update.language is not None:
@@ -137,5 +140,6 @@ def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
     user.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(user)
+    return user
     return user
 

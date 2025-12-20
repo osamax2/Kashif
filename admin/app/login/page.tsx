@@ -23,16 +23,19 @@ export default function LoginPage() {
       console.log('Login successful, token received');
       localStorage.setItem('admin_token', data.access_token);
       
-      // Verify user is admin
+      // Verify user role (ADMIN or COMPANY allowed)
       console.log('Fetching user profile...');
       const profile = await authAPI.getProfile();
       console.log('Profile:', profile);
       
-      if (profile.role !== 'ADMIN') {
-        setError('Access denied. Admin role required.');
+      if (profile.role !== 'ADMIN' && profile.role !== 'COMPANY') {
+        setError('Access denied. Admin or Company role required.');
         localStorage.removeItem('admin_token');
         return;
       }
+      
+      // Store user profile for role-based access
+      localStorage.setItem('user_profile', JSON.stringify(profile));
       
       console.log('Redirecting to dashboard...');
       router.push('/dashboard');

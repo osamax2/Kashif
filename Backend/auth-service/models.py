@@ -24,7 +24,8 @@ class User(Base):
     access_token = Column(String(255), nullable=True)  # Store current access token
     full_name = Column(String(150), nullable=False)
     phone = Column(String(30), nullable=True)
-    role = Column(String(50), default="USER", nullable=False)  # USER, ADMIN
+    role = Column(String(50), default="USER", nullable=False)  # USER, ADMIN, COMPANY
+    company_id = Column(Integer, nullable=True)  # For COMPANY role users - links to company in coupons-service
     total_points = Column(Integer, default=0, nullable=False)
     image_url = Column(String(255), nullable=True)
     level_id = Column(Integer, ForeignKey("levels.id"), nullable=True)

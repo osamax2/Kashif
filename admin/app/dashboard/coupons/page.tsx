@@ -20,6 +20,14 @@ interface Coupon {
   created_at: string;
 }
 
+interface UserProfile {
+  id: number;
+  email: string;
+  full_name: string;
+  role: string;
+  company_id?: number;
+}
+
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
@@ -29,6 +37,7 @@ export default function CouponsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -43,7 +52,21 @@ export default function CouponsPage() {
     status: 'ACTIVE',
   });
 
+  // Check if user is COMPANY role
+  const isCompanyUser = userProfile?.role === 'COMPANY';
+
   useEffect(() => {
+    // Load user profile from localStorage
+    const storedProfile = localStorage.getItem('user_profile');
+    if (storedProfile) {
+      const profile = JSON.parse(storedProfile);
+      setUserProfile(profile);
+      // If COMPANY user, pre-set the company_id in formData
+      if (profile.role === 'COMPANY' && profile.company_id) {
+        setFormData(prev => ({ ...prev, company_id: profile.company_id.toString() }));
+      }
+    }
+    
     loadCoupons();
     loadCompanies();
     loadCategories();
@@ -195,11 +218,16 @@ export default function CouponsPage() {
   };
 
   const resetForm = () => {
+    // For COMPANY users, keep their company_id
+    const companyId = userProfile?.role === 'COMPANY' && userProfile?.company_id 
+      ? userProfile.company_id.toString() 
+      : '';
+    
     setFormData({
       name: '',
       description: '',
       points_cost: '',
-      company_id: '',
+      company_id: companyId,
       coupon_category_id: '',
       image_url: '',
       expiration_date: '',
@@ -222,23 +250,29 @@ export default function CouponsPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Coupons</h1>
-          <p className="text-gray-600 mt-2">Manage coupons and rewards</p>
+          <p className="text-gray-600 mt-2">
+            {isCompanyUser ? 'Manage your company\'s coupons' : 'Manage coupons and rewards'}
+          </p>
         </div>
         <div className="flex gap-3">
-          <Link
-            href="/dashboard/companies"
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-          >
-            <Building2 className="w-5 h-5" />
-            Companies
-          </Link>
-          <Link
-            href="/dashboard/categories"
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-          >
-            <Tag className="w-5 h-5" />
-            Categories
-          </Link>
+          {!isCompanyUser && (
+            <>
+              <Link
+                href="/dashboard/companies"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+              >
+                <Building2 className="w-5 h-5" />
+                Companies
+              </Link>
+              <Link
+                href="/dashboard/categories"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+              >
+                <Tag className="w-5 h-5" />
+                Categories
+              </Link>
+            </>
+          )}
           <button
             onClick={() => {
               resetForm();
@@ -309,6 +343,7 @@ export default function CouponsPage() {
               setFormData={setFormData}
               companies={companies}
               categories={categories}
+              isCompanyUser={isCompanyUser}
             />
             <div className="flex gap-3 mt-6">
               <button
@@ -341,6 +376,7 @@ export default function CouponsPage() {
               setFormData={setFormData}
               companies={companies}
               categories={categories}
+              isCompanyUser={isCompanyUser}
             />
             <div className="flex gap-3 mt-6">
               <button
@@ -395,7 +431,7 @@ export default function CouponsPage() {
   );
 }
 
-function CouponForm({ formData, setFormData, companies, categories }: any) {
+function CouponForm({ formData, setFormData, companies, categories, isCompanyUser }: any) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
@@ -431,22 +467,25 @@ function CouponForm({ formData, setFormData, companies, categories }: any) {
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Company *</label>
-        <select
-          value={formData.company_id}
-          onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-          required
-        >
-          <option value="">Select a company...</option>
-          {companies.map((company: any) => (
-            <option key={company.id} value={company.id}>
-              {company.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Only show company dropdown for ADMIN users */}
+      {!isCompanyUser && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Company *</label>
+          <select
+            value={formData.company_id}
+            onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+            required
+          >
+            <option value="">Select a company...</option>
+            {companies.map((company: any) => (
+              <option key={company.id} value={company.id}>
+                {company.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>

@@ -43,10 +43,12 @@ export default function DashboardLayout({ children }: LayoutProps) {
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('user_profile');
     router.push('/login');
   };
 
-  const navigation = [
+  // Full navigation for ADMIN
+  const adminNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Users', href: '/dashboard/users', icon: Users },
     { name: 'Reports', href: '/dashboard/reports', icon: FileText },
@@ -54,6 +56,14 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   ];
+
+  // Limited navigation for COMPANY role
+  const companyNavigation = [
+    { name: 'Coupons', href: '/dashboard/coupons', icon: Gift },
+  ];
+
+  // Select navigation based on user role
+  const navigation = user?.role === 'COMPANY' ? companyNavigation : adminNavigation;
 
   if (!user) {
     return (
@@ -113,6 +123,11 @@ export default function DashboardLayout({ children }: LayoutProps) {
               <div className="flex-1 min-w-0">
                 <p className="text-white font-medium truncate">{user.full_name}</p>
                 <p className="text-blue-200 text-sm truncate">{user.email}</p>
+                <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${
+                  user.role === 'ADMIN' ? 'bg-purple-500 text-white' : 'bg-green-500 text-white'
+                }`}>
+                  {user.role}
+                </span>
               </div>
             </div>
             <button

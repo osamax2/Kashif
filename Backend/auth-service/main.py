@@ -236,6 +236,52 @@ def update_user(
     return updated_user
 
 
+@app.post("/users/company", response_model=schemas.User)
+def create_company_user(
+    user_data: schemas.CompanyUserCreate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Create a company user - Admin only
+    
+    This creates a user with role=COMPANY who can only manage coupons
+    for their assigned company.
+    """
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can create company users
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    # Check if user already exists
+    db_user = crud.get_user_by_email(db, email=user_data.email)
+    if db_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create user with COMPANY role
+    user_create = schemas.UserCreate(
+        email=user_data.email,
+        password=user_data.password,
+        full_name=user_data.full_name,
+        phone=user_data.phone,
+        role="COMPANY",
+        company_id=user_data.company_id,
+        language=user_data.language
+    )
+    
+    new_user = crud.create_user(db=db, user=user_create)
+    
+    logger.info(f"Created company user {new_user.id} for company {user_data.company_id}")
+    
+    return new_user
+
+
 @app.patch("/me/language")
 def update_language_preference(
     language_data: schemas.LanguageUpdate,

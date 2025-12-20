@@ -1,19 +1,21 @@
 'use client';
 
-import { usersAPI } from '@/lib/api';
+import { usersAPI, couponsAPI } from '@/lib/api';
 import { User } from '@/lib/types';
-import { Award, Search } from 'lucide-react';
+import { Award, Search, Plus, Building2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showAwardModal, setShowAwardModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCreateCompanyUserModal, setShowCreateCompanyUserModal] = useState(false);
   const [points, setPoints] = useState('');
   const [description, setDescription] = useState('');
   const [editForm, setEditForm] = useState({
@@ -22,9 +24,16 @@ export default function UsersPage() {
     role: 'USER',
     status: 'ACTIVE',
   });
+  const [companyUserForm, setCompanyUserForm] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    company_id: '',
+  });
 
   useEffect(() => {
     loadUsers();
+    loadCompanies();
   }, []);
 
   useEffect(() => {
@@ -46,6 +55,42 @@ export default function UsersPage() {
       console.error('Failed to load users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCompanies = async () => {
+    try {
+      const data = await couponsAPI.getCompanies();
+      // Filter out deleted companies
+      const activeCompanies = Array.isArray(data) 
+        ? data.filter((comp: any) => comp.status !== 'DELETED') 
+        : [];
+      setCompanies(activeCompanies);
+    } catch (error) {
+      console.error('Failed to load companies:', error);
+    }
+  };
+
+  const handleCreateCompanyUser = async () => {
+    if (!companyUserForm.email || !companyUserForm.password || !companyUserForm.full_name || !companyUserForm.company_id) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      await usersAPI.createCompanyUser({
+        email: companyUserForm.email,
+        password: companyUserForm.password,
+        full_name: companyUserForm.full_name,
+        company_id: parseInt(companyUserForm.company_id),
+      });
+      alert('Company user created successfully!');
+      setShowCreateCompanyUserModal(false);
+      setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '' });
+      loadUsers();
+    } catch (error: any) {
+      console.error('Failed to create company user:', error);
+      alert(error.response?.data?.detail || 'Failed to create company user');
     }
   };
 
@@ -119,9 +164,18 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-        <p className="text-gray-600 mt-2">Manage and monitor platform users</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-600 mt-2">Manage and monitor platform users</p>
+        </div>
+        <button
+          onClick={() => setShowCreateCompanyUserModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition"
+        >
+          <Building2 className="w-5 h-5" />
+          Create Company User
+        </button>
       </div>
 
       {/* Search */}
@@ -188,6 +242,8 @@ export default function UsersPage() {
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         user.role === 'ADMIN'
                           ? 'bg-purple-100 text-purple-700'
+                          : user.role === 'COMPANY'
+                          ? 'bg-green-100 text-green-700'
                           : 'bg-blue-100 text-blue-700'
                       }`}
                     >
@@ -340,6 +396,7 @@ export default function UsersPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                 >
                   <option value="USER">USER</option>
+                  <option value="COMPANY">COMPANY</option>
                   <option value="ADMIN">ADMIN</option>
                 </select>
               </div>
@@ -399,6 +456,93 @@ export default function UsersPage() {
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Company User Modal */}
+      {showCreateCompanyUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-primary" />
+              Create Company User
+            </h2>
+            <p className="text-gray-600 text-sm mb-4">
+              Create a user that can manage coupons for a specific company.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={companyUserForm.full_name}
+                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, full_name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={companyUserForm.email}
+                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  placeholder="user@company.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  value={companyUserForm.password}
+                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, password: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company *
+                </label>
+                <select
+                  value={companyUserForm.company_id}
+                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, company_id: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                >
+                  <option value="">Select a company...</option>
+                  {companies.map((company: any) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowCreateCompanyUserModal(false);
+                  setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '' });
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateCompanyUser}
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
+              >
+                Create User
               </button>
             </div>
           </div>

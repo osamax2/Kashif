@@ -56,6 +56,23 @@ async def get_current_user_id(authorization: Annotated[str, Header()]):
     return user["id"]
 
 
+async def get_current_user(authorization: Annotated[str, Header()]):
+    """Verify token and return full user info including company_id and role"""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header"
+        )
+    token = authorization.replace("Bearer ", "")
+    user = await auth_client.verify_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    return user
+
+
 # Company endpoints
 @app.post("/companies", response_model=schemas.Company)
 async def create_company(
@@ -154,10 +171,23 @@ async def delete_category(
 @app.post("/", response_model=schemas.Coupon)
 async def create_coupon(
     coupon: schemas.CouponCreate,
-    user_id: int = Depends(get_current_user_id),
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Create a new coupon (admin/company only)"""
+    """Create a new coupon (admin or company user for their own company)"""
+    # If user is COMPANY role, they can only create coupons for their company
+    if current_user.get("role") == "COMPANY":
+        user_company_id = current_user.get("company_id")
+        if not user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Company user has no assigned company"
+            )
+        if coupon.company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only create coupons for your own company"
+            )
     return crud.create_coupon(db=db, coupon=coupon)
 
 
@@ -167,15 +197,27 @@ async def get_coupons(
     limit: int = 100,
     coupon_category_id: Optional[int] = None,
     company_id: Optional[int] = None,
+    authorization: Annotated[str | None, Header()] = None,
     db: Session = Depends(get_db)
 ):
-    """Get all available coupons with filters"""
+    """Get all available coupons with filters.
+    If user is COMPANY role, only returns coupons for their company."""
+    
+    # Check if there's an auth header and if user is COMPANY role
+    filter_company_id = company_id
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        user = await auth_client.verify_token(token)
+        if user and user.get("role") == "COMPANY":
+            # Force filter to their company only
+            filter_company_id = user.get("company_id")
+    
     return crud.get_coupons(
         db=db,
         skip=skip,
         limit=limit,
         coupon_category_id=coupon_category_id,
-        company_id=company_id
+        company_id=filter_company_id
     )
 
 
@@ -198,32 +240,62 @@ async def get_coupon(
 async def update_coupon(
     coupon_id: int,
     coupon_update: schemas.CouponUpdate,
-    user_id: int = Depends(get_current_user_id),
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update coupon details (admin only)"""
-    updated_coupon = crud.update_coupon(db=db, coupon_id=coupon_id, coupon_update=coupon_update)
-    if not updated_coupon:
+    """Update coupon details (admin or company user for their own coupons)"""
+    # Get the coupon first to check ownership
+    coupon = crud.get_coupon(db=db, coupon_id=coupon_id)
+    if not coupon:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Coupon not found"
         )
+    
+    # If user is COMPANY role, they can only update their own company's coupons
+    if current_user.get("role") == "COMPANY":
+        user_company_id = current_user.get("company_id")
+        if coupon.company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only update coupons for your own company"
+            )
+        # Also prevent changing the company_id
+        if coupon_update.company_id and coupon_update.company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You cannot change the company of a coupon"
+            )
+    
+    updated_coupon = crud.update_coupon(db=db, coupon_id=coupon_id, coupon_update=coupon_update)
     return updated_coupon
 
 
 @app.delete("/{coupon_id}", response_model=schemas.Coupon)
 async def delete_coupon(
     coupon_id: int,
-    user_id: int = Depends(get_current_user_id),
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Soft delete coupon (admin only)"""
-    deleted_coupon = crud.delete_coupon(db=db, coupon_id=coupon_id)
-    if not deleted_coupon:
+    """Soft delete coupon (admin or company user for their own coupons)"""
+    # Get the coupon first to check ownership
+    coupon = crud.get_coupon(db=db, coupon_id=coupon_id)
+    if not coupon:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Coupon not found"
         )
+    
+    # If user is COMPANY role, they can only delete their own company's coupons
+    if current_user.get("role") == "COMPANY":
+        user_company_id = current_user.get("company_id")
+        if coupon.company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only delete coupons for your own company"
+            )
+    
+    deleted_coupon = crud.delete_coupon(db=db, coupon_id=coupon_id)
     return deleted_coupon
 
 
