@@ -2,9 +2,13 @@
 
 import { couponsAPI, reportsAPI, usersAPI } from '@/lib/api';
 import { FileText, Gift, TrendingUp, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalReports: 0,
@@ -14,7 +18,29 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats();
+    // Get user role from localStorage
+    const role = localStorage.getItem('user_role');
+    setUserRole(role);
+    
+    // Get company name for COMPANY users
+    const userProfile = localStorage.getItem('user_profile');
+    if (userProfile) {
+      try {
+        const profile = JSON.parse(userProfile);
+        if (profile.company_name) {
+          setCompanyName(profile.company_name);
+        }
+      } catch (e) {
+        console.error('Error parsing user profile:', e);
+      }
+    }
+    
+    // Only load stats for ADMIN users
+    if (role === 'ADMIN') {
+      loadStats();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const loadStats = async () => {
@@ -99,6 +125,50 @@ export default function DashboardPage() {
     );
   }
 
+  // Company User Dashboard - simplified view
+  if (userRole === 'COMPANY') {
+    return (
+      <div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-2">
+            Welcome to Kashif Admin Panel
+            {companyName && <span className="font-semibold"> - {companyName}</span>}
+          </p>
+        </div>
+
+        {/* Company User - Only Coupons Access */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Your Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a
+              href="/dashboard/coupons"
+              className="block p-6 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition"
+            >
+              <div className="flex items-center gap-4">
+                <div className="bg-purple-500 p-3 rounded-lg">
+                  <Gift className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-lg">Manage Coupons</h3>
+                  <p className="text-sm text-gray-600 mt-1">Create and edit coupons for your company</p>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-blue-800 text-sm">
+            <strong>Note:</strong> As a company user, you can only manage coupons for your assigned company. 
+            Contact an administrator if you need additional access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Admin Dashboard - full view
   return (
     <div>
       <div className="mb-8">
