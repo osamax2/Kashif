@@ -59,11 +59,15 @@ export default function CouponsPage() {
     // Load user profile from localStorage
     const storedProfile = localStorage.getItem('user_profile');
     if (storedProfile) {
-      const profile = JSON.parse(storedProfile);
-      setUserProfile(profile);
-      // If COMPANY user, pre-set the company_id in formData
-      if (profile.role === 'COMPANY' && profile.company_id) {
-        setFormData(prev => ({ ...prev, company_id: profile.company_id.toString() }));
+      try {
+        const profile = JSON.parse(storedProfile);
+        setUserProfile(profile);
+        // If COMPANY user, pre-set the company_id in formData
+        if (profile.role === 'COMPANY' && profile.company_id != null) {
+          setFormData(prev => ({ ...prev, company_id: String(profile.company_id) }));
+        }
+      } catch (e) {
+        console.error('Error parsing user profile:', e);
       }
     }
     
@@ -149,16 +153,16 @@ export default function CouponsPage() {
   const handleEdit = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
     setFormData({
-      name: coupon.name,
-      description: coupon.description,
-      points_cost: coupon.points_cost.toString(),
-      company_id: coupon.company_id.toString(),
-      coupon_category_id: coupon.coupon_category_id.toString(),
+      name: coupon.name || '',
+      description: coupon.description || '',
+      points_cost: coupon.points_cost != null ? String(coupon.points_cost) : '',
+      company_id: coupon.company_id != null ? String(coupon.company_id) : '',
+      coupon_category_id: coupon.coupon_category_id != null ? String(coupon.coupon_category_id) : '',
       image_url: coupon.image_url || '',
       expiration_date: coupon.expiration_date ? coupon.expiration_date.split('T')[0] : '',
-      max_usage_per_user: coupon.max_usage_per_user?.toString() || '',
-      total_available: coupon.total_available?.toString() || '',
-      status: coupon.status,
+      max_usage_per_user: coupon.max_usage_per_user != null ? String(coupon.max_usage_per_user) : '',
+      total_available: coupon.total_available != null ? String(coupon.total_available) : '',
+      status: coupon.status || 'ACTIVE',
     });
     setShowEditModal(true);
   };
@@ -219,8 +223,8 @@ export default function CouponsPage() {
 
   const resetForm = () => {
     // For COMPANY users, keep their company_id
-    const companyId = userProfile?.role === 'COMPANY' && userProfile?.company_id 
-      ? userProfile.company_id.toString() 
+    const companyId = userProfile?.role === 'COMPANY' && userProfile?.company_id != null
+      ? String(userProfile.company_id) 
       : '';
     
     setFormData({
