@@ -296,6 +296,10 @@ export interface Report {
   photo_urls?: string;
   address_text?: string;
   user_hide: boolean;
+  confirmation_status: 'pending' | 'confirmed' | 'expired';
+  confirmed_by_user_id?: number;
+  confirmed_at?: string;
+  points_awarded: boolean;
   created_at: string;
   updated_at?: string;
 }
@@ -326,8 +330,20 @@ export interface ReportStatusHistory {
   created_at: string;
 }
 
+export interface ConfirmReportRequest {
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface ConfirmReportResponse {
+  success: boolean;
+  message: string;
+  report_confirmed: boolean;
+  points_awarded: number;
+}
+
 export const reportingAPI = {
-  // Get user's reports
+  // Get user's reports (includes pending)
   getMyReports: async (skip: number = 0, limit: number = 100): Promise<Report[]> => {
     const response = await api.get<Report[]>('/api/reports/my-reports', {
       params: { skip, limit },
@@ -335,7 +351,7 @@ export const reportingAPI = {
     return response.data;
   },
 
-  // Get all reports (with filters)
+  // Get all confirmed reports (with filters)
   getReports: async (params?: {
     skip?: number;
     limit?: number;
@@ -344,9 +360,18 @@ export const reportingAPI = {
     latitude?: number;
     longitude?: number;
     radius_km?: number;
+    include_pending?: boolean;
   }): Promise<Report[]> => {
     const response = await api.get<Report[]>('/api/reports/', {
       params,
+    });
+    return response.data;
+  },
+
+  // Get pending reports nearby that can be confirmed
+  getPendingNearby: async (latitude: number, longitude: number, radius_km: number = 5): Promise<Report[]> => {
+    const response = await api.get<Report[]>('/api/reports/pending-nearby', {
+      params: { latitude, longitude, radius_km },
     });
     return response.data;
   },
@@ -357,9 +382,18 @@ export const reportingAPI = {
     return response.data;
   },
 
-  // Create new report
+  // Create new report (starts as pending)
   createReport: async (report: ReportCreate): Promise<Report> => {
     const response = await api.post<Report>('/api/reports/', report);
+    return response.data;
+  },
+
+  // Confirm a report exists ("Still There" button)
+  confirmReport: async (reportId: number, location?: { latitude: number; longitude: number }): Promise<ConfirmReportResponse> => {
+    const response = await api.post<ConfirmReportResponse>(
+      `/api/reports/${reportId}/confirm`,
+      location ? { latitude: location.latitude, longitude: location.longitude } : {}
+    );
     return response.data;
   },
 

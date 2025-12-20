@@ -12,48 +12,105 @@ RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
 
 # Points awarded for different actions
 POINTS_CONFIG = {
-    "report_created": 10,
+    "report_confirmed": 10,  # Points for each user when report is confirmed
     "report_resolved": 5
 }
 
 
 def handle_report_created(event_data):
-    """Award points when user creates a report"""
+    """
+    Handle report creation event.
+    NO LONGER awards points immediately - points are only awarded on confirmation.
+    """
+    try:
+        report_id = event_data.get("report_id")
+        confirmation_status = event_data.get("confirmation_status", "pending")
+        award_points = event_data.get("award_points", False)
+        
+        # Don't award points on creation - wait for confirmation
+        if not award_points:
+            logger.info(f"Report {report_id} created with status {confirmation_status} - no points awarded yet")
+            return
+        
+        logger.info(f"Report {report_id} created - awaiting confirmation for points")
+        
+    except Exception as e:
+        logger.error(f"Error handling report_created event: {e}")
+
+
+def handle_report_confirmed(event_data):
+    """
+    Award points when a report is confirmed by another user.
+    Both the original reporter and the confirmer receive points.
+    """
     try:
         db = SessionLocal()
         
-        user_id = event_data.get("user_id")
         report_id = event_data.get("report_id")
+        original_user_id = event_data.get("original_user_id")
+        confirming_user_id = event_data.get("confirming_user_id")
+        confirmation_type = event_data.get("confirmation_type", "unknown")
+        award_points = event_data.get("award_points", True)
         
-        if user_id and report_id:
-            points = POINTS_CONFIG["report_created"]
-            transaction = crud.create_transaction(
+        if not award_points:
+            logger.info(f"Report {report_id} confirmed but points not requested")
+            db.close()
+            return
+        
+        points = POINTS_CONFIG["report_confirmed"]
+        
+        # Award points to original reporter
+        if original_user_id:
+            transaction1 = crud.create_transaction(
                 db=db,
-                user_id=user_id,
+                user_id=original_user_id,
                 points=points,
-                transaction_type="REPORT_CREATED",
+                transaction_type="REPORT_CONFIRMED",
                 report_id=report_id,
-                description=f"Created report #{report_id}"
+                description=f"Report #{report_id} confirmed by another user"
             )
-            logger.info(f"Awarded {points} points to user {user_id} for creating report {report_id}")
+            logger.info(f"Awarded {points} points to original user {original_user_id} for confirmed report {report_id}")
             
-            # Publish event to update user's total_points in auth service
+            # Publish event to update user's total_points
             from rabbitmq_publisher import publish_event
             try:
                 publish_event("points.transaction.created", {
-                    "user_id": user_id,
+                    "user_id": original_user_id,
                     "points": points,
-                    "transaction_id": transaction.id,
-                    "transaction_type": "REPORT_CREATED"
+                    "transaction_id": transaction1.id,
+                    "transaction_type": "REPORT_CONFIRMED"
                 })
-                logger.info(f"Published points.transaction.created event for user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to publish points transaction event: {e}")
+        
+        # Award points to confirming user
+        if confirming_user_id and confirming_user_id != original_user_id:
+            transaction2 = crud.create_transaction(
+                db=db,
+                user_id=confirming_user_id,
+                points=points,
+                transaction_type="REPORT_CONFIRMATION",
+                report_id=report_id,
+                description=f"Confirmed report #{report_id} ({confirmation_type})"
+            )
+            logger.info(f"Awarded {points} points to confirming user {confirming_user_id} for confirming report {report_id}")
+            
+            # Publish event to update user's total_points
+            from rabbitmq_publisher import publish_event
+            try:
+                publish_event("points.transaction.created", {
+                    "user_id": confirming_user_id,
+                    "points": points,
+                    "transaction_id": transaction2.id,
+                    "transaction_type": "REPORT_CONFIRMATION"
+                })
             except Exception as e:
                 logger.error(f"Failed to publish points transaction event: {e}")
         
         db.close()
         
     except Exception as e:
-        logger.error(f"Error handling report_created event: {e}")
+        logger.error(f"Error handling report_confirmed event: {e}")
 
 
 def handle_report_resolved(event_data):
@@ -121,6 +178,11 @@ def start_consumer():
         channel.queue_bind(
             exchange='kashif_events',
             queue=queue_name,
+            routing_key='report.confirmed'
+        )
+        channel.queue_bind(
+            exchange='kashif_events',
+            queue=queue_name,
             routing_key='report.status_updated'
         )
         
@@ -134,6 +196,8 @@ def start_consumer():
                 
                 if event_type == 'report.created':
                     handle_report_created(data)
+                elif event_type == 'report.confirmed':
+                    handle_report_confirmed(data)
                 elif event_type == 'report.status_updated':
                     if data.get('new_status') == 'resolved':
                         handle_report_resolved(data)
@@ -150,5 +214,4 @@ def start_consumer():
         channel.start_consuming()
         
     except Exception as e:
-        logger.error(f"Failed to start RabbitMQ consumer: {e}")
         logger.error(f"Failed to start RabbitMQ consumer: {e}")
