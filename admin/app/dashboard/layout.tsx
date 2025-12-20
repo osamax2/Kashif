@@ -59,11 +59,22 @@ export default function DashboardLayout({ children }: LayoutProps) {
 
   // Limited navigation for COMPANY role
   const companyNavigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Coupons', href: '/dashboard/coupons', icon: Gift },
   ];
 
+  // Allowed paths for COMPANY users
+  const companyAllowedPaths = ['/dashboard', '/dashboard/coupons'];
+
   // Select navigation based on user role
   const navigation = user?.role === 'COMPANY' ? companyNavigation : adminNavigation;
+
+  // Route protection for COMPANY users
+  useEffect(() => {
+    if (user?.role === 'COMPANY' && !companyAllowedPaths.includes(pathname)) {
+      router.push('/dashboard/coupons');
+    }
+  }, [user, pathname, router]);
 
   if (!user) {
     return (
