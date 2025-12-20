@@ -1,18 +1,18 @@
 'use client';
 
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { authAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
-  BarChart3,
-  Bell,
-  FileText,
-  Gift,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Users,
-  X
+    BarChart3,
+    Bell,
+    FileText,
+    Gift,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Users,
+    X
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
