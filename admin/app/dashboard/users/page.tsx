@@ -1,8 +1,8 @@
 'use client';
 
-import { usersAPI, couponsAPI } from '@/lib/api';
+import { couponsAPI, usersAPI } from '@/lib/api';
 import { User } from '@/lib/types';
-import { Award, Search, Plus, Building2 } from 'lucide-react';
+import { Award, Building2, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function UsersPage() {

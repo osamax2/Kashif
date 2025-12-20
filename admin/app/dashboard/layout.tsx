@@ -2,15 +2,15 @@
 
 import { authAPI } from '@/lib/api';
 import {
-    BarChart3,
-    Bell,
-    FileText,
-    Gift,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    Users,
-    X
+  BarChart3,
+  Bell,
+  FileText,
+  Gift,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Users,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
