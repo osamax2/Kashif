@@ -1,6 +1,6 @@
 'use client';
 
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { authAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
