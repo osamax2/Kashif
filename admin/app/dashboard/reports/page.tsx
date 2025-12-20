@@ -1,11 +1,13 @@
 'use client';
 
 import { reportsAPI } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
 import { Report } from '@/lib/types';
 import { MapPin, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function ReportsPage() {
+  const { t, isRTL } = useLanguage();
   const [reports, setReports] = useState<Report[]>([]);
   const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const [search, setSearch] = useState('');
@@ -155,30 +157,30 @@ export default function ReportsPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Report Management</h1>
-        <p className="text-gray-600 mt-2">Moderate and manage user reports</p>
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className={`mb-6 sm:mb-8 ${isRTL ? 'text-right' : ''}`}>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.reports.title}</h1>
+        <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.reports.subtitle}</p>
       </div>
 
       {/* Filters */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+      <div className={`mb-6 flex flex-col sm:flex-row gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search reports..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+            placeholder={t.reports.searchPlaceholder}
+            className={`w-full py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+          className={`px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
         >
-          <option value="ALL">All Statuses</option>
+          <option value="ALL">{t.reports.allStatuses}</option>
           {statuses.map((status) => (
             <option key={status.id} value={status.name}>
               {status.name}
@@ -194,17 +196,17 @@ export default function ReportsPage() {
             key={report.id}
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition"
           >
-            <div className="flex items-start justify-between mb-3">
-              <h3 className="font-semibold text-gray-900 text-lg">{report.title}</h3>
+            <div className={`flex items-start justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h3 className={`font-semibold text-gray-900 text-lg ${isRTL ? 'text-right' : ''}`}>{report.title}</h3>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(getStatusName(report.status_id))}`}>
                 {getStatusName(report.status_id)}
               </span>
             </div>
             
-            <p className="text-gray-600 text-sm mb-4 line-clamp-2">{report.description}</p>
+            <p className={`text-gray-600 text-sm mb-4 line-clamp-2 ${isRTL ? 'text-right' : ''}`}>{report.description}</p>
             
-            <div className="flex items-center text-sm text-gray-500 mb-4">
-              <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+            <div className={`flex items-center text-sm text-gray-500 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <MapPin className={`w-4 h-4 flex-shrink-0 ${isRTL ? 'ml-1' : 'mr-1'}`} />
               {report.address_text ? (
                 <span>{report.address_text}</span>
               ) : (
@@ -216,40 +218,40 @@ export default function ReportsPage() {
               href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:text-blue-800 hover:underline mb-4 block"
+              className={`text-xs text-blue-600 hover:text-blue-800 hover:underline mb-4 block ${isRTL ? 'text-right' : ''}`}
             >
-              📍 View on Google Maps
+              📍 {t.reports.viewOnMap}
             </a>
             
-            <div className="text-xs text-gray-400 mb-4">
+            <div className={`text-xs text-gray-400 mb-4 ${isRTL ? 'text-right' : ''}`}>
               {new Date(report.created_at).toLocaleDateString()}
             </div>
             
-            <div className="flex gap-2">
+            <div className={`flex flex-col xs:flex-row gap-2 ${isRTL ? 'xs:flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setSelectedReport(report);
                   setNewStatus(getStatusName(report.status_id));
                   setShowStatusModal(true);
                 }}
-                className="flex-1 px-3 py-2 bg-primary text-white text-sm rounded-lg hover:bg-blue-800 transition"
+                className="flex-1 px-3 py-2 bg-primary text-white text-xs sm:text-sm rounded-lg hover:bg-blue-800 transition"
               >
-                Status
+                {t.common.status}
               </button>
               <button
                 onClick={() => handleEdit(report)}
-                className="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition"
+                className="flex-1 px-3 py-2 bg-green-600 text-white text-xs sm:text-sm rounded-lg hover:bg-green-700 transition"
               >
-                Edit
+                {t.common.edit}
               </button>
               <button
                 onClick={() => {
                   setSelectedReport(report);
                   setShowDeleteModal(true);
                 }}
-                className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition"
+                className="flex-1 px-3 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 transition"
               >
-                Delete
+                {t.common.delete}
               </button>
             </div>
           </div>
@@ -258,26 +260,26 @@ export default function ReportsPage() {
 
       {filteredReports.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No reports found</p>
+          <p className="text-gray-500">{t.reports.noReportsFound}</p>
         </div>
       )}
 
       {/* Status Update Modal */}
       {showStatusModal && selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Update Report Status
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {t.reports.updateReportStatus}
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.common.status}
                 </label>
                 <select
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 >
                   {statuses.map((status) => (
                     <option key={status.id} value={status.name}>
@@ -287,19 +289,19 @@ export default function ReportsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Comment (optional)
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.reports.commentOptional}
                 </label>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   rows={3}
-                  placeholder="Add a comment..."
+                  placeholder={t.reports.addComment}
                 />
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowStatusModal(false);
@@ -307,13 +309,13 @@ export default function ReportsPage() {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleUpdateStatus}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
               >
-                Update
+                {t.reports.update}
               </button>
             </div>
           </div>
@@ -323,39 +325,39 @@ export default function ReportsPage() {
       {/* Edit Report Modal */}
       {showEditModal && selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Edit Report</h2>
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.reports.editReport}</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.reports.reportTitle}
                 </label>
                 <input
                   type="text"
                   value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.reports.reportDescription}
                 </label>
                 <textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   rows={4}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.common.status}
                 </label>
                 <select
                   value={editForm.status_id}
                   onChange={(e) => setEditForm({ ...editForm, status_id: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 >
                   {statuses.map((status) => (
                     <option key={status.id} value={status.id}>
@@ -365,18 +367,18 @@ export default function ReportsPage() {
                 </select>
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleUpdate}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
               >
-                Save Changes
+                {t.users.saveChanges}
               </button>
             </div>
           </div>
@@ -386,12 +388,12 @@ export default function ReportsPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-4">Delete Report</h2>
-            <p className="text-gray-700 mb-6">
-              Are you sure you want to delete this report: <strong>{selectedReport.title}</strong>? This action cannot be undone.
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-red-600 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.reports.deleteReport}</h2>
+            <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
+              {t.reports.deleteConfirmText}: <strong>{selectedReport.title}</strong>?
             </p>
-            <div className="flex gap-3">
+            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
@@ -399,13 +401,13 @@ export default function ReportsPage() {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleDelete}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                Delete
+                {t.common.delete}
               </button>
             </div>
           </div>

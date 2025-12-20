@@ -1,6 +1,8 @@
 'use client';
 
 import { authAPI } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   BarChart3,
   Bell,
@@ -23,8 +25,9 @@ interface LayoutProps {
 export default function DashboardLayout({ children }: LayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t, isRTL } = useLanguage();
   const [user, setUser] = useState<any>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -47,20 +50,20 @@ export default function DashboardLayout({ children }: LayoutProps) {
     router.push('/login');
   };
 
-  // Full navigation for ADMIN
+  // Full navigation for ADMIN - using translations
   const adminNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Users', href: '/dashboard/users', icon: Users },
-    { name: 'Reports', href: '/dashboard/reports', icon: FileText },
-    { name: 'Coupons', href: '/dashboard/coupons', icon: Gift },
-    { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+    { name: t.nav.users, href: '/dashboard/users', icon: Users },
+    { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+    { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
+    { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
+    { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
   ];
 
   // Limited navigation for COMPANY role
   const companyNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Coupons', href: '/dashboard/coupons', icon: Gift },
+    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+    { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
   ];
 
   // Allowed paths for COMPANY users
@@ -85,12 +88,14 @@ export default function DashboardLayout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen bg-gray-50 ${isRTL ? 'font-tajawal' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        className={`fixed inset-y-0 ${isRTL ? 'right-0' : 'left-0'} z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen 
+            ? 'translate-x-0' 
+            : isRTL ? 'translate-x-full' : '-translate-x-full'
+        } ${isRTL ? 'lg:translate-x-0' : 'lg:translate-x-0'}`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -104,13 +109,18 @@ export default function DashboardLayout({ children }: LayoutProps) {
             </button>
           </div>
 
+          {/* Language Switcher */}
+          <div className="px-4 pt-4">
+            <LanguageSwitcher className="w-full justify-center" />
+          </div>
+
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
-                  key={item.name}
+                  key={item.href}
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
                     isActive
@@ -137,7 +147,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
                 <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${
                   user.role === 'ADMIN' ? 'bg-purple-500 text-white' : 'bg-green-500 text-white'
                 }`}>
-                  {user.role}
+                  {user.role === 'ADMIN' ? t.users.roles.admin : user.role === 'COMPANY' ? t.users.roles.company : t.users.roles.user}
                 </span>
               </div>
             </div>
@@ -146,7 +156,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
               className="w-full flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
             >
               <LogOut className="w-4 h-4" />
-              Logout
+              {t.auth.logout}
             </button>
           </div>
         </div>
@@ -155,14 +165,14 @@ export default function DashboardLayout({ children }: LayoutProps) {
       {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-primary text-white rounded-lg"
+        className={`lg:hidden fixed top-4 ${isRTL ? 'right-4' : 'left-4'} z-40 p-2 bg-primary text-white rounded-lg`}
       >
         <Menu className="w-6 h-6" />
       </button>
 
       {/* Main content */}
-      <main className="lg:pl-64">
-        <div className="p-6 lg:p-8">
+      <main className={isRTL ? 'lg:pr-64' : 'lg:pl-64'}>
+        <div className="p-4 pt-16 sm:p-6 sm:pt-6 lg:p-8 lg:pt-8">
           {children}
         </div>
       </main>

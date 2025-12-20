@@ -1,11 +1,13 @@
 'use client';
 
 import { couponsAPI, usersAPI } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
 import { User } from '@/lib/types';
 import { Award, Building2, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function UsersPage() {
+  const { t, isRTL } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
@@ -163,31 +165,32 @@ export default function UsersPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-2">Manage and monitor platform users</p>
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className={`mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+        <div className={isRTL ? 'text-right' : ''}>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.users.title}</h1>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.users.subtitle}</p>
         </div>
         <button
           onClick={() => setShowCreateCompanyUserModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition"
+          className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base w-full sm:w-auto ${isRTL ? 'flex-row-reverse' : ''}`}
         >
           <Building2 className="w-5 h-5" />
-          Create Company User
+          <span className="hidden sm:inline">{t.users.createCompanyUser}</span>
+          <span className="sm:hidden">{isRTL ? 'إضافة مستخدم' : 'Add User'}</span>
         </button>
       </div>
 
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search users by name or email..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+            placeholder={t.users.searchPlaceholder}
+            className={`w-full py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
           />
         </div>
       </div>
@@ -198,23 +201,23 @@ export default function UsersPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  User
+                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.users.user}
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Email
+                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.users.userEmail}
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Points
+                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.users.userPoints}
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Role
+                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.users.role}
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Status
+                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.common.status}
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Actions
+                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.common.actions}
                 </th>
               </tr>
             </thead>
@@ -222,22 +225,22 @@ export default function UsersPage() {
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
+                    <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
                         {user.full_name[0]?.toUpperCase()}
                       </div>
-                      <div className="ml-3">
+                      <div className={isRTL ? 'mr-3 text-right' : 'ml-3'}>
                         <p className="font-medium text-gray-900">{user.full_name}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-600 ${isRTL ? 'text-right' : ''}`}>
                     {user.email}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
                     <span className="text-yellow font-semibold">{user.total_points}</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         user.role === 'ADMIN'
@@ -250,7 +253,7 @@ export default function UsersPage() {
                       {user.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         user.status === 'ACTIVE'
@@ -261,22 +264,22 @@ export default function UsersPage() {
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
                     <button
                       onClick={() => {
                         setSelectedUser(user);
                         setShowAwardModal(true);
                       }}
-                      className="text-primary hover:text-blue-800 font-medium mr-3"
+                      className={`text-primary hover:text-blue-800 font-medium ${isRTL ? 'ml-3' : 'mr-3'}`}
                     >
-                      <Award className="w-4 h-4 inline mr-1" />
-                      Award
+                      <Award className={`w-4 h-4 inline ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                      {t.users.award}
                     </button>
                     <button
                       onClick={() => handleEdit(user)}
-                      className="text-green-600 hover:text-green-800 font-medium mr-3"
+                      className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-3' : 'mr-3'}`}
                     >
-                      Edit
+                      {t.common.edit}
                     </button>
                     <button
                       onClick={() => {
@@ -285,7 +288,7 @@ export default function UsersPage() {
                       }}
                       className="text-red-600 hover:text-red-800 font-medium"
                     >
-                      Delete
+                      {t.common.delete}
                     </button>
                   </td>
                 </tr>
@@ -296,7 +299,7 @@ export default function UsersPage() {
 
         {filteredUsers.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No users found</p>
+            <p className="text-gray-500">{t.users.noUsersFound}</p>
           </div>
         )}
       </div>
@@ -304,37 +307,37 @@ export default function UsersPage() {
       {/* Award Points Modal */}
       {showAwardModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Award Points to {selectedUser.full_name}
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {t.users.awardPointsTo} {selectedUser.full_name}
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Points
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userPoints}
                 </label>
                 <input
                   type="number"
                   value={points}
                   onChange={(e) => setPoints(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.reports.reportDescription}
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   rows={3}
-                  placeholder="Reason for awarding points..."
+                  placeholder={t.users.descriptionPlaceholder}
                 />
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowAwardModal(false);
@@ -343,13 +346,13 @@ export default function UsersPage() {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleAwardPoints}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
               >
-                Award Points
+                {t.users.awardPoints}
               </button>
             </div>
           </div>
@@ -359,74 +362,74 @@ export default function UsersPage() {
       {/* Edit User Modal */}
       {showEditModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Edit User: {selectedUser.full_name}
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {t.users.editUser}: {selectedUser.full_name}
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.fullName}
                 </label>
                 <input
                   type="text"
                   value={editForm.full_name}
                   onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userEmail}
                 </label>
                 <input
                   type="email"
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.role}
                 </label>
                 <select
                   value={editForm.role}
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 >
-                  <option value="USER">USER</option>
-                  <option value="COMPANY">COMPANY</option>
-                  <option value="ADMIN">ADMIN</option>
+                  <option value="USER">{t.users.roles.user}</option>
+                  <option value="COMPANY">{t.users.roles.company}</option>
+                  <option value="ADMIN">{t.users.roles.admin}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.common.status}
                 </label>
                 <select
                   value={editForm.status}
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 >
-                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="ACTIVE">{t.common.active}</option>
                   <option value="SUSPENDED">SUSPENDED</option>
                   <option value="BANNED">BANNED</option>
                 </select>
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleUpdate}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
               >
-                Save Changes
+                {t.users.saveChanges}
               </button>
             </div>
           </div>
@@ -436,12 +439,12 @@ export default function UsersPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-red-600 mb-4">Delete User</h2>
-            <p className="text-gray-700 mb-6">
-              Are you sure you want to delete <strong>{selectedUser.full_name}</strong>? This action cannot be undone.
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-red-600 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.users.deleteUser}</h2>
+            <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
+              {t.users.confirmDelete} <strong>{selectedUser.full_name}</strong>? {t.users.deleteConfirmText}
             </p>
-            <div className="flex gap-3">
+            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
@@ -449,13 +452,13 @@ export default function UsersPage() {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleDelete}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                Delete
+                {t.common.delete}
               </button>
             </div>
           </div>
@@ -465,61 +468,61 @@ export default function UsersPage() {
       {/* Create Company User Modal */}
       {showCreateCompanyUserModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
               <Building2 className="w-6 h-6 text-primary" />
-              Create Company User
+              {t.users.createCompanyUser}
             </h2>
-            <p className="text-gray-600 text-sm mb-4">
-              Create a user that can manage coupons for a specific company.
+            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {t.users.createCompanyUserDesc}
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.fullName} *
                 </label>
                 <input
                   type="text"
                   value={companyUserForm.full_name}
                   onChange={(e) => setCompanyUserForm({ ...companyUserForm, full_name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="John Doe"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userEmail} *
                 </label>
                 <input
                   type="email"
                   value={companyUserForm.email}
                   onChange={(e) => setCompanyUserForm({ ...companyUserForm, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="user@company.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password *
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.auth.password} *
                 </label>
                 <input
                   type="password"
                   value={companyUserForm.password}
                   onChange={(e) => setCompanyUserForm({ ...companyUserForm, password: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="••••••••"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company *
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.company} *
                 </label>
                 <select
                   value={companyUserForm.company_id}
                   onChange={(e) => setCompanyUserForm({ ...companyUserForm, company_id: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 >
-                  <option value="">Select a company...</option>
+                  <option value="">{t.users.selectCompany}</option>
                   {companies.map((company: any) => (
                     <option key={company.id} value={company.id}>
                       {company.name}
@@ -528,7 +531,7 @@ export default function UsersPage() {
                 </select>
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowCreateCompanyUserModal(false);
@@ -536,13 +539,13 @@ export default function UsersPage() {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleCreateCompanyUser}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
               >
-                Create User
+                {t.users.createUser}
               </button>
             </div>
           </div>
