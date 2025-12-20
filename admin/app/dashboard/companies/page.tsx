@@ -37,7 +37,11 @@ export default function CompaniesPage() {
     try {
       setLoading(true);
       const data = await couponsAPI.getCompanies();
-      setCompanies(Array.isArray(data) ? data : []);
+      // Filter out deleted companies
+      const activeCompanies = Array.isArray(data) 
+        ? data.filter(comp => comp.status !== 'DELETED') 
+        : [];
+      setCompanies(activeCompanies);
     } catch (error) {
       console.error('Failed to load companies:', error);
     } finally {

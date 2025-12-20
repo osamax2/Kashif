@@ -64,7 +64,11 @@ export default function CouponsPage() {
   const loadCompanies = async () => {
     try {
       const data = await couponsAPI.getCompanies();
-      setCompanies(Array.isArray(data) ? data : []);
+      // Filter out deleted companies
+      const activeCompanies = Array.isArray(data) 
+        ? data.filter(comp => comp.status !== 'DELETED') 
+        : [];
+      setCompanies(activeCompanies);
     } catch (error) {
       console.error('Failed to load companies:', error);
     }
@@ -73,7 +77,11 @@ export default function CouponsPage() {
   const loadCategories = async () => {
     try {
       const data = await couponsAPI.getCategories();
-      setCategories(Array.isArray(data) ? data : []);
+      // Filter out deleted categories
+      const activeCategories = Array.isArray(data) 
+        ? data.filter(cat => cat.status !== 'DELETED') 
+        : [];
+      setCategories(activeCategories);
     } catch (error) {
       console.error('Failed to load categories:', error);
     }
