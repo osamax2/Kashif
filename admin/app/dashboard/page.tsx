@@ -22,13 +22,16 @@ export default function DashboardPage() {
   useEffect(() => {
     // Get user role from localStorage
     const role = localStorage.getItem('user_role');
+    console.log('Dashboard - User role from localStorage:', role);
     setUserRole(role);
     
     // Get company name for COMPANY users
     const userProfile = localStorage.getItem('user_profile');
+    console.log('Dashboard - User profile from localStorage:', userProfile);
     if (userProfile) {
       try {
         const profile = JSON.parse(userProfile);
+        console.log('Dashboard - Parsed profile:', profile);
         if (profile.company_name) {
           setCompanyName(profile.company_name);
         }
@@ -37,12 +40,9 @@ export default function DashboardPage() {
       }
     }
     
-    // Only load stats for ADMIN users
-    if (role === 'ADMIN') {
-      loadStats();
-    } else {
-      setLoading(false);
-    }
+    // Load stats for all users (ADMIN or otherwise)
+    // Previously was only loading for ADMIN users which was causing issue
+    loadStats();
   }, []);
 
   const loadStats = async () => {
