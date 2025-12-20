@@ -21,6 +21,7 @@ class UserBase(BaseModel):
     full_name: str
     phone: Optional[str] = None
     role: str = "USER"
+    company_id: Optional[int] = None  # For COMPANY role users
     language: str = "ar"  # ar or en
 
 
@@ -33,6 +34,7 @@ class User(UserBase):
     total_points: int
     image_url: Optional[str] = None
     level_id: Optional[int] = None
+    company_id: Optional[int] = None
     status: str
     language: str
     last_login: Optional[datetime] = None
@@ -67,5 +69,16 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     role: Optional[str] = None
+    company_id: Optional[int] = None
     status: Optional[str] = None
     language: Optional[str] = None
+
+
+class CompanyUserCreate(BaseModel):
+    """Schema for creating a company user by admin"""
+    email: EmailStr
+    password: str
+    full_name: str
+    phone: Optional[str] = None
+    company_id: int  # Required - must link to a company
+    language: str = "ar"
