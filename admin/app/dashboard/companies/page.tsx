@@ -3,7 +3,7 @@
 import CompanyForm from '@/components/CompanyForm';
 import { couponsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -19,6 +19,9 @@ export default function CompaniesPage() {
   const router = useRouter();
   const { t, isRTL } = useLanguage();
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -35,6 +38,22 @@ export default function CompaniesPage() {
     loadCompanies();
   }, []);
 
+  useEffect(() => {
+    let filtered = companies;
+    
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter((c) => c.status === statusFilter);
+    }
+    
+    if (search) {
+      filtered = filtered.filter((c) =>
+        c.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    setFilteredCompanies(filtered);
+  }, [search, statusFilter, companies]);
+
   const loadCompanies = async () => {
     try {
       setLoading(true);
@@ -44,6 +63,7 @@ export default function CompaniesPage() {
         ? data.filter(comp => comp.status !== 'DELETED') 
         : [];
       setCompanies(activeCompanies);
+      setFilteredCompanies(activeCompanies);
     } catch (error) {
       console.error('Failed to load companies:', error);
     } finally {
@@ -144,8 +164,46 @@ export default function CompaniesPage() {
         </button>
       </div>
 
+      {/* Filters */}
+      <div className="mb-6 space-y-4">
+        <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={isRTL ? 'بحث عن شركة...' : 'Search company...'}
+              className={`w-full py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
+            />
+          </div>
+          
+          {/* Status Filter */}
+          <div className="sm:w-48">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
+            >
+              <option value="ALL">{isRTL ? 'جميع الحالات' : 'All Statuses'}</option>
+              <option value="ACTIVE">{isRTL ? 'نشط' : 'Active'}</option>
+              <option value="INACTIVE">{isRTL ? 'غير نشط' : 'Inactive'}</option>
+            </select>
+          </div>
+          
+          {/* Results count */}
+          <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'sm:mr-auto' : 'sm:ml-auto'}`}>
+            {isRTL 
+              ? `${filteredCompanies.length} من ${companies.length} شركة`
+              : `${filteredCompanies.length} of ${companies.length} companies`
+            }
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {companies.map((company) => (
+        {filteredCompanies.map((company) => (
           <div key={company.id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition">
             {company.logo_url && (
               <img
@@ -183,7 +241,7 @@ export default function CompaniesPage() {
         ))}
       </div>
 
-      {companies.length === 0 && (
+      {filteredCompanies.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500">{isRTL ? 'لم يتم العثور على شركات' : 'No companies found'}</p>
         </div>
