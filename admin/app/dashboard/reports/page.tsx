@@ -3,7 +3,7 @@
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report } from '@/lib/types';
-import { MapPin, Search } from 'lucide-react';
+import { Download, MapPin, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function ReportsPage() {
@@ -156,6 +156,60 @@ export default function ReportsPage() {
     return status ? status.name : 'UNKNOWN';
   };
 
+  const getCategoryName = (categoryId: number) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return 'Unknown';
+    return isRTL ? (category.name_ar || category.name) : category.name;
+  };
+
+  const exportToCSV = () => {
+    // CSV headers
+    const headers = [
+      'ID',
+      isRTL ? 'العنوان' : 'Title',
+      isRTL ? 'الوصف' : 'Description',
+      isRTL ? 'الفئة' : 'Category',
+      isRTL ? 'الحالة' : 'Status',
+      isRTL ? 'العنوان' : 'Address',
+      isRTL ? 'خط العرض' : 'Latitude',
+      isRTL ? 'خط الطول' : 'Longitude',
+      isRTL ? 'تاريخ الإنشاء' : 'Created At',
+    ];
+
+    // CSV rows
+    const rows = filteredReports.map(report => [
+      report.id,
+      `"${report.title.replace(/"/g, '""')}"`,
+      `"${report.description.replace(/"/g, '""')}"`,
+      getCategoryName(report.category_id),
+      getStatusName(report.status_id),
+      `"${(report.address_text || '').replace(/"/g, '""')}"`,
+      report.latitude,
+      report.longitude,
+      new Date(report.created_at).toLocaleDateString(),
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Add BOM for proper Arabic encoding
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reports_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -166,9 +220,19 @@ export default function ReportsPage() {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className={`mb-6 sm:mb-8 ${isRTL ? 'text-right' : ''}`}>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.reports.title}</h1>
-        <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.reports.subtitle}</p>
+      <div className={`mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+        <div className={isRTL ? 'text-right' : ''}>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.reports.title}</h1>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.reports.subtitle}</p>
+        </div>
+        <button
+          onClick={exportToCSV}
+          disabled={filteredReports.length === 0}
+          className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? 'flex-row-reverse' : ''}`}
+        >
+          <Download className="w-5 h-5" />
+          <span>{isRTL ? 'تصدير CSV' : 'Export CSV'}</span>
+        </button>
       </div>
 
       {/* Filters */}
