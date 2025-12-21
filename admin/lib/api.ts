@@ -271,6 +271,16 @@ export const couponsAPI = {
     const response = await api.get(`/api/coupons/redemptions/stats/company/${companyId}/summary`);
     return response.data;
   },
+
+  verifyRedemption: async (verificationCode: string) => {
+    const response = await api.post('/api/coupons/redemptions/verify', { verification_code: verificationCode });
+    return response.data;
+  },
+
+  checkRedemptionStatus: async (verificationCode: string) => {
+    const response = await api.get(`/api/coupons/redemptions/check/${verificationCode}`);
+    return response.data;
+  },
 };
 
 // Notifications

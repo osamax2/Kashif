@@ -13,6 +13,7 @@ import {
     LogOut,
     Map,
     Menu,
+    QrCode,
     Users,
     UsersRound,
     X
@@ -69,6 +70,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
   const companyNavigation = [
     { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
     { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
+    { name: isRTL ? 'مسح كوبون' : 'Scan Coupon', href: '/dashboard/scan', icon: QrCode },
     { name: isRTL ? 'فريق العمل' : 'Team', href: '/dashboard/team', icon: UsersRound },
   ];
 
@@ -80,7 +82,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
   ];
 
   // Allowed paths for COMPANY users
-  const companyAllowedPaths = ['/dashboard', '/dashboard/coupons', '/dashboard/team'];
+  const companyAllowedPaths = ['/dashboard', '/dashboard/coupons', '/dashboard/scan', '/dashboard/team'];
 
   // Allowed paths for GOVERNMENT users
   const governmentAllowedPaths = ['/dashboard', '/dashboard/reports', '/dashboard/map'];

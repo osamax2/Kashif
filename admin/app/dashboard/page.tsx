@@ -2,7 +2,7 @@
 
 import { couponsAPI, reportsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { BarChart3, Calendar, FileText, Gift, Map, TrendingUp, UserCheck, Users, UsersRound } from 'lucide-react';
+import { BarChart3, Calendar, FileText, Gift, Map, QrCode, TrendingUp, UserCheck, Users, UsersRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -242,7 +242,21 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
       {/* Quick Actions */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
         <h2 className={`text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 ${isRTL ? 'text-right' : ''}`}>{t.common.actions}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <a
+            href="/dashboard/scan"
+            className="block p-4 sm:p-6 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition"
+          >
+            <div className={`flex items-center gap-3 sm:gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className="bg-green-500 p-2 sm:p-3 rounded-lg">
+                <QrCode className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className={isRTL ? 'text-right' : ''}>
+                <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{isRTL ? 'مسح كوبون' : 'Scan Coupon'}</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">{isRTL ? 'التحقق من كوبون العميل' : 'Verify customer coupon'}</p>
+              </div>
+            </div>
+          </a>
           <a
             href="/dashboard/coupons"
             className="block p-4 sm:p-6 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition"
