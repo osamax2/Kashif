@@ -121,6 +121,29 @@ async def delete_company(
     return company
 
 
+@app.get("/companies/{company_id}/coupons", response_model=List[schemas.Coupon])
+async def get_company_coupons(
+    company_id: int,
+    authorization: Annotated[str | None, Header()] = None,
+    db: Session = Depends(get_db)
+):
+    """Get all coupons for a specific company.
+    If user is COMPANY role, they can only view their own company's coupons."""
+    
+    # Check if user is COMPANY role and can only view their own company
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        user = await auth_client.verify_token(token)
+        if user and user.get("role") == "COMPANY":
+            if user.get("company_id") != company_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You can only view coupons for your own company"
+                )
+    
+    return crud.get_all_company_coupons(db=db, company_id=company_id)
+
+
 # Category endpoints
 @app.post("/categories", response_model=schemas.CouponCategory)
 async def create_category(

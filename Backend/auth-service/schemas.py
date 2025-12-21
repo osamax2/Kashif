@@ -96,6 +96,15 @@ class GovernmentUserCreate(BaseModel):
     language: str = "ar"
 
 
+class NormalUserCreate(BaseModel):
+    """Schema for creating a normal user by admin"""
+    email: EmailStr
+    password: str
+    full_name: str
+    phone: str  # Required for normal users
+    language: str = "ar"
+
+
 class VerifyAccountRequest(BaseModel):
     """Schema for account verification via token"""
     token: str

@@ -105,7 +105,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
         couponsAPI.getCompanyRedemptionsOverTime(companyId, parseInt(dateRange) || 365),
         couponsAPI.getCompanyStatsSummary(companyId),
         usersAPI.getCompanyMembers(companyId).catch(() => []),
-        couponsAPI.getCoupons({ company_id: companyId }).catch(() => []),
+        couponsAPI.getCompanyCoupons(companyId).catch(() => []),
       ]);
 
       if (statsRes.status === 'fulfilled') {
@@ -121,8 +121,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
         setTeamMembers(Array.isArray(membersRes.value) ? membersRes.value : []);
       }
       if (couponsRes.status === 'fulfilled') {
-        const couponsData = Array.isArray(couponsRes.value) ? couponsRes.value : [];
-        setCoupons(couponsData.filter((c: any) => c.company_id === companyId));
+        setCoupons(Array.isArray(couponsRes.value) ? couponsRes.value : []);
       }
     } catch (error) {
       console.error('Failed to load analytics:', error);
@@ -428,8 +427,25 @@ export default function AnalyticsPage() {
   useEffect(() => {
     setIsClient(true);
     
-    // Check user role from localStorage
-    const role = localStorage.getItem('user_role');
+    // Check user role from localStorage, fallback to profile
+    let role = localStorage.getItem('user_role');
+    
+    // Fallback: Get role from user_profile if user_role not set
+    if (!role) {
+      const userProfile = localStorage.getItem('user_profile');
+      if (userProfile) {
+        try {
+          const profile = JSON.parse(userProfile);
+          role = profile.role || null;
+          // Save it for future use
+          if (role) {
+            localStorage.setItem('user_role', role);
+          }
+        } catch (e) {
+          console.error('Error parsing user profile for role:', e);
+        }
+      }
+    }
     setUserRole(role);
     
     // Get company info for COMPANY users
@@ -593,7 +609,16 @@ export default function AnalyticsPage() {
   }
 
   // Show Company Analytics for COMPANY users
-  if (userRole?.toUpperCase() === 'COMPANY' && companyId) {
+  if (userRole?.toUpperCase() === 'COMPANY') {
+    if (!companyId) {
+      return (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center text-gray-500">
+            <p>{isRTL ? 'لم يتم العثور على بيانات الشركة' : 'Company data not found'}</p>
+          </div>
+        </div>
+      );
+    }
     return <CompanyAnalytics companyId={companyId} companyName={companyName} isRTL={isRTL} t={t} />;
   }
 

@@ -31,14 +31,15 @@ export default function LoginPage() {
       const profile = await authAPI.getProfile();
       console.log('Profile:', profile);
       
-      if (profile.role !== 'ADMIN' && profile.role !== 'COMPANY') {
+      if (profile.role !== 'ADMIN' && profile.role !== 'COMPANY' && profile.role !== 'GOVERNMENT') {
         setError(t.errors.unauthorized);
         localStorage.removeItem('admin_token');
         return;
       }
       
-      // Store user profile for role-based access
+      // Store user profile and role for role-based access
       localStorage.setItem('user_profile', JSON.stringify(profile));
+      localStorage.setItem('user_role', profile.role);
       
       console.log('Redirecting to dashboard...');
       router.push('/dashboard');

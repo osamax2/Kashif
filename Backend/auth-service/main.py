@@ -462,6 +462,56 @@ def create_government_user(
     return new_user
 
 
+@app.post("/users/normal", response_model=schemas.User)
+def create_normal_user(
+    user_data: schemas.NormalUserCreate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Create a normal user - Admin only
+    
+    This creates a user with role=USER who can report issues and earn points.
+    Phone number is required for normal users.
+    """
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can create users via this endpoint
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    # Check if user already exists
+    db_user = crud.get_user_by_email(db, email=user_data.email)
+    if db_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create user with USER role
+    user_create = schemas.UserCreate(
+        email=user_data.email,
+        password=user_data.password,
+        full_name=user_data.full_name,
+        phone=user_data.phone,
+        role="USER",
+        language=user_data.language
+    )
+    
+    new_user = crud.create_user(db=db, user=user_create)
+    
+    # Auto-verify since admin created the account
+    new_user.is_verified = True
+    db.commit()
+    db.refresh(new_user)
+    
+    logger.info(f"Created normal user {new_user.id} by admin {current_user.id}")
+    
+    return new_user
+
+
 @app.get("/users/company/{company_id}/count")
 def get_company_users_count(
     company_id: int,

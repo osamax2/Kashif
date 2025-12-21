@@ -34,6 +34,8 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'7' | '30' | '90' | 'all'>('30');
   const [companyId, setCompanyId] = useState<number | null>(null);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [companyCoupons, setCompanyCoupons] = useState<any[]>([]);
 
   useEffect(() => {
     const userProfile = localStorage.getItem('user_profile');
@@ -72,10 +74,12 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
         startDate = start.toISOString();
       }
 
-      const [statsRes, timeRes, summaryRes] = await Promise.allSettled([
+      const [statsRes, timeRes, summaryRes, membersRes, couponsRes] = await Promise.allSettled([
         couponsAPI.getCompanyCouponStats(companyId, startDate, dateRange !== 'all' ? endDate : undefined),
         couponsAPI.getCompanyRedemptionsOverTime(companyId, parseInt(dateRange) || 365),
         couponsAPI.getCompanyStatsSummary(companyId),
+        usersAPI.getCompanyMembers(companyId).catch(() => []),
+        couponsAPI.getCompanyCoupons(companyId).catch(() => []),
       ]);
 
       if (statsRes.status === 'fulfilled') {
@@ -87,6 +91,12 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
       if (summaryRes.status === 'fulfilled') {
         setSummary(summaryRes.value);
       }
+      if (membersRes.status === 'fulfilled') {
+        setTeamMembers(Array.isArray(membersRes.value) ? membersRes.value : []);
+      }
+      if (couponsRes.status === 'fulfilled') {
+        setCompanyCoupons(Array.isArray(couponsRes.value) ? couponsRes.value : []);
+      }
     } catch (error) {
       console.error('Failed to load analytics:', error);
     } finally {
@@ -96,6 +106,8 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
 
   // Simple bar chart component
   const maxRedemptions = Math.max(...couponStats.map(c => c.redemption_count), 1);
+  const activeTeamMembers = teamMembers.filter((m: any) => m.status === 'ACTIVE').length;
+  const activeCoupons = companyCoupons.filter((c: any) => c.status === 'ACTIVE').length;
 
   return (
     <div>
@@ -107,44 +119,55 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
         </p>
       </div>
 
-      {/* Summary Stats */}
-      {summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="bg-purple-500 p-2 sm:p-3 rounded-lg">
-                <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div className={isRTL ? 'text-right' : ''}>
-                <p className="text-gray-600 text-xs sm:text-sm">{isRTL ? 'إجمالي الكوبونات' : 'Total Coupons'}</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{summary.total_coupons}</p>
-              </div>
+      {/* Summary Stats - Company specific */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="bg-blue-500 p-2 sm:p-3 rounded-lg">
+              <UsersRound className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="bg-green-500 p-2 sm:p-3 rounded-lg">
-                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div className={isRTL ? 'text-right' : ''}>
-                <p className="text-gray-600 text-xs sm:text-sm">{isRTL ? 'إجمالي الاستبدالات' : 'Total Redemptions'}</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{summary.total_redemptions}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="bg-yellow-500 p-2 sm:p-3 rounded-lg">
-                <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div className={isRTL ? 'text-right' : ''}>
-                <p className="text-gray-600 text-xs sm:text-sm">{isRTL ? 'إجمالي النقاط المستخدمة' : 'Total Points Spent'}</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{summary.total_points_spent.toLocaleString()}</p>
-              </div>
+            <div className={isRTL ? 'text-right' : ''}>
+              <p className="text-gray-600 text-xs sm:text-sm">{isRTL ? 'فريق العمل' : 'Team Members'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{teamMembers.length}</p>
+              <p className="text-xs text-blue-600">{activeTeamMembers} {isRTL ? 'نشط' : 'active'}</p>
             </div>
           </div>
         </div>
-      )}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="bg-purple-500 p-2 sm:p-3 rounded-lg">
+              <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className={isRTL ? 'text-right' : ''}>
+              <p className="text-gray-600 text-xs sm:text-sm">{isRTL ? 'الكوبونات' : 'Coupons'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{companyCoupons.length}</p>
+              <p className="text-xs text-purple-600">{activeCoupons} {isRTL ? 'نشط' : 'active'}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="bg-green-500 p-2 sm:p-3 rounded-lg">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className={isRTL ? 'text-right' : ''}>
+              <p className="text-gray-600 text-xs sm:text-sm">{isRTL ? 'الاستبدالات' : 'Redemptions'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{summary?.total_redemptions || 0}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="bg-yellow-500 p-2 sm:p-3 rounded-lg">
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className={isRTL ? 'text-right' : ''}>
+              <p className="text-gray-600 text-xs sm:text-sm">{isRTL ? 'النقاط المستخدمة' : 'Points Used'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{(summary?.total_points_spent || 0).toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Date Range Filter */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
@@ -310,6 +333,7 @@ export default function DashboardPage() {
   const { t, isRTL } = useLanguage();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
+  const [roleChecked, setRoleChecked] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalReports: 0,
@@ -319,9 +343,27 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get user role from localStorage
-    const role = localStorage.getItem('user_role');
-    console.log('Dashboard - User role from localStorage:', role);
+    // Get user role from localStorage FIRST, fallback to profile
+    let role = localStorage.getItem('user_role');
+    
+    // Fallback: Get role from user_profile if user_role not set
+    if (!role) {
+      const userProfile = localStorage.getItem('user_profile');
+      if (userProfile) {
+        try {
+          const profile = JSON.parse(userProfile);
+          role = profile.role || null;
+          // Save it for future use
+          if (role) {
+            localStorage.setItem('user_role', role);
+          }
+        } catch (e) {
+          console.error('Error parsing user profile for role:', e);
+        }
+      }
+    }
+    
+    console.log('Dashboard - User role:', role);
     setUserRole(role);
     
     // Get company name for COMPANY users
@@ -339,9 +381,16 @@ export default function DashboardPage() {
       }
     }
     
-    // Load stats for all users (ADMIN or otherwise)
-    // Previously was only loading for ADMIN users which was causing issue
-    loadStats();
+    // Mark role as checked
+    setRoleChecked(true);
+    
+    // Only load platform-wide stats for ADMIN and GOVERNMENT users
+    // COMPANY users have their own component with company-specific data
+    if (role?.toUpperCase() !== 'COMPANY') {
+      loadStats();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const loadStats = async () => {
@@ -440,7 +489,8 @@ export default function DashboardPage() {
     },
   ];
 
-  if (loading) {
+  // Wait for role to be checked first
+  if (!roleChecked || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
