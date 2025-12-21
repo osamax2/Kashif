@@ -73,9 +73,32 @@ export default function UsersPage() {
     }
   };
 
+  // Password validation function
+  const validatePassword = (password: string): { valid: boolean; error: string } => {
+    if (password.length < 8) {
+      return { valid: false, error: t.users.passwordTooShort };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return { valid: false, error: t.users.passwordNeedsUppercase };
+    }
+    if (!/[a-z]/.test(password)) {
+      return { valid: false, error: t.users.passwordNeedsLowercase };
+    }
+    return { valid: true, error: '' };
+  };
+
+  const [passwordError, setPasswordError] = useState('');
+
   const handleCreateCompanyUser = async () => {
     if (!companyUserForm.email || !companyUserForm.password || !companyUserForm.full_name || !companyUserForm.company_id) {
-      alert('Please fill in all required fields');
+      alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields');
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(companyUserForm.password);
+    if (!passwordValidation.valid) {
+      setPasswordError(passwordValidation.error);
       return;
     }
 
@@ -86,13 +109,14 @@ export default function UsersPage() {
         full_name: companyUserForm.full_name,
         company_id: parseInt(companyUserForm.company_id),
       });
-      alert('Company user created successfully!');
+      alert(isRTL ? 'تم إنشاء مستخدم الشركة بنجاح!' : 'Company user created successfully!');
       setShowCreateCompanyUserModal(false);
       setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '' });
+      setPasswordError('');
       loadUsers();
     } catch (error: any) {
       console.error('Failed to create company user:', error);
-      alert(error.response?.data?.detail || 'Failed to create company user');
+      alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء مستخدم الشركة' : 'Failed to create company user'));
     }
   };
 
@@ -508,10 +532,33 @@ export default function UsersPage() {
                 <input
                   type="password"
                   value={companyUserForm.password}
-                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, password: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setCompanyUserForm({ ...companyUserForm, password: e.target.value });
+                    setPasswordError('');
+                  }}
+                  className={`w-full px-4 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="••••••••"
+                  minLength={8}
                 />
+                {/* Password requirements */}
+                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                  <p className={`${companyUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
+                  </p>
+                  <p className={`${/[A-Z]/.test(companyUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                  </p>
+                  <p className={`${/[a-z]/.test(companyUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                  </p>
+                </div>
+                {passwordError && (
+                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{passwordError}</p>
+                )}
+                {/* Note about password change on first login */}
+                <p className={`mt-2 text-xs text-blue-600 ${isRTL ? 'text-right' : ''}`}>
+                  ℹ️ {t.users.mustChangePasswordNote}
+                </p>
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -536,6 +583,7 @@ export default function UsersPage() {
                 onClick={() => {
                   setShowCreateCompanyUserModal(false);
                   setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '' });
+                  setPasswordError('');
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
