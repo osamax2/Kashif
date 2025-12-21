@@ -2,7 +2,7 @@
 
 import { notificationsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { Bell, Send, Users, Building2, Landmark, User } from 'lucide-react';
+import { Bell, Building2, Landmark, Send, User, Users } from 'lucide-react';
 import { useState } from 'react';
 
 type SendMode = 'single' | 'broadcast';
