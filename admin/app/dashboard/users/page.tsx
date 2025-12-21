@@ -302,7 +302,11 @@ export default function UsersPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr 
+                  key={user.id} 
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleEdit(user)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
@@ -345,7 +349,8 @@ export default function UsersPage() {
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedUser(user);
                         setShowAwardModal(true);
                       }}
@@ -355,13 +360,17 @@ export default function UsersPage() {
                       {t.users.award}
                     </button>
                     <button
-                      onClick={() => handleEdit(user)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(user);
+                      }}
                       className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-3' : 'mr-3'}`}
                     >
                       {t.common.edit}
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedUser(user);
                         setShowDeleteModal(true);
                       }}
