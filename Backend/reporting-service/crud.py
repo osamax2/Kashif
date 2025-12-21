@@ -317,6 +317,26 @@ def get_pending_reports_nearby(
     return nearby_reports
 
 
+def update_report(
+    db: Session,
+    report_id: int,
+    report_update: dict
+):
+    """Update a report with the given data"""
+    report = get_report(db, report_id)
+    if not report:
+        return None
+    
+    # Update only provided fields
+    for key, value in report_update.items():
+        if value is not None and hasattr(report, key):
+            setattr(report, key, value)
+    
+    db.commit()
+    db.refresh(report)
+    return report
+
+
 def update_report_status(
     db: Session,
     report_id: int,
