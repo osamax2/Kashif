@@ -246,6 +246,7 @@ export default function UsersPage() {
               <option value="ALL">{isRTL ? 'جميع الأدوار' : 'All Roles'}</option>
               <option value="USER">{t.users.roles.user}</option>
               <option value="COMPANY">{t.users.roles.company}</option>
+              <option value="GOVERNMENT">{t.users.roles.government}</option>
               <option value="ADMIN">{t.users.roles.admin}</option>
             </select>
           </div>
@@ -488,6 +489,7 @@ export default function UsersPage() {
                 >
                   <option value="USER">{t.users.roles.user}</option>
                   <option value="COMPANY">{t.users.roles.company}</option>
+                  <option value="GOVERNMENT">{t.users.roles.government}</option>
                   <option value="ADMIN">{t.users.roles.admin}</option>
                 </select>
               </div>

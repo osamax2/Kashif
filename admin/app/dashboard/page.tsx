@@ -2,7 +2,7 @@
 
 import { couponsAPI, reportsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { FileText, Gift, UserCheck, Users } from 'lucide-react';
+import { FileText, Gift, Map, UserCheck, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -176,6 +176,75 @@ export default function DashboardPage() {
                 <div className={isRTL ? 'text-right' : ''}>
                   <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{t.dashboard.manageCoupons}</h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-1">{t.coupons.title}</p>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Government User Dashboard - Reports and Map access only
+  if (userRole?.toUpperCase() === 'GOVERNMENT') {
+    return (
+      <div>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {isRTL ? 'لوحة التحكم الحكومية' : 'Government Dashboard'}
+          </h1>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">
+            {isRTL ? 'مرحباً بك في لوحة تحكم الموظف الحكومي' : 'Welcome to the Government Employee Dashboard'}
+          </p>
+        </div>
+
+        {/* Stats for Government - Reports only */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div
+            onClick={() => router.push('/dashboard/reports')}
+            className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition cursor-pointer"
+          >
+            <div className={`flex items-center justify-between mb-3 sm:mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className="bg-green-500 p-2 sm:p-3 rounded-lg">
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+            </div>
+            <h3 className={`text-gray-600 text-xs sm:text-sm font-medium ${isRTL ? 'text-right' : ''}`}>{t.dashboard.totalReports}</h3>
+            <p className={`text-xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2 ${isRTL ? 'text-right' : ''}`}>
+              {stats.totalReports.toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        {/* Government User - Reports and Map Access */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className={`text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 ${isRTL ? 'text-right' : ''}`}>{t.common.actions}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a
+              href="/dashboard/reports"
+              className="block p-4 sm:p-6 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition"
+            >
+              <div className={`flex items-center gap-3 sm:gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="bg-green-500 p-2 sm:p-3 rounded-lg">
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div className={isRTL ? 'text-right' : ''}>
+                  <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{t.reports.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">{t.nav.reports}</p>
+                </div>
+              </div>
+            </a>
+            <a
+              href="/dashboard/map"
+              className="block p-4 sm:p-6 border-2 border-blue-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+            >
+              <div className={`flex items-center gap-3 sm:gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="bg-blue-500 p-2 sm:p-3 rounded-lg">
+                  <Map className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div className={isRTL ? 'text-right' : ''}>
+                  <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{isRTL ? 'الخريطة' : 'Map'}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">{isRTL ? 'عرض البلاغات على الخريطة' : 'View reports on map'}</p>
                 </div>
               </div>
             </a>

@@ -70,16 +70,35 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
   ];
 
+  // Navigation for GOVERNMENT role - Reports and Map only
+  const governmentNavigation = [
+    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+    { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+    { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
+  ];
+
   // Allowed paths for COMPANY users
   const companyAllowedPaths = ['/dashboard', '/dashboard/coupons'];
 
-  // Select navigation based on user role
-  const navigation = user?.role === 'COMPANY' ? companyNavigation : adminNavigation;
+  // Allowed paths for GOVERNMENT users
+  const governmentAllowedPaths = ['/dashboard', '/dashboard/reports', '/dashboard/map'];
 
-  // Route protection for COMPANY users
+  // Select navigation based on user role
+  const getNavigation = () => {
+    const role = user?.role?.toUpperCase();
+    if (role === 'COMPANY') return companyNavigation;
+    if (role === 'GOVERNMENT') return governmentNavigation;
+    return adminNavigation;
+  };
+  const navigation = getNavigation();
+
+  // Route protection for restricted roles
   useEffect(() => {
-    if (user?.role === 'COMPANY' && !companyAllowedPaths.includes(pathname)) {
+    const role = user?.role?.toUpperCase();
+    if (role === 'COMPANY' && !companyAllowedPaths.includes(pathname)) {
       router.push('/dashboard/coupons');
+    } else if (role === 'GOVERNMENT' && !governmentAllowedPaths.includes(pathname)) {
+      router.push('/dashboard/reports');
     }
   }, [user, pathname, router]);
 
@@ -149,9 +168,13 @@ export default function DashboardLayout({ children }: LayoutProps) {
                 <p className="text-white font-medium truncate">{user.full_name}</p>
                 <p className="text-blue-200 text-sm truncate">{user.email}</p>
                 <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${
-                  user.role === 'ADMIN' ? 'bg-purple-500 text-white' : 'bg-green-500 text-white'
+                  user.role === 'ADMIN' ? 'bg-purple-500 text-white' : 
+                  user.role === 'GOVERNMENT' ? 'bg-blue-600 text-white' :
+                  user.role === 'COMPANY' ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'
                 }`}>
-                  {user.role === 'ADMIN' ? t.users.roles.admin : user.role === 'COMPANY' ? t.users.roles.company : t.users.roles.user}
+                  {user.role === 'ADMIN' ? t.users.roles.admin : 
+                   user.role === 'GOVERNMENT' ? t.users.roles.government :
+                   user.role === 'COMPANY' ? t.users.roles.company : t.users.roles.user}
                 </span>
               </div>
             </div>

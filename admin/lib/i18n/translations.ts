@@ -122,6 +122,7 @@ export const translations = {
         admin: 'Admin',
         user: 'User',
         company: 'Company',
+        government: 'Government',
       },
     },
 
@@ -411,6 +412,7 @@ export const translations = {
         admin: 'مشرف',
         user: 'مستخدم',
         company: 'شركة',
+        government: 'حكومي',
       },
     },
 
