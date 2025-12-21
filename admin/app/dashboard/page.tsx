@@ -2,7 +2,7 @@
 
 import { couponsAPI, reportsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { FileText, Gift, TrendingUp, Users } from 'lucide-react';
+import { FileText, Gift, UserCheck, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -135,9 +135,9 @@ export default function DashboardPage() {
     {
       title: t.dashboard.activeUsers,
       value: stats.totalRedemptions,
-      icon: TrendingUp,
+      icon: UserCheck,
       color: 'bg-yellow-500',
-      href: '/dashboard/analytics',
+      href: '/dashboard/users',
     },
   ];
 
@@ -198,7 +198,8 @@ export default function DashboardPage() {
         {cards.map((card) => (
           <div
             key={card.title}
-            className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition"
+            onClick={() => router.push(card.href)}
+            className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition cursor-pointer"
           >
             <div className={`flex items-center justify-between mb-3 sm:mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className={`${card.color} p-2 sm:p-3 rounded-lg`}>
