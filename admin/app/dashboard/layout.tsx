@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/i18n';
 import {
     BarChart3,
     Bell,
+    Building2,
     FileText,
     Gift,
     LayoutDashboard,
@@ -58,6 +59,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
     { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
     { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
+    { name: isRTL ? 'الشركات' : 'Companies', href: '/dashboard/companies', icon: Building2 },
     { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
     { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
   ];
