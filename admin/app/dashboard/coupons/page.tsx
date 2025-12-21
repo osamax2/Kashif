@@ -149,13 +149,15 @@ export default function CouponsPage() {
       }
 
       await couponsAPI.createCoupon(createData);
-      alert('Coupon created successfully!');
+      alert(isRTL ? 'تم إنشاء الكوبون بنجاح!' : 'Coupon created successfully!');
       setShowCreateModal(false);
       resetForm();
       loadCoupons();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create coupon:', error);
-      alert('Failed to create coupon');
+      if (error.response?.status !== 401) {
+        alert(isRTL ? 'فشل إنشاء الكوبون' : 'Failed to create coupon');
+      }
     }
   };
 
@@ -215,13 +217,16 @@ export default function CouponsPage() {
       }
 
       await couponsAPI.updateCoupon(selectedCoupon.id, updateData);
-      alert('Coupon updated successfully!');
+      alert(isRTL ? 'تم تحديث الكوبون بنجاح!' : 'Coupon updated successfully!');
       setShowEditModal(false);
       resetForm();
       loadCoupons();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update coupon:', error);
-      alert('Failed to update coupon');
+      // Don't show alert for 401 (handled by interceptor redirect)
+      if (error.response?.status !== 401) {
+        alert(isRTL ? 'فشل تحديث الكوبون' : 'Failed to update coupon');
+      }
     }
   };
 
@@ -229,13 +234,15 @@ export default function CouponsPage() {
     if (!selectedCoupon) return;
     try {
       await couponsAPI.deleteCoupon(selectedCoupon.id);
-      alert('Coupon deleted successfully!');
+      alert(isRTL ? 'تم حذف الكوبون بنجاح!' : 'Coupon deleted successfully!');
       setShowDeleteModal(false);
       setSelectedCoupon(null);
       loadCoupons();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete coupon:', error);
-      alert('Failed to delete coupon');
+      if (error.response?.status !== 401) {
+        alert(isRTL ? 'فشل حذف الكوبون' : 'Failed to delete coupon');
+      }
     }
   };
 
