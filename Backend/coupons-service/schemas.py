@@ -31,6 +31,7 @@ class CompanyUpdate(BaseModel):
 class Company(CompanyBase):
     id: int
     status: str
+    max_users: int = 5
     created_at: datetime
 
     class Config:
