@@ -12,6 +12,8 @@ export default function UsersPage() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showAwardModal, setShowAwardModal] = useState(false);
@@ -39,13 +41,24 @@ export default function UsersPage() {
   }, []);
 
   useEffect(() => {
-    const filtered = users.filter(
+    let filtered = users.filter(
       (user) =>
         user.full_name.toLowerCase().includes(search.toLowerCase()) ||
         user.email.toLowerCase().includes(search.toLowerCase())
     );
+    
+    // Apply role filter
+    if (roleFilter !== 'ALL') {
+      filtered = filtered.filter((user) => user.role === roleFilter);
+    }
+    
+    // Apply status filter
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter((user) => user.status === statusFilter);
+    }
+    
     setFilteredUsers(filtered);
-  }, [search, users]);
+  }, [search, users, roleFilter, statusFilter]);
 
   const loadUsers = async () => {
     try {
@@ -205,8 +218,9 @@ export default function UsersPage() {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
+      {/* Search and Filters */}
+      <div className="mb-6 space-y-4">
+        {/* Search */}
         <div className="relative">
           <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
           <input
@@ -216,6 +230,45 @@ export default function UsersPage() {
             placeholder={t.users.searchPlaceholder}
             className={`w-full py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
           />
+        </div>
+        
+        {/* Filters */}
+        <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+          {/* Role Filter */}
+          <div className="flex-1 sm:max-w-[200px]">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
+            >
+              <option value="ALL">{isRTL ? 'جميع الأدوار' : 'All Roles'}</option>
+              <option value="USER">{t.users.roles.user}</option>
+              <option value="COMPANY">{t.users.roles.company}</option>
+              <option value="ADMIN">{t.users.roles.admin}</option>
+            </select>
+          </div>
+          
+          {/* Status Filter */}
+          <div className="flex-1 sm:max-w-[200px]">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
+            >
+              <option value="ALL">{isRTL ? 'جميع الحالات' : 'All Statuses'}</option>
+              <option value="ACTIVE">{t.common.active}</option>
+              <option value="SUSPENDED">{isRTL ? 'موقوف' : 'Suspended'}</option>
+              <option value="BANNED">{isRTL ? 'محظور' : 'Banned'}</option>
+            </select>
+          </div>
+          
+          {/* Results count */}
+          <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'sm:mr-auto' : 'sm:ml-auto'}`}>
+            {isRTL 
+              ? `${filteredUsers.length} من ${users.length} مستخدم`
+              : `${filteredUsers.length} of ${users.length} users`
+            }
+          </div>
         </div>
       </div>
 
