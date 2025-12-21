@@ -113,6 +113,11 @@ export const translations = {
       saveChanges: 'Save Changes',
       createUser: 'Create User',
       deleteConfirmText: 'This action cannot be undone.',
+      passwordRequirements: 'Password must be at least 8 characters with uppercase and lowercase letters',
+      passwordTooShort: 'Password must be at least 8 characters',
+      passwordNeedsUppercase: 'Password must contain at least one uppercase letter',
+      passwordNeedsLowercase: 'Password must contain at least one lowercase letter',
+      mustChangePasswordNote: 'User will be required to change password on first login',
       roles: {
         admin: 'Admin',
         user: 'User',
@@ -397,6 +402,11 @@ export const translations = {
       saveChanges: 'حفظ التغييرات',
       createUser: 'إنشاء مستخدم',
       deleteConfirmText: 'لا يمكن التراجع عن هذا الإجراء.',
+      passwordRequirements: 'يجب أن تكون كلمة المرور ٨ أحرف على الأقل مع أحرف كبيرة وصغيرة',
+      passwordTooShort: 'يجب أن تكون كلمة المرور ٨ أحرف على الأقل',
+      passwordNeedsUppercase: 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل',
+      passwordNeedsLowercase: 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل',
+      mustChangePasswordNote: 'سيُطلب من المستخدم تغيير كلمة المرور عند أول تسجيل دخول',
       roles: {
         admin: 'مشرف',
         user: 'مستخدم',
