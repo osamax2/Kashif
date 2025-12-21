@@ -141,5 +141,50 @@ def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
     db.commit()
     db.refresh(user)
     return user
+
+
+def verify_user_account(db: Session, user_id: int):
+    """Mark user account as verified"""
+    user = get_user(db, user_id)
+    if user:
+        user.is_verified = True
+        user.status = "ACTIVE"
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
     return user
+
+
+def update_user_password(db: Session, user_id: int, new_password: str, clear_must_change: bool = False):
+    """Update user's password"""
+    user = get_user(db, user_id)
+    if user:
+        user.hashed_password = get_password_hash(new_password)
+        if clear_must_change:
+            user.must_change_password = False
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+    return user
+
+
+def create_company_user(db: Session, user: schemas.CompanyUserCreate):
+    """Create a company user (by admin) - auto-verified, must change password"""
+    hashed_password = get_password_hash(user.password)
+    db_user = models.User(
+        email=user.email,
+        hashed_password=hashed_password,
+        full_name=user.full_name,
+        phone=user.phone,
+        role="COMPANY",
+        company_id=user.company_id,
+        language=user.language if hasattr(user, 'language') else 'ar',
+        is_verified=True,  # Company users created by admin are auto-verified
+        must_change_password=True,  # Must change password on first login
+        status="ACTIVE"
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 

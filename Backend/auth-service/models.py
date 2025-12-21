@@ -29,7 +29,9 @@ class User(Base):
     total_points = Column(Integer, default=0, nullable=False)
     image_url = Column(String(255), nullable=True)
     level_id = Column(Integer, ForeignKey("levels.id"), nullable=True)
-    status = Column(String(50), default="ACTIVE", nullable=False)  # ACTIVE, BANNED
+    status = Column(String(50), default="ACTIVE", nullable=False)  # ACTIVE, BANNED, PENDING
+    is_verified = Column(Boolean, default=False, nullable=False)  # Email verification status
+    must_change_password = Column(Boolean, default=False, nullable=False)  # Force password change on first login
     language = Column(String(2), default="ar", nullable=False)  # ar or en
     last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
