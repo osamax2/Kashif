@@ -20,7 +20,10 @@ export interface CouponRedemption {
     user_id: number;
     coupon_id: number;
     points_spent: number;
+    verification_code: string;
     status: string;
+    verified_at?: string | null;
+    verified_by?: number | null;
     redeemed_at: string;
 }
 

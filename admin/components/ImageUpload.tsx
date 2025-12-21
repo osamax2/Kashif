@@ -1,7 +1,7 @@
 'use client';
 
-import { Upload, X, Link as LinkIcon } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { Link as LinkIcon, Upload, X } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 interface ImageUploadProps {
   value: string;
@@ -51,15 +51,40 @@ export default function ImageUpload({ value, onChange, label, isRTL = false }: I
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Upload failed');
+        let errorMessage = 'Upload failed';
+        try {
+          const errorData = await response.json();
+          if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else if (typeof errorData.detail === 'object' && errorData.detail?.msg) {
+            errorMessage = errorData.detail.msg;
+          } else if (typeof errorData.message === 'string') {
+            errorMessage = errorData.message;
+          } else if (typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          // JSON parse failed, use default message
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       onChange(data.url);
       setUrlInput(data.url);
     } catch (err: any) {
-      setError(err.message || (isRTL ? 'فشل رفع الصورة' : 'Failed to upload image'));
+      console.error('Image upload error:', err);
+      let errorMessage = isRTL ? 'فشل رفع الصورة' : 'Failed to upload image';
+      
+      if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err?.message && typeof err.message === 'string') {
+        errorMessage = err.message;
+      } else if (err?.detail && typeof err.detail === 'string') {
+        errorMessage = err.detail;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsUploading(false);
     }

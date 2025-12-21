@@ -1,7 +1,7 @@
 'use client';
 
 import ImageUpload from '@/components/ImageUpload';
-import { couponsAPI } from '@/lib/api';
+import { couponsAPI, getImageUrl } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Building2, Plus, Tag } from 'lucide-react';
 import Link from 'next/link';
@@ -322,7 +322,7 @@ export default function CouponsPage() {
           <div key={coupon.id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition">
             {coupon.image_url && (
               <img
-                src={coupon.image_url}
+                src={getImageUrl(coupon.image_url)}
                 alt={coupon.name}
                 className="w-full h-40 object-cover rounded-lg mb-4"
               />

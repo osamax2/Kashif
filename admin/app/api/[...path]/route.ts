@@ -56,29 +56,38 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     process.stderr.write(`[PROXY] ${request.method} ${fullUrl}\n`);
 
     // Get request body if present
-    let body;
+    let body: any;
     const contentType = request.headers.get('content-type');
     
-    if (contentType?.includes('application/json')) {
+    // Forward headers
+    const headers: Record<string, string> = {};
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    // Handle different content types
+    if (contentType?.includes('multipart/form-data')) {
+      // For file uploads, forward the FormData directly
+      // Don't set Content-Type - fetch will set it with correct boundary
+      const formData = await request.formData();
+      body = formData;
+      process.stderr.write(`[PROXY] FormData with ${Array.from(formData.keys()).length} fields\n`);
+    } else if (contentType?.includes('application/json')) {
       try {
         body = await request.json();
+        headers['Content-Type'] = 'application/json';
         process.stderr.write(`[PROXY] Body: ${JSON.stringify(body).substring(0, 100)}\n`);
       } catch (e) {
         process.stderr.write(`[PROXY] Failed to parse JSON body: ${e}\n`);
       }
     } else if (contentType?.includes('application/x-www-form-urlencoded')) {
       body = await request.text();
+      headers['Content-Type'] = 'application/x-www-form-urlencoded';
       process.stderr.write(`[PROXY] Form body: ${body.substring(0, 100)}\n`);
-    }
-
-    // Forward headers
-    const headers: Record<string, string> = {
-      'Content-Type': contentType || 'application/json',
-    };
-
-    const authHeader = request.headers.get('authorization');
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
+    } else if (contentType) {
+      headers['Content-Type'] = contentType;
     }
 
     // Make backend request with timeout
@@ -93,7 +102,7 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     const response = await fetch(fullUrl, {
       method: request.method,
       headers,
-      body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+      body: body instanceof FormData ? body : (body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined),
       signal: controller.signal,
     });
 

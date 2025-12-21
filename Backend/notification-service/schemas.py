@@ -41,6 +41,13 @@ class NotificationCreate(BaseModel):
     related_coupon_id: Optional[int] = None
 
 
+class BroadcastNotificationCreate(BaseModel):
+    title: str
+    body: str
+    type: str
+    target_role: Optional[str] = None  # None = all users, "USER" = regular users, "COMPANY" = company users, "GOVERNMENT" = government employees
+
+
 class Notification(BaseModel):
     id: int
     user_id: int
