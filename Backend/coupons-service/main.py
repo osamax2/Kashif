@@ -381,3 +381,79 @@ async def get_redemptions_by_company(
 ):
     """Get redemption counts grouped by company (for analytics)"""
     return crud.get_redemptions_by_company(db=db)
+
+
+@app.get("/redemptions/stats/company/{company_id}")
+async def get_company_coupon_stats(
+    company_id: int,
+    start_date: str = None,
+    end_date: str = None,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get coupon redemption statistics for a specific company"""
+    from datetime import datetime
+    
+    # If user is COMPANY role, they can only view their own company stats
+    if current_user.get("role") == "COMPANY":
+        user_company_id = current_user.get("company_id")
+        if company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view stats for your own company"
+            )
+    
+    # Parse dates if provided
+    parsed_start = None
+    parsed_end = None
+    if start_date:
+        try:
+            parsed_start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            parsed_end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        except ValueError:
+            pass
+    
+    return crud.get_company_coupon_stats(db=db, company_id=company_id, start_date=parsed_start, end_date=parsed_end)
+
+
+@app.get("/redemptions/stats/company/{company_id}/over-time")
+async def get_company_redemptions_over_time(
+    company_id: int,
+    days: int = 30,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get daily redemption counts for a company over time"""
+    # If user is COMPANY role, they can only view their own company stats
+    if current_user.get("role") == "COMPANY":
+        user_company_id = current_user.get("company_id")
+        if company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view stats for your own company"
+            )
+    
+    return crud.get_company_redemptions_over_time(db=db, company_id=company_id, days=days)
+
+
+@app.get("/redemptions/stats/company/{company_id}/summary")
+async def get_company_stats_summary(
+    company_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get summary statistics for a company"""
+    # If user is COMPANY role, they can only view their own company stats
+    if current_user.get("role") == "COMPANY":
+        user_company_id = current_user.get("company_id")
+        if company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view stats for your own company"
+            )
+    
+    return crud.get_company_stats_summary(db=db, company_id=company_id)

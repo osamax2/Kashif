@@ -251,6 +251,26 @@ export const couponsAPI = {
     const response = await api.get('/api/coupons/redemptions/stats/by-company');
     return response.data;
   },
+
+  getCompanyCouponStats: async (companyId: number, startDate?: string, endDate?: string) => {
+    let url = `/api/coupons/redemptions/stats/company/${companyId}`;
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (params.toString()) url += `?${params.toString()}`;
+    const response = await api.get(url);
+    return response.data;
+  },
+
+  getCompanyRedemptionsOverTime: async (companyId: number, days: number = 30) => {
+    const response = await api.get(`/api/coupons/redemptions/stats/company/${companyId}/over-time?days=${days}`);
+    return response.data;
+  },
+
+  getCompanyStatsSummary: async (companyId: number) => {
+    const response = await api.get(`/api/coupons/redemptions/stats/company/${companyId}/summary`);
+    return response.data;
+  },
 };
 
 // Notifications
