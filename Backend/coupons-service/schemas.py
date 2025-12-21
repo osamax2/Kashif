@@ -110,9 +110,25 @@ class CouponRedemption(BaseModel):
     user_id: int
     coupon_id: int
     points_spent: int
+    verification_code: str
     status: str
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[int] = None
     redeemed_at: datetime
 
     class Config:
         from_attributes = True
-        from_attributes = True
+
+
+class CouponRedemptionVerify(BaseModel):
+    verification_code: str
+
+
+class CouponRedemptionVerifyResponse(BaseModel):
+    success: bool
+    message: str
+    redemption: Optional[CouponRedemption] = None
+    coupon_name: Optional[str] = None
+    company_name: Optional[str] = None
+    user_id: Optional[int] = None
+    points_spent: Optional[int] = None

@@ -65,9 +65,10 @@ class CouponRedemption(Base):
     coupon_id = Column(Integer, ForeignKey("coupons.id"), nullable=False)
     user_id = Column(Integer, nullable=False, index=True)
     points_spent = Column(Integer, nullable=False)
-    status = Column(String(50), default="PENDING", nullable=False)  # USED, CANCELED, PENDING
+    verification_code = Column(String(32), unique=True, nullable=False, index=True)  # Unique code for QR verification
+    status = Column(String(50), default="PENDING", nullable=False)  # PENDING, VERIFIED, EXPIRED, CANCELED
+    verified_at = Column(DateTime, nullable=True)  # When the coupon was verified by company
+    verified_by = Column(Integer, nullable=True)  # User ID of company employee who verified
     redeemed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-
-    coupon = relationship("Coupon", back_populates="redemptions")
 
     coupon = relationship("Coupon", back_populates="redemptions")

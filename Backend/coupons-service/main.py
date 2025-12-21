@@ -363,6 +363,84 @@ async def get_my_redemptions(
     return crud.get_user_redemptions(db=db, user_id=user_id, skip=skip, limit=limit)
 
 
+@app.post("/redemptions/verify", response_model=schemas.CouponRedemptionVerifyResponse)
+async def verify_redemption(
+    verify_data: schemas.CouponRedemptionVerify,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Verify a coupon redemption by scanning QR code (company users only)"""
+    # Only COMPANY users can verify redemptions
+    if current_user.get("role") != "COMPANY":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only company users can verify redemptions"
+        )
+    
+    company_id = current_user.get("company_id")
+    if not company_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Company user has no assigned company"
+        )
+    
+    # Verify the redemption
+    redemption, error = crud.verify_redemption(
+        db=db,
+        verification_code=verify_data.verification_code,
+        verified_by=current_user.get("id"),
+        company_id=company_id
+    )
+    
+    if error:
+        return schemas.CouponRedemptionVerifyResponse(
+            success=False,
+            message=error
+        )
+    
+    # Get coupon and company details
+    coupon = crud.get_coupon(db=db, coupon_id=redemption.coupon_id)
+    company = crud.get_company(db=db, company_id=coupon.company_id) if coupon else None
+    
+    return schemas.CouponRedemptionVerifyResponse(
+        success=True,
+        message="Coupon verified successfully",
+        redemption=redemption,
+        coupon_name=coupon.name if coupon else None,
+        company_name=company.name if company else None,
+        user_id=redemption.user_id,
+        points_spent=redemption.points_spent
+    )
+
+
+@app.get("/redemptions/check/{verification_code}")
+async def check_redemption_status(
+    verification_code: str,
+    db: Session = Depends(get_db)
+):
+    """Check the status of a redemption by verification code (for mobile app)"""
+    redemption = crud.get_redemption_by_code(db=db, verification_code=verification_code)
+    
+    if not redemption:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Redemption not found"
+        )
+    
+    coupon = crud.get_coupon(db=db, coupon_id=redemption.coupon_id)
+    company = crud.get_company(db=db, company_id=coupon.company_id) if coupon else None
+    
+    return {
+        "verification_code": redemption.verification_code,
+        "status": redemption.status,
+        "coupon_name": coupon.name if coupon else None,
+        "company_name": company.name if company else None,
+        "points_spent": redemption.points_spent,
+        "redeemed_at": redemption.redeemed_at.isoformat() if redemption.redeemed_at else None,
+        "verified_at": redemption.verified_at.isoformat() if redemption.verified_at else None
+    }
+
+
 @app.get("/redemptions/all")
 async def get_all_redemptions(
     skip: int = 0,

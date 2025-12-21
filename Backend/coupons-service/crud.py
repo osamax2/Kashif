@@ -160,15 +160,67 @@ def delete_coupon(db: Session, coupon_id: int):
 
 # Redemption CRUD
 def create_redemption(db: Session, user_id: int, coupon_id: int, points_spent: int):
+    # Generate unique verification code
+    verification_code = generate_redemption_code(16)
+    
+    # Make sure the code is unique
+    while db.query(models.CouponRedemption).filter(
+        models.CouponRedemption.verification_code == verification_code
+    ).first():
+        verification_code = generate_redemption_code(16)
+    
     db_redemption = models.CouponRedemption(
         user_id=user_id,
         coupon_id=coupon_id,
-        points_spent=points_spent
+        points_spent=points_spent,
+        verification_code=verification_code
     )
     db.add(db_redemption)
     db.commit()
     db.refresh(db_redemption)
     return db_redemption
+
+
+def get_redemption_by_code(db: Session, verification_code: str):
+    """Get redemption by verification code"""
+    return db.query(models.CouponRedemption).filter(
+        models.CouponRedemption.verification_code == verification_code
+    ).first()
+
+
+def verify_redemption(db: Session, verification_code: str, verified_by: int, company_id: int):
+    """Verify a redemption - mark it as VERIFIED"""
+    from datetime import datetime
+    
+    redemption = get_redemption_by_code(db, verification_code)
+    if not redemption:
+        return None, "Redemption not found"
+    
+    # Check if already verified
+    if redemption.status == "VERIFIED":
+        return None, "Coupon already verified"
+    
+    # Check if expired or canceled
+    if redemption.status in ["EXPIRED", "CANCELED"]:
+        return None, f"Coupon is {redemption.status.lower()}"
+    
+    # Check if coupon belongs to the company
+    coupon = get_coupon(db, redemption.coupon_id)
+    if not coupon:
+        return None, "Coupon not found"
+    
+    if coupon.company_id != company_id:
+        return None, "This coupon does not belong to your company"
+    
+    # Verify the redemption
+    redemption.status = "VERIFIED"
+    redemption.verified_at = datetime.utcnow()
+    redemption.verified_by = verified_by
+    
+    db.commit()
+    db.refresh(redemption)
+    
+    return redemption, None
 
 
 def get_user_redemption(db: Session, user_id: int, coupon_id: int):
