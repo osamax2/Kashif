@@ -1,5 +1,7 @@
 import logging
+import os
 import threading
+import uuid
 from typing import Annotated
 
 import auth
@@ -7,9 +9,10 @@ import crud
 import models
 import schemas
 from database import engine, get_db
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
 from sqlalchemy.orm import Session
@@ -17,7 +20,14 @@ from sqlalchemy.orm import Session
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
+# Create uploads directory if it doesn't exist
+UPLOAD_DIR = "/app/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 app = FastAPI(title="Auth Service")
+
+# Mount static files for uploads
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Configure CORS
 app.add_middleware(
@@ -443,4 +453,56 @@ def update_language_preference(
     return {
         "message": "Language preference updated successfully",
         "language": updated_user.language
+    }
+
+
+# File Upload Endpoints
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+
+@app.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload an image file and return the URL.
+    Supports: jpg, jpeg, png, gif, webp
+    Max size: 5MB
+    """
+    # Verify token
+    current_user = auth.get_current_user(token, db)
+    
+    # Check file extension
+    file_ext = os.path.splitext(file.filename)[1].lower() if file.filename else ''
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+    
+    # Read file content
+    content = await file.read()
+    
+    # Check file size
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB"
+        )
+    
+    # Generate unique filename
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    
+    # Save file
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    # Return the URL (relative path that will be served via nginx)
+    return {
+        "url": f"/api/auth/uploads/{unique_filename}",
+        "filename": unique_filename
     }

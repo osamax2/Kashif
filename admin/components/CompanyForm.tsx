@@ -1,3 +1,5 @@
+import ImageUpload from './ImageUpload';
+
 export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
   return (
     <div className="space-y-4">
@@ -14,19 +16,12 @@ export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
         />
       </div>
       
-      <div>
-        <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
-          {t?.companies?.logoUrl || 'Logo URL'}
-        </label>
-        <input
-          type="url"
-          value={formData.logo_url}
-          onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
-          placeholder="https://example.com/logo.png"
-          dir="ltr"
-        />
-      </div>
+      <ImageUpload
+        value={formData.logo_url || ''}
+        onChange={(url) => setFormData({ ...formData, logo_url: url })}
+        label={t?.companies?.logoUrl || 'Logo URL'}
+        isRTL={isRTL}
+      />
       
       <div>
         <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
