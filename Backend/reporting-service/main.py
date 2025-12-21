@@ -254,6 +254,32 @@ async def get_report(
     return report
 
 
+@app.put("/{report_id}", response_model=schemas.Report)
+async def update_report(
+    report_id: int,
+    report_update: schemas.ReportUpdate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Update a report"""
+    # Convert Pydantic model to dict, excluding None values
+    update_data = report_update.model_dump(exclude_none=True)
+    
+    report = crud.update_report(
+        db=db,
+        report_id=report_id,
+        report_update=update_data
+    )
+    
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Report not found"
+        )
+    
+    return report
+
+
 @app.patch("/{report_id}/status", response_model=schemas.Report)
 async def update_report_status(
     report_id: int,
