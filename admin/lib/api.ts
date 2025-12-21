@@ -127,7 +127,12 @@ export const reportsAPI = {
     const response = await api.delete(`/api/reports/${reportId}`);
     return response.data;
   },
-  
+
+  getReportHistory: async (reportId: number) => {
+    const response = await api.get(`/api/reports/${reportId}/history`);
+    return response.data;
+  },
+
   getCategories: async () => {
     const response = await api.get('/api/reports/categories');
     return response.data;
