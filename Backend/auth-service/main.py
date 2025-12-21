@@ -59,16 +59,20 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered"
         )
     
-    # Create user
+    # Create user (not verified by default)
     new_user = crud.create_user(db=db, user=user)
     
-    # Publish UserRegistered event
+    # Generate verification token
+    verification_token = auth.create_verification_token(data={"user_id": new_user.id, "email": new_user.email})
+    
+    # Publish UserRegistered event with verification token
     try:
         publish_event("user.registered", {
             "user_id": new_user.id,
             "email": new_user.email,
             "full_name": new_user.full_name,
-            "role": new_user.role
+            "role": new_user.role,
+            "verification_token": verification_token
         })
         logger.info(f"Published UserRegistered event for user {new_user.id}")
     except Exception as e:
@@ -90,6 +94,13 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Check if user account is verified (for regular users, not admins/company users created by admin)
+    if not user.is_verified and user.role == "USER":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account not verified. Please check your email to activate your account.",
+        )
+    
     access_token = auth.create_access_token(data={"sub": user.email, "user_id": user.id})
     refresh_token = auth.create_refresh_token(data={"sub": user.email, "user_id": user.id})
     
@@ -97,10 +108,12 @@ def login(
     crud.update_user_access_token(db, user.id, access_token)
     crud.create_refresh_token(db, user.id, refresh_token)
     
+    # Include must_change_password flag in response for frontend handling
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "must_change_password": user.must_change_password
     }
 
 
@@ -151,6 +164,118 @@ def get_current_user_info(
 ):
     user = auth.get_current_user(token, db)
     return user
+
+
+@app.post("/verify-account")
+def verify_account(
+    request: schemas.VerifyAccountRequest,
+    db: Session = Depends(get_db)
+):
+    """Verify user account using verification token from email"""
+    try:
+        payload = auth.verify_verification_token(request.token)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification token"
+            )
+        
+        user_id = payload.get("user_id")
+        user = crud.get_user(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        if user.is_verified:
+            return {"message": "Account already verified"}
+        
+        # Activate the account
+        crud.verify_user_account(db, user_id)
+        
+        return {"message": "Account verified successfully. You can now login."}
+    except Exception as e:
+        logger.error(f"Account verification error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token"
+        )
+
+
+@app.post("/resend-verification")
+def resend_verification_email(
+    request: schemas.ResendVerificationRequest,
+    db: Session = Depends(get_db)
+):
+    """Resend verification email"""
+    user = crud.get_user_by_email(db, request.email)
+    if not user:
+        # Don't reveal if email exists
+        return {"message": "If the email exists, a verification link has been sent."}
+    
+    if user.is_verified:
+        return {"message": "Account is already verified."}
+    
+    # Generate verification token
+    verification_token = auth.create_verification_token(data={"user_id": user.id, "email": user.email})
+    
+    # Publish event to send verification email
+    try:
+        publish_event("user.verification_resend", {
+            "user_id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "verification_token": verification_token
+        })
+        logger.info(f"Published verification resend event for user {user.id}")
+    except Exception as e:
+        logger.error(f"Failed to publish verification resend event: {e}")
+    
+    return {"message": "If the email exists, a verification link has been sent."}
+
+
+@app.post("/change-password")
+def change_password(
+    request: schemas.ChangePasswordRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Change user password (requires current password)"""
+    user = auth.get_current_user(token, db)
+    
+    # Verify current password
+    if not auth.verify_password(request.current_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    # Update password
+    crud.update_user_password(db, user.id, request.new_password)
+    
+    return {"message": "Password changed successfully"}
+
+
+@app.post("/force-change-password")
+def force_change_password(
+    request: schemas.ForceChangePasswordRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Change password on first login (for users who must change password)"""
+    user = auth.get_current_user(token, db)
+    
+    if not user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password change not required"
+        )
+    
+    # Update password and clear the flag
+    crud.update_user_password(db, user.id, request.new_password, clear_must_change=True)
+    
+    return {"message": "Password changed successfully"}
 
 
 @app.post("/logout")

@@ -5,12 +5,27 @@ from typing import Optional
 import crud
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 30
+VERIFICATION_TOKEN_EXPIRE_HOURS = 24
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against a hash"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    """Hash a password"""
+    return pwd_context.hash(password)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -43,6 +58,23 @@ def verify_token(token: str):
 def verify_refresh_token(token: str):
     payload = verify_token(token)
     if payload and payload.get("type") == "refresh":
+        return payload
+    return None
+
+
+def create_verification_token(data: dict) -> str:
+    """Create a token for email verification"""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
+    to_encode.update({"exp": expire, "type": "verification"})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def verify_verification_token(token: str):
+    """Verify an email verification token"""
+    payload = verify_token(token)
+    if payload and payload.get("type") == "verification":
         return payload
     return None
 

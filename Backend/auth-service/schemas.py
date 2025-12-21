@@ -36,6 +36,8 @@ class User(UserBase):
     level_id: Optional[int] = None
     company_id: Optional[int] = None
     status: str
+    is_verified: bool = False
+    must_change_password: bool = False
     language: str
     last_login: Optional[datetime] = None
     created_at: datetime
@@ -49,6 +51,7 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+    must_change_password: bool = False
 
 
 class RefreshTokenRequest(BaseModel):
@@ -82,3 +85,24 @@ class CompanyUserCreate(BaseModel):
     phone: Optional[str] = None
     company_id: int  # Required - must link to a company
     language: str = "ar"
+
+
+class VerifyAccountRequest(BaseModel):
+    """Schema for account verification via token"""
+    token: str
+
+
+class ChangePasswordRequest(BaseModel):
+    """Schema for changing password"""
+    current_password: str
+    new_password: str
+
+
+class ForceChangePasswordRequest(BaseModel):
+    """Schema for first-time password change (no current password required)"""
+    new_password: str
+
+
+class ResendVerificationRequest(BaseModel):
+    """Schema for resending verification email"""
+    email: EmailStr
