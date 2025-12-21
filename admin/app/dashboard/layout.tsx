@@ -72,6 +72,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
     { name: isRTL ? 'مسح كوبون' : 'Scan Coupon', href: '/dashboard/scan', icon: QrCode },
     { name: isRTL ? 'فريق العمل' : 'Team', href: '/dashboard/team', icon: UsersRound },
+    { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
   ];
 
   // Navigation for GOVERNMENT role - Reports and Map only
@@ -82,7 +83,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
   ];
 
   // Allowed paths for COMPANY users
-  const companyAllowedPaths = ['/dashboard', '/dashboard/coupons', '/dashboard/scan', '/dashboard/team'];
+  const companyAllowedPaths = ['/dashboard', '/dashboard/coupons', '/dashboard/scan', '/dashboard/team', '/dashboard/analytics'];
 
   // Allowed paths for GOVERNMENT users
   const governmentAllowedPaths = ['/dashboard', '/dashboard/reports', '/dashboard/map'];
