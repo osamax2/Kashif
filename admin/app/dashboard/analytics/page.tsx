@@ -442,7 +442,7 @@ export default function AnalyticsPage() {
                 .map((report) => (
                   <CircleMarker
                     key={report.id}
-                    center={[report.latitude, report.longitude]}
+                    center={[Number(report.latitude), Number(report.longitude)]}
                     radius={8}
                     fillColor={report.status_id === 3 ? '#22c55e' : report.status_id === 1 ? '#eab308' : '#3b82f6'}
                     color="#fff"
