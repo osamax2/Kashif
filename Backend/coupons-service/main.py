@@ -361,3 +361,23 @@ async def get_my_redemptions(
 ):
     """Get current user's coupon redemptions"""
     return crud.get_user_redemptions(db=db, user_id=user_id, skip=skip, limit=limit)
+
+
+@app.get("/redemptions/all")
+async def get_all_redemptions(
+    skip: int = 0,
+    limit: int = 10000,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get all redemptions (admin only)"""
+    return crud.get_all_redemptions(db=db, skip=skip, limit=limit)
+
+
+@app.get("/redemptions/stats/by-company")
+async def get_redemptions_by_company(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get redemption counts grouped by company (for analytics)"""
+    return crud.get_redemptions_by_company(db=db)

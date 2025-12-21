@@ -3,12 +3,20 @@
 import { analyticsAPI, couponsAPI, reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { LeaderboardEntry } from '@/lib/types';
-import { TrendingUp, Trophy } from 'lucide-react';
+import { BarChart3, TrendingUp, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+interface CompanyRedemptionStats {
+  company_id: number;
+  company_name: string;
+  logo_url: string | null;
+  redemption_count: number;
+}
 
 export default function AnalyticsPage() {
   const { t, isRTL } = useLanguage();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [companyStats, setCompanyStats] = useState<CompanyRedemptionStats[]>([]);
   const [stats, setStats] = useState({
     totalReports: 0,
     resolvedReports: 0,
@@ -24,12 +32,16 @@ export default function AnalyticsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [leaderboardData, reports, coupons, users] = await Promise.all([
+      const [leaderboardData, reports, coupons, users, companyRedemptions] = await Promise.all([
         analyticsAPI.getLeaderboard(100),
         reportsAPI.getReports({ limit: 1000 }),
         couponsAPI.getRedemptions(),
         import('@/lib/api').then(m => m.usersAPI.getUsers(0, 1000).catch(() => [])),
+        couponsAPI.getRedemptionsByCompany().catch(() => []),
       ]);
+
+      // Set company stats
+      setCompanyStats(Array.isArray(companyRedemptions) ? companyRedemptions : []);
 
       // Enrich leaderboard with user names
       const usersArray = Array.isArray(users) ? users : [];
@@ -97,6 +109,86 @@ export default function AnalyticsPage() {
           <h3 className="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{isRTL ? 'إجمالي الاستخدامات' : 'Total Redemptions'}</h3>
           <p className="text-xl sm:text-3xl font-bold text-yellow">{stats.totalRedemptions}</p>
         </div>
+      </div>
+
+      {/* Company Redemptions Chart */}
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6 sm:mb-8">
+        <div className={`flex items-center gap-3 mb-4 sm:mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+          </div>
+          <div className={isRTL ? 'text-right' : ''}>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              {isRTL ? 'الشركات الأكثر استخداماً للكوبونات' : 'Top Companies by Coupon Usage'}
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600">
+              {isRTL ? 'الشركات مرتبة حسب عدد استخدامات الكوبونات' : 'Companies ranked by redemption count'}
+            </p>
+          </div>
+        </div>
+
+        {companyStats.length > 0 ? (
+          <div className="space-y-4">
+            {companyStats.slice(0, 10).map((company, index) => {
+              const maxCount = companyStats[0]?.redemption_count || 1;
+              const percentage = (company.redemption_count / maxCount) * 100;
+              const colors = [
+                'bg-blue-500',
+                'bg-green-500',
+                'bg-purple-500',
+                'bg-orange-500',
+                'bg-pink-500',
+                'bg-indigo-500',
+                'bg-teal-500',
+                'bg-red-500',
+                'bg-cyan-500',
+                'bg-amber-500',
+              ];
+              
+              return (
+                <div key={company.company_id} className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`w-8 text-center font-semibold text-gray-500 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    #{index + 1}
+                  </div>
+                  {company.logo_url ? (
+                    <img
+                      src={company.logo_url}
+                      alt={company.company_name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
+                      {company.company_name?.[0]?.toUpperCase() || 'C'}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className={`flex items-center justify-between mb-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <span className="font-medium text-gray-900 text-sm truncate">
+                        {company.company_name}
+                      </span>
+                      <span className="font-bold text-gray-700 text-sm">
+                        {company.redemption_count.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div
+                        className={`h-3 rounded-full transition-all duration-500 ${colors[index % colors.length]}`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <BarChart3 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500">
+              {isRTL ? 'لا توجد بيانات استخدام الكوبونات' : 'No coupon redemption data available'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Leaderboard */}
