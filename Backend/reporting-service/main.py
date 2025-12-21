@@ -137,12 +137,14 @@ async def get_reports(
     longitude: Optional[float] = None,
     radius_km: Optional[float] = None,
     include_pending: bool = False,
+    include_deleted: bool = False,
     db: Session = Depends(get_db)
 ):
     """
     Get reports with optional filters including geo-location.
     By default, only confirmed reports are returned.
     Set include_pending=true to also see pending reports.
+    Set include_deleted=true to see deleted reports only (trash).
     """
     reports = crud.get_reports(
         db=db,
@@ -153,7 +155,8 @@ async def get_reports(
         latitude=latitude,
         longitude=longitude,
         radius_km=radius_km,
-        include_pending=include_pending
+        include_pending=include_pending,
+        include_deleted=include_deleted
     )
     return reports
 
@@ -323,4 +326,51 @@ async def get_report_history(
     """Get status change history for a report"""
     history = crud.get_report_history(db=db, report_id=report_id)
     return history
-    return history
+
+
+@app.delete("/{report_id}")
+async def delete_report(
+    report_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Soft delete a report (mark as deleted)"""
+    report = crud.soft_delete_report(db=db, report_id=report_id)
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Report not found"
+        )
+    
+    logger.info(f"Report {report_id} soft deleted by user {user_id}")
+    return {"message": "Report deleted successfully", "report_id": report_id}
+
+
+@app.post("/{report_id}/restore")
+async def restore_report(
+    report_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Restore a soft-deleted report"""
+    report = crud.restore_report(db=db, report_id=report_id)
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Report not found"
+        )
+    
+    logger.info(f"Report {report_id} restored by user {user_id}")
+    return {"message": "Report restored successfully", "report_id": report_id}
+
+
+@app.get("/trash/all", response_model=List[schemas.Report])
+async def get_deleted_reports(
+    skip: int = 0,
+    limit: int = 100,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get all soft-deleted reports (trash)"""
+    reports = crud.get_deleted_reports(db=db, skip=skip, limit=limit)
+    return reports

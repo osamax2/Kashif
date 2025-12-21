@@ -128,6 +128,16 @@ export const reportsAPI = {
     return response.data;
   },
 
+  restoreReport: async (reportId: number) => {
+    const response = await api.post(`/api/reports/${reportId}/restore`);
+    return response.data;
+  },
+
+  getDeletedReports: async () => {
+    const response = await api.get('/api/reports/trash/all');
+    return response.data;
+  },
+
   getReportHistory: async (reportId: number) => {
     const response = await api.get(`/api/reports/${reportId}/history`);
     return response.data;

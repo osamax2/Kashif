@@ -73,6 +73,8 @@ class Report(Base):
     points_awarded = Column(Boolean, default=False, nullable=False)  # Whether points have been awarded
     created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Soft delete
+    deleted_at = Column(DateTime, nullable=True, index=True)  # When the report was soft-deleted
 
     category = relationship("Category", back_populates="reports")
     status = relationship("ReportStatus", back_populates="reports")

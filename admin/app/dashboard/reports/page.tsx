@@ -3,7 +3,7 @@
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
-import { Download, History, MapPin, Search, Share2 } from 'lucide-react';
+import { Download, History, MapPin, Search, Share2, Trash2, RotateCcw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function ReportsPage() {
@@ -20,6 +20,9 @@ export default function ReportsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
+  const [deletedReports, setDeletedReports] = useState<Report[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
   const [reportHistory, setReportHistory] = useState<ReportStatusHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [newStatus, setNewStatus] = useState('');
@@ -79,6 +82,19 @@ export default function ReportsPage() {
     }
   };
 
+  const loadDeletedReports = async () => {
+    try {
+      setTrashLoading(true);
+      const data = await reportsAPI.getDeletedReports();
+      setDeletedReports(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load deleted reports:', error);
+      setDeletedReports([]);
+    } finally {
+      setTrashLoading(false);
+    }
+  };
+
   const handleUpdateStatus = async () => {
     if (!selectedReport || !newStatus) return;
 
@@ -129,14 +145,31 @@ export default function ReportsPage() {
 
     try {
       await reportsAPI.deleteReport(selectedReport.id);
-      alert('Report deleted successfully!');
+      alert(isRTL ? 'تم نقل التقرير إلى سلة المحذوفات!' : 'Report moved to trash!');
       setShowDeleteModal(false);
       setSelectedReport(null);
       loadData();
     } catch (error) {
       console.error('Failed to delete report:', error);
-      alert('Failed to delete report');
+      alert(isRTL ? 'فشل في حذف التقرير' : 'Failed to delete report');
     }
+  };
+
+  const handleRestore = async (report: Report) => {
+    try {
+      await reportsAPI.restoreReport(report.id);
+      alert(isRTL ? 'تم استعادة التقرير بنجاح!' : 'Report restored successfully!');
+      loadDeletedReports();
+      loadData();
+    } catch (error) {
+      console.error('Failed to restore report:', error);
+      alert(isRTL ? 'فشل في استعادة التقرير' : 'Failed to restore report');
+    }
+  };
+
+  const handleOpenTrash = () => {
+    setShowTrash(true);
+    loadDeletedReports();
   };
 
   const handleShowHistory = async (report: Report) => {
@@ -243,14 +276,23 @@ export default function ReportsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.reports.title}</h1>
           <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.reports.subtitle}</p>
         </div>
-        <button
-          onClick={exportToCSV}
-          disabled={filteredReports.length === 0}
-          className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? 'flex-row-reverse' : ''}`}
-        >
-          <Download className="w-5 h-5" />
-          <span>{isRTL ? 'تصدير CSV' : 'Export CSV'}</span>
-        </button>
+        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <button
+            onClick={handleOpenTrash}
+            className={`flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Trash2 className="w-5 h-5" />
+            <span>{isRTL ? 'المحذوفات' : 'Trash'}</span>
+          </button>
+          <button
+            onClick={exportToCSV}
+            disabled={filteredReports.length === 0}
+            className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Download className="w-5 h-5" />
+            <span>{isRTL ? 'تصدير CSV' : 'Export CSV'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -665,6 +707,98 @@ export default function ReportsPage() {
                   setShowHistoryModal(false);
                   setReportHistory([]);
                 }}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                {t.common.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trash Modal */}
+      {showTrash && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className={`flex items-center justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h2 className={`text-xl font-bold text-gray-900 flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Trash2 className="w-6 h-6 text-gray-600" />
+                {isRTL ? 'التقارير المحذوفة' : 'Deleted Reports'}
+              </h2>
+              <button
+                onClick={() => setShowTrash(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <p className={`text-sm text-gray-600 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL 
+                ? 'يمكنك استعادة التقارير المحذوفة من هنا' 
+                : 'You can restore deleted reports from here'}
+            </p>
+            
+            <div className="flex-1 overflow-y-auto">
+              {trashLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-600"></div>
+                </div>
+              ) : deletedReports.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Trash2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  {isRTL ? 'لا توجد تقارير محذوفة' : 'No deleted reports'}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {deletedReports.map((report) => {
+                    const category = categories.find(c => c.id === report.category_id);
+                    return (
+                      <div
+                        key={report.id}
+                        className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                      >
+                        <div className={`flex items-start justify-between mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <h3 className={`font-semibold text-gray-900 ${isRTL ? 'text-right' : ''}`}>{report.title}</h3>
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">
+                            {isRTL ? 'محذوف' : 'Deleted'}
+                          </span>
+                        </div>
+                        
+                        {category && (
+                          <div className={`mb-2 ${isRTL ? 'text-right' : ''}`}>
+                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                              {isRTL ? category.name_ar || category.name : category.name}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <p className={`text-gray-600 text-sm mb-3 line-clamp-2 ${isRTL ? 'text-right' : ''}`}>
+                          {report.description}
+                        </p>
+                        
+                        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <span className="text-xs text-gray-400">
+                            {new Date(report.created_at).toLocaleDateString(isRTL ? 'ar' : 'en')}
+                          </span>
+                          <button
+                            onClick={() => handleRestore(report)}
+                            className={`flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition ${isRTL ? 'flex-row-reverse' : ''}`}
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            {isRTL ? 'استعادة' : 'Restore'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-4 pt-4 border-t">
+              <button
+                onClick={() => setShowTrash(false)}
                 className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >
                 {t.common.cancel}
