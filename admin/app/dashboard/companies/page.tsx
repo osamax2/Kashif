@@ -1,7 +1,7 @@
 'use client';
 
 import CompanyForm from '@/components/CompanyForm';
-import { couponsAPI } from '@/lib/api';
+import { couponsAPI, getImageUrl } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { ArrowLeft, Plus, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -211,7 +211,7 @@ export default function CompaniesPage() {
           <div key={company.id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition">
             {company.logo_url && (
               <img
-                src={company.logo_url}
+                src={getImageUrl(company.logo_url)}
                 alt={company.name}
                 className="w-full h-24 sm:h-32 object-contain rounded-lg mb-3 sm:mb-4"
               />

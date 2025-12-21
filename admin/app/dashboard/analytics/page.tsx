@@ -1,6 +1,6 @@
 'use client';
 
-import { analyticsAPI, couponsAPI, reportsAPI, usersAPI } from '@/lib/api';
+import { analyticsAPI, couponsAPI, getImageUrl, reportsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { LeaderboardEntry, Report } from '@/lib/types';
 import { BarChart3, Building2, Calendar, FileText, Filter, MapPin, TrendingUp, Trophy, Users } from 'lucide-react';
@@ -520,7 +520,7 @@ export default function AnalyticsPage() {
                   </div>
                   {company.logo_url ? (
                     <img
-                      src={company.logo_url}
+                      src={getImageUrl(company.logo_url)}
                       alt={company.company_name}
                       className="w-8 h-8 rounded-full object-cover"
                     />

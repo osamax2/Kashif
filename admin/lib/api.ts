@@ -3,6 +3,24 @@ import axios from 'axios';
 // Use Next.js API proxy to avoid firewall/CORS issues
 const API_BASE_URL = '';
 
+// Backend URL for direct image access (uploads are served from auth-service)
+export const BACKEND_URL = 'http://87.106.51.243:8000';
+
+// Helper function to get full image URL
+export function getImageUrl(url: string | undefined | null): string {
+  if (!url) return '';
+  // If it's already a full URL, return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // If it's a relative path starting with /api/, prepend the backend URL
+  if (url.startsWith('/api/')) {
+    return `${BACKEND_URL}${url}`;
+  }
+  // Otherwise return as-is
+  return url;
+}
+
 console.log('API Base URL:', API_BASE_URL || 'Using Next.js proxy /api/*');
 
 const api = axios.create({
@@ -85,6 +103,11 @@ export const usersAPI = {
   
   createCompanyUser: async (data: { email: string; password: string; full_name: string; company_id: number; phone_number?: string }) => {
     const response = await api.post('/api/auth/users/company', data);
+    return response.data;
+  },
+
+  createGovernmentUser: async (data: { email: string; password: string; full_name: string; phone?: string; language?: string }) => {
+    const response = await api.post('/api/auth/users/government', data);
     return response.data;
   },
 
@@ -289,6 +312,10 @@ export const notificationsAPI = {
     // Remove 'data' field as backend expects type, not data
     const { data: _, ...notificationData } = data;
     const response = await api.post('/api/notifications/send', notificationData);
+    return response.data;
+  },
+  broadcastNotification: async (data: { title: string; body: string; type: string; target_role?: string | null }) => {
+    const response = await api.post('/api/notifications/broadcast', data);
     return response.data;
   },
 };

@@ -3,7 +3,7 @@
 import { couponsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { User } from '@/lib/types';
-import { Award, Building2, Search } from 'lucide-react';
+import { Award, Building2, Landmark, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function UsersPage() {
@@ -20,6 +20,7 @@ export default function UsersPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCreateCompanyUserModal, setShowCreateCompanyUserModal] = useState(false);
+  const [showCreateGovernmentUserModal, setShowCreateGovernmentUserModal] = useState(false);
   const [points, setPoints] = useState('');
   const [description, setDescription] = useState('');
   const [editForm, setEditForm] = useState({
@@ -34,6 +35,12 @@ export default function UsersPage() {
     full_name: '',
     company_id: '',
     phone_number: '',
+  });
+  const [governmentUserForm, setGovernmentUserForm] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
   });
 
   useEffect(() => {
@@ -135,6 +142,39 @@ export default function UsersPage() {
     }
   };
 
+  const [governmentPasswordError, setGovernmentPasswordError] = useState('');
+
+  const handleCreateGovernmentUser = async () => {
+    if (!governmentUserForm.email || !governmentUserForm.password || !governmentUserForm.full_name) {
+      alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields');
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(governmentUserForm.password);
+    if (!passwordValidation.valid) {
+      setGovernmentPasswordError(passwordValidation.error);
+      return;
+    }
+
+    try {
+      await usersAPI.createGovernmentUser({
+        email: governmentUserForm.email,
+        password: governmentUserForm.password,
+        full_name: governmentUserForm.full_name,
+        phone: governmentUserForm.phone || undefined,
+      });
+      alert(isRTL ? 'تم إنشاء الموظف الحكومي بنجاح!' : 'Government employee created successfully!');
+      setShowCreateGovernmentUserModal(false);
+      setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '' });
+      setGovernmentPasswordError('');
+      loadUsers();
+    } catch (error: any) {
+      console.error('Failed to create government user:', error);
+      alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء الموظف الحكومي' : 'Failed to create government employee'));
+    }
+  };
+
   const handleAwardPoints = async () => {
     if (!selectedUser || !points) return;
 
@@ -210,14 +250,24 @@ export default function UsersPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.users.title}</h1>
           <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.users.subtitle}</p>
         </div>
-        <button
-          onClick={() => setShowCreateCompanyUserModal(true)}
-          className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base w-full sm:w-auto ${isRTL ? 'flex-row-reverse' : ''}`}
-        >
-          <Building2 className="w-5 h-5" />
-          <span className="hidden sm:inline">{t.users.createCompanyUser}</span>
-          <span className="sm:hidden">{isRTL ? 'إضافة مستخدم' : 'Add User'}</span>
-        </button>
+        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <button
+            onClick={() => setShowCreateGovernmentUserModal(true)}
+            className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Landmark className="w-5 h-5" />
+            <span className="hidden sm:inline">{isRTL ? 'إضافة موظف حكومي' : 'Add Government Employee'}</span>
+            <span className="sm:hidden">{isRTL ? 'موظف' : 'Gov'}</span>
+          </button>
+          <button
+            onClick={() => setShowCreateCompanyUserModal(true)}
+            className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Building2 className="w-5 h-5" />
+            <span className="hidden sm:inline">{t.users.createCompanyUser}</span>
+            <span className="sm:hidden">{isRTL ? 'شركة' : 'Company'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -671,6 +721,115 @@ export default function UsersPage() {
               <button
                 onClick={handleCreateCompanyUser}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
+              >
+                {t.users.createUser}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Government User Modal */}
+      {showCreateGovernmentUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+              <Landmark className="w-6 h-6 text-green-600" />
+              {isRTL ? 'إضافة موظف حكومي' : 'Add Government Employee'}
+            </h2>
+            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL 
+                ? 'إنشاء حساب موظف حكومي للوصول إلى البلاغات والخريطة' 
+                : 'Create a government employee account with access to reports and map'}
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.fullName} *
+                </label>
+                <input
+                  type="text"
+                  value={governmentUserForm.full_name}
+                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, full_name: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userEmail} *
+                </label>
+                <input
+                  type="email"
+                  value={governmentUserForm.email}
+                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, email: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder="user@gov.sa"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userPhone}
+                </label>
+                <input
+                  type="tel"
+                  value={governmentUserForm.phone}
+                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, phone: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.auth.password} *
+                </label>
+                <input
+                  type="password"
+                  value={governmentUserForm.password}
+                  onChange={(e) => {
+                    setGovernmentUserForm({ ...governmentUserForm, password: e.target.value });
+                    setGovernmentPasswordError('');
+                  }}
+                  className={`w-full px-4 py-2 border ${governmentPasswordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder="••••••••"
+                  minLength={8}
+                />
+                {/* Password requirements */}
+                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                  <p className={`${governmentUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
+                  </p>
+                  <p className={`${/[A-Z]/.test(governmentUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                  </p>
+                  <p className={`${/[a-z]/.test(governmentUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                  </p>
+                </div>
+                {governmentPasswordError && (
+                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentPasswordError}</p>
+                )}
+                {/* Note about password change on first login */}
+                <p className={`mt-2 text-xs text-blue-600 ${isRTL ? 'text-right' : ''}`}>
+                  ℹ️ {t.users.mustChangePasswordNote}
+                </p>
+              </div>
+            </div>
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => {
+                  setShowCreateGovernmentUserModal(false);
+                  setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '' });
+                  setGovernmentPasswordError('');
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleCreateGovernmentUser}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
                 {t.users.createUser}
               </button>

@@ -87,6 +87,15 @@ class CompanyUserCreate(BaseModel):
     language: str = "ar"
 
 
+class GovernmentUserCreate(BaseModel):
+    """Schema for creating a government employee by admin"""
+    email: EmailStr
+    password: str
+    full_name: str
+    phone: Optional[str] = None
+    language: str = "ar"
+
+
 class VerifyAccountRequest(BaseModel):
     """Schema for account verification via token"""
     token: str

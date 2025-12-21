@@ -417,6 +417,51 @@ def create_company_user(
     return new_user
 
 
+@app.post("/users/government", response_model=schemas.User)
+def create_government_user(
+    user_data: schemas.GovernmentUserCreate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Create a government employee user - Admin only
+    
+    This creates a user with role=GOVERNMENT who can view and manage reports
+    and access the map.
+    """
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can create government users
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    # Check if user already exists
+    db_user = crud.get_user_by_email(db, email=user_data.email)
+    if db_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create user with GOVERNMENT role
+    user_create = schemas.UserCreate(
+        email=user_data.email,
+        password=user_data.password,
+        full_name=user_data.full_name,
+        phone=user_data.phone,
+        role="GOVERNMENT",
+        language=user_data.language
+    )
+    
+    new_user = crud.create_user(db=db, user=user_create)
+    
+    logger.info(f"Created government user {new_user.id}")
+    
+    return new_user
+
+
 @app.get("/users/company/{company_id}/count")
 def get_company_users_count(
     company_id: int,

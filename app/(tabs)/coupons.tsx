@@ -1,5 +1,6 @@
 // app/(tabs)/coupons.tsx
 import CouponCard from "@/components/CouponCard";
+import QRCodeModal from "@/components/QRCodeModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCoupons } from "@/hooks/useCoupons";
@@ -8,16 +9,16 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Animated,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const PRIMARY = "#0D2B66";
@@ -28,6 +29,14 @@ export default function CouponsScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { user, refreshUser } = useAuth();
   const [redeemingId, setRedeemingId] = useState<number | null>(null);
+  
+  // QR Code Modal state
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [redemptionData, setRedemptionData] = useState<{
+    verificationCode: string;
+    couponName: string;
+    pointsSpent: number;
+  } | null>(null);
 
   const {
     filteredCoupons,
@@ -78,9 +87,16 @@ export default function CouponsScreen() {
       const executeRedeem = async () => {
         try {
           setRedeemingId(coupon.id);
-          await couponsAPI.redeemCoupon(coupon.id);
+          const redemption = await couponsAPI.redeemCoupon(coupon.id);
           await Promise.all([refreshUser(), refetch()]);
-          Alert.alert(t("coupons.redeem.successTitle"), t("coupons.redeem.successMessage"));
+          
+          // Show QR Code Modal instead of Alert
+          setRedemptionData({
+            verificationCode: redemption.verification_code,
+            couponName: coupon.name,
+            pointsSpent: coupon.points_cost,
+          });
+          setQrModalVisible(true);
         } catch (err) {
           console.error("Failed to redeem coupon", err);
           Alert.alert(t("common.error"), t("coupons.redeem.errorMessage"));
@@ -116,6 +132,20 @@ export default function CouponsScreen() {
 
   return (
     <View style={styles.root}>
+      {/* QR Code Modal */}
+      {redemptionData && (
+        <QRCodeModal
+          visible={qrModalVisible}
+          onClose={() => {
+            setQrModalVisible(false);
+            setRedemptionData(null);
+          }}
+          verificationCode={redemptionData.verificationCode}
+          couponName={redemptionData.couponName}
+          pointsSpent={redemptionData.pointsSpent}
+        />
+      )}
+
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t("coupons.screenTitle")}</Text>
