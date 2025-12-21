@@ -149,8 +149,8 @@ export default function DashboardPage() {
     );
   }
 
-  // Company User Dashboard - simplified view
-  if (userRole === 'COMPANY') {
+  // Company User Dashboard - simplified view (case insensitive check)
+  if (userRole?.toUpperCase() === 'COMPANY') {
     return (
       <div>
         <div className="mb-6 sm:mb-8">
@@ -214,33 +214,35 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-        <h2 className={`text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 ${isRTL ? 'text-right' : ''}`}>{t.dashboard.quickStats}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <a
-            href="/dashboard/users"
-            className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
-          >
-            <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.users.title}</h3>
-            <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.users}</p>
-          </a>
-          <a
-            href="/dashboard/reports"
-            className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
-          >
-            <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.reports.title}</h3>
-            <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.reports}</p>
-          </a>
-          <a
-            href="/dashboard/coupons"
-            className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
-          >
-            <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.coupons.title}</h3>
-            <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.coupons}</p>
-          </a>
+      {/* Quick Actions - Only for Admin users */}
+      {userRole?.toUpperCase() === 'ADMIN' && (
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className={`text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 ${isRTL ? 'text-right' : ''}`}>{t.dashboard.quickStats}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <a
+              href="/dashboard/users"
+              className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
+            >
+              <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.users.title}</h3>
+              <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.users}</p>
+            </a>
+            <a
+              href="/dashboard/reports"
+              className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
+            >
+              <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.reports.title}</h3>
+              <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.reports}</p>
+            </a>
+            <a
+              href="/dashboard/coupons"
+              className="block p-3 sm:p-4 border-2 border-gray-200 rounded-lg hover:border-primary transition"
+            >
+              <h3 className={`font-semibold text-gray-900 text-sm sm:text-base ${isRTL ? 'text-right' : ''}`}>{t.coupons.title}</h3>
+              <p className={`text-xs sm:text-sm text-gray-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{t.nav.coupons}</p>
+            </a>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
