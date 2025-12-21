@@ -1,5 +1,6 @@
 'use client';
 
+import ImageUpload from '@/components/ImageUpload';
 import { couponsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Building2, Plus, Tag } from 'lucide-react';
@@ -550,13 +551,11 @@ function CouponForm({ formData, setFormData, companies, categories, isCompanyUse
       </div>
 
       <div>
-        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.imageUrl}</label>
-        <input
-          type="url"
-          value={formData.image_url}
-          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
-          placeholder="https://example.com/image.jpg"
+        <ImageUpload
+          value={formData.image_url || ''}
+          onChange={(url) => setFormData({ ...formData, image_url: url })}
+          label={t.coupons.imageUrl}
+          isRTL={isRTL}
         />
       </div>
 
