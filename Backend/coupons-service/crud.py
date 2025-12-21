@@ -219,3 +219,115 @@ def get_redemptions_by_company(db: Session):
         }
         for r in results
     ]
+
+
+def get_company_coupon_stats(db: Session, company_id: int, start_date=None, end_date=None):
+    """Get coupon redemption statistics for a specific company"""
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    # Base query for coupon stats
+    query = db.query(
+        models.Coupon.id,
+        models.Coupon.title,
+        models.Coupon.title_ar,
+        models.Coupon.points_cost,
+        func.count(models.CouponRedemption.id).label('redemption_count'),
+        func.max(models.CouponRedemption.redeemed_at).label('last_redeemed')
+    ).outerjoin(
+        models.CouponRedemption, models.Coupon.id == models.CouponRedemption.coupon_id
+    ).filter(
+        models.Coupon.company_id == company_id,
+        models.Coupon.status == "ACTIVE"
+    )
+    
+    # Apply date filters if provided
+    if start_date:
+        query = query.filter(
+            (models.CouponRedemption.redeemed_at >= start_date) | 
+            (models.CouponRedemption.redeemed_at.is_(None))
+        )
+    if end_date:
+        query = query.filter(
+            (models.CouponRedemption.redeemed_at <= end_date) | 
+            (models.CouponRedemption.redeemed_at.is_(None))
+        )
+    
+    results = query.group_by(
+        models.Coupon.id, models.Coupon.title, models.Coupon.title_ar, models.Coupon.points_cost
+    ).order_by(
+        func.count(models.CouponRedemption.id).desc()
+    ).all()
+    
+    return [
+        {
+            "coupon_id": r[0],
+            "title": r[1],
+            "title_ar": r[2],
+            "points_cost": r[3],
+            "redemption_count": r[4],
+            "last_redeemed": r[5].isoformat() if r[5] else None
+        }
+        for r in results
+    ]
+
+
+def get_company_redemptions_over_time(db: Session, company_id: int, days: int = 30):
+    """Get daily redemption counts for a company over time"""
+    from sqlalchemy import func, cast, Date
+    from datetime import datetime, timedelta
+    
+    start_date = datetime.utcnow() - timedelta(days=days)
+    
+    results = db.query(
+        cast(models.CouponRedemption.redeemed_at, Date).label('date'),
+        func.count(models.CouponRedemption.id).label('count')
+    ).join(
+        models.Coupon, models.CouponRedemption.coupon_id == models.Coupon.id
+    ).filter(
+        models.Coupon.company_id == company_id,
+        models.CouponRedemption.redeemed_at >= start_date
+    ).group_by(
+        cast(models.CouponRedemption.redeemed_at, Date)
+    ).order_by(
+        cast(models.CouponRedemption.redeemed_at, Date)
+    ).all()
+    
+    return [
+        {
+            "date": r[0].isoformat() if r[0] else None,
+            "count": r[1]
+        }
+        for r in results
+    ]
+
+
+def get_company_stats_summary(db: Session, company_id: int):
+    """Get summary statistics for a company"""
+    from sqlalchemy import func
+    
+    # Total coupons
+    total_coupons = db.query(func.count(models.Coupon.id)).filter(
+        models.Coupon.company_id == company_id,
+        models.Coupon.status == "ACTIVE"
+    ).scalar() or 0
+    
+    # Total redemptions
+    total_redemptions = db.query(func.count(models.CouponRedemption.id)).join(
+        models.Coupon, models.CouponRedemption.coupon_id == models.Coupon.id
+    ).filter(
+        models.Coupon.company_id == company_id
+    ).scalar() or 0
+    
+    # Total points spent on company coupons
+    total_points = db.query(func.sum(models.CouponRedemption.points_spent)).join(
+        models.Coupon, models.CouponRedemption.coupon_id == models.Coupon.id
+    ).filter(
+        models.Coupon.company_id == company_id
+    ).scalar() or 0
+    
+    return {
+        "total_coupons": total_coupons,
+        "total_redemptions": total_redemptions,
+        "total_points_spent": total_points
+    }
