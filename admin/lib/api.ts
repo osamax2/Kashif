@@ -83,7 +83,7 @@ export const usersAPI = {
     return response.data;
   },
   
-  createCompanyUser: async (data: { email: string; password: string; full_name: string; company_id: number }) => {
+  createCompanyUser: async (data: { email: string; password: string; full_name: string; company_id: number; phone_number?: string }) => {
     const response = await api.post('/api/auth/users/company', data);
     return response.data;
   },

@@ -33,6 +33,7 @@ export default function UsersPage() {
     password: '',
     full_name: '',
     company_id: '',
+    phone_number: '',
   });
 
   useEffect(() => {
@@ -121,10 +122,11 @@ export default function UsersPage() {
         password: companyUserForm.password,
         full_name: companyUserForm.full_name,
         company_id: parseInt(companyUserForm.company_id),
+        phone_number: companyUserForm.phone_number || undefined,
       });
       alert(isRTL ? 'تم إنشاء مستخدم الشركة بنجاح!' : 'Company user created successfully!');
       setShowCreateCompanyUserModal(false);
-      setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '' });
+      setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '', phone_number: '' });
       setPasswordError('');
       loadUsers();
     } catch (error: any) {
@@ -580,6 +582,19 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userPhone}
+                </label>
+                <input
+                  type="tel"
+                  value={companyUserForm.phone_number}
+                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, phone_number: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
                   {t.auth.password} *
                 </label>
                 <input
@@ -635,7 +650,7 @@ export default function UsersPage() {
               <button
                 onClick={() => {
                   setShowCreateCompanyUserModal(false);
-                  setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '' });
+                  setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '', phone_number: '' });
                   setPasswordError('');
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
