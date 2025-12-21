@@ -233,14 +233,20 @@ def get_reports(
     longitude: Optional[float] = None,
     radius_km: Optional[float] = None,
     include_pending: bool = False,
-    user_id: Optional[int] = None
+    user_id: Optional[int] = None,
+    include_deleted: bool = False
 ) -> List[models.Report]:
     """
     Get reports with optional filters.
     By default, only confirmed reports are returned.
     Set include_pending=True to include pending reports.
+    Set include_deleted=True to include soft-deleted reports.
     """
     query = db.query(models.Report)
+    
+    # Filter out deleted reports by default
+    if not include_deleted:
+        query = query.filter(models.Report.deleted_at == None)
     
     # By default, only show confirmed reports (unless include_pending is True)
     if not include_pending:
@@ -270,9 +276,10 @@ def get_reports(
 
 
 def get_user_reports(db: Session, user_id: int, skip: int = 0, limit: int = 100):
-    """Get user's reports - includes both pending and confirmed for the owner"""
+    """Get user's reports - includes both pending and confirmed for the owner, excludes deleted"""
     return db.query(models.Report).filter(
-        models.Report.user_id == user_id
+        models.Report.user_id == user_id,
+        models.Report.deleted_at == None
     ).order_by(models.Report.created_at.desc()).offset(skip).limit(limit).all()
 
 
@@ -390,4 +397,34 @@ def get_severities(db: Session, category_id: Optional[int] = None):
     if category_id:
         query = query.filter(models.Severity.category_id == category_id)
     return query.order_by(models.Severity.category_id, models.Severity.id).all()
-    return query.order_by(models.Severity.category_id, models.Severity.id).all()
+
+
+def soft_delete_report(db: Session, report_id: int):
+    """Soft delete a report by setting deleted_at timestamp"""
+    report = get_report(db, report_id)
+    if not report:
+        return None
+    
+    report.deleted_at = datetime.utcnow()
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+def restore_report(db: Session, report_id: int):
+    """Restore a soft-deleted report by clearing deleted_at"""
+    report = db.query(models.Report).filter(models.Report.id == report_id).first()
+    if not report:
+        return None
+    
+    report.deleted_at = None
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+def get_deleted_reports(db: Session, skip: int = 0, limit: int = 100):
+    """Get all soft-deleted reports"""
+    return db.query(models.Report).filter(
+        models.Report.deleted_at != None
+    ).order_by(models.Report.deleted_at.desc()).offset(skip).limit(limit).all()
