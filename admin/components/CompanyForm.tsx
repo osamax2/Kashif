@@ -22,6 +22,23 @@ export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
         label={t?.companies?.logoUrl || 'Logo URL'}
         isRTL={isRTL}
       />
+
+      <div>
+        <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+          {isRTL ? 'الحد الأقصى للمستخدمين' : 'Max Users'}
+        </label>
+        <input
+          type="number"
+          min="1"
+          max="1000"
+          value={formData.max_users || 5}
+          onChange={(e) => setFormData({ ...formData, max_users: parseInt(e.target.value) || 5 })}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+        />
+        <p className={`text-xs text-gray-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
+          {isRTL ? 'عدد المستخدمين الذين يمكن للشركة إضافتهم' : 'Number of users the company can add'}
+        </p>
+      </div>
       
       <div>
         <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>

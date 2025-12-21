@@ -2,7 +2,7 @@
 
 import { couponsAPI, reportsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { FileText, Gift, Map, UserCheck, Users } from 'lucide-react';
+import { FileText, Gift, Map, UserCheck, Users, UsersRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -161,10 +161,10 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Company User - Only Coupons Access */}
+        {/* Company User - Coupons and Team Access */}
         <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">{t.common.actions}</h2>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <a
               href="/dashboard/coupons"
               className="block p-4 sm:p-6 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition"
@@ -176,6 +176,20 @@ export default function DashboardPage() {
                 <div className={isRTL ? 'text-right' : ''}>
                   <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{t.dashboard.manageCoupons}</h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-1">{t.coupons.title}</p>
+                </div>
+              </div>
+            </a>
+            <a
+              href="/dashboard/team"
+              className="block p-4 sm:p-6 border-2 border-blue-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+            >
+              <div className={`flex items-center gap-3 sm:gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="bg-blue-500 p-2 sm:p-3 rounded-lg">
+                  <UsersRound className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div className={isRTL ? 'text-right' : ''}>
+                  <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{isRTL ? 'فريق العمل' : 'Team Members'}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">{isRTL ? 'إدارة أعضاء الفريق' : 'Manage team members'}</p>
                 </div>
               </div>
             </a>

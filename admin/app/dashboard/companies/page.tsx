@@ -11,6 +11,7 @@ interface Company {
   id: number;
   name: string;
   logo_url?: string;
+  max_users?: number;
   status: string;
   created_at: string;
 }
@@ -31,6 +32,7 @@ export default function CompaniesPage() {
   const [formData, setFormData] = useState({
     name: '',
     logo_url: '',
+    max_users: 5,
     status: 'ACTIVE',
   });
 
@@ -89,6 +91,7 @@ export default function CompaniesPage() {
     setFormData({
       name: company.name,
       logo_url: company.logo_url || '',
+      max_users: company.max_users || 5,
       status: company.status,
     });
     setShowEditModal(true);
@@ -126,6 +129,7 @@ export default function CompaniesPage() {
     setFormData({
       name: '',
       logo_url: '',
+      max_users: 5,
       status: 'ACTIVE',
     });
   };

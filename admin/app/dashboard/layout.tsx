@@ -14,6 +14,7 @@ import {
     Map,
     Menu,
     Users,
+    UsersRound,
     X
 } from 'lucide-react';
 import Link from 'next/link';
@@ -68,6 +69,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
   const companyNavigation = [
     { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
     { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
+    { name: isRTL ? 'فريق العمل' : 'Team', href: '/dashboard/team', icon: UsersRound },
   ];
 
   // Navigation for GOVERNMENT role - Reports and Map only
@@ -78,7 +80,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
   ];
 
   // Allowed paths for COMPANY users
-  const companyAllowedPaths = ['/dashboard', '/dashboard/coupons'];
+  const companyAllowedPaths = ['/dashboard', '/dashboard/coupons', '/dashboard/team'];
 
   // Allowed paths for GOVERNMENT users
   const governmentAllowedPaths = ['/dashboard', '/dashboard/reports', '/dashboard/map'];

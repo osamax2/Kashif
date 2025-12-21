@@ -106,3 +106,13 @@ class ForceChangePasswordRequest(BaseModel):
 class ResendVerificationRequest(BaseModel):
     """Schema for resending verification email"""
     email: EmailStr
+
+
+class CompanyMemberCreate(BaseModel):
+    """Schema for adding a member to company by company user"""
+    email: EmailStr
+    password: str
+    full_name: str
+    phone: Optional[str] = None
+    language: str = "ar"
+    max_users: Optional[int] = 5  # Pass current limit for validation

@@ -16,6 +16,7 @@ class Company(Base):
     website_url = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True)
     address = Column(String(255), nullable=True)
+    max_users = Column(Integer, default=5, nullable=False)  # Maximum users allowed for this company
     status = Column(String(50), default="ACTIVE", nullable=False)  # ACTIVE, INACTIVE
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 

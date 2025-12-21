@@ -417,6 +417,159 @@ def create_company_user(
     return new_user
 
 
+@app.get("/users/company/{company_id}/count")
+def get_company_users_count(
+    company_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Get count of users in a company"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Allow admin or company users of the same company
+    if current_user.role not in ["ADMIN", "COMPANY"] or \
+       (current_user.role == "COMPANY" and current_user.company_id != company_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized"
+        )
+    
+    count = crud.get_company_users_count(db, company_id)
+    return {"company_id": company_id, "user_count": count}
+
+
+@app.get("/users/company/{company_id}/members")
+def get_company_members(
+    company_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Get all users in a company"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Allow admin or company users of the same company
+    if current_user.role not in ["ADMIN", "COMPANY"] or \
+       (current_user.role == "COMPANY" and current_user.company_id != company_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized"
+        )
+    
+    users = crud.get_company_users(db, company_id)
+    return users
+
+
+@app.post("/users/company/add-member", response_model=schemas.User)
+def add_company_member(
+    user_data: schemas.CompanyMemberCreate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Add a member to company - Company users can add members to their own company
+    
+    This creates a user with role=COMPANY who belongs to the same company.
+    Respects the max_users limit set by admin.
+    """
+    current_user = auth.get_current_user(token, db)
+    
+    # Only company users can add members
+    if current_user.role != "COMPANY":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only company users can add members to their company"
+        )
+    
+    if not current_user.company_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You are not assigned to any company"
+        )
+    
+    # Check if user already exists
+    db_user = crud.get_user_by_email(db, email=user_data.email)
+    if db_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Check company user limit (need to fetch from coupons service)
+    # For now, we'll check against a reasonable default
+    current_count = crud.get_company_users_count(db, current_user.company_id)
+    
+    # Default max is 5 if not specified
+    max_users = user_data.max_users if hasattr(user_data, 'max_users') and user_data.max_users else 5
+    
+    if current_count >= max_users:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Company has reached maximum user limit ({max_users})"
+        )
+    
+    # Create user with COMPANY role in the same company
+    user_create = schemas.UserCreate(
+        email=user_data.email,
+        password=user_data.password,
+        full_name=user_data.full_name,
+        phone=user_data.phone,
+        role="COMPANY",
+        company_id=current_user.company_id,
+        language=user_data.language or current_user.language
+    )
+    
+    new_user = crud.create_user(db=db, user=user_create)
+    
+    logger.info(f"Company user {current_user.id} added member {new_user.id} to company {current_user.company_id}")
+    
+    return new_user
+
+
+@app.delete("/users/company/member/{user_id}")
+def remove_company_member(
+    user_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Remove a member from company - Company users can remove members from their own company"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only company users can remove members
+    if current_user.role != "COMPANY":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only company users can manage company members"
+        )
+    
+    # Get the user to remove
+    user_to_remove = crud.get_user(db, user_id)
+    if not user_to_remove:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Can't remove yourself
+    if user_to_remove.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot remove yourself"
+        )
+    
+    # Can only remove users from same company
+    if user_to_remove.company_id != current_user.company_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Can only remove members from your own company"
+        )
+    
+    # Soft delete the user
+    crud.update_user(db, user_id, {"status": "DELETED"})
+    
+    logger.info(f"Company user {current_user.id} removed member {user_id} from company {current_user.company_id}")
+    
+    return {"message": "Member removed successfully"}
+
+
 @app.patch("/me/language")
 def update_language_preference(
     language_data: schemas.LanguageUpdate,

@@ -188,3 +188,19 @@ def create_company_user(db: Session, user: schemas.CompanyUserCreate):
     db.refresh(db_user)
     return db_user
 
+
+def get_company_users_count(db: Session, company_id: int):
+    """Get count of users in a company"""
+    return db.query(models.User).filter(
+        models.User.company_id == company_id,
+        models.User.status != "DELETED"
+    ).count()
+
+
+def get_company_users(db: Session, company_id: int):
+    """Get all users in a company"""
+    return db.query(models.User).filter(
+        models.User.company_id == company_id,
+        models.User.status != "DELETED"
+    ).all()
+

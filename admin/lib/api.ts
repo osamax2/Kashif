@@ -87,6 +87,27 @@ export const usersAPI = {
     const response = await api.post('/api/auth/users/company', data);
     return response.data;
   },
+
+  // Company member management
+  getCompanyUsersCount: async (companyId: number) => {
+    const response = await api.get(`/api/auth/users/company/${companyId}/count`);
+    return response.data;
+  },
+
+  getCompanyMembers: async (companyId: number) => {
+    const response = await api.get(`/api/auth/users/company/${companyId}/members`);
+    return response.data;
+  },
+
+  addCompanyMember: async (data: { email: string; password: string; full_name: string; phone?: string; language?: string; max_users?: number }) => {
+    const response = await api.post('/api/auth/users/company/add-member', data);
+    return response.data;
+  },
+
+  removeCompanyMember: async (userId: number) => {
+    const response = await api.delete(`/api/auth/users/company/member/${userId}`);
+    return response.data;
+  },
   
   awardPoints: async (userId: number, points: number, description: string) => {
     const response = await api.post('/api/gamification/points/award', {
