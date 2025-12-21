@@ -3,7 +3,7 @@
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report } from '@/lib/types';
-import { Download, MapPin, Search } from 'lucide-react';
+import { Download, MapPin, Search, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function ReportsPage() {
@@ -369,6 +369,40 @@ export default function ReportsPage() {
                 {t.common.delete}
               </button>
             </div>
+            
+            {/* WhatsApp Share Button */}
+            <button
+              onClick={() => {
+                const categoryName = getCategoryName(report.category_id);
+                const statusName = getStatusName(report.status_id);
+                const mapUrl = `https://www.google.com/maps?q=${report.latitude},${report.longitude}`;
+                
+                const message = isRTL 
+                  ? `📋 *تقرير جديد*\n\n` +
+                    `📌 *العنوان:* ${report.title}\n` +
+                    `📝 *الوصف:* ${report.description}\n` +
+                    `🏷️ *الفئة:* ${categoryName}\n` +
+                    `📊 *الحالة:* ${statusName}\n` +
+                    `📍 *الموقع:* ${report.address_text || 'غير محدد'}\n` +
+                    `📅 *التاريخ:* ${new Date(report.created_at).toLocaleDateString('ar')}\n\n` +
+                    `🗺️ *رابط الخريطة:* ${mapUrl}`
+                  : `📋 *New Report*\n\n` +
+                    `📌 *Title:* ${report.title}\n` +
+                    `📝 *Description:* ${report.description}\n` +
+                    `🏷️ *Category:* ${categoryName}\n` +
+                    `📊 *Status:* ${statusName}\n` +
+                    `📍 *Location:* ${report.address_text || 'Not specified'}\n` +
+                    `📅 *Date:* ${new Date(report.created_at).toLocaleDateString()}\n\n` +
+                    `🗺️ *Map Link:* ${mapUrl}`;
+                
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+              }}
+              className={`mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#25D366] text-white text-xs sm:text-sm rounded-lg hover:bg-[#128C7E] transition ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              <Share2 className="w-4 h-4" />
+              {isRTL ? 'مشاركة عبر واتساب' : 'Share on WhatsApp'}
+            </button>
           </div>
         );
         })}
