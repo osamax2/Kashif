@@ -117,12 +117,19 @@ export default function CouponsPage() {
   };
 
   const handleCreate = async () => {
+    // Validate points_cost
+    const pointsCost = parseInt(formData.points_cost);
+    if (isNaN(pointsCost) || pointsCost < 0 || pointsCost > 100000) {
+      alert(isRTL ? 'تكلفة النقاط يجب أن تكون بين 0 و 100000' : 'Points cost must be between 0 and 100,000');
+      return;
+    }
+    
     try {
       const createData: any = {
         company_id: parseInt(formData.company_id),
         name: formData.name,
         description: formData.description,
-        points_cost: parseInt(formData.points_cost),
+        points_cost: pointsCost,
       };
       
       if (formData.coupon_category_id) {
@@ -171,6 +178,15 @@ export default function CouponsPage() {
 
   const handleUpdate = async () => {
     if (!selectedCoupon) return;
+
+    // Validate points_cost if provided
+    if (formData.points_cost && formData.points_cost.toString().trim()) {
+      const pointsCost = parseInt(formData.points_cost);
+      if (isNaN(pointsCost) || pointsCost < 0 || pointsCost > 100000) {
+        alert(isRTL ? 'تكلفة النقاط يجب أن تكون بين 0 و 100000' : 'Points cost must be between 0 and 100,000');
+        return;
+      }
+    }
 
     try {
       const updateData: any = {};
@@ -459,12 +475,25 @@ function CouponForm({ formData, setFormData, companies, categories, isCompanyUse
       <div>
         <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.pointsCost} *</label>
         <input
-          type="number"
+          type="text"
+          inputMode="numeric"
           value={formData.points_cost}
-          onChange={(e) => setFormData({ ...formData, points_cost: e.target.value })}
+          onChange={(e) => {
+            // Only allow English numbers (0-9)
+            const value = e.target.value.replace(/[^0-9]/g, '');
+            // Limit to max 100000
+            const numValue = parseInt(value) || 0;
+            if (value === '' || numValue <= 100000) {
+              setFormData({ ...formData, points_cost: value });
+            }
+          }}
           className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          placeholder="0 - 100000"
           required
         />
+        <p className={`text-xs text-gray-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
+          {isRTL ? 'أدخل رقم بين 0 و 100000' : 'Enter a number between 0 and 100,000'}
+        </p>
       </div>
 
       <div className="md:col-span-2">
