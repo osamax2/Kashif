@@ -225,6 +225,11 @@ export const couponsAPI = {
     const response = await api.get('/api/coupons/redemptions/me');
     return response.data;
   },
+
+  getRedemptionsByCompany: async () => {
+    const response = await api.get('/api/coupons/redemptions/stats/by-company');
+    return response.data;
+  },
 };
 
 // Notifications

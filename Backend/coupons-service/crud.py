@@ -182,3 +182,40 @@ def get_user_redemptions(db: Session, user_id: int, skip: int = 0, limit: int = 
     return db.query(models.CouponRedemption).filter(
         models.CouponRedemption.user_id == user_id
     ).order_by(models.CouponRedemption.redeemed_at.desc()).offset(skip).limit(limit).all()
+
+
+def get_all_redemptions(db: Session, skip: int = 0, limit: int = 10000):
+    """Get all redemptions for analytics"""
+    return db.query(models.CouponRedemption).order_by(
+        models.CouponRedemption.redeemed_at.desc()
+    ).offset(skip).limit(limit).all()
+
+
+def get_redemptions_by_company(db: Session):
+    """Get redemption counts grouped by company"""
+    from sqlalchemy import func
+    
+    results = db.query(
+        models.Company.id,
+        models.Company.name,
+        models.Company.logo_url,
+        func.count(models.CouponRedemption.id).label('redemption_count')
+    ).join(
+        models.Coupon, models.Company.id == models.Coupon.company_id
+    ).join(
+        models.CouponRedemption, models.Coupon.id == models.CouponRedemption.coupon_id
+    ).group_by(
+        models.Company.id, models.Company.name, models.Company.logo_url
+    ).order_by(
+        func.count(models.CouponRedemption.id).desc()
+    ).all()
+    
+    return [
+        {
+            "company_id": r[0],
+            "company_name": r[1],
+            "logo_url": r[2],
+            "redemption_count": r[3]
+        }
+        for r in results
+    ]
