@@ -210,6 +210,7 @@
     "enterFullName": "Please enter your full name",
     "enterEmail": "Please enter your email",
     "enterPassword": "Please enter your password",
+    "enterPhoneNumber": "Please enter your phone number",
     "passwordMinLength": "Password must be at least 6 characters",
     "mustAgreeToTerms": "You must agree to the Terms of Use and Privacy Policy",
     "loginError": "An error occurred during login",

@@ -111,6 +111,11 @@ export const usersAPI = {
     return response.data;
   },
 
+  createNormalUser: async (data: { email: string; password: string; full_name: string; phone: string }) => {
+    const response = await api.post('/api/auth/users/normal', data);
+    return response.data;
+  },
+
   // Company member management
   getCompanyUsersCount: async (companyId: number) => {
     const response = await api.get(`/api/auth/users/company/${companyId}/count`);
@@ -227,6 +232,11 @@ export const couponsAPI = {
   
   getCompanies: async () => {
     const response = await api.get('/api/coupons/companies');
+    return response.data;
+  },
+
+  getCompanyCoupons: async (companyId: number) => {
+    const response = await api.get(`/api/coupons/companies/${companyId}/coupons`);
     return response.data;
   },
   

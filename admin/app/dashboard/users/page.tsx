@@ -3,7 +3,7 @@
 import { couponsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { User } from '@/lib/types';
-import { Award, Building2, Landmark, Search } from 'lucide-react';
+import { Award, Building2, Landmark, Search, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function UsersPage() {
@@ -21,6 +21,7 @@ export default function UsersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCreateCompanyUserModal, setShowCreateCompanyUserModal] = useState(false);
   const [showCreateGovernmentUserModal, setShowCreateGovernmentUserModal] = useState(false);
+  const [showCreateNormalUserModal, setShowCreateNormalUserModal] = useState(false);
   const [points, setPoints] = useState('');
   const [description, setDescription] = useState('');
   const [editForm, setEditForm] = useState({
@@ -42,6 +43,13 @@ export default function UsersPage() {
     full_name: '',
     phone: '',
   });
+  const [normalUserForm, setNormalUserForm] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+  });
+  const [normalUserPasswordError, setNormalUserPasswordError] = useState('');
 
   useEffect(() => {
     loadUsers();
@@ -175,6 +183,37 @@ export default function UsersPage() {
     }
   };
 
+  const handleCreateNormalUser = async () => {
+    if (!normalUserForm.email || !normalUserForm.password || !normalUserForm.full_name || !normalUserForm.phone) {
+      alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة (بما في ذلك رقم الهاتف)' : 'Please fill in all required fields (including phone number)');
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(normalUserForm.password);
+    if (!passwordValidation.valid) {
+      setNormalUserPasswordError(passwordValidation.error);
+      return;
+    }
+
+    try {
+      await usersAPI.createNormalUser({
+        email: normalUserForm.email,
+        password: normalUserForm.password,
+        full_name: normalUserForm.full_name,
+        phone: normalUserForm.phone,
+      });
+      alert(isRTL ? 'تم إنشاء المستخدم بنجاح!' : 'User created successfully!');
+      setShowCreateNormalUserModal(false);
+      setNormalUserForm({ email: '', password: '', full_name: '', phone: '' });
+      setNormalUserPasswordError('');
+      loadUsers();
+    } catch (error: any) {
+      console.error('Failed to create normal user:', error);
+      alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء المستخدم' : 'Failed to create user'));
+    }
+  };
+
   const handleAwardPoints = async () => {
     if (!selectedUser || !points) return;
 
@@ -250,7 +289,15 @@ export default function UsersPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.users.title}</h1>
           <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.users.subtitle}</p>
         </div>
-        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex flex-wrap gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <button
+            onClick={() => setShowCreateNormalUserModal(true)}
+            className={`flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <UserPlus className="w-5 h-5" />
+            <span className="hidden sm:inline">{isRTL ? 'إضافة مستخدم' : 'Add User'}</span>
+            <span className="sm:hidden">{isRTL ? 'مستخدم' : 'User'}</span>
+          </button>
           <button
             onClick={() => setShowCreateGovernmentUserModal(true)}
             className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
@@ -830,6 +877,114 @@ export default function UsersPage() {
               <button
                 onClick={handleCreateGovernmentUser}
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                {t.users.createUser}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Normal User Modal */}
+      {showCreateNormalUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+              <UserPlus className="w-6 h-6 text-purple-600" />
+              {isRTL ? 'إضافة مستخدم جديد' : 'Add New User'}
+            </h2>
+            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL 
+                ? 'إنشاء حساب مستخدم عادي يمكنه الإبلاغ وكسب النقاط' 
+                : 'Create a normal user account who can report issues and earn points'}
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.fullName} *
+                </label>
+                <input
+                  type="text"
+                  value={normalUserForm.full_name}
+                  onChange={(e) => setNormalUserForm({ ...normalUserForm, full_name: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userEmail} *
+                </label>
+                <input
+                  type="email"
+                  value={normalUserForm.email}
+                  onChange={(e) => setNormalUserForm({ ...normalUserForm, email: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder="user@example.com"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userPhone} *
+                </label>
+                <input
+                  type="tel"
+                  value={normalUserForm.phone}
+                  onChange={(e) => setNormalUserForm({ ...normalUserForm, phone: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
+                  dir="ltr"
+                />
+                <p className={`mt-1 text-xs text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'رقم الهاتف مطلوب للمستخدمين العاديين' : 'Phone number is required for normal users'}
+                </p>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.auth.password} *
+                </label>
+                <input
+                  type="password"
+                  value={normalUserForm.password}
+                  onChange={(e) => {
+                    setNormalUserForm({ ...normalUserForm, password: e.target.value });
+                    setNormalUserPasswordError('');
+                  }}
+                  className={`w-full px-4 py-2 border ${normalUserPasswordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder="••••••••"
+                  minLength={8}
+                />
+                {/* Password requirements */}
+                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                  <p className={`${normalUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
+                  </p>
+                  <p className={`${/[A-Z]/.test(normalUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                  </p>
+                  <p className={`${/[a-z]/.test(normalUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                  </p>
+                </div>
+                {normalUserPasswordError && (
+                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalUserPasswordError}</p>
+                )}
+              </div>
+            </div>
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => {
+                  setShowCreateNormalUserModal(false);
+                  setNormalUserForm({ email: '', password: '', full_name: '', phone: '' });
+                  setNormalUserPasswordError('');
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleCreateNormalUser}
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >
                 {t.users.createUser}
               </button>

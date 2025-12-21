@@ -59,6 +59,12 @@ export default function Register() {
             return;
         }
 
+        // Phone number is required
+        if (!phoneNumber.trim()) {
+            Alert.alert(t('errors.error'), t('errors.enterPhoneNumber') || 'Please enter your phone number');
+            return;
+        }
+
         if (!password) {
             Alert.alert(t('errors.error'), t('errors.enterPassword'));
             return;
@@ -82,7 +88,7 @@ export default function Register() {
                 email: email.trim(),
                 password: password,
                 full_name: fullName.trim(),
-                phone_number: phoneNumber.trim() || undefined,
+                phone_number: phoneNumber.trim(),
             });
 
             console.log('Registration successful:', registeredUser);

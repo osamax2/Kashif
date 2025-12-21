@@ -45,6 +45,17 @@ export default function ScanPage() {
   const startCamera = async () => {
     try {
       setError(null);
+      
+      // Check if we're on HTTPS or localhost (required for camera access)
+      const isSecureContext = window.isSecureContext;
+      if (!isSecureContext) {
+        setError(isRTL 
+          ? 'الكاميرا تتطلب اتصال HTTPS آمن. استخدم الإدخال اليدوي.' 
+          : 'Camera requires secure HTTPS connection. Please use manual entry.');
+        setHasCamera(false);
+        return;
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
       });

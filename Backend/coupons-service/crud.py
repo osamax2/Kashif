@@ -130,6 +130,14 @@ def get_coupons(
     return query.order_by(models.Coupon.created_at.desc()).offset(skip).limit(limit).all()
 
 
+def get_all_company_coupons(db: Session, company_id: int):
+    """Get all coupons for a specific company (including non-active)"""
+    return db.query(models.Coupon).filter(
+        models.Coupon.company_id == company_id,
+        models.Coupon.status != "DELETED"
+    ).order_by(models.Coupon.created_at.desc()).all()
+
+
 def update_coupon(db: Session, coupon_id: int, coupon_update: schemas.CouponUpdate):
     """Update coupon fields (admin only)"""
     coupon = get_coupon(db, coupon_id)
