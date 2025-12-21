@@ -38,6 +38,21 @@ export default function TeamPage() {
     full_name: '',
     phone: '',
   });
+  const [passwordError, setPasswordError] = useState('');
+
+  // Password validation function - same as users page
+  const validatePassword = (password: string): { valid: boolean; error: string } => {
+    if (password.length < 8) {
+      return { valid: false, error: isRTL ? 'يجب أن تكون كلمة المرور ٨ أحرف على الأقل' : 'Password must be at least 8 characters' };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return { valid: false, error: isRTL ? 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل' : 'Password must contain at least one uppercase letter' };
+    }
+    if (!/[a-z]/.test(password)) {
+      return { valid: false, error: isRTL ? 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل' : 'Password must contain at least one lowercase letter' };
+    }
+    return { valid: true, error: '' };
+  };
 
   useEffect(() => {
     loadData();
@@ -81,6 +96,20 @@ export default function TeamPage() {
   const handleAddMember = async () => {
     if (!formData.email || !formData.password || !formData.full_name) {
       alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert(isRTL ? 'يرجى إدخال بريد إلكتروني صالح' : 'Please enter a valid email address');
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.valid) {
+      setPasswordError(passwordValidation.error);
       return;
     }
     
@@ -127,6 +156,7 @@ export default function TeamPage() {
       full_name: '',
       phone: '',
     });
+    setPasswordError('');
   };
 
   const canAddMore = company ? userCount < company.max_users : false;
@@ -299,11 +329,30 @@ export default function TeamPage() {
                 <input
                   type="password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    setPasswordError('');
+                  }}
+                  className={`w-full px-3 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent`}
                   dir="ltr"
                   required
+                  minLength={8}
                 />
+                {/* Password requirements */}
+                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                  <p className={`${formData.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
+                  </p>
+                  <p className={`${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                  </p>
+                  <p className={`${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                  </p>
+                </div>
+                {passwordError && (
+                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{passwordError}</p>
+                )}
               </div>
               
               <div>
