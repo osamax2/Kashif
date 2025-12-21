@@ -3,7 +3,7 @@
 import { analyticsAPI, couponsAPI, getImageUrl, reportsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { LeaderboardEntry, Report } from '@/lib/types';
-import { BarChart3, Building2, Calendar, FileText, Filter, MapPin, TrendingUp, Trophy, Users } from 'lucide-react';
+import { BarChart3, Building2, Calendar, FileText, Filter, Gift, MapPin, TrendingUp, Trophy, Users } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
@@ -47,10 +47,360 @@ interface StatusStats {
   color: string;
 }
 
+interface CouponStat {
+  coupon_id: number;
+  title: string;
+  title_ar: string;
+  points_cost: number;
+  redemption_count: number;
+  last_redeemed: string | null;
+}
+
+interface TimeData {
+  date: string;
+  count: number;
+}
+
+interface SummaryStats {
+  total_coupons: number;
+  total_redemptions: number;
+  total_points_spent: number;
+}
+
 type TimeFilter = 'today' | 'week' | 'month' | 'year' | 'all';
+
+// Company Analytics Component - Shows only company's own data
+function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: number; companyName: string | null; isRTL: boolean; t: any }) {
+  const [couponStats, setCouponStats] = useState<CouponStat[]>([]);
+  const [timeData, setTimeData] = useState<TimeData[]>([]);
+  const [summary, setSummary] = useState<SummaryStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<'7' | '30' | '90' | 'all'>('30');
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [companyId, dateRange]);
+
+  const loadAnalytics = async () => {
+    if (!companyId) return;
+    
+    try {
+      setLoading(true);
+      
+      // Calculate date range
+      let startDate: string | undefined;
+      const endDate = new Date().toISOString();
+      
+      if (dateRange !== 'all') {
+        const days = parseInt(dateRange);
+        const start = new Date();
+        start.setDate(start.getDate() - days);
+        startDate = start.toISOString();
+      }
+
+      const [statsRes, timeRes, summaryRes, membersRes, couponsRes] = await Promise.allSettled([
+        couponsAPI.getCompanyCouponStats(companyId, startDate, dateRange !== 'all' ? endDate : undefined),
+        couponsAPI.getCompanyRedemptionsOverTime(companyId, parseInt(dateRange) || 365),
+        couponsAPI.getCompanyStatsSummary(companyId),
+        usersAPI.getCompanyMembers(companyId).catch(() => []),
+        couponsAPI.getCoupons({ company_id: companyId }).catch(() => []),
+      ]);
+
+      if (statsRes.status === 'fulfilled') {
+        setCouponStats(statsRes.value || []);
+      }
+      if (timeRes.status === 'fulfilled') {
+        setTimeData(timeRes.value || []);
+      }
+      if (summaryRes.status === 'fulfilled') {
+        setSummary(summaryRes.value);
+      }
+      if (membersRes.status === 'fulfilled') {
+        setTeamMembers(Array.isArray(membersRes.value) ? membersRes.value : []);
+      }
+      if (couponsRes.status === 'fulfilled') {
+        const couponsData = Array.isArray(couponsRes.value) ? couponsRes.value : [];
+        setCoupons(couponsData.filter((c: any) => c.company_id === companyId));
+      }
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const maxRedemptions = Math.max(...couponStats.map(c => c.redemption_count), 1);
+  const activeCoupons = coupons.filter((c: any) => c.status === 'ACTIVE').length;
+  const activeMembers = teamMembers.filter((m: any) => m.status === 'ACTIVE').length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Header */}
+      <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8`}>
+        <div className={isRTL ? 'text-right' : ''}>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {isRTL ? 'تحليلات الشركة' : 'Company Analytics'}
+          </h1>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">
+            {companyName && <span className="font-semibold">{companyName}</span>}
+            {' - '}
+            {isRTL ? 'إحصائيات ورؤى الكوبونات' : 'Coupon statistics and insights'}
+          </p>
+        </div>
+        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <Calendar className="w-5 h-5 text-gray-500" />
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value as '7' | '30' | '90' | 'all')}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+          >
+            <option value="7">{isRTL ? 'آخر 7 أيام' : 'Last 7 days'}</option>
+            <option value="30">{isRTL ? 'آخر 30 يوم' : 'Last 30 days'}</option>
+            <option value="90">{isRTL ? 'آخر 90 يوم' : 'Last 90 days'}</option>
+            <option value="all">{isRTL ? 'كل الوقت' : 'All time'}</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-purple-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Gift className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs sm:text-sm">{isRTL ? 'الكوبونات' : 'Coupons'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{summary?.total_coupons || coupons.length}</p>
+              <p className="text-xs text-purple-600">{activeCoupons} {isRTL ? 'نشط' : 'active'}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs sm:text-sm">{isRTL ? 'الاستبدالات' : 'Redemptions'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{summary?.total_redemptions || 0}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-yellow-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-yellow-600" />
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs sm:text-sm">{isRTL ? 'النقاط المستخدمة' : 'Points Used'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{(summary?.total_points_spent || 0).toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-blue-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs sm:text-sm">{isRTL ? 'الفريق' : 'Team'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{teamMembers.length}</p>
+              <p className="text-xs text-blue-600">{activeMembers} {isRTL ? 'نشط' : 'active'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Coupon Performance */}
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
+        <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-purple-600" />
+          </div>
+          <div className={isRTL ? 'text-right' : ''}>
+            <h2 className="text-lg font-bold text-gray-900">
+              {isRTL ? 'أداء الكوبونات' : 'Coupon Performance'}
+            </h2>
+            <p className="text-xs text-gray-500">
+              {isRTL ? 'أكثر الكوبونات استخداماً' : 'Most used coupons'}
+            </p>
+          </div>
+        </div>
+
+        {couponStats.length > 0 ? (
+          <div className="space-y-3">
+            {couponStats.slice(0, 10).map((coupon, index) => (
+              <div key={coupon.coupon_id} className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="w-6 h-6 flex items-center justify-center bg-purple-100 text-purple-600 rounded-full text-xs font-bold">
+                  {index + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className={`flex items-center justify-between mb-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <span className="font-medium text-gray-900 truncate text-sm">
+                      {isRTL ? coupon.title_ar || coupon.title : coupon.title}
+                    </span>
+                    <span className="text-sm font-semibold text-purple-600 ml-2">
+                      {coupon.redemption_count} {isRTL ? 'استبدال' : 'uses'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${(coupon.redemption_count / maxRedemptions) * 100}%` }}
+                    />
+                  </div>
+                  <div className={`flex items-center justify-between mt-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <span className="text-xs text-gray-500">
+                      {coupon.points_cost} {isRTL ? 'نقطة' : 'points'}
+                    </span>
+                    {coupon.last_redeemed && (
+                      <span className="text-xs text-gray-400">
+                        {isRTL ? 'آخر استبدال: ' : 'Last: '}
+                        {new Date(coupon.last_redeemed).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <BarChart3 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p>{isRTL ? 'لا توجد بيانات استبدال حتى الآن' : 'No redemption data yet'}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Redemptions Over Time */}
+      {timeData.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
+          <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+            </div>
+            <div className={isRTL ? 'text-right' : ''}>
+              <h2 className="text-lg font-bold text-gray-900">
+                {isRTL ? 'الاستبدالات عبر الوقت' : 'Redemptions Over Time'}
+              </h2>
+              <p className="text-xs text-gray-500">
+                {isRTL ? 'نشاط استخدام الكوبونات' : 'Coupon usage activity'}
+              </p>
+            </div>
+          </div>
+
+          <div className="h-40 flex items-end gap-1">
+            {timeData.map((day, index) => {
+              const maxCount = Math.max(...timeData.map(d => d.count), 1);
+              const height = (day.count / maxCount) * 100;
+              return (
+                <div
+                  key={index}
+                  className="flex-1 bg-gradient-to-t from-green-500 to-green-400 rounded-t hover:from-green-600 hover:to-green-500 transition-all cursor-pointer group relative"
+                  style={{ height: `${Math.max(height, 4)}%` }}
+                  title={`${day.date}: ${day.count} ${isRTL ? 'استبدال' : 'redemptions'}`}
+                >
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                    {day.count}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className={`flex justify-between mt-2 text-xs text-gray-500 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <span>{timeData[0]?.date}</span>
+            <span>{timeData[timeData.length - 1]?.date}</span>
+          </div>
+        </div>
+      )}
+
+      {/* All Coupons List */}
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <Gift className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div className={isRTL ? 'text-right' : ''}>
+            <h2 className="text-lg font-bold text-gray-900">
+              {isRTL ? 'جميع الكوبونات' : 'All Coupons'}
+            </h2>
+            <p className="text-xs text-gray-500">
+              {coupons.length} {isRTL ? 'كوبون' : 'coupons'}
+            </p>
+          </div>
+        </div>
+
+        {coupons.length > 0 ? (
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full min-w-[400px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className={`px-3 sm:px-4 py-2 text-xs font-semibold text-gray-600 uppercase ${isRTL ? 'text-right' : 'text-left'}`}>
+                    {isRTL ? 'الكوبون' : 'Coupon'}
+                  </th>
+                  <th className={`px-3 sm:px-4 py-2 text-xs font-semibold text-gray-600 uppercase ${isRTL ? 'text-right' : 'text-left'}`}>
+                    {isRTL ? 'النقاط' : 'Points'}
+                  </th>
+                  <th className={`px-3 sm:px-4 py-2 text-xs font-semibold text-gray-600 uppercase ${isRTL ? 'text-right' : 'text-left'}`}>
+                    {isRTL ? 'الحالة' : 'Status'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {coupons.map((coupon: any) => (
+                  <tr key={coupon.id} className="hover:bg-gray-50">
+                    <td className={`px-3 sm:px-4 py-3 ${isRTL ? 'text-right' : ''}`}>
+                      <p className="font-medium text-gray-900 text-sm">
+                        {isRTL ? coupon.title_ar || coupon.title : coupon.title}
+                      </p>
+                    </td>
+                    <td className={`px-3 sm:px-4 py-3 ${isRTL ? 'text-right' : ''}`}>
+                      <span className="font-semibold text-purple-600">{coupon.points_cost}</span>
+                    </td>
+                    <td className={`px-3 sm:px-4 py-3 ${isRTL ? 'text-right' : ''}`}>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        coupon.status === 'ACTIVE' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {coupon.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <Gift className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p>{isRTL ? 'لا توجد كوبونات' : 'No coupons yet'}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function AnalyticsPage() {
   const { t, isRTL } = useLanguage();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [companyName, setCompanyName] = useState<string | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [companyStats, setCompanyStats] = useState<CompanyRedemptionStats[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -77,7 +427,33 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     setIsClient(true);
-    loadData();
+    
+    // Check user role from localStorage
+    const role = localStorage.getItem('user_role');
+    setUserRole(role);
+    
+    // Get company info for COMPANY users
+    const userProfile = localStorage.getItem('user_profile');
+    if (userProfile) {
+      try {
+        const profile = JSON.parse(userProfile);
+        if (profile.company_id) {
+          setCompanyId(profile.company_id);
+        }
+        if (profile.company_name) {
+          setCompanyName(profile.company_name);
+        }
+      } catch (e) {
+        console.error('Error parsing user profile:', e);
+      }
+    }
+    
+    // Only load full analytics for non-company users
+    if (role?.toUpperCase() !== 'COMPANY') {
+      loadData();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -216,6 +592,12 @@ export default function AnalyticsPage() {
     );
   }
 
+  // Show Company Analytics for COMPANY users
+  if (userRole?.toUpperCase() === 'COMPANY' && companyId) {
+    return <CompanyAnalytics companyId={companyId} companyName={companyName} isRTL={isRTL} t={t} />;
+  }
+
+  // Admin/Government full analytics view
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header with Time Filter */}

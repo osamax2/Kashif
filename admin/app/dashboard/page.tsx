@@ -242,7 +242,7 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
       {/* Quick Actions */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
         <h2 className={`text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 ${isRTL ? 'text-right' : ''}`}>{t.common.actions}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <a
             href="/dashboard/scan"
             className="block p-4 sm:p-6 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition"
@@ -268,6 +268,20 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
               <div className={isRTL ? 'text-right' : ''}>
                 <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{t.dashboard.manageCoupons}</h3>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">{t.coupons.title}</p>
+              </div>
+            </div>
+          </a>
+          <a
+            href="/dashboard/analytics"
+            className="block p-4 sm:p-6 border-2 border-orange-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition"
+          >
+            <div className={`flex items-center gap-3 sm:gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className="bg-orange-500 p-2 sm:p-3 rounded-lg">
+                <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className={isRTL ? 'text-right' : ''}>
+                <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{isRTL ? 'التحليلات' : 'Analytics'}</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">{isRTL ? 'عرض إحصائيات الشركة' : 'View company statistics'}</p>
               </div>
             </div>
           </a>
