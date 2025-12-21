@@ -27,8 +27,19 @@ export interface Report {
   photo_urls?: string;
   status_id: number;
   user_hide: boolean;
+  admin_comment?: string;
   created_at: string;
   updated_at?: string;
+}
+
+export interface ReportStatusHistory {
+  id: number;
+  report_id: number;
+  old_status_id?: number;
+  new_status_id: number;
+  changed_by_user_id: number;
+  comment?: string;
+  created_at: string;
 }
 
 export interface Coupon {

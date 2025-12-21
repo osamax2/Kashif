@@ -2,8 +2,8 @@
 
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { Report } from '@/lib/types';
-import { Download, MapPin, Search, Share2 } from 'lucide-react';
+import { Report, ReportStatusHistory } from '@/lib/types';
+import { Download, History, MapPin, Search, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function ReportsPage() {
@@ -19,6 +19,9 @@ export default function ReportsPage() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [reportHistory, setReportHistory] = useState<ReportStatusHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [comment, setComment] = useState('');
   const [statuses, setStatuses] = useState<any[]>([]);
@@ -133,6 +136,21 @@ export default function ReportsPage() {
     } catch (error) {
       console.error('Failed to delete report:', error);
       alert('Failed to delete report');
+    }
+  };
+
+  const handleShowHistory = async (report: Report) => {
+    setSelectedReport(report);
+    setHistoryLoading(true);
+    setShowHistoryModal(true);
+    try {
+      const history = await reportsAPI.getReportHistory(report.id);
+      setReportHistory(Array.isArray(history) ? history : []);
+    } catch (error) {
+      console.error('Failed to load history:', error);
+      setReportHistory([]);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -368,6 +386,13 @@ export default function ReportsPage() {
               >
                 {t.common.delete}
               </button>
+              <button
+                onClick={() => handleShowHistory(report)}
+                className={`flex-1 px-3 py-2 bg-purple-600 text-white text-xs sm:text-sm rounded-lg hover:bg-purple-700 transition flex items-center justify-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}
+              >
+                <History className="w-4 h-4" />
+                {isRTL ? 'السجل' : 'History'}
+              </button>
             </div>
             
             {/* WhatsApp Share Button */}
@@ -558,6 +583,91 @@ export default function ReportsPage() {
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                 {t.common.delete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistoryModal && selectedReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className={`flex items-center justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h2 className={`text-xl font-bold text-gray-900 flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <History className="w-6 h-6 text-purple-600" />
+                {isRTL ? 'سجل التغييرات' : 'Change History'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowHistoryModal(false);
+                  setReportHistory([]);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <p className={`text-sm text-gray-600 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? `التقرير: ${selectedReport.title}` : `Report: ${selectedReport.title}`}
+            </p>
+            
+            <div className="flex-1 overflow-y-auto">
+              {historyLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-600"></div>
+                </div>
+              ) : reportHistory.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  {isRTL ? 'لا يوجد سجل تغييرات' : 'No change history'}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reportHistory.map((entry, index) => (
+                    <div 
+                      key={entry.id} 
+                      className={`border-l-4 ${index === 0 ? 'border-purple-600' : 'border-gray-300'} pl-4 py-2`}
+                      style={{ borderLeftWidth: isRTL ? '0' : '4px', borderRightWidth: isRTL ? '4px' : '0', paddingLeft: isRTL ? '0' : '1rem', paddingRight: isRTL ? '1rem' : '0' }}
+                    >
+                      <div className={`flex items-center gap-2 mb-1 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+                        {entry.old_status_id && (
+                          <>
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(getStatusName(entry.old_status_id))}`}>
+                              {getStatusName(entry.old_status_id)}
+                            </span>
+                            <span className="text-gray-400">→</span>
+                          </>
+                        )}
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(getStatusName(entry.new_status_id))}`}>
+                          {getStatusName(entry.new_status_id)}
+                        </span>
+                      </div>
+                      
+                      {entry.comment && (
+                        <p className={`text-sm text-gray-700 bg-gray-50 p-2 rounded mt-2 ${isRTL ? 'text-right' : ''}`}>
+                          💬 {entry.comment}
+                        </p>
+                      )}
+                      
+                      <p className={`text-xs text-gray-400 mt-1 ${isRTL ? 'text-right' : ''}`}>
+                        {new Date(entry.created_at).toLocaleString(isRTL ? 'ar' : 'en')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-4 pt-4 border-t">
+              <button
+                onClick={() => {
+                  setShowHistoryModal(false);
+                  setReportHistory([]);
+                }}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                {t.common.cancel}
               </button>
             </div>
           </div>
