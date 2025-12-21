@@ -10,6 +10,7 @@ import {
     Gift,
     LayoutDashboard,
     LogOut,
+    Map,
     Menu,
     Users,
     X
@@ -55,6 +56,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
     { name: t.nav.users, href: '/dashboard/users', icon: Users },
     { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+    { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
     { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
     { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
     { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
