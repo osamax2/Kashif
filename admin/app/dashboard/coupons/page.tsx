@@ -482,15 +482,14 @@ function CouponForm({ formData, setFormData, companies, categories, isCompanyUse
       <div>
         <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.pointsCost} *</label>
         <input
-          type="text"
-          inputMode="numeric"
+          type="number"
+          min="0"
+          max="100000"
           value={formData.points_cost}
           onChange={(e) => {
-            // Only allow English numbers (0-9)
-            const value = e.target.value.replace(/[^0-9]/g, '');
-            // Limit to max 100000
+            const value = e.target.value;
             const numValue = parseInt(value) || 0;
-            if (value === '' || numValue <= 100000) {
+            if (value === '' || (numValue >= 0 && numValue <= 100000)) {
               setFormData({ ...formData, points_cost: value });
             }
           }}
