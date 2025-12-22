@@ -52,8 +52,30 @@ export default function RootLayout() {
         "Tajawal-Medium": require("../assets/fonts/Tajawal/Tajawal-Medium.ttf"),
         "Tajawal-Bold": require("../assets/fonts/Tajawal/Tajawal-Bold.ttf"),
     });
+    
+    const [appReady, setAppReady] = React.useState(false);
 
-    if (!fontsLoaded) return null;
+    React.useEffect(() => {
+        // Force app to be ready after 3 seconds even if something fails
+        const timer = setTimeout(() => {
+            setAppReady(true);
+        }, 3000);
+
+        if (fontsLoaded) {
+            setAppReady(true);
+            clearTimeout(timer);
+        }
+
+        return () => clearTimeout(timer);
+    }, [fontsLoaded]);
+
+    if (!appReady) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#033076' }}>
+                <ActivityIndicator size="large" color="#F4B400" />
+            </View>
+        );
+    }
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>

@@ -6,6 +6,25 @@
 echo "🤖 Building Kashif APK..."
 echo ""
 
+# Use compatible Java version (21 or 17)
+JAVA_21=$(/usr/libexec/java_home -v 21 2>/dev/null || echo "")
+JAVA_17=$(/usr/libexec/java_home -v 17 2>/dev/null || echo "")
+
+if [ -n "$JAVA_21" ]; then
+    export JAVA_HOME=$JAVA_21
+    echo "✓ Using Java 21"
+elif [ -n "$JAVA_17" ]; then
+    export JAVA_HOME=$JAVA_17
+    echo "✓ Using Java 17"
+else
+    echo "❌ Compatible Java not found (need Java 17 or 21)"
+    echo "Install Java 21:"
+    echo "  brew install openjdk@21"
+    exit 1
+fi
+
+export PATH=$JAVA_HOME/bin:$PATH
+
 # Check Android SDK
 if [ ! -d "$HOME/Library/Android/sdk" ] && [ ! -d "$HOME/Android/Sdk" ]; then
     echo "❌ Android SDK not found. Install Android Studio:"
