@@ -63,11 +63,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const loggedIn = await isLoggedIn();
-      if (loggedIn) {
-        const storedUser = await getStoredUser();
-        setUser(storedUser);
-      }
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Auth check timeout')), 3000)
+      );
+      
+      const authPromise = async () => {
+        const loggedIn = await isLoggedIn();
+        if (loggedIn) {
+          const storedUser = await getStoredUser();
+          setUser(storedUser);
+        }
+      };
+      
+      await Promise.race([authPromise(), timeoutPromise]);
     } catch (error) {
       console.error('Auth check error:', error);
       setUser(null);
