@@ -149,35 +149,6 @@ export default function Index() {
               )}
             </TouchableOpacity>
 
-            {/* --- Social Login --- */}
-            <Text style={styles.orText}>{t('auth.orLoginWith')}</Text>
-
-            {/* WHATSAPP + GOOGLE */}
-            <View style={styles.socialRow}>
-              {/* WhatsApp */}
-              <TouchableOpacity style={[styles.socialButtonModern, { backgroundColor: "#25D366" }]}>
-                <FontAwesome name="whatsapp" size={20} color="#fff" style={{ marginLeft: 8 }} />
-                <Text style={styles.socialTextModern}>WhatsApp</Text>
-              </TouchableOpacity>
-
-              {/* Google */}
-              <TouchableOpacity style={[styles.socialButtonModern, { backgroundColor: "rgba(206,43,33,0.92)" }]}>
-                <Image
-                    source={require("../assets/icons/google.png")}
-                    style={{ width: 22, height: 22, marginLeft: 8 }}
-                />
-                <Text style={styles.socialTextModern}>Google</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Apple – zentriert */}
-            <TouchableOpacity style={styles.appleButton}>
-              <FontAwesome name="apple" size={24} color="#fff" style={{ marginLeft: -3 }} />
-              <Text style={styles.appleText}>{t('auth.loginWithApple')}</Text>
-            </TouchableOpacity>
-
-
-
             {/* Links unten */}
             <View style={styles.linksContainer}>
               <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/register')}>
