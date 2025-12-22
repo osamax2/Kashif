@@ -33,9 +33,13 @@ class User(Base):
     is_verified = Column(Boolean, default=False, nullable=False)  # Email verification status
     must_change_password = Column(Boolean, default=False, nullable=False)  # Force password change on first login
     language = Column(String(2), default="ar", nullable=False)  # ar or en
+    city = Column(String(100), nullable=True)  # City for government employees
+    district = Column(String(100), nullable=True)  # District for government employees
+    job_description = Column(String(255), nullable=True)  # Job description for government employees
     last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # Soft delete timestamp
 
     level = relationship("Level", back_populates="users")
     refresh_tokens = relationship("RefreshToken", back_populates="user")

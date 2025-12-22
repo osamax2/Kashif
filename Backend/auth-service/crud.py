@@ -24,9 +24,51 @@ def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
 
-def get_users(db: Session, skip: int = 0, limit: int = 100):
-    """Get all users with pagination"""
-    return db.query(models.User).offset(skip).limit(limit).all()
+def get_users(db: Session, skip: int = 0, limit: int = 100, include_deleted: bool = False):
+    """Get all users with pagination (excluding deleted by default)"""
+    query = db.query(models.User)
+    if not include_deleted:
+        query = query.filter(models.User.deleted_at == None)
+    return query.offset(skip).limit(limit).all()
+
+
+def get_deleted_users(db: Session, skip: int = 0, limit: int = 100):
+    """Get only deleted users (trash)"""
+    return db.query(models.User).filter(
+        models.User.deleted_at != None
+    ).offset(skip).limit(limit).all()
+
+
+def soft_delete_user(db: Session, user_id: int):
+    """Soft delete a user by setting deleted_at timestamp"""
+    user = get_user(db, user_id)
+    if user:
+        user.deleted_at = datetime.utcnow()
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+    return user
+
+
+def restore_user(db: Session, user_id: int):
+    """Restore a soft-deleted user"""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        user.deleted_at = None
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+    return user
+
+
+def permanent_delete_user(db: Session, user_id: int):
+    """Permanently delete a user from database"""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        db.delete(user)
+        db.commit()
+        return True
+    return False
 
 
 def create_user(db: Session, user: schemas.UserCreate):

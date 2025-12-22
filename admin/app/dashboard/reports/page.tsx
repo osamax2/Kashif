@@ -3,7 +3,8 @@
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
-import { Download, History, MapPin, Search, Share2, Trash2, RotateCcw } from 'lucide-react';
+import { Download, History, MapPin, RotateCcw, Search, Settings, Share2, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function ReportsPage() {
@@ -213,52 +214,98 @@ export default function ReportsPage() {
     return isRTL ? (category.name_ar || category.name) : category.name;
   };
 
-  const exportToCSV = () => {
-    // CSV headers
-    const headers = [
-      'ID',
-      isRTL ? 'العنوان' : 'Title',
-      isRTL ? 'الوصف' : 'Description',
-      isRTL ? 'الفئة' : 'Category',
-      isRTL ? 'الحالة' : 'Status',
-      isRTL ? 'العنوان' : 'Address',
-      isRTL ? 'خط العرض' : 'Latitude',
-      isRTL ? 'خط الطول' : 'Longitude',
-      isRTL ? 'تاريخ الإنشاء' : 'Created At',
-    ];
+  const [exporting, setExporting] = useState(false);
 
-    // CSV rows
-    const rows = filteredReports.map(report => [
-      report.id,
-      `"${report.title.replace(/"/g, '""')}"`,
-      `"${report.description.replace(/"/g, '""')}"`,
-      getCategoryName(report.category_id),
-      getStatusName(report.status_id),
-      `"${(report.address_text || '').replace(/"/g, '""')}"`,
-      report.latitude,
-      report.longitude,
-      new Date(report.created_at).toLocaleDateString(),
-    ]);
+  const exportToCSV = async () => {
+    try {
+      setExporting(true);
+      
+      // Fetch history for all filtered reports
+      const historyPromises = filteredReports.map(report => 
+        reportsAPI.getReportHistory(report.id).catch(() => [])
+      );
+      const allHistories = await Promise.all(historyPromises);
+      
+      // Create a map of report id to history
+      const historyMap: { [key: number]: ReportStatusHistory[] } = {};
+      filteredReports.forEach((report, index) => {
+        historyMap[report.id] = Array.isArray(allHistories[index]) ? allHistories[index] : [];
+      });
 
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
+      // CSV headers - now includes user info and history
+      const headers = [
+        'ID',
+        isRTL ? 'معرف المستخدم' : 'User ID',
+        isRTL ? 'اسم المبلغ' : 'Reporter Name',
+        isRTL ? 'هاتف المبلغ' : 'Reporter Phone',
+        isRTL ? 'بريد المبلغ' : 'Reporter Email',
+        isRTL ? 'العنوان' : 'Title',
+        isRTL ? 'الوصف' : 'Description',
+        isRTL ? 'الفئة' : 'Category',
+        isRTL ? 'الحالة' : 'Status',
+        isRTL ? 'العنوان' : 'Address',
+        isRTL ? 'خط العرض' : 'Latitude',
+        isRTL ? 'خط الطول' : 'Longitude',
+        isRTL ? 'تاريخ الإنشاء' : 'Created At',
+        isRTL ? 'سجل التغييرات' : 'Status History',
+      ];
 
-    // Add BOM for proper Arabic encoding
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create download link
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `reports_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      // Format history for CSV
+      const formatHistory = (history: ReportStatusHistory[]) => {
+        if (!history || history.length === 0) return isRTL ? 'لا يوجد سجل' : 'No history';
+        return history.map(h => {
+          const date = new Date(h.created_at).toLocaleDateString();
+          const oldStatus = h.old_status_id ? getStatusName(h.old_status_id) : (isRTL ? 'جديد' : 'New');
+          const newStatus = getStatusName(h.new_status_id);
+          const changedBy = h.changed_by_user_name || h.changed_by_user_email || (isRTL ? 'غير معروف' : 'Unknown');
+          const comment = h.comment ? ` - ${h.comment}` : '';
+          return `[${date}] ${oldStatus} → ${newStatus} (${changedBy})${comment}`;
+        }).join(' | ');
+      };
+
+      // CSV rows with user info and history
+      const rows = filteredReports.map(report => [
+        report.id,
+        report.user_id,
+        `"${(report.user_name || '').replace(/"/g, '""')}"`,
+        `"${(report.user_phone || '').replace(/"/g, '""')}"`,
+        `"${(report.user_email || '').replace(/"/g, '""')}"`,
+        `"${report.title.replace(/"/g, '""')}"`,
+        `"${report.description.replace(/"/g, '""')}"`,
+        getCategoryName(report.category_id),
+        getStatusName(report.status_id),
+        `"${(report.address_text || '').replace(/"/g, '""')}"`,
+        report.latitude,
+        report.longitude,
+        new Date(report.created_at).toLocaleDateString(),
+        `"${formatHistory(historyMap[report.id]).replace(/"/g, '""')}"`,
+      ]);
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      // Add BOM for proper Arabic encoding
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reports_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+      alert(isRTL ? 'فشل في تصدير الملف' : 'Failed to export file');
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading) {
@@ -277,6 +324,13 @@ export default function ReportsPage() {
           <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.reports.subtitle}</p>
         </div>
         <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <Link
+            href="/dashboard/report-categories"
+            className={`flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Settings className="w-5 h-5" />
+            <span>{isRTL ? 'الفئات' : 'Categories'}</span>
+          </Link>
           <button
             onClick={handleOpenTrash}
             className={`flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
@@ -286,11 +340,15 @@ export default function ReportsPage() {
           </button>
           <button
             onClick={exportToCSV}
-            disabled={filteredReports.length === 0}
+            disabled={filteredReports.length === 0 || exporting}
             className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? 'flex-row-reverse' : ''}`}
           >
-            <Download className="w-5 h-5" />
-            <span>{isRTL ? 'تصدير CSV' : 'Export CSV'}</span>
+            {exporting ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+            ) : (
+              <Download className="w-5 h-5" />
+            )}
+            <span>{exporting ? (isRTL ? 'جاري التصدير...' : 'Exporting...') : (isRTL ? 'تصدير CSV' : 'Export CSV')}</span>
           </button>
         </div>
       </div>
@@ -379,6 +437,23 @@ export default function ReportsPage() {
             )}
             
             <p className={`text-gray-600 text-sm mb-4 line-clamp-2 ${isRTL ? 'text-right' : ''}`}>{report.description}</p>
+            
+            {/* Reporter Info */}
+            {(report.user_name || report.user_phone) && (
+              <div className={`flex items-center text-sm text-gray-600 mb-3 bg-gray-50 p-2 rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <span className={`font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}>👤</span>
+                <div className={`flex flex-col ${isRTL ? 'text-right' : ''}`}>
+                  {report.user_name && (
+                    <span className="font-medium text-gray-800">{report.user_name}</span>
+                  )}
+                  {report.user_phone && (
+                    <a href={`tel:${report.user_phone}`} className="text-blue-600 hover:underline text-xs">
+                      📞 {report.user_phone}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
             
             <div className={`flex items-center text-sm text-gray-500 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <MapPin className={`w-4 h-4 flex-shrink-0 ${isRTL ? 'ml-1' : 'mr-1'}`} />
@@ -692,9 +767,18 @@ export default function ReportsPage() {
                         </p>
                       )}
                       
-                      <p className={`text-xs text-gray-400 mt-1 ${isRTL ? 'text-right' : ''}`}>
-                        {new Date(entry.created_at).toLocaleString(isRTL ? 'ar' : 'en')}
-                      </p>
+                      <div className={`flex items-center gap-2 mt-2 text-xs text-gray-500 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+                        {entry.changed_by_user_name && (
+                          <span className="flex items-center gap-1">
+                            👤 {entry.changed_by_user_name}
+                            {entry.changed_by_user_email && (
+                              <span className="text-gray-400">({entry.changed_by_user_email})</span>
+                            )}
+                          </span>
+                        )}
+                        <span>•</span>
+                        <span>{new Date(entry.created_at).toLocaleString(isRTL ? 'ar' : 'en')}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -770,6 +854,13 @@ export default function ReportsPage() {
                             <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
                               {isRTL ? category.name_ar || category.name : category.name}
                             </span>
+                          </div>
+                        )}
+                        
+                        {/* Reporter Info in Trash */}
+                        {(report.user_name || report.user_phone) && (
+                          <div className={`text-xs text-gray-500 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                            👤 {report.user_name} {report.user_phone && `• ${report.user_phone}`}
                           </div>
                         )}
                         

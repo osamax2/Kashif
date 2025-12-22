@@ -13,6 +13,18 @@ class CategoryBase(BaseModel):
     description: Optional[str] = None
 
 
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    color: Optional[str] = None
+    description: Optional[str] = None
+
+
 class Category(CategoryBase):
     id: int
 
@@ -75,6 +87,9 @@ class ReportUpdate(BaseModel):
 class Report(ReportBase):
     id: int
     user_id: int
+    user_name: Optional[str] = None
+    user_phone: Optional[str] = None
+    user_email: Optional[str] = None
     status_id: int
     user_hide: bool
     confirmation_status: str = "pending"  # pending, confirmed, expired
@@ -99,6 +114,8 @@ class ReportStatusHistory(BaseModel):
     old_status_id: Optional[int] = None
     new_status_id: int
     changed_by_user_id: int
+    changed_by_user_name: Optional[str] = None
+    changed_by_user_email: Optional[str] = None
     comment: Optional[str] = None
     created_at: datetime
 

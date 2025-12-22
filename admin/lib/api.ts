@@ -101,12 +101,28 @@ export const usersAPI = {
     return response.data;
   },
   
+  // Trash management
+  getDeletedUsers: async (skip = 0, limit = 100) => {
+    const response = await api.get(`/api/auth/users/trash?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+  
+  restoreUser: async (userId: number) => {
+    const response = await api.post(`/api/auth/users/${userId}/restore`);
+    return response.data;
+  },
+  
+  permanentDeleteUser: async (userId: number) => {
+    const response = await api.delete(`/api/auth/users/${userId}/permanent`);
+    return response.data;
+  },
+  
   createCompanyUser: async (data: { email: string; password: string; full_name: string; company_id: number; phone_number?: string }) => {
     const response = await api.post('/api/auth/users/company', data);
     return response.data;
   },
 
-  createGovernmentUser: async (data: { email: string; password: string; full_name: string; phone?: string; language?: string }) => {
+  createGovernmentUser: async (data: { email: string; password: string; full_name: string; phone?: string; city?: string; district?: string; job_description?: string; language?: string }) => {
     const response = await api.post('/api/auth/users/government', data);
     return response.data;
   },
@@ -143,6 +159,18 @@ export const usersAPI = {
       points,
       description,
     });
+    return response.data;
+  },
+
+  resetPassword: async (userId: number, newPassword: string) => {
+    const response = await api.post(`/api/auth/users/${userId}/reset-password`, {
+      new_password: newPassword,
+    });
+    return response.data;
+  },
+
+  createAdminUser: async (data: { email: string; password: string; full_name: string; phone?: string }) => {
+    const response = await api.post('/api/auth/users/admin', data);
     return response.data;
   },
 };
@@ -194,6 +222,21 @@ export const reportsAPI = {
 
   getCategories: async () => {
     const response = await api.get('/api/reports/categories');
+    return response.data;
+  },
+
+  createCategory: async (data: { name: string; name_ar?: string; description?: string }) => {
+    const response = await api.post('/api/reports/categories', data);
+    return response.data;
+  },
+
+  updateCategory: async (categoryId: number, data: { name?: string; name_ar?: string; description?: string }) => {
+    const response = await api.patch(`/api/reports/categories/${categoryId}`, data);
+    return response.data;
+  },
+
+  deleteCategory: async (categoryId: number) => {
+    const response = await api.delete(`/api/reports/categories/${categoryId}`);
     return response.data;
   },
   
