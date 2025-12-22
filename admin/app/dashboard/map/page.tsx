@@ -2,8 +2,8 @@
 
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { Report } from '@/lib/types';
-import { FileText, MapPin, Search, Tag, X } from 'lucide-react';
+import { Report, ReportStatusHistory } from '@/lib/types';
+import { Download, FileText, History, MapPin, Search, Share2, Tag, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
@@ -50,6 +50,22 @@ export default function MapPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [textFilter, setTextFilter] = useState('');
   const [isClient, setIsClient] = useState(false);
+  
+  // Report Card Modal states
+  const [showReportCard, setShowReportCard] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [reportHistory, setReportHistory] = useState<ReportStatusHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [comment, setComment] = useState('');
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    status_id: 1,
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -226,6 +242,172 @@ export default function MapPage() {
     }
   };
 
+  const getStatusBgClass = (statusName: string) => {
+    switch (statusName) {
+      case 'NEW': return 'bg-blue-100 text-blue-800';
+      case 'IN_PROGRESS': return 'bg-yellow-100 text-yellow-800';
+      case 'RESOLVED': return 'bg-green-100 text-green-800';
+      case 'REJECTED': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Export to CSV
+  const [exporting, setExporting] = useState(false);
+  
+  const exportToCSV = async () => {
+    try {
+      setExporting(true);
+      
+      // CSV headers
+      const headers = [
+        'ID',
+        isRTL ? 'معرف المستخدم' : 'User ID',
+        isRTL ? 'اسم المبلغ' : 'Reporter Name',
+        isRTL ? 'هاتف المبلغ' : 'Reporter Phone',
+        isRTL ? 'العنوان' : 'Title',
+        isRTL ? 'الوصف' : 'Description',
+        isRTL ? 'الفئة' : 'Category',
+        isRTL ? 'الحالة' : 'Status',
+        isRTL ? 'العنوان' : 'Address',
+        isRTL ? 'خط العرض' : 'Latitude',
+        isRTL ? 'خط الطول' : 'Longitude',
+        isRTL ? 'تاريخ الإنشاء' : 'Created At',
+      ];
+
+      // CSV rows
+      const rows = filteredReports.map(report => [
+        report.id,
+        report.user_id,
+        `"${((report as any).reporter_name || '').replace(/"/g, '""')}"`,
+        `"${((report as any).reporter_phone || '').replace(/"/g, '""')}"`,
+        `"${report.title.replace(/"/g, '""')}"`,
+        `"${report.description.replace(/"/g, '""')}"`,
+        getCategoryName(report.category_id),
+        getStatusName(report.status_id),
+        `"${(report.address_text || '').replace(/"/g, '""')}"`,
+        report.latitude,
+        report.longitude,
+        new Date(report.created_at).toLocaleDateString(),
+      ]);
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      // Add BOM for proper Arabic encoding
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `map_reports_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Report Card Handlers
+  const handleOpenReportCard = (report: Report) => {
+    setSelectedReport(report);
+    setShowReportCard(true);
+  };
+
+  const handleShowHistory = async (report: Report) => {
+    setSelectedReport(report);
+    setHistoryLoading(true);
+    setShowHistoryModal(true);
+    try {
+      const data = await reportsAPI.getReportHistory(report.id);
+      setReportHistory(data);
+    } catch (error) {
+      console.error('Failed to load history:', error);
+      setReportHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!selectedReport || !newStatus) return;
+    try {
+      const statusObj = statuses.find((s) => s.name === newStatus);
+      await reportsAPI.updateReportStatus(selectedReport.id, { status_id: statusObj.id, admin_comment: comment || undefined });
+      // Reload reports
+      const data = await reportsAPI.getReports();
+      setReports(data);
+      // Update selected report
+      const updated = data.find((r: Report) => r.id === selectedReport.id);
+      if (updated) setSelectedReport(updated);
+      setShowStatusModal(false);
+      setNewStatus('');
+      setComment('');
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleOpenEditModal = (report: Report) => {
+    setSelectedReport(report);
+    setEditForm({
+      title: report.title,
+      description: report.description,
+      status_id: report.status_id,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedReport) return;
+    try {
+      await reportsAPI.updateReport(selectedReport.id, editForm);
+      const data = await reportsAPI.getReports();
+      setReports(data);
+      const updated = data.find((r: Report) => r.id === selectedReport.id);
+      if (updated) setSelectedReport(updated);
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Failed to update report:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedReport) return;
+    try {
+      await reportsAPI.deleteReport(selectedReport.id);
+      const data = await reportsAPI.getReports();
+      setReports(data);
+      setShowDeleteModal(false);
+      setShowReportCard(false);
+      setSelectedReport(null);
+    } catch (error) {
+      console.error('Failed to delete report:', error);
+    }
+  };
+
+  const shareOnWhatsApp = (report: Report) => {
+    const statusName = getStatusName(report.status_id);
+    const categoryName = getCategoryName(report.category_id);
+    const lat = parseFloat(report.latitude);
+    const lng = parseFloat(report.longitude);
+    const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+    
+    const message = isRTL 
+      ? `📋 تقرير: ${report.title}\n\n📝 الوصف: ${report.description}\n\n📍 العنوان: ${report.address_text || 'غير محدد'}\n\n📂 الفئة: ${categoryName}\n📊 الحالة: ${statusName}\n\n🗺️ الموقع: ${mapsLink}`
+      : `📋 Report: ${report.title}\n\n📝 Description: ${report.description}\n\n📍 Address: ${report.address_text || 'Not specified'}\n\n📂 Category: ${categoryName}\n📊 Status: ${statusName}\n\n🗺️ Location: ${mapsLink}`;
+    
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
   const filteredReports = reports.filter(report => {
     if (categoryFilter !== 'ALL' && report.category_id !== parseInt(categoryFilter)) return false;
     if (statusFilter !== 'ALL') {
@@ -388,6 +570,19 @@ export default function MapPage() {
             ))}
           </select>
           
+          {/* Export Button */}
+          <button
+            onClick={exportToCSV}
+            disabled={exporting || filteredReports.length === 0}
+            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Download className="w-4 h-4" />
+            {exporting 
+              ? (isRTL ? 'جاري التصدير...' : 'Exporting...') 
+              : (isRTL ? 'تصدير CSV' : 'Export CSV')
+            }
+          </button>
+          
           <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'mr-auto' : 'ml-auto'}`}>
             <MapPin className="w-4 h-4 mr-1" />
             {isRTL 
@@ -420,36 +615,20 @@ export default function MapPage() {
                 <Marker
                   key={report.id}
                   position={[lat, lng]}
+                  eventHandlers={{
+                    click: () => handleOpenReportCard(report)
+                  }}
                 >
                   <Popup>
-                    <div className="min-w-[200px]" dir={isRTL ? 'rtl' : 'ltr'}>
+                    <div className="min-w-[180px]" dir={isRTL ? 'rtl' : 'ltr'}>
                       <h3 className="font-bold text-gray-900 mb-1">{report.title}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{report.description}</p>
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        <span 
-                          className="px-2 py-0.5 rounded text-xs text-white"
-                          style={{ backgroundColor: getStatusColor(getStatusName(report.status_id)) }}
-                        >
-                          {getStatusName(report.status_id)}
-                        </span>
-                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
-                          {getCategoryName(report.category_id)}
-                        </span>
-                      </div>
-                      {report.address_text && (
-                        <p className="text-xs text-gray-500 mb-2">📍 {report.address_text}</p>
-                      )}
-                      <p className="text-xs text-gray-400">
-                        {new Date(report.created_at).toLocaleDateString(isRTL ? 'ar' : 'en')}
-                      </p>
-                      <a
-                        href={`https://www.google.com/maps?q=${lat},${lng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline mt-2 block"
+                      <p className="text-xs text-gray-500 mb-2">{getCategoryName(report.category_id)}</p>
+                      <button
+                        onClick={() => handleOpenReportCard(report)}
+                        className="w-full py-1.5 bg-primary text-white rounded text-xs hover:bg-primary/90"
                       >
-                        {isRTL ? 'فتح في خرائط جوجل' : 'Open in Google Maps'}
-                      </a>
+                        {isRTL ? 'عرض التفاصيل' : 'View Details'}
+                      </button>
                     </div>
                   </Popup>
                 </Marker>
@@ -478,6 +657,368 @@ export default function MapPage() {
           <span>REJECTED</span>
         </div>
       </div>
+
+      {/* Report Card Slide Panel */}
+      {showReportCard && selectedReport && (
+        <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center">
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setShowReportCard(false)}
+          ></div>
+          <div 
+            className={`relative bg-white w-full sm:w-[480px] max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl ${isRTL ? 'text-right' : ''}`}
+            dir={isRTL ? 'rtl' : 'ltr'}
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
+              <h2 className="font-bold text-lg text-gray-900">
+                {isRTL ? 'تفاصيل التقرير' : 'Report Details'}
+              </h2>
+              <button
+                onClick={() => setShowReportCard(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Title & Status */}
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-bold text-xl text-gray-900 flex-1">{selectedReport.title}</h3>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBgClass(getStatusName(selectedReport.status_id))}`}>
+                  {getStatusName(selectedReport.status_id)}
+                </span>
+              </div>
+
+              {/* Category */}
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-purple-500" />
+                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                  {getCategoryName(selectedReport.category_id)}
+                </span>
+              </div>
+
+              {/* Description */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-gray-600 text-sm">{selectedReport.description}</p>
+              </div>
+
+              {/* Reporter Info */}
+              {((selectedReport as any).reporter_name || (selectedReport as any).reporter_phone) && (
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <p className="text-xs text-blue-600 font-medium mb-1">
+                    {isRTL ? 'معلومات المبلغ' : 'Reporter Info'}
+                  </p>
+                  {(selectedReport as any).reporter_name && (
+                    <p className="text-sm text-gray-700">{(selectedReport as any).reporter_name}</p>
+                  )}
+                  {(selectedReport as any).reporter_phone && (
+                    <a href={`tel:${(selectedReport as any).reporter_phone}`} className="text-sm text-blue-600 hover:underline">
+                      {(selectedReport as any).reporter_phone}
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Address */}
+              {selectedReport.address_text && (
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                  <span className="text-sm text-gray-600">{selectedReport.address_text}</span>
+                </div>
+              )}
+
+              {/* Google Maps Link */}
+              <a
+                href={`https://www.google.com/maps?q=${selectedReport.latitude},${selectedReport.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-blue-600 hover:underline text-sm"
+              >
+                <MapPin className="w-4 h-4" />
+                {isRTL ? 'فتح في خرائط جوجل' : 'Open in Google Maps'}
+              </a>
+
+              {/* Date */}
+              <p className="text-xs text-gray-400">
+                {isRTL ? 'تاريخ الإنشاء: ' : 'Created: '}
+                {new Date(selectedReport.created_at).toLocaleDateString(isRTL ? 'ar' : 'en', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                <button
+                  onClick={() => {
+                    setNewStatus(getStatusName(selectedReport.status_id));
+                    setShowStatusModal(true);
+                  }}
+                  className="py-2.5 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  📊 {isRTL ? 'الحالة' : 'Status'}
+                </button>
+                <button
+                  onClick={() => handleOpenEditModal(selectedReport)}
+                  className="py-2.5 px-3 bg-yellow-100 text-yellow-700 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  ✏️ {isRTL ? 'تعديل' : 'Edit'}
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="py-2.5 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  🗑️ {isRTL ? 'حذف' : 'Delete'}
+                </button>
+                <button
+                  onClick={() => handleShowHistory(selectedReport)}
+                  className="py-2.5 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  <History className="w-4 h-4" />
+                  {isRTL ? 'السجل' : 'History'}
+                </button>
+              </div>
+
+              {/* WhatsApp Share */}
+              <button
+                onClick={() => shareOnWhatsApp(selectedReport)}
+                className="w-full py-3 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                {isRTL ? 'مشاركة عبر واتساب' : 'Share on WhatsApp'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Modal */}
+      {showStatusModal && selectedReport && (
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowStatusModal(false)}></div>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h3 className="text-lg font-bold mb-4">
+              {isRTL ? 'تحديث حالة التقرير' : 'Update Report Status'}
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isRTL ? 'الحالة الجديدة' : 'New Status'}
+                </label>
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  {statuses.map((status) => (
+                    <option key={status.id} value={status.name}>
+                      {status.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isRTL ? 'ملاحظة (اختياري)' : 'Comment (optional)'}
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={3}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder={isRTL ? 'أضف ملاحظة...' : 'Add a comment...'}
+                ></textarea>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowStatusModal(false)}
+                  className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  {isRTL ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleUpdateStatus}
+                  className="flex-1 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90"
+                >
+                  {isRTL ? 'حفظ' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && selectedReport && (
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowEditModal(false)}></div>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h3 className="text-lg font-bold mb-4">
+              {isRTL ? 'تعديل التقرير' : 'Edit Report'}
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isRTL ? 'العنوان' : 'Title'}
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isRTL ? 'الوصف' : 'Description'}
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  rows={4}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isRTL ? 'الحالة' : 'Status'}
+                </label>
+                <select
+                  value={editForm.status_id}
+                  onChange={(e) => setEditForm({ ...editForm, status_id: parseInt(e.target.value) })}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  {statuses.map((status) => (
+                    <option key={status.id} value={status.id}>
+                      {status.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  {isRTL ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleUpdate}
+                  className="flex-1 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90"
+                >
+                  {isRTL ? 'حفظ' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && selectedReport && (
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowDeleteModal(false)}></div>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🗑️</span>
+            </div>
+            <h3 className="text-lg font-bold mb-2">
+              {isRTL ? 'حذف التقرير؟' : 'Delete Report?'}
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              {isRTL 
+                ? 'هل أنت متأكد من حذف هذا التقرير؟ لا يمكن التراجع عن هذا الإجراء.'
+                : 'Are you sure you want to delete this report? This action cannot be undone.'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                {isRTL ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                {isRTL ? 'حذف' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistoryModal && selectedReport && (
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowHistoryModal(false)}></div>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
+              <h3 className="text-lg font-bold">
+                {isRTL ? 'سجل التغييرات' : 'Status History'}
+              </h3>
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              {historyLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : reportHistory.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">
+                  {isRTL ? 'لا يوجد سجل' : 'No history found'}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {reportHistory.map((item, index) => {
+                    const oldStatusName = item.old_status_id ? getStatusName(item.old_status_id) : 'N/A';
+                    const newStatusName = getStatusName(item.new_status_id);
+                    return (
+                      <div key={index} className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusBgClass(oldStatusName)}`}>
+                              {oldStatusName}
+                            </span>
+                            <span className="text-gray-400">→</span>
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusBgClass(newStatusName)}`}>
+                              {newStatusName}
+                            </span>
+                          </div>
+                        </div>
+                        {item.comment && (
+                          <p className="text-sm text-gray-600 mb-2">{item.comment}</p>
+                        )}
+                        <p className="text-xs text-gray-400">
+                          {new Date(item.created_at).toLocaleDateString(isRTL ? 'ar' : 'en', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                          {item.changed_by_user_name && ` • ${item.changed_by_user_name}`}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
