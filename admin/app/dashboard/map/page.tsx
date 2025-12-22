@@ -101,8 +101,8 @@ export default function MapPage() {
         const title = (report.title || '').toLowerCase();
         const description = (report.description || '').toLowerCase();
         const address = (report.address_text || '').toLowerCase();
-        const reporterName = (report.reporter_name || '').toLowerCase();
-        const reporterPhone = (report.reporter_phone || '').toLowerCase();
+        const reporterName = ((report as any).reporter_name || '').toLowerCase();
+        const reporterPhone = ((report as any).reporter_phone || '').toLowerCase();
         
         return title.includes(query) || 
                description.includes(query) || 
