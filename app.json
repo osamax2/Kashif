@@ -10,12 +10,22 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.kashif.app",
+      "buildNumber": "1.0.0",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك للكشف عن الحفر في الطريق أثناء القيادة",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "نحتاج إلى موقعك في الخلفية لتنبيهك عند اقترابك من حفر مُبلغ عنها",
         "UIBackgroundModes": [
-          "location"
-        ]
+          "location",
+          "fetch",
+          "remote-notification",
+          "location",
+          "fetch",
+          "remote-notification"
+        ],
+        "NSCameraUsageDescription": "نحتاج إلى الوصول إلى الكاميرا لالتقاط صور للحفر",
+        "NSPhotoLibraryUsageDescription": "نحتاج إلى الوصول إلى مكتبة الصور لتحميل صور الحفر",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "config": {
         "googleMapsApiKey": "REMOVED_API_KEY"

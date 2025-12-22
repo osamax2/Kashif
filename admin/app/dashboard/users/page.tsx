@@ -460,7 +460,7 @@ export default function UsersPage() {
         >
           <span className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <UserPlus className="w-4 h-4" />
-            {isRTL ? 'المستخدمين النشطين' : 'Active Users'} ({users.length})
+            {isRTL ? 'المستخدمين' : 'Users'} ({users.length})
           </span>
         </button>
         <button
