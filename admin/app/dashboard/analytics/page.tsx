@@ -3,7 +3,7 @@
 import { analyticsAPI, couponsAPI, getImageUrl, reportsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { LeaderboardEntry, Report } from '@/lib/types';
-import { BarChart3, Building2, Calendar, FileText, Filter, Gift, MapPin, TrendingUp, Trophy, Users } from 'lucide-react';
+import { BarChart3, Building2, Calendar, Download, FileText, Filter, Gift, MapPin, TrendingUp, Trophy, Users } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
@@ -67,7 +67,7 @@ interface SummaryStats {
   total_points_spent: number;
 }
 
-type TimeFilter = 'today' | 'week' | 'month' | 'year' | 'all';
+type TimeFilter = 'today' | 'week' | 'month' | 'year' | 'all' | 'custom';
 
 // Company Analytics Component - Shows only company's own data
 function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: number; companyName: string | null; isRTL: boolean; t: any }) {
@@ -75,13 +75,17 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
   const [timeData, setTimeData] = useState<TimeData[]>([]);
   const [summary, setSummary] = useState<SummaryStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<'7' | '30' | '90' | 'all'>('30');
+  const [dateRange, setDateRange] = useState<'7' | '30' | '90' | 'all' | 'custom'>('30');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
 
   useEffect(() => {
+    // Don't load if custom is selected but dates are not set
+    if (dateRange === 'custom' && (!customStartDate || !customEndDate)) return;
     loadAnalytics();
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, customStartDate, customEndDate]);
 
   const loadAnalytics = async () => {
     if (!companyId) return;
@@ -91,9 +95,12 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
       
       // Calculate date range
       let startDate: string | undefined;
-      const endDate = new Date().toISOString();
+      let endDate: string | undefined = new Date().toISOString();
       
-      if (dateRange !== 'all') {
+      if (dateRange === 'custom' && customStartDate && customEndDate) {
+        startDate = new Date(customStartDate).toISOString();
+        endDate = new Date(customEndDate + 'T23:59:59').toISOString();
+      } else if (dateRange !== 'all') {
         const days = parseInt(dateRange);
         const start = new Date();
         start.setDate(start.getDate() - days);
@@ -133,6 +140,71 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
   const maxRedemptions = Math.max(...couponStats.map(c => c.redemption_count), 1);
   const activeCoupons = coupons.filter((c: any) => c.status === 'ACTIVE').length;
   const activeMembers = teamMembers.filter((m: any) => m.status === 'ACTIVE').length;
+  const [exporting, setExporting] = useState(false);
+
+  // Export Company Analytics to CSV
+  const exportCompanyAnalytics = () => {
+    try {
+      setExporting(true);
+      
+      // Build CSV content
+      let csvContent = '';
+      const BOM = '\uFEFF';
+      
+      // Summary Section
+      csvContent += `${isRTL ? 'ملخص التحليلات' : 'Analytics Summary'}\n`;
+      csvContent += `${isRTL ? 'الشركة' : 'Company'},${companyName || ''}\n`;
+      csvContent += `${isRTL ? 'الفترة' : 'Period'},${dateRange === 'all' ? (isRTL ? 'كل الوقت' : 'All time') : `${isRTL ? 'آخر' : 'Last'} ${dateRange} ${isRTL ? 'يوم' : 'days'}`}\n`;
+      csvContent += `${isRTL ? 'إجمالي الكوبونات' : 'Total Coupons'},${summary?.total_coupons || coupons.length}\n`;
+      csvContent += `${isRTL ? 'الكوبونات النشطة' : 'Active Coupons'},${activeCoupons}\n`;
+      csvContent += `${isRTL ? 'إجمالي الاستبدالات' : 'Total Redemptions'},${summary?.total_redemptions || 0}\n`;
+      csvContent += `${isRTL ? 'النقاط المستخدمة' : 'Points Used'},${summary?.total_points_spent || 0}\n`;
+      csvContent += `${isRTL ? 'أعضاء الفريق' : 'Team Members'},${teamMembers.length}\n`;
+      csvContent += `${isRTL ? 'الأعضاء النشطين' : 'Active Members'},${activeMembers}\n\n`;
+      
+      // Coupon Performance Section
+      if (couponStats.length > 0) {
+        csvContent += `${isRTL ? 'أداء الكوبونات' : 'Coupon Performance'}\n`;
+        csvContent += `${isRTL ? 'الترتيب' : 'Rank'},${isRTL ? 'الكوبون' : 'Coupon'},${isRTL ? 'النقاط' : 'Points'},${isRTL ? 'الاستبدالات' : 'Redemptions'},${isRTL ? 'آخر استبدال' : 'Last Redeemed'}\n`;
+        couponStats.forEach((c, i) => {
+          csvContent += `${i + 1},"${isRTL ? c.title_ar || c.title : c.title}",${c.points_cost},${c.redemption_count},${c.last_redeemed ? new Date(c.last_redeemed).toLocaleDateString() : 'N/A'}\n`;
+        });
+        csvContent += '\n';
+      }
+      
+      // Time Data Section
+      if (timeData.length > 0) {
+        csvContent += `${isRTL ? 'الاستبدالات عبر الوقت' : 'Redemptions Over Time'}\n`;
+        csvContent += `${isRTL ? 'التاريخ' : 'Date'},${isRTL ? 'العدد' : 'Count'}\n`;
+        timeData.forEach(d => {
+          csvContent += `${d.date},${d.count}\n`;
+        });
+        csvContent += '\n';
+      }
+      
+      // All Coupons Section
+      if (coupons.length > 0) {
+        csvContent += `${isRTL ? 'جميع الكوبونات' : 'All Coupons'}\n`;
+        csvContent += `ID,${isRTL ? 'الاسم' : 'Name'},${isRTL ? 'النقاط' : 'Points'},${isRTL ? 'الحالة' : 'Status'}\n`;
+        coupons.forEach((c: any) => {
+          csvContent += `${c.id},"${isRTL ? c.title_ar || c.title : c.title}",${c.points_cost},${c.status}\n`;
+        });
+      }
+      
+      // Download
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `company_analytics_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -156,18 +228,49 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
             {isRTL ? 'إحصائيات ورؤى الكوبونات' : 'Coupon statistics and insights'}
           </p>
         </div>
-        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-2 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Calendar className="w-5 h-5 text-gray-500" />
           <select
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as '7' | '30' | '90' | 'all')}
+            onChange={(e) => setDateRange(e.target.value as '7' | '30' | '90' | 'all' | 'custom')}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
           >
             <option value="7">{isRTL ? 'آخر 7 أيام' : 'Last 7 days'}</option>
             <option value="30">{isRTL ? 'آخر 30 يوم' : 'Last 30 days'}</option>
             <option value="90">{isRTL ? 'آخر 90 يوم' : 'Last 90 days'}</option>
             <option value="all">{isRTL ? 'كل الوقت' : 'All time'}</option>
+            <option value="custom">{isRTL ? 'نطاق مخصص' : 'Custom range'}</option>
           </select>
+          {dateRange === 'custom' && (
+            <>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-sm"
+                placeholder={isRTL ? 'من تاريخ' : 'Start date'}
+              />
+              <span className="text-gray-500">{isRTL ? 'إلى' : 'to'}</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-sm"
+                placeholder={isRTL ? 'إلى تاريخ' : 'End date'}
+              />
+            </>
+          )}
+          <button
+            onClick={exportCompanyAnalytics}
+            disabled={exporting}
+            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Download className="w-4 h-4" />
+            {exporting 
+              ? (isRTL ? 'جاري التصدير...' : 'Exporting...') 
+              : (isRTL ? 'تصدير CSV' : 'Export CSV')
+            }
+          </button>
         </div>
       </div>
 
@@ -409,6 +512,8 @@ export default function AnalyticsPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [stats, setStats] = useState({
     totalReports: 0,
@@ -473,8 +578,10 @@ export default function AnalyticsPage() {
   }, []);
 
   useEffect(() => {
+    // Don't filter if custom is selected but dates are not set
+    if (timeFilter === 'custom' && (!customStartDate || !customEndDate)) return;
     filterDataByTime();
-  }, [timeFilter, reports, users, categories, statuses]);
+  }, [timeFilter, reports, users, categories, statuses, customStartDate, customEndDate]);
 
   const loadData = async () => {
     try {
@@ -534,27 +641,33 @@ export default function AnalyticsPage() {
   const filterDataByTime = () => {
     const now = new Date();
     let startDate: Date;
+    let endDate: Date = now;
 
-    switch (timeFilter) {
-      case 'today':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        break;
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      default:
-        startDate = new Date(0);
+    if (timeFilter === 'custom' && customStartDate && customEndDate) {
+      startDate = new Date(customStartDate);
+      endDate = new Date(customEndDate + 'T23:59:59');
+    } else {
+      switch (timeFilter) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'year':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = new Date(0);
+      }
     }
 
     const filtered = reports.filter((r) => {
       const reportDate = new Date(r.created_at);
-      return reportDate >= startDate;
+      return reportDate >= startDate && reportDate <= endDate;
     });
     setFilteredReports(filtered);
 
@@ -596,8 +709,102 @@ export default function AnalyticsPage() {
       month: isRTL ? 'هذا الشهر' : 'This Month',
       year: isRTL ? 'هذا العام' : 'This Year',
       all: isRTL ? 'الكل' : 'All Time',
+      custom: isRTL ? 'نطاق مخصص' : 'Custom Range',
     };
     return labels[filter];
+  };
+
+  // Export Platform Analytics to CSV
+  const [exporting, setExporting] = useState(false);
+  
+  const exportPlatformAnalytics = () => {
+    try {
+      setExporting(true);
+      
+      let csvContent = '';
+      const BOM = '\uFEFF';
+      
+      // Summary Section
+      csvContent += `${isRTL ? 'ملخص تحليلات المنصة' : 'Platform Analytics Summary'}\n`;
+      csvContent += `${isRTL ? 'الفترة' : 'Period'},${getTimeFilterLabel(timeFilter)}\n`;
+      csvContent += `${isRTL ? 'تاريخ التصدير' : 'Export Date'},${new Date().toLocaleDateString()}\n\n`;
+      
+      // Main Stats
+      csvContent += `${isRTL ? 'الإحصائيات الرئيسية' : 'Main Statistics'}\n`;
+      csvContent += `${isRTL ? 'إجمالي البلاغات' : 'Total Reports'},${filteredReports.length}\n`;
+      csvContent += `${isRTL ? 'البلاغات المحلولة' : 'Resolved Reports'},${stats.resolvedReports}\n`;
+      csvContent += `${isRTL ? 'البلاغات قيد الانتظار' : 'Pending Reports'},${stats.pendingReports}\n`;
+      csvContent += `${isRTL ? 'معدل الحل' : 'Resolution Rate'},${stats.totalReports > 0 ? Math.round((stats.resolvedReports / stats.totalReports) * 100) : 0}%\n`;
+      csvContent += `${isRTL ? 'إجمالي المستخدمين' : 'Total Users'},${stats.totalUsers}\n`;
+      csvContent += `${isRTL ? 'المستخدمين النشطين' : 'Active Users'},${stats.activeUsers}\n`;
+      csvContent += `${isRTL ? 'إجمالي الشركات' : 'Total Companies'},${stats.totalCompanies}\n`;
+      csvContent += `${isRTL ? 'الشركات النشطة' : 'Active Companies'},${stats.activeCompanies}\n`;
+      csvContent += `${isRTL ? 'استخدام الكوبونات' : 'Coupon Redemptions'},${stats.totalRedemptions}\n\n`;
+      
+      // Category Stats
+      if (categoryStats.length > 0) {
+        csvContent += `${isRTL ? 'البلاغات حسب الفئة' : 'Reports by Category'}\n`;
+        csvContent += `${isRTL ? 'الفئة' : 'Category'},${isRTL ? 'العدد' : 'Count'}\n`;
+        categoryStats.forEach(cat => {
+          csvContent += `"${isRTL ? cat.name_ar : cat.name}",${cat.count}\n`;
+        });
+        csvContent += '\n';
+      }
+      
+      // Status Stats
+      if (statusStats.length > 0) {
+        csvContent += `${isRTL ? 'البلاغات حسب الحالة' : 'Reports by Status'}\n`;
+        csvContent += `${isRTL ? 'الحالة' : 'Status'},${isRTL ? 'العدد' : 'Count'}\n`;
+        statusStats.forEach(s => {
+          csvContent += `"${isRTL ? s.name_ar : s.name}",${s.count}\n`;
+        });
+        csvContent += '\n';
+      }
+      
+      // Leaderboard
+      if (leaderboard.length > 0) {
+        csvContent += `${isRTL ? 'لوحة المتصدرين' : 'Leaderboard'}\n`;
+        csvContent += `${isRTL ? 'الترتيب' : 'Rank'},${isRTL ? 'المستخدم' : 'User'},${isRTL ? 'النقاط' : 'Points'}\n`;
+        leaderboard.slice(0, 20).forEach((entry, i) => {
+          csvContent += `${i + 1},"${entry.full_name || `User ${entry.user_id}`}",${entry.total_points}\n`;
+        });
+        csvContent += '\n';
+      }
+      
+      // Company Redemptions
+      if (companyStats.length > 0) {
+        csvContent += `${isRTL ? 'استبدالات الشركات' : 'Company Redemptions'}\n`;
+        csvContent += `${isRTL ? 'الشركة' : 'Company'},${isRTL ? 'الاستبدالات' : 'Redemptions'}\n`;
+        companyStats.forEach(c => {
+          csvContent += `"${c.company_name}",${c.redemption_count}\n`;
+        });
+        csvContent += '\n';
+      }
+      
+      // Reports List
+      if (filteredReports.length > 0) {
+        csvContent += `${isRTL ? 'قائمة البلاغات' : 'Reports List'}\n`;
+        csvContent += `ID,${isRTL ? 'العنوان' : 'Title'},${isRTL ? 'الفئة' : 'Category'},${isRTL ? 'الحالة' : 'Status'},${isRTL ? 'التاريخ' : 'Date'}\n`;
+        filteredReports.slice(0, 500).forEach(r => {
+          const cat = categories.find(c => c.id === r.category_id);
+          const status = statuses.find(s => s.id === r.status_id);
+          csvContent += `${r.id},"${r.title}","${isRTL ? (cat?.name_ar || cat?.name) : cat?.name}","${status?.name}",${new Date(r.created_at).toLocaleDateString()}\n`;
+        });
+      }
+      
+      // Download
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `platform_analytics_${timeFilter}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading) {
@@ -631,7 +838,7 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.analytics.title}</h1>
           <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{isRTL ? 'إحصائيات ورؤى المنصة' : 'Platform statistics and insights'}</p>
         </div>
-        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-2 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Filter className="w-5 h-5 text-gray-500" />
           <select
             value={timeFilter}
@@ -643,7 +850,38 @@ export default function AnalyticsPage() {
             <option value="month">{getTimeFilterLabel('month')}</option>
             <option value="year">{getTimeFilterLabel('year')}</option>
             <option value="all">{getTimeFilterLabel('all')}</option>
+            <option value="custom">{getTimeFilterLabel('custom')}</option>
           </select>
+          {timeFilter === 'custom' && (
+            <>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-sm"
+                placeholder={isRTL ? 'من تاريخ' : 'Start date'}
+              />
+              <span className="text-gray-500">{isRTL ? 'إلى' : 'to'}</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-sm"
+                placeholder={isRTL ? 'إلى تاريخ' : 'End date'}
+              />
+            </>
+          )}
+          <button
+            onClick={exportPlatformAnalytics}
+            disabled={exporting}
+            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Download className="w-4 h-4" />
+            {exporting 
+              ? (isRTL ? 'جاري التصدير...' : 'Exporting...') 
+              : (isRTL ? 'تصدير CSV' : 'Export CSV')
+            }
+          </button>
         </div>
       </div>
 
