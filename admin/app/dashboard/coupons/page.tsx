@@ -33,6 +33,8 @@ interface UserProfile {
 export default function CouponsPage() {
   const { t, isRTL } = useLanguage();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [filteredCoupons, setFilteredCoupons] = useState<Coupon[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [companies, setCompanies] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,9 @@ export default function CouponsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [companySearch, setCompanySearch] = useState('');
+  const [showCompanySuggestions, setShowCompanySuggestions] = useState(false);
+  const [selectedCompanyName, setSelectedCompanyName] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -79,11 +84,52 @@ export default function CouponsPage() {
     loadCategories();
   }, []);
 
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowCompanySuggestions(false);
+    };
+    if (showCompanySuggestions) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showCompanySuggestions]);
+
+  // Filter coupons based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredCoupons(coupons);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = coupons.filter(coupon => {
+      const matchesName = coupon.name.toLowerCase().includes(query);
+      const matchesDescription = coupon.description.toLowerCase().includes(query);
+      const matchesPoints = coupon.points_cost.toString().includes(query);
+      const matchesStatus = coupon.status.toLowerCase().includes(query);
+      
+      // Check company name
+      const company = companies.find(c => c.id === coupon.company_id);
+      const matchesCompany = company?.name.toLowerCase().includes(query);
+      
+      // Check category name
+      const category = categories.find(c => c.id === coupon.coupon_category_id);
+      const matchesCategory = category?.name.toLowerCase().includes(query);
+
+      return matchesName || matchesDescription || matchesPoints || matchesStatus || matchesCompany || matchesCategory;
+    });
+
+    setFilteredCoupons(filtered);
+  }, [searchQuery, coupons, companies, categories]);
+
   const loadCoupons = async () => {
     try {
       setLoading(true);
       const data = await couponsAPI.getCoupons({ limit: 1000 });
-      setCoupons(Array.isArray(data) ? data : []);
+      const couponsData = Array.isArray(data) ? data : [];
+      setCoupons(couponsData);
+      setFilteredCoupons(couponsData);
     } catch (error) {
       console.error('Failed to load coupons:', error);
     } finally {
@@ -164,6 +210,9 @@ export default function CouponsPage() {
 
   const handleEdit = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
+    const company = companies.find(c => c.id === coupon.company_id);
+    setSelectedCompanyName(company ? company.name : '');
+    setCompanySearch(company ? company.name : '');
     setFormData({
       name: coupon.name || '',
       description: coupon.description || '',
@@ -265,6 +314,31 @@ export default function CouponsPage() {
       total_available: '',
       status: 'ACTIVE',
     });
+    setCompanySearch('');
+    setSelectedCompanyName('');
+    setShowCompanySuggestions(false);
+  };
+
+  // Filter companies based on search
+  const filteredCompanies = companies.filter(company =>
+    company.name.toLowerCase().includes(companySearch.toLowerCase())
+  );
+
+  const handleCompanySelect = (company: any) => {
+    setFormData({ ...formData, company_id: String(company.id) });
+    setCompanySearch(company.name);
+    setSelectedCompanyName(company.name);
+    setShowCompanySuggestions(false);
+  };
+
+  const handleCompanySearchChange = (value: string) => {
+    setCompanySearch(value);
+    setShowCompanySuggestions(true);
+    // Clear company_id if search is cleared
+    if (!value) {
+      setFormData({ ...formData, company_id: '' });
+      setSelectedCompanyName('');
+    }
   };
 
   if (loading) {
@@ -317,8 +391,27 @@ export default function CouponsPage() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-6">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={isRTL ? 'ابحث عن الكوبونات...' : 'Search coupons...'}
+          className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+        />
+        {searchQuery && (
+          <p className={`text-sm text-gray-500 mt-2 ${isRTL ? 'text-right' : ''}`}>
+            {isRTL 
+              ? `تم العثور على ${filteredCoupons.length} من ${coupons.length} كوبون`
+              : `Found ${filteredCoupons.length} of ${coupons.length} coupons`
+            }
+          </p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {coupons.map((coupon) => (
+        {filteredCoupons.map((coupon) => (
           <div key={coupon.id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition">
             {coupon.image_url && (
               <img
@@ -358,6 +451,14 @@ export default function CouponsPage() {
         ))}
       </div>
 
+      {filteredCoupons.length === 0 && coupons.length > 0 && searchQuery && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">
+            {isRTL ? 'لم يتم العثور على كوبونات مطابقة لبحثك' : 'No coupons found matching your search'}
+          </p>
+        </div>
+      )}
+
       {coupons.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500">{t.coupons.noCouponsFound}</p>
@@ -377,6 +478,13 @@ export default function CouponsPage() {
               isCompanyUser={isCompanyUser}
               t={t}
               isRTL={isRTL}
+              companySearch={companySearch}
+              setCompanySearch={setCompanySearch}
+              showCompanySuggestions={showCompanySuggestions}
+              setShowCompanySuggestions={setShowCompanySuggestions}
+              filteredCompanies={filteredCompanies}
+              handleCompanySelect={handleCompanySelect}
+              handleCompanySearchChange={handleCompanySearchChange}
             />
             <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
@@ -412,6 +520,13 @@ export default function CouponsPage() {
               isCompanyUser={isCompanyUser}
               t={t}
               isRTL={isRTL}
+              companySearch={companySearch}
+              setCompanySearch={setCompanySearch}
+              showCompanySuggestions={showCompanySuggestions}
+              setShowCompanySuggestions={setShowCompanySuggestions}
+              filteredCompanies={filteredCompanies}
+              handleCompanySelect={handleCompanySelect}
+              handleCompanySearchChange={handleCompanySearchChange}
             />
             <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
@@ -466,7 +581,22 @@ export default function CouponsPage() {
   );
 }
 
-function CouponForm({ formData, setFormData, companies, categories, isCompanyUser, t, isRTL }: any) {
+function CouponForm({ 
+  formData, 
+  setFormData, 
+  companies, 
+  categories, 
+  isCompanyUser, 
+  t, 
+  isRTL,
+  companySearch,
+  setCompanySearch,
+  showCompanySuggestions,
+  setShowCompanySuggestions,
+  filteredCompanies,
+  handleCompanySelect,
+  handleCompanySearchChange
+}: any) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
@@ -514,23 +644,38 @@ function CouponForm({ formData, setFormData, companies, categories, isCompanyUse
         />
       </div>
 
-      {/* Only show company dropdown for ADMIN users */}
+      {/* Only show company search for ADMIN users */}
       {!isCompanyUser && (
-        <div>
+        <div className="relative" onClick={(e) => e.stopPropagation()}>
           <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.couponCompany} *</label>
-          <select
-            value={formData.company_id}
-            onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
+          <input
+            type="text"
+            value={companySearch}
+            onChange={(e) => handleCompanySearchChange(e.target.value)}
+            onFocus={() => setShowCompanySuggestions(true)}
+            placeholder={isRTL ? 'ابحث عن شركة...' : 'Search for a company...'}
             className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
             required
-          >
-            <option value="">{t.coupons.selectCompany}</option>
-            {companies.map((company: any) => (
-              <option key={company.id} value={company.id}>
-                {company.name}
-              </option>
-            ))}
-          </select>
+          />
+          {showCompanySuggestions && companySearch && filteredCompanies.length > 0 && (
+            <div className={`absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto ${isRTL ? 'text-right' : ''}`}>
+              {filteredCompanies.map((company: any) => (
+                <div
+                  key={company.id}
+                  onClick={() => handleCompanySelect(company)}
+                  className={`px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
+                >
+                  <Building2 className="w-4 h-4 text-gray-400" />
+                  <span>{company.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {companySearch && filteredCompanies.length === 0 && showCompanySuggestions && (
+            <div className={`absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-2 text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'لم يتم العثور على شركات' : 'No companies found'}
+            </div>
+          )}
         </div>
       )}
 
