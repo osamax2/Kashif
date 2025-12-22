@@ -12,11 +12,15 @@ export interface User {
   last_login?: string;
   created_at: string;
   updated_at: string;
+  deleted_at?: string;  // Soft delete timestamp
 }
 
 export interface Report {
   id: number;
   user_id: number;
+  user_name?: string;
+  user_phone?: string;
+  user_email?: string;
   category_id: number;
   severity_id: number;
   title: string;
@@ -38,6 +42,8 @@ export interface ReportStatusHistory {
   old_status_id?: number;
   new_status_id: number;
   changed_by_user_id: number;
+  changed_by_user_name?: string;
+  changed_by_user_email?: string;
   comment?: string;
   created_at: string;
 }

@@ -35,6 +35,9 @@ class User(UserBase):
     image_url: Optional[str] = None
     level_id: Optional[int] = None
     company_id: Optional[int] = None
+    city: Optional[str] = None
+    district: Optional[str] = None
+    job_description: Optional[str] = None
     status: str
     is_verified: bool = False
     must_change_password: bool = False
@@ -42,6 +45,7 @@ class User(UserBase):
     last_login: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    deleted_at: Optional[datetime] = None  # Soft delete timestamp
 
     class Config:
         from_attributes = True
@@ -83,6 +87,9 @@ class CompanyUserCreate(BaseModel):
     password: str
     full_name: str
     phone: Optional[str] = None
+    city: Optional[str] = None
+    district: Optional[str] = None
+    job_description: Optional[str] = None
     company_id: int  # Required - must link to a company
     language: str = "ar"
 
@@ -93,6 +100,9 @@ class GovernmentUserCreate(BaseModel):
     password: str
     full_name: str
     phone: Optional[str] = None
+    city: Optional[str] = None
+    district: Optional[str] = None
+    job_description: Optional[str] = None
     language: str = "ar"
 
 
@@ -119,6 +129,20 @@ class ChangePasswordRequest(BaseModel):
 class ForceChangePasswordRequest(BaseModel):
     """Schema for first-time password change (no current password required)"""
     new_password: str
+
+
+class AdminResetPasswordRequest(BaseModel):
+    """Schema for admin to reset any user's password"""
+    new_password: str
+
+
+class AdminUserCreate(BaseModel):
+    """Schema for admin to create a new admin user"""
+    email: EmailStr
+    password: str
+    full_name: str
+    phone: Optional[str] = None
+    language: str = "ar"
 
 
 class ResendVerificationRequest(BaseModel):

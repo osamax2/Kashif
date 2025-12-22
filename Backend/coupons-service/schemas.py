@@ -10,6 +10,7 @@ class CompanyBase(BaseModel):
     description: Optional[str] = None
     website_url: Optional[str] = None
     phone: Optional[str] = None
+    email: Optional[str] = None
     address: Optional[str] = None
 
 
@@ -24,6 +25,7 @@ class CompanyUpdate(BaseModel):
     description: Optional[str] = None
     website_url: Optional[str] = None
     phone: Optional[str] = None
+    email: Optional[str] = None
     address: Optional[str] = None
     status: Optional[str] = None
 

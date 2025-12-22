@@ -39,24 +39,6 @@ def health_check():
     return {"status": "healthy", "service": "reporting"}
 
 
-@app.get("/categories", response_model=List[schemas.Category])
-def get_categories(db: Session = Depends(get_db)):
-    """Get all report categories"""
-    return crud.get_categories(db=db)
-
-
-@app.get("/statuses", response_model=List[schemas.ReportStatus])
-def get_statuses(db: Session = Depends(get_db)):
-    """Get all report statuses"""
-    return crud.get_statuses(db=db)
-
-
-@app.get("/severities", response_model=List[schemas.Severity])
-def get_severities(category_id: Optional[int] = None, db: Session = Depends(get_db)):
-    """Get all severities, optionally filtered by category"""
-    return crud.get_severities(db=db, category_id=category_id)
-
-
 async def get_current_user_id(authorization: Annotated[str, Header()]):
     """Verify token with auth service and get user_id"""
     if not authorization.startswith("Bearer "):
@@ -72,6 +54,61 @@ async def get_current_user_id(authorization: Annotated[str, Header()]):
             detail="Invalid token"
         )
     return user["id"]
+
+
+@app.get("/categories", response_model=List[schemas.Category])
+def get_categories(db: Session = Depends(get_db)):
+    """Get all report categories"""
+    return crud.get_categories(db=db)
+
+
+@app.post("/categories", response_model=schemas.Category, status_code=status.HTTP_201_CREATED)
+async def create_category(
+    category: schemas.CategoryCreate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Create a new report category (admin only)"""
+    return crud.create_category(db=db, category=category)
+
+
+@app.patch("/categories/{category_id}", response_model=schemas.Category)
+async def update_category(
+    category_id: int,
+    category: schemas.CategoryUpdate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Update a report category (admin only)"""
+    db_category = crud.update_category(db=db, category_id=category_id, category=category)
+    if not db_category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return db_category
+
+
+@app.delete("/categories/{category_id}")
+async def delete_category(
+    category_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Delete a report category (admin only)"""
+    db_category = crud.delete_category(db=db, category_id=category_id)
+    if not db_category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return {"message": "Category deleted successfully"}
+
+
+@app.get("/statuses", response_model=List[schemas.ReportStatus])
+def get_statuses(db: Session = Depends(get_db)):
+    """Get all report statuses"""
+    return crud.get_statuses(db=db)
+
+
+@app.get("/severities", response_model=List[schemas.Severity])
+def get_severities(category_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get all severities, optionally filtered by category"""
+    return crud.get_severities(db=db, category_id=category_id)
 
 
 @app.post("/", response_model=schemas.Report)
@@ -158,7 +195,56 @@ async def get_reports(
         include_pending=include_pending,
         include_deleted=include_deleted
     )
-    return reports
+    
+    # Enrich reports with user information
+    enriched_reports = []
+    user_cache = {}
+    
+    for report in reports:
+        report_dict = {
+            "id": report.id,
+            "user_id": report.user_id,
+            "title": report.title,
+            "description": report.description,
+            "category_id": report.category_id,
+            "latitude": report.latitude,
+            "longitude": report.longitude,
+            "address_text": report.address_text,
+            "severity_id": report.severity_id,
+            "photo_urls": report.photo_urls,
+            "status_id": report.status_id,
+            "user_hide": report.user_hide,
+            "confirmation_status": report.confirmation_status,
+            "confirmed_by_user_id": report.confirmed_by_user_id,
+            "confirmed_at": report.confirmed_at,
+            "points_awarded": report.points_awarded,
+            "created_at": report.created_at,
+            "updated_at": report.updated_at,
+            "user_name": None,
+            "user_phone": None,
+            "user_email": None,
+        }
+        
+        # Get user info from cache or auth service
+        user_id = report.user_id
+        if user_id in user_cache:
+            user_info = user_cache[user_id]
+        else:
+            try:
+                user_info = auth_client.get_user_by_id(user_id)
+                user_cache[user_id] = user_info
+            except Exception as e:
+                logger.warning(f"Failed to get user info for user {user_id}: {e}")
+                user_info = None
+        
+        if user_info:
+            report_dict["user_name"] = user_info.get("full_name")
+            report_dict["user_phone"] = user_info.get("phone")
+            report_dict["user_email"] = user_info.get("email")
+        
+        enriched_reports.append(report_dict)
+    
+    return enriched_reports
 
 
 @app.get("/pending-nearby", response_model=List[schemas.Report])
@@ -323,9 +409,45 @@ async def get_report_history(
     report_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get status change history for a report"""
+    """Get status change history for a report with user names"""
     history = crud.get_report_history(db=db, report_id=report_id)
-    return history
+    
+    # Enrich history with user names from auth service
+    enriched_history = []
+    user_cache = {}  # Cache to avoid multiple API calls for the same user
+    
+    for entry in history:
+        entry_dict = {
+            "id": entry.id,
+            "report_id": entry.report_id,
+            "old_status_id": entry.old_status_id,
+            "new_status_id": entry.new_status_id,
+            "changed_by_user_id": entry.changed_by_user_id,
+            "comment": entry.comment,
+            "created_at": entry.created_at,
+            "changed_by_user_name": None,
+            "changed_by_user_email": None,
+        }
+        
+        # Get user info from cache or auth service
+        user_id = entry.changed_by_user_id
+        if user_id in user_cache:
+            user_info = user_cache[user_id]
+        else:
+            try:
+                user_info = auth_client.get_user_by_id(user_id)
+                user_cache[user_id] = user_info
+            except Exception as e:
+                logger.warning(f"Failed to get user info for user {user_id}: {e}")
+                user_info = None
+        
+        if user_info:
+            entry_dict["changed_by_user_name"] = user_info.get("full_name")
+            entry_dict["changed_by_user_email"] = user_info.get("email")
+        
+        enriched_history.append(entry_dict)
+    
+    return enriched_history
 
 
 @app.delete("/{report_id}")

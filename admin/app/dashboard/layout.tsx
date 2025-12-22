@@ -119,7 +119,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
     <div className={`min-h-screen bg-gray-50 ${isRTL ? 'font-tajawal' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 ${isRTL ? 'right-0' : 'left-0'} z-50 w-64 bg-primary transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 ${isRTL ? 'right-0' : 'left-0'} z-[999] w-64 bg-primary transform transition-transform duration-300 ease-in-out ${
           sidebarOpen 
             ? 'translate-x-0' 
             : isRTL ? 'translate-x-full' : '-translate-x-full'
@@ -197,7 +197,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
       {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className={`lg:hidden fixed top-4 ${isRTL ? 'right-4' : 'left-4'} z-40 p-2 bg-primary text-white rounded-lg`}
+        className={`lg:hidden fixed top-4 ${isRTL ? 'right-4' : 'left-4'} z-[998] p-2 bg-primary text-white rounded-lg`}
       >
         <Menu className="w-6 h-6" />
       </button>
@@ -212,7 +212,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-[998]"
           onClick={() => setSidebarOpen(false)}
         />
       )}

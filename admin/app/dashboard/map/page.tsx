@@ -3,7 +3,7 @@
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report } from '@/lib/types';
-import { MapPin, Search, X } from 'lucide-react';
+import { FileText, MapPin, Search, Tag, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
@@ -25,6 +25,15 @@ const Popup = dynamic(
   { ssr: false }
 );
 
+interface SearchResult {
+  type: 'report' | 'location' | 'category';
+  report?: Report;
+  location?: any;
+  category?: any;
+  displayName: string;
+  subtitle?: string;
+}
+
 export default function MapPage() {
   const { t, isRTL } = useLanguage();
   const [reports, setReports] = useState<Report[]>([]);
@@ -32,13 +41,14 @@ export default function MapPage() {
   const [statuses, setStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([24.7136, 46.6753]); // Riyadh default
   const [mapZoom, setMapZoom] = useState(10);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [textFilter, setTextFilter] = useState('');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -64,31 +74,6 @@ export default function MapPage() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    
-    setSearching(true);
-    try {
-      // Use Nominatim OpenStreetMap search
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`
-      );
-      const data = await response.json();
-      setSearchResults(data);
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const handleSelectLocation = (result: any) => {
-    setMapCenter([parseFloat(result.lat), parseFloat(result.lon)]);
-    setMapZoom(15);
-    setSearchResults([]);
-    setSearchQuery(result.display_name);
-  };
-
   const getCategoryName = (categoryId: number) => {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return 'Unknown';
@@ -98,6 +83,137 @@ export default function MapPage() {
   const getStatusName = (statusId: number) => {
     const status = statuses.find(s => s.id === statusId);
     return status ? status.name : 'UNKNOWN';
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setSearching(true);
+    const query = searchQuery.toLowerCase().trim();
+    const results: SearchResult[] = [];
+
+    try {
+      // 1. Search in Reports (title, description, address, user info)
+      const matchingReports = reports.filter(report => {
+        const title = (report.title || '').toLowerCase();
+        const description = (report.description || '').toLowerCase();
+        const address = (report.address_text || '').toLowerCase();
+        const reporterName = (report.reporter_name || '').toLowerCase();
+        const reporterPhone = (report.reporter_phone || '').toLowerCase();
+        
+        return title.includes(query) || 
+               description.includes(query) || 
+               address.includes(query) ||
+               reporterName.includes(query) ||
+               reporterPhone.includes(query) ||
+               report.id.toString() === query;
+      });
+
+      // Add matching reports to results (max 5)
+      matchingReports.slice(0, 5).forEach(report => {
+        results.push({
+          type: 'report',
+          report,
+          displayName: report.title || `Report #${report.id}`,
+          subtitle: `${getCategoryName(report.category_id)} • ${report.address_text || ''}`
+        });
+      });
+
+      // 2. Search in Categories
+      const matchingCategories = categories.filter(cat => {
+        const name = (cat.name || '').toLowerCase();
+        const nameAr = (cat.name_ar || '').toLowerCase();
+        return name.includes(query) || nameAr.includes(query);
+      });
+
+      // Add matching categories to results
+      matchingCategories.slice(0, 3).forEach(cat => {
+        const reportsInCategory = reports.filter(r => r.category_id === cat.id).length;
+        results.push({
+          type: 'category',
+          category: cat,
+          displayName: isRTL ? (cat.name_ar || cat.name) : cat.name,
+          subtitle: `${reportsInCategory} ${isRTL ? 'تقرير' : 'reports'}`
+        });
+      });
+
+      // 3. Search for Location using Nominatim (only if query is 3+ chars)
+      if (query.length >= 3) {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=3`
+        );
+        const locationData = await response.json();
+        
+        locationData.forEach((loc: any) => {
+          results.push({
+            type: 'location',
+            location: loc,
+            displayName: loc.display_name.split(',').slice(0, 3).join(','),
+            subtitle: isRTL ? 'موقع على الخريطة' : 'Location on map'
+          });
+        });
+      }
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Debounced search on input change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        handleSearch();
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSelectResult = (result: SearchResult) => {
+    if (result.type === 'report' && result.report) {
+      const lat = parseFloat(result.report.latitude);
+      const lng = parseFloat(result.report.longitude);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setMapCenter([lat, lng]);
+        setMapZoom(17);
+        setSelectedReport(result.report);
+      }
+    } else if (result.type === 'location' && result.location) {
+      setMapCenter([parseFloat(result.location.lat), parseFloat(result.location.lon)]);
+      setMapZoom(15);
+    } else if (result.type === 'category' && result.category) {
+      setCategoryFilter(result.category.id.toString());
+      // Find center of all reports in this category
+      const categoryReports = reports.filter(r => r.category_id === result.category.id);
+      if (categoryReports.length > 0) {
+        const firstReport = categoryReports[0];
+        const lat = parseFloat(firstReport.latitude);
+        const lng = parseFloat(firstReport.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          setMapCenter([lat, lng]);
+          setMapZoom(12);
+        }
+      }
+    }
+    setSearchResults([]);
+    setSearchQuery(result.displayName);
+  };
+
+  const getResultIcon = (type: string) => {
+    switch (type) {
+      case 'report': return <FileText className="w-4 h-4 text-green-500" />;
+      case 'category': return <Tag className="w-4 h-4 text-purple-500" />;
+      case 'location': return <MapPin className="w-4 h-4 text-blue-500" />;
+      default: return <Search className="w-4 h-4 text-gray-400" />;
+    }
   };
 
   const getStatusColor = (statusName: string) => {
@@ -140,7 +256,7 @@ export default function MapPage() {
 
       {/* Search and Filters */}
       <div className="mb-4 space-y-3">
-        {/* Search Bar */}
+        {/* Smart Search Bar */}
         <div className="relative">
           <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <div className="flex-1 relative">
@@ -149,15 +265,15 @@ export default function MapPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder={isRTL ? 'ابحث عن موقع...' : 'Search for a location...'}
-                className={`w-full py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
+                placeholder={isRTL ? 'ابحث عن تقرير، فئة، موقع، اسم المبلغ...' : 'Search reports, categories, locations, reporter name...'}
+                className={`w-full py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-10 text-right' : 'pl-10 pr-10'}`}
               />
               {searchQuery && (
                 <button
                   onClick={() => {
                     setSearchQuery('');
                     setSearchResults([]);
+                    setTextFilter('');
                   }}
                   className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 ${isRTL ? 'left-3' : 'right-3'}`}
                 >
@@ -165,30 +281,81 @@ export default function MapPage() {
                 </button>
               )}
             </div>
-            <button
-              onClick={handleSearch}
-              disabled={searching}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 disabled:opacity-50"
-            >
-              {searching ? '...' : (isRTL ? 'بحث' : 'Search')}
-            </button>
           </div>
           
-          {/* Search Results Dropdown */}
+          {/* Smart Search Results Dropdown */}
           {searchResults.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {searchResults.map((result, index) => (
+            <div className="absolute z-[800] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+              {/* Group by type */}
+              {searchResults.filter(r => r.type === 'report').length > 0 && (
+                <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-500 border-b">
+                  {isRTL ? 'التقارير' : 'Reports'}
+                </div>
+              )}
+              {searchResults.filter(r => r.type === 'report').map((result, index) => (
                 <button
-                  key={index}
-                  onClick={() => handleSelectLocation(result)}
-                  className={`w-full px-4 py-2 text-sm hover:bg-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}
+                  key={`report-${index}`}
+                  onClick={() => handleSelectResult(result)}
+                  className={`w-full px-4 py-2.5 text-sm hover:bg-green-50 border-b border-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}
                 >
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <span className="truncate">{result.display_name}</span>
+                  <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    {getResultIcon(result.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{result.displayName}</p>
+                      <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
+                    </div>
                   </div>
                 </button>
               ))}
+              
+              {searchResults.filter(r => r.type === 'category').length > 0 && (
+                <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-500 border-b">
+                  {isRTL ? 'الفئات' : 'Categories'}
+                </div>
+              )}
+              {searchResults.filter(r => r.type === 'category').map((result, index) => (
+                <button
+                  key={`category-${index}`}
+                  onClick={() => handleSelectResult(result)}
+                  className={`w-full px-4 py-2.5 text-sm hover:bg-purple-50 border-b border-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}
+                >
+                  <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    {getResultIcon(result.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{result.displayName}</p>
+                      <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              
+              {searchResults.filter(r => r.type === 'location').length > 0 && (
+                <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-500 border-b">
+                  {isRTL ? 'المواقع' : 'Locations'}
+                </div>
+              )}
+              {searchResults.filter(r => r.type === 'location').map((result, index) => (
+                <button
+                  key={`location-${index}`}
+                  onClick={() => handleSelectResult(result)}
+                  className={`w-full px-4 py-2.5 text-sm hover:bg-blue-50 border-b border-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}
+                >
+                  <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    {getResultIcon(result.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{result.displayName}</p>
+                      <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              
+              {searching && (
+                <div className="px-4 py-3 text-center text-sm text-gray-500">
+                  <div className="animate-spin inline-block w-4 h-4 border-2 border-gray-300 border-t-primary rounded-full mr-2"></div>
+                  {isRTL ? 'جاري البحث...' : 'Searching...'}
+                </div>
+              )}
             </div>
           )}
         </div>

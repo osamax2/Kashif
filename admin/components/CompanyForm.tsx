@@ -25,6 +25,45 @@ export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
 
       <div>
         <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+          {isRTL ? 'رقم الهاتف' : 'Phone Number'}
+        </label>
+        <input
+          type="tel"
+          value={formData.phone || ''}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+          placeholder={isRTL ? 'مثال: +966501234567' : 'e.g., +966501234567'}
+        />
+      </div>
+
+      <div>
+        <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+          {isRTL ? 'البريد الإلكتروني' : 'Email Address'}
+        </label>
+        <input
+          type="email"
+          value={formData.email || ''}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+          placeholder={isRTL ? 'مثال: info@company.com' : 'e.g., info@company.com'}
+        />
+      </div>
+
+      <div>
+        <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+          {isRTL ? 'العنوان' : 'Address'}
+        </label>
+        <textarea
+          value={formData.address || ''}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+          rows={2}
+          placeholder={isRTL ? 'عنوان الشركة الكامل' : 'Full company address'}
+        />
+      </div>
+
+      <div>
+        <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
           {isRTL ? 'الحد الأقصى للمستخدمين' : 'Max Users'}
         </label>
         <input

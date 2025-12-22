@@ -11,6 +11,11 @@ interface Company {
   id: number;
   name: string;
   logo_url?: string;
+  description?: string;
+  website_url?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
   max_users?: number;
   status: string;
   created_at: string;
@@ -32,6 +37,11 @@ export default function CompaniesPage() {
   const [formData, setFormData] = useState({
     name: '',
     logo_url: '',
+    description: '',
+    website_url: '',
+    phone: '',
+    email: '',
+    address: '',
     max_users: 5,
     status: 'ACTIVE',
   });
@@ -91,6 +101,11 @@ export default function CompaniesPage() {
     setFormData({
       name: company.name,
       logo_url: company.logo_url || '',
+      description: company.description || '',
+      website_url: company.website_url || '',
+      phone: company.phone || '',
+      email: company.email || '',
+      address: company.address || '',
       max_users: company.max_users || 5,
       status: company.status,
     });
@@ -129,6 +144,11 @@ export default function CompaniesPage() {
     setFormData({
       name: '',
       logo_url: '',
+      description: '',
+      website_url: '',
+      phone: '',
+      email: '',
+      address: '',
       max_users: 5,
       status: 'ACTIVE',
     });

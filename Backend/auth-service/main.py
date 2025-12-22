@@ -288,6 +288,81 @@ def force_change_password(
     return {"message": "Password changed successfully"}
 
 
+@app.post("/users/{user_id}/reset-password")
+def admin_reset_password(
+    user_id: int,
+    request: schemas.AdminResetPasswordRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to reset any user's password"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can reset passwords
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    # Get the target user
+    target_user = crud.get_user(db, user_id)
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update password (optionally require change on next login)
+    crud.update_user_password(db, user_id, request.new_password, clear_must_change=False)
+    
+    return {"message": f"Password reset successfully for user {target_user.email}"}
+
+
+@app.post("/users/admin", response_model=schemas.User)
+def create_admin_user(
+    user_data: schemas.AdminUserCreate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to create a new admin user"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can create admin users
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    # Check if email already exists
+    existing_user = crud.get_user_by_email(db, user_data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create the admin user
+    user_create = schemas.UserCreate(
+        email=user_data.email,
+        password=user_data.password,
+        full_name=user_data.full_name,
+        phone=user_data.phone,
+        language=user_data.language,
+        role="ADMIN"
+    )
+    
+    new_user = crud.create_user(db, user_create)
+    
+    # Admin users don't need email verification
+    new_user.is_verified = True
+    db.commit()
+    db.refresh(new_user)
+    
+    return new_user
+
+
 @app.post("/logout")
 def logout(
     token_data: schemas.RefreshTokenRequest,
@@ -302,9 +377,10 @@ def get_all_users(
     token: Annotated[str, Depends(oauth2_scheme)],
     skip: int = 0,
     limit: int = 100,
+    include_deleted: bool = False,
     db: Session = Depends(get_db)
 ):
-    """Get all users - Admin only"""
+    """Get all users - Admin only. Set include_deleted=true to see all users including deleted."""
     current_user = auth.get_current_user(token, db)
     
     # Only admins can list all users
@@ -314,8 +390,124 @@ def get_all_users(
             detail="Not authorized. Admin role required."
         )
     
-    users = crud.get_users(db, skip=skip, limit=limit)
+    users = crud.get_users(db, skip=skip, limit=limit, include_deleted=include_deleted)
     return users
+
+
+@app.get("/users/trash", response_model=list[schemas.User])
+def get_deleted_users(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """Get all deleted users (trash) - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can view trash
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    users = crud.get_deleted_users(db, skip=skip, limit=limit)
+    return users
+
+
+@app.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Soft delete a user (move to trash) - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can delete users
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    # Can't delete yourself
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot delete yourself"
+        )
+    
+    user = crud.soft_delete_user(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    logger.info(f"User {user_id} soft deleted by admin {current_user.id}")
+    return {"message": "User moved to trash", "user_id": user_id}
+
+
+@app.post("/users/{user_id}/restore")
+def restore_user(
+    user_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Restore a deleted user from trash - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can restore users
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    user = crud.restore_user(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    logger.info(f"User {user_id} restored by admin {current_user.id}")
+    return {"message": "User restored successfully", "user_id": user_id}
+
+
+@app.delete("/users/{user_id}/permanent")
+def permanent_delete_user(
+    user_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Permanently delete a user - Admin only. This action cannot be undone!"""
+    current_user = auth.get_current_user(token, db)
+    
+    # Only admins can permanently delete users
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+    
+    # Can't delete yourself
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot delete yourself"
+        )
+    
+    success = crud.permanent_delete_user(db, user_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    logger.info(f"User {user_id} permanently deleted by admin {current_user.id}")
+    return {"message": "User permanently deleted", "user_id": user_id}
 
 
 @app.get("/users/{user_id}", response_model=schemas.User)
@@ -456,6 +648,17 @@ def create_government_user(
     )
     
     new_user = crud.create_user(db=db, user=user_create)
+    
+    # Set additional government-specific fields
+    if user_data.city:
+        new_user.city = user_data.city
+    if user_data.district:
+        new_user.district = user_data.district
+    if user_data.job_description:
+        new_user.job_description = user_data.job_description
+    
+    db.commit()
+    db.refresh(new_user)
     
     logger.info(f"Created government user {new_user.id}")
     
@@ -754,3 +957,27 @@ async def upload_file(
         "url": f"/api/auth/uploads/{unique_filename}",
         "filename": unique_filename
     }
+
+
+# ============ Internal Service-to-Service Endpoints ============
+# These endpoints are for internal microservice communication only
+# They should be protected by network isolation in production
+
+@app.get("/internal/users/{user_id}", response_model=schemas.User)
+def get_user_internal(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Internal endpoint for service-to-service communication.
+    Returns user info without authentication.
+    Should only be accessible within the Docker network.
+    """
+    user = crud.get_user(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return user

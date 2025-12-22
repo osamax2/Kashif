@@ -3,25 +3,31 @@
 import { couponsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { User } from '@/lib/types';
-import { Award, Building2, Landmark, Search, UserPlus } from 'lucide-react';
+import { Award, Building2, KeyRound, Landmark, RotateCcw, Search, Shield, Trash2, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function UsersPage() {
   const { t, isRTL } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
+  const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'active' | 'trash'>('active');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showAwardModal, setShowAwardModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
   const [showCreateCompanyUserModal, setShowCreateCompanyUserModal] = useState(false);
   const [showCreateGovernmentUserModal, setShowCreateGovernmentUserModal] = useState(false);
   const [showCreateNormalUserModal, setShowCreateNormalUserModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [showCreateAdminUserModal, setShowCreateAdminUserModal] = useState(false);
   const [points, setPoints] = useState('');
   const [description, setDescription] = useState('');
   const [editForm, setEditForm] = useState({
@@ -42,6 +48,9 @@ export default function UsersPage() {
     password: '',
     full_name: '',
     phone: '',
+    city: '',
+    district: '',
+    job_description: '',
   });
   const [normalUserForm, setNormalUserForm] = useState({
     email: '',
@@ -50,14 +59,25 @@ export default function UsersPage() {
     phone: '',
   });
   const [normalUserPasswordError, setNormalUserPasswordError] = useState('');
+  const [adminUserForm, setAdminUserForm] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+  });
+  const [adminUserPasswordError, setAdminUserPasswordError] = useState('');
+  const [resetPasswordForm, setResetPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
+  const [resetPasswordError, setResetPasswordError] = useState('');
 
   useEffect(() => {
     loadUsers();
+    loadDeletedUsers();
     loadCompanies();
   }, []);
 
   useEffect(() => {
-    let filtered = users.filter(
+    const sourceUsers = activeTab === 'active' ? users : deletedUsers;
+    let filtered = sourceUsers.filter(
       (user) =>
         user.full_name.toLowerCase().includes(search.toLowerCase()) ||
         user.email.toLowerCase().includes(search.toLowerCase())
@@ -68,24 +88,32 @@ export default function UsersPage() {
       filtered = filtered.filter((user) => user.role === roleFilter);
     }
     
-    // Apply status filter
-    if (statusFilter !== 'ALL') {
+    // Apply status filter (only for active tab)
+    if (statusFilter !== 'ALL' && activeTab === 'active') {
       filtered = filtered.filter((user) => user.status === statusFilter);
     }
     
     setFilteredUsers(filtered);
-  }, [search, users, roleFilter, statusFilter]);
+  }, [search, users, deletedUsers, roleFilter, statusFilter, activeTab]);
 
   const loadUsers = async () => {
     try {
       setLoading(true);
       const data = await usersAPI.getUsers(0, 1000);
       setUsers(Array.isArray(data) ? data : []);
-      setFilteredUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDeletedUsers = async () => {
+    try {
+      const data = await usersAPI.getDeletedUsers(0, 1000);
+      setDeletedUsers(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load deleted users:', error);
     }
   };
 
@@ -153,7 +181,7 @@ export default function UsersPage() {
   const [governmentPasswordError, setGovernmentPasswordError] = useState('');
 
   const handleCreateGovernmentUser = async () => {
-    if (!governmentUserForm.email || !governmentUserForm.password || !governmentUserForm.full_name) {
+    if (!governmentUserForm.email || !governmentUserForm.password || !governmentUserForm.full_name || !governmentUserForm.city || !governmentUserForm.district || !governmentUserForm.job_description) {
       alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields');
       return;
     }
@@ -171,10 +199,13 @@ export default function UsersPage() {
         password: governmentUserForm.password,
         full_name: governmentUserForm.full_name,
         phone: governmentUserForm.phone || undefined,
+        city: governmentUserForm.city || undefined,
+        district: governmentUserForm.district || undefined,
+        job_description: governmentUserForm.job_description || undefined,
       });
       alert(isRTL ? 'تم إنشاء الموظف الحكومي بنجاح!' : 'Government employee created successfully!');
       setShowCreateGovernmentUserModal(false);
-      setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '' });
+      setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '', city: '', district: '', job_description: '' });
       setGovernmentPasswordError('');
       loadUsers();
     } catch (error: any) {
@@ -211,6 +242,66 @@ export default function UsersPage() {
     } catch (error: any) {
       console.error('Failed to create normal user:', error);
       alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء المستخدم' : 'Failed to create user'));
+    }
+  };
+
+  const handleCreateAdminUser = async () => {
+    if (!adminUserForm.email || !adminUserForm.password || !adminUserForm.full_name) {
+      alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields');
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(adminUserForm.password);
+    if (!passwordValidation.valid) {
+      setAdminUserPasswordError(passwordValidation.error);
+      return;
+    }
+
+    try {
+      await usersAPI.createAdminUser({
+        email: adminUserForm.email,
+        password: adminUserForm.password,
+        full_name: adminUserForm.full_name,
+        phone: adminUserForm.phone || undefined,
+      });
+      alert(isRTL ? 'تم إنشاء المسؤول بنجاح!' : 'Admin created successfully!');
+      setShowCreateAdminUserModal(false);
+      setAdminUserForm({ email: '', password: '', full_name: '', phone: '' });
+      setAdminUserPasswordError('');
+      loadUsers();
+    } catch (error: any) {
+      console.error('Failed to create admin user:', error);
+      alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء المسؤول' : 'Failed to create admin'));
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
+
+    // Validate passwords match
+    if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
+      setResetPasswordError(isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
+      return;
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePassword(resetPasswordForm.newPassword);
+    if (!passwordValidation.valid) {
+      setResetPasswordError(passwordValidation.error);
+      return;
+    }
+
+    try {
+      await usersAPI.resetPassword(selectedUser.id, resetPasswordForm.newPassword);
+      alert(isRTL ? 'تم إعادة تعيين كلمة المرور بنجاح!' : 'Password reset successfully!');
+      setShowResetPasswordModal(false);
+      setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+      setResetPasswordError('');
+      setSelectedUser(null);
+    } catch (error: any) {
+      console.error('Failed to reset password:', error);
+      alert(error.response?.data?.detail || (isRTL ? 'فشل في إعادة تعيين كلمة المرور' : 'Failed to reset password'));
     }
   };
 
@@ -264,13 +355,45 @@ export default function UsersPage() {
 
     try {
       await usersAPI.deleteUser(selectedUser.id);
-      alert('User deleted successfully!');
+      alert(isRTL ? 'تم نقل المستخدم إلى سلة المحذوفات!' : 'User moved to trash!');
       setShowDeleteModal(false);
       setSelectedUser(null);
       loadUsers();
+      loadDeletedUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
-      alert('Failed to delete user');
+      alert(isRTL ? 'فشل في حذف المستخدم' : 'Failed to delete user');
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await usersAPI.restoreUser(selectedUser.id);
+      alert(isRTL ? 'تم استعادة المستخدم بنجاح!' : 'User restored successfully!');
+      setShowRestoreModal(false);
+      setSelectedUser(null);
+      loadUsers();
+      loadDeletedUsers();
+    } catch (error) {
+      console.error('Failed to restore user:', error);
+      alert(isRTL ? 'فشل في استعادة المستخدم' : 'Failed to restore user');
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await usersAPI.permanentDeleteUser(selectedUser.id);
+      alert(isRTL ? 'تم حذف المستخدم نهائياً!' : 'User permanently deleted!');
+      setShowPermanentDeleteModal(false);
+      setSelectedUser(null);
+      loadDeletedUsers();
+    } catch (error) {
+      console.error('Failed to permanently delete user:', error);
+      alert(isRTL ? 'فشل في حذف المستخدم نهائياً' : 'Failed to permanently delete user');
     }
   };
 
@@ -314,7 +437,45 @@ export default function UsersPage() {
             <span className="hidden sm:inline">{t.users.createCompanyUser}</span>
             <span className="sm:hidden">{isRTL ? 'شركة' : 'Company'}</span>
           </button>
+          <button
+            onClick={() => setShowCreateAdminUserModal(true)}
+            className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Shield className="w-5 h-5" />
+            <span className="hidden sm:inline">{isRTL ? 'إضافة مسؤول' : 'Add Admin'}</span>
+            <span className="sm:hidden">{isRTL ? 'مسؤول' : 'Admin'}</span>
+          </button>
         </div>
+      </div>
+
+      {/* Tabs: Active Users / Trash */}
+      <div className={`flex gap-4 mb-6 border-b border-gray-200 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`pb-3 px-1 font-medium text-sm transition-colors ${
+            activeTab === 'active'
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <span className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <UserPlus className="w-4 h-4" />
+            {isRTL ? 'المستخدمين النشطين' : 'Active Users'} ({users.length})
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('trash')}
+          className={`pb-3 px-1 font-medium text-sm transition-colors ${
+            activeTab === 'trash'
+              ? 'text-red-600 border-b-2 border-red-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <span className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <Trash2 className="w-4 h-4" />
+            {isRTL ? 'سلة المحذوفات' : 'Trash'} ({deletedUsers.length})
+          </span>
+        </button>
       </div>
 
       {/* Search and Filters */}
@@ -365,14 +526,15 @@ export default function UsersPage() {
           {/* Results count */}
           <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'sm:mr-auto' : 'sm:ml-auto'}`}>
             {isRTL 
-              ? `${filteredUsers.length} من ${users.length} مستخدم`
-              : `${filteredUsers.length} of ${users.length} users`
+              ? `${filteredUsers.length} من ${activeTab === 'active' ? users.length : deletedUsers.length} مستخدم`
+              : `${filteredUsers.length} of ${activeTab === 'active' ? users.length : deletedUsers.length} users`
             }
           </div>
         </div>
       </div>
 
-      {/* Users Table */}
+      {/* Active Users Table */}
+      {activeTab === 'active' && (
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -452,17 +614,30 @@ export default function UsersPage() {
                         setSelectedUser(user);
                         setShowAwardModal(true);
                       }}
-                      className={`text-primary hover:text-blue-800 font-medium ${isRTL ? 'ml-3' : 'mr-3'}`}
+                      className={`text-primary hover:text-blue-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
+                      title={t.users.award}
                     >
-                      <Award className={`w-4 h-4 inline ${isRTL ? 'ml-1' : 'mr-1'}`} />
-                      {t.users.award}
+                      <Award className="w-4 h-4 inline" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedUser(user);
+                        setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+                        setResetPasswordError('');
+                        setShowResetPasswordModal(true);
+                      }}
+                      className={`text-orange-600 hover:text-orange-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
+                      title={isRTL ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+                    >
+                      <KeyRound className="w-4 h-4 inline" />
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEdit(user);
                       }}
-                      className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-3' : 'mr-3'}`}
+                      className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
                     >
                       {t.common.edit}
                     </button>
@@ -489,6 +664,106 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+      )}
+
+      {/* Trash Table */}
+      {activeTab === 'trash' && (
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-red-50 border-b border-red-200">
+              <tr>
+                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.users.user}
+                </th>
+                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.users.userEmail}
+                </th>
+                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.users.role}
+                </th>
+                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {isRTL ? 'تاريخ الحذف' : 'Deleted At'}
+                </th>
+                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t.common.actions}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-red-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <div className="w-10 h-10 rounded-full bg-red-400 text-white flex items-center justify-center font-semibold">
+                        {user.full_name[0]?.toUpperCase()}
+                      </div>
+                      <div className={isRTL ? 'mr-3 text-right' : 'ml-3'}>
+                        <p className="font-medium text-gray-900">{user.full_name}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-600 ${isRTL ? 'text-right' : ''}`}>
+                    {user.email}
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        user.role === 'ADMIN'
+                          ? 'bg-purple-100 text-purple-700'
+                          : user.role === 'COMPANY'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+                    {user.deleted_at ? new Date(user.deleted_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) : '-'}
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
+                    <button
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setShowRestoreModal(true);
+                      }}
+                      className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-3' : 'mr-3'}`}
+                      title={isRTL ? 'استعادة' : 'Restore'}
+                    >
+                      <RotateCcw className="w-4 h-4 inline" /> {isRTL ? 'استعادة' : 'Restore'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setShowPermanentDeleteModal(true);
+                      }}
+                      className="text-red-600 hover:text-red-800 font-medium"
+                      title={isRTL ? 'حذف نهائي' : 'Delete Forever'}
+                    >
+                      <Trash2 className="w-4 h-4 inline" /> {isRTL ? 'حذف نهائي' : 'Delete Forever'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredUsers.length === 0 && (
+          <div className="text-center py-12">
+            <Trash2 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-gray-500">{isRTL ? 'سلة المحذوفات فارغة' : 'Trash is empty'}</p>
+          </div>
+        )}
+      </div>
+      )}
 
       {/* Award Points Modal */}
       {showAwardModal && selectedUser && (
@@ -629,7 +904,10 @@ export default function UsersPage() {
           <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
             <h2 className={`text-xl font-bold text-red-600 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.users.deleteUser}</h2>
             <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
-              {t.users.confirmDelete} <strong>{selectedUser.full_name}</strong>? {t.users.deleteConfirmText}
+              {isRTL ? 'هل أنت متأكد من نقل' : 'Are you sure you want to move'} <strong>{selectedUser.full_name}</strong> {isRTL ? 'إلى سلة المحذوفات؟' : 'to trash?'}
+            </p>
+            <p className={`text-sm text-gray-500 mb-6 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'يمكنك استعادة المستخدم لاحقاً من سلة المحذوفات.' : 'You can restore the user later from trash.'}
             </p>
             <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
@@ -645,7 +923,157 @@ export default function UsersPage() {
                 onClick={handleDelete}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                {t.common.delete}
+                {isRTL ? 'نقل للمحذوفات' : 'Move to Trash'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore User Modal */}
+      {showRestoreModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-green-600 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+              <RotateCcw className="w-6 h-6" />
+              {isRTL ? 'استعادة المستخدم' : 'Restore User'}
+            </h2>
+            <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'هل تريد استعادة' : 'Do you want to restore'} <strong>{selectedUser.full_name}</strong>?
+            </p>
+            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => {
+                  setShowRestoreModal(false);
+                  setSelectedUser(null);
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleRestore}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                {isRTL ? 'استعادة' : 'Restore'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Modal */}
+      {showPermanentDeleteModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-red-600 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+              <Trash2 className="w-6 h-6" />
+              {isRTL ? 'حذف نهائي' : 'Permanent Delete'}
+            </h2>
+            <p className={`text-gray-700 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'هل أنت متأكد من حذف' : 'Are you sure you want to permanently delete'} <strong>{selectedUser.full_name}</strong>?
+            </p>
+            <p className={`text-sm text-red-500 font-medium mb-6 p-3 bg-red-50 rounded-lg ${isRTL ? 'text-right' : ''}`}>
+              ⚠️ {isRTL ? 'هذا الإجراء لا يمكن التراجع عنه! سيتم حذف جميع بيانات المستخدم نهائياً.' : 'This action cannot be undone! All user data will be permanently deleted.'}
+            </p>
+            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => {
+                  setShowPermanentDeleteModal(false);
+                  setSelectedUser(null);
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handlePermanentDelete}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                {isRTL ? 'حذف نهائي' : 'Delete Forever'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {showResetPasswordModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+              <KeyRound className="w-6 h-6 text-orange-600" />
+              {isRTL ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+            </h2>
+            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL 
+                ? `إعادة تعيين كلمة المرور للمستخدم: ${selectedUser.full_name}` 
+                : `Reset password for user: ${selectedUser.full_name}`}
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'كلمة المرور الجديدة' : 'New Password'} *
+                </label>
+                <input
+                  type="password"
+                  value={resetPasswordForm.newPassword}
+                  onChange={(e) => {
+                    setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value });
+                    setResetPasswordError('');
+                  }}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder="********"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'تأكيد كلمة المرور' : 'Confirm Password'} *
+                </label>
+                <input
+                  type="password"
+                  value={resetPasswordForm.confirmPassword}
+                  onChange={(e) => {
+                    setResetPasswordForm({ ...resetPasswordForm, confirmPassword: e.target.value });
+                    setResetPasswordError('');
+                  }}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder="********"
+                />
+              </div>
+              {resetPasswordError && (
+                <p className={`text-red-500 text-sm ${isRTL ? 'text-right' : ''}`}>{resetPasswordError}</p>
+              )}
+              {/* Password requirements */}
+              <div className={`text-xs text-gray-500 space-y-1 ${isRTL ? 'text-right' : ''}`}>
+                <p className={resetPasswordForm.newPassword.length >= 8 ? 'text-green-600' : ''}>
+                  {isRTL ? '• 8 أحرف على الأقل' : '• At least 8 characters'}
+                </p>
+                <p className={/[A-Z]/.test(resetPasswordForm.newPassword) ? 'text-green-600' : ''}>
+                  {isRTL ? '• حرف كبير واحد على الأقل' : '• At least one uppercase letter'}
+                </p>
+                <p className={/[a-z]/.test(resetPasswordForm.newPassword) ? 'text-green-600' : ''}>
+                  {isRTL ? '• حرف صغير واحد على الأقل' : '• At least one lowercase letter'}
+                </p>
+              </div>
+            </div>
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => {
+                  setShowResetPasswordModal(false);
+                  setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+                  setResetPasswordError('');
+                  setSelectedUser(null);
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleResetPassword}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              >
+                {isRTL ? 'إعادة تعيين' : 'Reset Password'}
               </button>
             </div>
           </div>
@@ -829,6 +1257,42 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'المدينة' : 'City'} *
+                </label>
+                <input
+                  type="text"
+                  value={governmentUserForm.city}
+                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, city: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? 'الرياض' : 'Riyadh'}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'الحي' : 'District'} *
+                </label>
+                <input
+                  type="text"
+                  value={governmentUserForm.district}
+                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, district: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? 'العليا' : 'Al Olaya'}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'المسمى الوظيفي' : 'Job Description'} *
+                </label>
+                <input
+                  type="text"
+                  value={governmentUserForm.job_description}
+                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, job_description: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? 'مراقب بلدي' : 'Municipal Inspector'}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
                   {t.auth.password} *
                 </label>
                 <input
@@ -867,7 +1331,7 @@ export default function UsersPage() {
               <button
                 onClick={() => {
                   setShowCreateGovernmentUserModal(false);
-                  setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '' });
+                  setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '', city: '', district: '', job_description: '' });
                   setGovernmentPasswordError('');
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -985,6 +1449,114 @@ export default function UsersPage() {
               <button
                 onClick={handleCreateNormalUser}
                 className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              >
+                {t.users.createUser}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Admin User Modal */}
+      {showCreateAdminUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+              <Shield className="w-6 h-6 text-red-600" />
+              {isRTL ? 'إضافة مسؤول جديد' : 'Add New Admin'}
+            </h2>
+            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL 
+                ? 'إنشاء حساب مسؤول بصلاحيات كاملة للوصول إلى لوحة التحكم' 
+                : 'Create an admin account with full access to the dashboard'}
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.fullName} *
+                </label>
+                <input
+                  type="text"
+                  value={adminUserForm.full_name}
+                  onChange={(e) => setAdminUserForm({ ...adminUserForm, full_name: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userEmail} *
+                </label>
+                <input
+                  type="email"
+                  value={adminUserForm.email}
+                  onChange={(e) => setAdminUserForm({ ...adminUserForm, email: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder="admin@example.com"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.userPhone}
+                </label>
+                <input
+                  type="tel"
+                  value={adminUserForm.phone}
+                  onChange={(e) => setAdminUserForm({ ...adminUserForm, phone: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
+                  dir="ltr"
+                />
+                <p className={`mt-1 text-xs text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'رقم الهاتف اختياري للمسؤولين' : 'Phone number is optional for admins'}
+                </p>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {t.auth.password} *
+                </label>
+                <input
+                  type="password"
+                  value={adminUserForm.password}
+                  onChange={(e) => {
+                    setAdminUserForm({ ...adminUserForm, password: e.target.value });
+                    setAdminUserPasswordError('');
+                  }}
+                  className={`w-full px-4 py-2 border ${adminUserPasswordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  placeholder="••••••••"
+                  minLength={8}
+                />
+                {/* Password requirements */}
+                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                  <p className={`${adminUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
+                  </p>
+                  <p className={`${/[A-Z]/.test(adminUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                  </p>
+                  <p className={`${/[a-z]/.test(adminUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                  </p>
+                </div>
+                {adminUserPasswordError && (
+                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminUserPasswordError}</p>
+                )}
+              </div>
+            </div>
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => {
+                  setShowCreateAdminUserModal(false);
+                  setAdminUserForm({ email: '', password: '', full_name: '', phone: '' });
+                  setAdminUserPasswordError('');
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleCreateAdminUser}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                 {t.users.createUser}
               </button>
