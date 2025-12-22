@@ -117,14 +117,16 @@ export default function MapPage() {
         const title = (report.title || '').toLowerCase();
         const description = (report.description || '').toLowerCase();
         const address = (report.address_text || '').toLowerCase();
-        const reporterName = ((report as any).reporter_name || '').toLowerCase();
-        const reporterPhone = ((report as any).reporter_phone || '').toLowerCase();
+        const userName = (report.user_name || '').toLowerCase();
+        const userPhone = (report.user_phone || '').toLowerCase();
+        const userEmail = (report.user_email || '').toLowerCase();
         
         return title.includes(query) || 
                description.includes(query) || 
                address.includes(query) ||
-               reporterName.includes(query) ||
-               reporterPhone.includes(query) ||
+               userName.includes(query) ||
+               userPhone.includes(query) ||
+               userEmail.includes(query) ||
                report.id.toString() === query;
       });
 
@@ -259,12 +261,38 @@ export default function MapPage() {
     try {
       setExporting(true);
       
-      // CSV headers
+      // Fetch history for all reports in parallel
+      const historyPromises = filteredReports.map(report => 
+        reportsAPI.getReportHistory(report.id).catch(() => [])
+      );
+      const allHistories = await Promise.all(historyPromises);
+      
+      // Create a map of report id to history
+      const historyMap: { [key: number]: ReportStatusHistory[] } = {};
+      filteredReports.forEach((report, index) => {
+        historyMap[report.id] = Array.isArray(allHistories[index]) ? allHistories[index] : [];
+      });
+
+      // Format history for CSV
+      const formatHistory = (history: ReportStatusHistory[]) => {
+        if (!history || history.length === 0) return isRTL ? 'لا يوجد سجل' : 'No history';
+        return history.map(h => {
+          const date = new Date(h.created_at).toLocaleDateString();
+          const oldStatus = h.old_status_id ? getStatusName(h.old_status_id) : (isRTL ? 'جديد' : 'New');
+          const newStatus = getStatusName(h.new_status_id);
+          const changedBy = h.changed_by_user_name || h.changed_by_user_email || (isRTL ? 'غير معروف' : 'Unknown');
+          const comment = h.comment ? ` - ${h.comment}` : '';
+          return `[${date}] ${oldStatus} → ${newStatus} (${changedBy})${comment}`;
+        }).join(' | ');
+      };
+
+      // CSV headers - includes user info and history
       const headers = [
         'ID',
         isRTL ? 'معرف المستخدم' : 'User ID',
         isRTL ? 'اسم المبلغ' : 'Reporter Name',
         isRTL ? 'هاتف المبلغ' : 'Reporter Phone',
+        isRTL ? 'بريد المبلغ' : 'Reporter Email',
         isRTL ? 'العنوان' : 'Title',
         isRTL ? 'الوصف' : 'Description',
         isRTL ? 'الفئة' : 'Category',
@@ -273,14 +301,16 @@ export default function MapPage() {
         isRTL ? 'خط العرض' : 'Latitude',
         isRTL ? 'خط الطول' : 'Longitude',
         isRTL ? 'تاريخ الإنشاء' : 'Created At',
+        isRTL ? 'سجل التغييرات' : 'Status History',
       ];
 
-      // CSV rows
+      // CSV rows with user info and history
       const rows = filteredReports.map(report => [
         report.id,
         report.user_id,
-        `"${((report as any).reporter_name || '').replace(/"/g, '""')}"`,
-        `"${((report as any).reporter_phone || '').replace(/"/g, '""')}"`,
+        `"${(report.user_name || '').replace(/"/g, '""')}"`,
+        `"${(report.user_phone || '').replace(/"/g, '""')}"`,
+        `"${(report.user_email || '').replace(/"/g, '""')}"`,
         `"${report.title.replace(/"/g, '""')}"`,
         `"${report.description.replace(/"/g, '""')}"`,
         getCategoryName(report.category_id),
@@ -289,6 +319,7 @@ export default function MapPage() {
         report.latitude,
         report.longitude,
         new Date(report.created_at).toLocaleDateString(),
+        `"${formatHistory(historyMap[report.id]).replace(/"/g, '""')}"`,
       ]);
 
       // Combine headers and rows
@@ -706,19 +737,29 @@ export default function MapPage() {
               </div>
 
               {/* Reporter Info */}
-              {((selectedReport as any).reporter_name || (selectedReport as any).reporter_phone) && (
+              {(selectedReport.user_name || selectedReport.user_phone || selectedReport.user_email) && (
                 <div className="bg-blue-50 rounded-lg p-3">
-                  <p className="text-xs text-blue-600 font-medium mb-1">
+                  <p className="text-xs text-blue-600 font-medium mb-2">
                     {isRTL ? 'معلومات المبلغ' : 'Reporter Info'}
                   </p>
-                  {(selectedReport as any).reporter_name && (
-                    <p className="text-sm text-gray-700">{(selectedReport as any).reporter_name}</p>
-                  )}
-                  {(selectedReport as any).reporter_phone && (
-                    <a href={`tel:${(selectedReport as any).reporter_phone}`} className="text-sm text-blue-600 hover:underline">
-                      {(selectedReport as any).reporter_phone}
-                    </a>
-                  )}
+                  <div className="space-y-1">
+                    {selectedReport.user_name && (
+                      <p className="text-sm text-gray-700 font-medium">{selectedReport.user_name}</p>
+                    )}
+                    {selectedReport.user_phone && (
+                      <a href={`tel:${selectedReport.user_phone}`} className="text-sm text-blue-600 hover:underline block">
+                        📞 {selectedReport.user_phone}
+                      </a>
+                    )}
+                    {selectedReport.user_email && (
+                      <a href={`mailto:${selectedReport.user_email}`} className="text-sm text-blue-600 hover:underline block">
+                        ✉️ {selectedReport.user_email}
+                      </a>
+                    )}
+                    <p className="text-xs text-gray-500">
+                      {isRTL ? 'معرف المستخدم: ' : 'User ID: '}{selectedReport.user_id}
+                    </p>
+                  </div>
                 </div>
               )}
 
