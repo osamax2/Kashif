@@ -76,6 +76,7 @@ class CouponBase(BaseModel):
     description: str
     points_cost: int
     image_url: Optional[str] = None
+    address: Optional[str] = None
     expiration_date: Optional[datetime] = None
     max_usage_per_user: Optional[int] = None
     total_available: Optional[int] = None
@@ -93,6 +94,7 @@ class CouponUpdate(BaseModel):
     description: Optional[str] = None
     points_cost: Optional[int] = None
     image_url: Optional[str] = None
+    address: Optional[str] = None
     expiration_date: Optional[datetime] = None
     max_usage_per_user: Optional[int] = None
     total_available: Optional[int] = None

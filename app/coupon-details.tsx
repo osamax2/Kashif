@@ -4,7 +4,7 @@ import { couponsAPI, isCouponExpired, type Coupon } from "@/services/coupons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const PRIMARY = "#0D2B66";  // Blau
 const YELLOW = "#F4B400";   // Gelb
@@ -150,6 +150,25 @@ export default function CouponDetails() {
           </View>
         )}
 
+        {/* ADDRESS SECTION */}
+        {coupon.address && (
+          <View>
+            <Text style={styles.sectionTitle}>{t("coupons.details.addressTitle") || (language === "ar" ? "العنوان" : "Address")}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                const encodedAddress = encodeURIComponent(coupon.address!);
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                Linking.openURL(mapsUrl);
+              }}
+              style={styles.addressContainer}
+            >
+              <Ionicons name="location" size={18} color={PRIMARY} style={{ marginRight: 8 }} />
+              <Text style={styles.addressText}>{coupon.address}</Text>
+              <Ionicons name="open-outline" size={16} color="#666" style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {isCouponExpired(coupon) && (
           <View style={styles.warningBox}>
             <Ionicons name="warning" size={18} color="#FF453A" />
@@ -249,6 +268,24 @@ const styles = StyleSheet.create({
     color: "#444",
     paddingHorizontal: 16,
     lineHeight: 24,
+  },
+  addressContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F7FF",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: "#D0E3FF",
+  },
+  addressText: {
+    flex: 1,
+    fontSize: 15,
+    color: PRIMARY,
+    textDecorationLine: "underline",
   },
   warningBox: {
     flexDirection: "row-reverse",

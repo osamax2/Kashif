@@ -372,7 +372,8 @@
       "usageLimitTitle": "Usage limit",
       "usageLimit": "Each user can redeem {{count}} time(s).",
       "totalAvailableTitle": "Total availability",
-      "totalAvailable": "{{count}} coupons available."
+      "totalAvailable": "{{count}} coupons available.",
+      "addressTitle": "Location"
     }
   }
 }

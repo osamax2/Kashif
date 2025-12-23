@@ -49,6 +49,7 @@ class Coupon(Base):
     points_cost = Column(Integer, nullable=False)
     expiration_date = Column(DateTime, nullable=True)
     image_url = Column(String(255), nullable=True)
+    address = Column(String(500), nullable=True)  # Location/address for the coupon
     max_usage_per_user = Column(Integer, nullable=True)
     total_available = Column(Integer, nullable=True)
     status = Column(String(50), default="ACTIVE", nullable=False)  # ACTIVE, EXPIRED, DISABLED
