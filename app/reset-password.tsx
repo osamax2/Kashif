@@ -3,13 +3,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+    I18nManager,
     Platform,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View,
-    I18nManager,
 } from "react-native";
 import { useLanguage } from "../contexts/LanguageContext";
 
