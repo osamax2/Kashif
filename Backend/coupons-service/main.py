@@ -73,6 +73,40 @@ async def get_current_user(authorization: Annotated[str, Header()]):
     return user
 
 
+async def get_user_role(authorization: Annotated[str, Header()]) -> str:
+    """Get user role from token"""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header"
+        )
+    token = authorization.replace("Bearer ", "")
+    user = await auth_client.verify_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    return user.get("role", "USER")
+
+
+async def get_user_company_id(authorization: Annotated[str, Header()]) -> Optional[int]:
+    """Get user company_id from token"""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header"
+        )
+    token = authorization.replace("Bearer ", "")
+    user = await auth_client.verify_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    return user.get("company_id")
+
+
 # Company endpoints
 @app.post("/companies", response_model=schemas.Company)
 async def create_company(
@@ -244,6 +278,20 @@ async def get_coupons(
     )
 
 
+# IMPORTANT: This route must be defined BEFORE /{coupon_id} to avoid path conflicts
+@app.get("/trash", response_model=List[schemas.Coupon])
+async def get_deleted_coupons(
+    company_id: Optional[int] = None,
+    user_role: str = Depends(get_user_role),
+    user_company_id: Optional[int] = Depends(get_user_company_id),
+    db: Session = Depends(get_db)
+):
+    """Get soft-deleted coupons (admin sees all, company sees own)"""
+    if user_role == "COMPANY":
+        return crud.get_deleted_coupons(db=db, company_id=user_company_id)
+    return crud.get_deleted_coupons(db=db, company_id=company_id)
+
+
 @app.get("/{coupon_id}", response_model=schemas.Coupon)
 async def get_coupon(
     coupon_id: int,
@@ -320,19 +368,6 @@ async def delete_coupon(
     
     deleted_coupon = crud.delete_coupon(db=db, coupon_id=coupon_id)
     return deleted_coupon
-
-
-@app.get("/trash", response_model=List[schemas.Coupon])
-async def get_deleted_coupons(
-    company_id: Optional[int] = None,
-    user_role: str = Depends(get_user_role),
-    user_company_id: Optional[int] = Depends(get_user_company_id),
-    db: Session = Depends(get_db)
-):
-    """Get soft-deleted coupons (admin sees all, company sees own)"""
-    if user_role == "COMPANY":
-        return crud.get_deleted_coupons(db=db, company_id=user_company_id)
-    return crud.get_deleted_coupons(db=db, company_id=company_id)
 
 
 @app.post("/{coupon_id}/restore", response_model=schemas.Coupon)
