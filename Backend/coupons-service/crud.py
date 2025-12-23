@@ -166,6 +166,37 @@ def delete_coupon(db: Session, coupon_id: int):
     return coupon
 
 
+def get_deleted_coupons(db: Session, company_id: int = None):
+    """Get all soft-deleted coupons, optionally filtered by company"""
+    query = db.query(models.Coupon).filter(models.Coupon.status == "DELETED")
+    if company_id:
+        query = query.filter(models.Coupon.company_id == company_id)
+    return query.order_by(models.Coupon.created_at.desc()).all()
+
+
+def restore_coupon(db: Session, coupon_id: int):
+    """Restore a soft-deleted coupon"""
+    coupon = db.query(models.Coupon).filter(models.Coupon.id == coupon_id).first()
+    if not coupon:
+        return None
+    
+    coupon.status = "ACTIVE"
+    db.commit()
+    db.refresh(coupon)
+    return coupon
+
+
+def permanent_delete_coupon(db: Session, coupon_id: int):
+    """Permanently delete a coupon from the database"""
+    coupon = db.query(models.Coupon).filter(models.Coupon.id == coupon_id).first()
+    if not coupon:
+        return None
+    
+    db.delete(coupon)
+    db.commit()
+    return True
+
+
 # Redemption CRUD
 def create_redemption(db: Session, user_id: int, coupon_id: int, points_spent: int):
     # Generate unique verification code
