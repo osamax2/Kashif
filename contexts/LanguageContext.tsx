@@ -55,31 +55,25 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         // Continue anyway - local storage is more important
       }
 
-      // Update state
+      // Update state immediately
       setLanguageState(newLang);
       setRtl(isRTL());
       setLocale(getLocale());
 
-      // Show restart prompt
+      // Show simple alert that language changed
       Alert.alert(
-        t('settings.restartRequired'),
-        t('settings.languageChanged'),
+        newLang === 'ar' ? 'تم تغيير اللغة' : 'Language Changed',
+        newLang === 'ar' 
+          ? 'الرجاء إغلاق التطبيق وإعادة فتحه لتطبيق التغييرات بالكامل'
+          : 'Please close and reopen the app to apply all changes',
         [
           {
-            text: t('settings.restartLater'),
-            style: 'cancel',
-          },
-          {
-            text: t('settings.restartNow'),
+            text: newLang === 'ar' ? 'حسناً' : 'OK',
             onPress: () => {
-              // In Expo, we can't programmatically restart the app
-              // User needs to manually restart
-              Alert.alert(
-                t('common.success'),
-                newLang === 'ar' 
-                  ? 'الرجاء إغلاق التطبيق وإعادة فتحه لتطبيق التغييرات'
-                  : 'Please close and reopen the app to apply changes'
-              );
+              // Force state update
+              setLanguageState(newLang);
+              setRtl(isRTL());
+              setLocale(getLocale());
             },
           },
         ]

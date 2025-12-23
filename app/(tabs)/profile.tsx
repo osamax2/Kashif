@@ -11,16 +11,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
-    I18nManager, Image, Linking,
+    Image, Linking,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from "react-native";
-
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
 
 const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
