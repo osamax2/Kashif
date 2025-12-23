@@ -8,10 +8,10 @@ import sys
 
 # Server configuration
 SERVER_USER = "root"
-SERVER_HOST = "38.127.216.236"
+SERVER_HOST = "87.106.51.243"
 SERVER_PASSWORD = "33Dpf178Lty9pzg_x31O35"
 # Root user's path
-REMOTE_BASE = "/root/Kashif_backend/Kashif/Backend"
+REMOTE_BASE = "/root/Kashif/Backend"
 
 # Files to upload
 FILES_TO_UPLOAD = [
@@ -19,6 +19,7 @@ FILES_TO_UPLOAD = [
     ("auth-service/crud.py", f"{REMOTE_BASE}/auth-service/crud.py"),
     ("auth-service/main.py", f"{REMOTE_BASE}/auth-service/main.py"),
     ("gamification-service/rabbitmq_consumer.py", f"{REMOTE_BASE}/gamification-service/rabbitmq_consumer.py"),
+    ("gamification-service/main.py", f"{REMOTE_BASE}/gamification-service/main.py"),
 ]
 
 def run_scp(local_file, remote_path):

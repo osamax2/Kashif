@@ -104,7 +104,7 @@ async def award_points(
         description=award.description
     )
     
-    # Publish PointsAwarded event
+    # Publish PointsAwarded event for notifications
     try:
         publish_event("points.awarded", {
             "user_id": transaction.user_id,
@@ -114,6 +114,18 @@ async def award_points(
         })
     except Exception as e:
         logger.error(f"Failed to publish PointsAwarded event: {e}")
+    
+    # Also publish points.transaction.created to update auth-service total_points
+    try:
+        publish_event("points.transaction.created", {
+            "user_id": transaction.user_id,
+            "points": transaction.points,
+            "transaction_type": transaction.transaction_type,
+            "description": transaction.description
+        })
+        logger.info(f"Published points.transaction.created event for admin award to user {transaction.user_id}")
+    except Exception as e:
+        logger.error(f"Failed to publish points.transaction.created event: {e}")
     
     return transaction
 
