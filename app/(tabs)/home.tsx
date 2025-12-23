@@ -368,11 +368,21 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             
             setUserLocation(userCoords);
             setReportLocation(userCoords); // Use GPS as default report location
-            setMapRegion({
+            
+            const newRegion = {
                 ...userCoords,
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
-            });
+            };
+            setMapRegion(newRegion);
+            
+            // Animate map to user location
+            setTimeout(() => {
+                if (mapRef.current) {
+                    mapRef.current.animateToRegion(newRegion, 1000);
+                    console.log('📍 Map animated to user location');
+                }
+            }, 500);
 
             await loadData(userCoords);
         } catch (error) {
