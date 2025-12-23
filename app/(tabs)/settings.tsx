@@ -18,16 +18,13 @@ import {
     View,
 } from "react-native";
 
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
-
 const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
 const CARD = "#133B7A";
 
 export default function SettingsScreen() {
     const { user, logout } = useAuth();
-    const { language, setLanguage, t } = useLanguage();
+    const { language, setLanguage, t, isRTL } = useLanguage();
     const [hideName, setHideName] = useState(false);
     const [notifReports, setNotifReports] = useState(true);
     const [notifPoints, setNotifPoints] = useState(false);
@@ -109,25 +106,25 @@ export default function SettingsScreen() {
 >
 
             {/* Header */}
-            <View style={styles.header}>
-                {/* Logout Icon – oben rechts (visuell) */}
+            <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                {/* Logout Icon */}
                 <TouchableOpacity onPress={handleLogout} style={styles.iconBtn}>
                     <Ionicons name="log-out-outline" size={28} color={YELLOW} />
                 </TouchableOpacity>
 
                 <Text style={styles.headerTitle}>{t('settings.title')}</Text>
 
-                {/* Back icon (like profile) */}
+                {/* Back icon */}
                 <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-                    <Ionicons name="chevron-forward" size={30} color={YELLOW} />
+                    <Ionicons name={isRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
                 </TouchableOpacity>
             </View>
 
             {/* USER ID + USERNAME */}
-            <Text style={styles.userId}>
+            <Text style={[styles.userId, { textAlign: isRTL ? 'right' : 'left' }]}>
                 <Text style={{ color: "#ccc" }}>   {t('profile.userId')} </Text>{user?.id ? `U-${user.id}` : 'U-2025-143'}
             </Text>
-            <Text style={styles.userName}>{user?.full_name || 'مستخدم'}</Text>
+            <Text style={[styles.userName, { textAlign: isRTL ? 'right' : 'left' }]}>{user?.full_name || 'مستخدم'}</Text>
 
             {/* ACTIONS */}
             <View
@@ -159,13 +156,13 @@ export default function SettingsScreen() {
                 {/* Language */}
                 <TouchableOpacity
                     onPress={() => setLanguageSheet(true)}
-                    style={styles.languageRow}
+                    style={[styles.languageRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                 >
-                     <View style={styles.languageSelector}>
+                     <View style={[styles.languageSelector, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                         <Text style={styles.languageValue}>{selectedLanguage}</Text>
                        
                     </View>
-                    <Text style={styles.languageLabel}>{t('settings.language')}: </Text>
+                    <Text style={[styles.languageLabel, { textAlign: isRTL ? 'right' : 'left' }]}>{t('settings.language')}: </Text>
 
                    
                 </TouchableOpacity>
@@ -199,7 +196,7 @@ export default function SettingsScreen() {
             />
 
             {/* Notifications */}
-            <Text style={styles.sectionTitle}>   {t('settings.notifications')}</Text>
+            <Text style={[styles.sectionTitle, { textAlign: isRTL ? 'right' : 'left' }]}>   {t('settings.notifications')}</Text>
 
             <View style={styles.card}>
                 <SwitchRow
@@ -224,8 +221,8 @@ export default function SettingsScreen() {
             </TouchableOpacity>
 
             {/* Logout Button */}
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                <Ionicons name="log-out-outline" size={22} color="#fff" style={{ marginLeft: 8 }} />
+            <TouchableOpacity style={[styles.logoutButton, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={handleLogout}>
+                <Ionicons name="log-out-outline" size={22} color="#fff" style={isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
                 <Text style={styles.logoutButtonText}>{t('auth.logout')}</Text>
             </TouchableOpacity>
 
@@ -303,16 +300,17 @@ export default function SettingsScreen() {
 
 /* COMPONENT: Switch Row */
 function SwitchRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+    const isRTL = I18nManager.isRTL;
     return (
-        <View style={styles.switchRow}>
-            <Text style={styles.switchText}>{label}</Text>
+        <View style={[styles.switchRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <Text style={[styles.switchText, { textAlign: isRTL ? 'right' : 'left' }]}>{label}</Text>
 
             <Switch
                 value={value}
                 onValueChange={onChange}
                 trackColor={{ false: "#777", true: YELLOW }}
                 thumbColor={value ? "#fff" : "#ccc"}
-                style={{ marginLeft: 4 }} // damit es rechts nicht rausfällt
+                style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }}
             />
         </View>
     );
@@ -324,13 +322,11 @@ const styles = StyleSheet.create({
         backgroundColor: BLUE,
         paddingHorizontal: 20,
         paddingTop: 45,
-        direction: "rtl",
          minHeight: "100%",
     },
 
     header: {
         width: "100%",
-        flexDirection: "row-reverse",
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 20,
@@ -355,7 +351,6 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         marginBottom: 8,
-        textAlign: "left",
         fontFamily: "Tajawal-Regular",
     },
 
@@ -363,7 +358,6 @@ const styles = StyleSheet.create({
         color: YELLOW,
         fontSize: 20,
         marginBottom: 20,
-        textAlign: "left",
         fontFamily: "Tajawal-Bold",
     },
 
@@ -391,7 +385,6 @@ const styles = StyleSheet.create({
 
     languageRow: {
         width: "100%",
-        flexDirection: "row-reverse",   // RTL Reihenfolge
         alignItems: "center",
         justifyContent: "space-between",
         paddingVertical: 8,
@@ -403,11 +396,9 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 14,
         fontFamily: "Tajawal-Medium",
-        textAlign: "right",
     },
 
     languageSelector: {
-        flexDirection: "row-reverse",
         alignItems: "center",
         gap: 8,
         marginRight: "auto",
@@ -431,11 +422,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 14,
         fontFamily: "Tajawal-Bold",
-        textAlign: "left",
     },
 
     switchRow: {
-        flexDirection: "row-reverse",   // TEXT rechts → SWITCH links
         justifyContent: "space-between",
         alignItems: "center",
         paddingVertical: 0,
@@ -446,8 +435,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: "Tajawal-Regular",
         flex: 1,
-        textAlign: "left",             // rechtsbündig
-        writingDirection: "rtl",
     },
 
     saveButton: {
@@ -471,7 +458,6 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: "center",
         marginTop: 16,
-        flexDirection: "row-reverse",
         justifyContent: "center",
     },
 
@@ -488,7 +474,6 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderColor: "rgba(255,255,255,0.25)",
         fontFamily: "Tajawal-Regular",
-        textAlign: "left",
     },
 
 });
