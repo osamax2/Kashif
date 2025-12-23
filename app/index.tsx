@@ -20,7 +20,7 @@ import { authAPI } from '../services/api';
 export default function Index() {
   const router = useRouter();
   const { setUser } = useAuth();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -98,32 +98,32 @@ export default function Index() {
           <View style={styles.form}>
             {/* E-Mail */}
             <View style={styles.field}>
-              <Text style={styles.label}>{t('auth.email')}</Text>
+              <Text style={[styles.label, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.email')}</Text>
               <RtlTextInput
                   value={email}
                   onChangeText={setEmail}
                   placeholder={t('auth.emailPlaceholder')}
                   placeholderTextColor="#AAB3C0"
-                  style={styles.inputUnderline}
-                  textAlign="right"
+                  style={[styles.inputUnderline, { textAlign: isRTL ? 'right' : 'left' }]}
+                  textAlign={isRTL ? 'right' : 'left'}
               />
             </View>
 
             {/* Passwort */}
             <View style={styles.field}>
-              <Text style={styles.label}>{t('auth.password')}</Text>
+              <Text style={[styles.label, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.password')}</Text>
               <View style={styles.passwordContainer}>
                 <RtlTextInput
                     secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={setPassword}
-                    style={styles.inputUnderline}
+                    style={[styles.inputUnderline, { textAlign: isRTL ? 'right' : 'left', paddingRight: isRTL ? 12 : 40, paddingLeft: isRTL ? 40 : 12 }]}
                     placeholder={t('auth.passwordPlaceholder')}
                     placeholderTextColor="#AAB3C0"
-                    textAlign="right"
+                    textAlign={isRTL ? 'right' : 'left'}
                 />
                 <TouchableOpacity
-                    style={styles.eyeTouch}
+                    style={[styles.eyeTouch, isRTL ? { left: 8 } : { right: 8 }]}
                     onPress={() => setShowPassword(!showPassword)}
                 >
                   <FontAwesome
@@ -172,18 +172,16 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "#033076", // Dunkelblau
-    // Alles physisch nach links
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "center",
     paddingVertical: 45,
     paddingHorizontal: 20,
-    direction: 'ltr',
   },
   header: {
     width: "100%",
-    flexDirection: "row", // LTR: logo left, text right
+    flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: I18nManager.isRTL ? "flex-end" : "flex-start",
     paddingTop: 14,
     paddingBottom: 15,
   },
@@ -200,16 +198,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 70,
     fontWeight: "800",
-    textAlign: "left",
-    writingDirection: 'ltr',
+    textAlign: I18nManager.isRTL ? "right" : "left",
     includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
   },
   appTag: {
     color: "#BFD7EA",
     fontSize: 25,
-    textAlign: "left",
-    writingDirection: 'ltr',
+    textAlign: I18nManager.isRTL ? "right" : "left",
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
@@ -218,8 +214,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     marginTop: -4,
-    textAlign: "left",
-    writingDirection: 'ltr',
+    textAlign: I18nManager.isRTL ? "right" : "left",
     includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
     marginVertical: 6,
@@ -228,8 +223,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#BFD7EA",
     marginBottom: 30,
-    textAlign: "left",
-    writingDirection: 'ltr',
+    textAlign: I18nManager.isRTL ? "right" : "left",
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
@@ -239,25 +233,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     display: "flex",
-    alignItems: 'flex-end',
-    direction:"ltr",
+    alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
     marginTop: 1,
     marginBottom: 20,
   },
   field: { 
     width: "100%", 
     marginBottom: 14,
-    alignItems: 'flex-end',
+    alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
   },
   form: {
     display: 'flex',
     width: '100%',
-    alignItems: 'flex-end',
+    alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
   },
   label: {
-    alignSelf: 'flex-end',
-    textAlign: 'left',
-    writingDirection:'ltr',
+    alignSelf: I18nManager.isRTL ? 'flex-end' : 'flex-start',
     color: '#F4B400',
     marginBottom: 8,
     fontSize: 16,
@@ -269,13 +260,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.4)",
     paddingVertical: 8,
-    paddingRight: 12,
-    paddingLeft: 0,
+    paddingHorizontal: 12,
     color: "#FFFFFF",
     includeFontPadding: false,
     textAlignVertical: 'center',
     fontSize: 14,
-    alignSelf: 'flex-end',
   },
   passwordContainer: {
     width: "100%",
@@ -285,7 +274,6 @@ const styles = StyleSheet.create({
   eyeTouch: {
     position: "absolute",
     top: 6,
-    left: 8,
     padding: 6,
   },
   eyeIcon: {
@@ -312,8 +300,6 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontWeight: "700",
     fontSize: 24,
-    textAlign: "left",
-    writingDirection: 'ltr',
     fontFamily: 'Tajawal-Medium',
   },
   boltIcon: { marginLeft: 8, backgroundColor: "#FFFFFF", padding: 2, borderRadius: 6 },

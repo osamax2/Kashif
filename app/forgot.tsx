@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
     Animated,
+    I18nManager,
     Modal,
     StyleSheet,
     Text,
@@ -10,9 +11,11 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { useLanguage } from "../contexts/LanguageContext";
 const BLUE = "#0D2B66";
 
 export default function ForgotScreen() {
+    const { t, isRTL } = useLanguage();
     const [method, setMethod] = useState<"email" | "phone" | null>(null);
     const [successVisible, setSuccessVisible] = useState(false);
     const [showBottomActions, setShowBottomActions] = useState(false);
@@ -43,10 +46,10 @@ export default function ForgotScreen() {
     return (
         <View style={styles.root}>
             {/* HEADER */}
-            <Text style={styles.title}>نسيت كلمة المرور</Text>
+            <Text style={styles.title}>{t('auth.forgot.title')}</Text>
 
             <Text style={styles.subtitle}>
-                اختر طريقة الاستعادة ثم أدخل بياناتك لإعادة تعيين كلمة المرور
+                {t('auth.forgot.subtitle')}
             </Text>
 
             {/* SELECT METHOD */}
@@ -59,7 +62,7 @@ export default function ForgotScreen() {
                         name="mail"
                         size={20}
                         color={method === "email" ? "#FFD166" : "#FFFFFF"}
-                        style={{ marginLeft: 6 }}
+                        style={isRTL ? { marginLeft: 6 } : { marginRight: 6 }}
                     />
                     <Text
                         style={[
@@ -67,7 +70,7 @@ export default function ForgotScreen() {
                             method === "email" && { color: "#FFD166" },
                         ]}
                     >
-                        البريد الإلكتروني
+                        {t('auth.forgot.methodEmail')}
                     </Text>
                 </TouchableOpacity>
 
@@ -79,7 +82,7 @@ export default function ForgotScreen() {
                         name="call"
                         size={20}
                         color={method === "phone" ? "#FFD166" : "#FFFFFF"}
-                        style={{ marginLeft: 6 }}
+                        style={isRTL ? { marginLeft: 6 } : { marginRight: 6 }}
                     />
                     <Text
                         style={[
@@ -87,7 +90,7 @@ export default function ForgotScreen() {
                             method === "phone" && { color: "#FFD166" },
                         ]}
                     >
-                        رقم الهاتف
+                        {t('auth.forgot.methodPhone')}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -110,7 +113,7 @@ export default function ForgotScreen() {
                         placeholder="example@email.com"
                         placeholderTextColor="#AAB3C0"
                         style={styles.input}
-                        textAlign="right"
+                        textAlign={isRTL ? 'right' : 'left'}
                     />
                 )}
 
@@ -120,7 +123,7 @@ export default function ForgotScreen() {
                         placeholderTextColor="#AAB3C0"
                         keyboardType="phone-pad"
                         style={styles.input}
-                        textAlign="right"
+                        textAlign={isRTL ? 'right' : 'left'}
                     />
                 )}
             </Animated.View>
@@ -128,7 +131,7 @@ export default function ForgotScreen() {
             {/* RESET */}
             {method && (
                 <TouchableOpacity style={styles.resetButton} onPress={() => router.push("/verify-code")}>
-                    <Text style={styles.resetText}>إعادة تعيين كلمة المرور</Text>
+                    <Text style={styles.resetText}>{t('auth.forgot.resetButton')}</Text>
                 </TouchableOpacity>
             )}
             {/* BOTTOM ACTIONS */}
@@ -136,8 +139,8 @@ export default function ForgotScreen() {
                 <View style={styles.bottomActions}>
 
             {/* BACK */}
-            <TouchableOpacity>
-                <Text style={styles.backLink}>العودة إلى تسجيل الدخول</Text>
+            <TouchableOpacity onPress={() => router.push("/")}>
+                <Text style={styles.backLink}>{t('auth.forgot.backToLogin')}</Text>
             </TouchableOpacity>
 
                 </View>
@@ -147,16 +150,16 @@ export default function ForgotScreen() {
             <Modal visible={successVisible} transparent animationType="fade">
                 <View style={styles.modalBg}>
                     <View style={styles.modalBox}>
-                        <Text style={styles.modalTitle}>🎉 تم الإرسال بنجاح</Text>
+                        <Text style={styles.modalTitle}>{t('auth.forgot.successTitle')}</Text>
                         <Text style={styles.modalMsg}>
-                            تم إرسال رمز التفعيل إلى هاتفك. يرجى التحقق والمتابعة.
+                            {t('auth.forgot.successMessage')}
                         </Text>
 
                         <TouchableOpacity
                             style={styles.modalBtn}
                             onPress={() => setSuccessVisible(false)}
                         >
-                            <Text style={styles.modalBtnText}>متابعة</Text>
+                            <Text style={styles.modalBtnText}>{t('auth.forgot.continue')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -171,7 +174,6 @@ const styles = StyleSheet.create({
         backgroundColor: BLUE,
         paddingTop: 80,
         paddingHorizontal: 24,
-        direction: "rtl",
     },
 
     title: {
@@ -191,14 +193,14 @@ const styles = StyleSheet.create({
     },
 
     pillsRow: {
-        flexDirection: "row-reverse",
+        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
         justifyContent: "center",
         gap: 10,
         marginTop: 10,
     },
 
     pill: {
-        flexDirection: "row-reverse",
+        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
         alignItems: "center",
         backgroundColor: "rgba(255,255,255,0.07)",
         paddingVertical: 10,

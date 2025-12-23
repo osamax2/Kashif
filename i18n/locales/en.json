@@ -47,7 +47,37 @@
     "phonePlaceholder": "+966 XX XXX XXXX",
     "registrationSuccess": "Registration Successful",
     "accountCreated": "Your account has been created successfully!",
-    "ok": "OK"
+    "ok": "OK",
+    "forgot": {
+      "title": "Forgot Password",
+      "subtitle": "Choose a recovery method and enter your details to reset your password",
+      "methodEmail": "Email",
+      "methodPhone": "Phone Number",
+      "resetButton": "Reset Password",
+      "backToLogin": "Back to Login",
+      "successTitle": "🎉 Sent Successfully",
+      "successMessage": "An activation code has been sent to your phone. Please verify and continue.",
+      "continue": "Continue"
+    },
+    "verifyCode": {
+      "title": "Verify Your Identity",
+      "subtitle": "We've sent a six-digit code to your phone number",
+      "phoneMasked": "453***",
+      "codeLabel": "Activation Code",
+      "continueButton": "Continue",
+      "notReceived": "Didn't receive the code?",
+      "resend": "Resend",
+      "changePhone": "Change Phone Number",
+      "backToLogin": "Back to Login"
+    },
+    "resetPassword": {
+      "title": "New Password",
+      "subtitle": "Your new password must be different from the previous one,\nand contain at least 8 characters with letters, numbers, and symbols",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "resetButton": "Reset Password",
+      "backToLogin": "Back to Login"
+    }
   },
   "home": {
     "title": "Home",
@@ -260,6 +290,10 @@
     "enterPassword": "Please enter your password",
     "enterPhoneNumber": "Please enter your phone number",
     "passwordMinLength": "Password must be at least 6 characters",
+    "passwordRequirements": "Password must be at least 8 characters with a number, uppercase letter, and special character",
+    "invalidPhoneFormat": "Invalid phone number format",
+    "passwordRequirements": "Password must be at least 8 characters with a number, uppercase letter, and special character",
+    "invalidPhoneFormat": "Invalid phone number format",
     "mustAgreeToTerms": "You must agree to the Terms of Use and Privacy Policy",
     "loginError": "An error occurred during login",
     "registerError": "An error occurred during registration",
