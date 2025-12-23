@@ -485,6 +485,19 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         return "📍";
     };
     
+    // Get category color for markers
+    const getCategoryColor = (categoryId: number): string => {
+        const category = categories.find(c => c.id === categoryId);
+        if (category?.color) return category.color;
+        
+        // Fallback colors based on category name
+        const name = category?.name_ar || category?.name_en || category?.name || "";
+        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "#22C55E"; // Green
+        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "#EF4444"; // Red
+        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "#F59E0B"; // Amber
+        return "#3B82F6"; // Default blue
+    };
+    
     // Navigate to selected place
     const navigateToPlace = (latitude: number, longitude: number, title: string) => {
         console.log('\ud83e\uddedNavigating to place:', { latitude, longitude, title });
@@ -736,14 +749,8 @@ async function playBeep(value: number) {
             <View style={styles.categoriesRow}>
                 {categories.slice(0, 3).map((category) => {
                     const isActive = activeFilters.includes(category.id);
-                    // Use color from database, fallback to default colors
-                    const color = category.color || (
-                        category.name_ar?.includes("كاشف") || category.name_ar?.includes("سرعة") || category.name_en?.includes("Speed")
-                            ? "#00FF00" // Green for speed camera
-                            : category.name_ar?.includes("حادث") || category.name_en?.includes("Accident")
-                            ? "#FF0000" // Red for accident
-                            : "#FFD700" // Yellow/Gold for pothole
-                    );
+                    // Use color from database with getCategoryColor helper
+                    const color = getCategoryColor(category.id);
                     
                     // Display Arabic name if available, otherwise English
                     const displayName = category.name_ar || category.name_en || category.name;
@@ -823,6 +830,8 @@ async function playBeep(value: number) {
                                 return null;
                             }
                             
+                            const categoryColor = getCategoryColor(report.category_id);
+                            
                             return (
                                 <Marker 
                                     key={`report-${report.id}`}
@@ -833,8 +842,8 @@ async function playBeep(value: number) {
                                     title={report.title || categories.find(c => c.id === report.category_id)?.name || (language === 'ar' ? 'بلاغ' : 'Report')}
                                     description={report.description}
                                 >
-                                    <View style={styles.marker}>
-                                        <Text style={{ fontSize: 18 }}>{getCategoryIcon(report.category_id)}</Text>
+                                    <View style={[styles.marker, { backgroundColor: categoryColor }]}>
+                                        <Text style={{ fontSize: 14, color: '#FFFFFF' }}>{getCategoryIcon(report.category_id)}</Text>
                                     </View>
                                 </Marker>
                             );
@@ -1156,7 +1165,18 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         backgroundColor: "#123a7a",
     },
-    marker: { backgroundColor: "#fff", padding: 2, borderRadius: 8 },
+    marker: { 
+        backgroundColor: "#fff", 
+        padding: 6, 
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+        elevation: 4,
+    },
 
     fab: {
         position: "absolute",

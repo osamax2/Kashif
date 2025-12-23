@@ -10,9 +10,34 @@ interface ReportCategory {
   id: number;
   name: string;
   name_ar?: string;
+  color?: string;
   description?: string;
   created_at: string;
 }
+
+// Predefined color palette for easy selection
+const COLOR_PALETTE = [
+  '#EF4444', // Red
+  '#F97316', // Orange
+  '#F59E0B', // Amber
+  '#EAB308', // Yellow
+  '#84CC16', // Lime
+  '#22C55E', // Green
+  '#10B981', // Emerald
+  '#14B8A6', // Teal
+  '#06B6D4', // Cyan
+  '#0EA5E9', // Sky
+  '#3B82F6', // Blue
+  '#6366F1', // Indigo
+  '#8B5CF6', // Violet
+  '#A855F7', // Purple
+  '#D946EF', // Fuchsia
+  '#EC4899', // Pink
+  '#F43F5E', // Rose
+  '#78716C', // Stone
+  '#6B7280', // Gray
+  '#1F2937', // Dark
+];
 
 export default function ReportCategoriesPage() {
   const router = useRouter();
@@ -28,8 +53,10 @@ export default function ReportCategoriesPage() {
   const [formData, setFormData] = useState({
     name: '',
     name_ar: '',
+    color: '#3B82F6',
     description: '',
   });
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -48,8 +75,9 @@ export default function ReportCategoriesPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', name_ar: '', description: '' });
+    setFormData({ name: '', name_ar: '', color: '#3B82F6', description: '' });
     setSelectedCategory(null);
+    setShowColorPicker(false);
   };
 
   const handleCreate = async () => {
@@ -77,6 +105,7 @@ export default function ReportCategoriesPage() {
     setFormData({
       name: category.name,
       name_ar: category.name_ar || '',
+      color: category.color || '#3B82F6',
       description: category.description || '',
     });
     setShowEditModal(true);
@@ -177,6 +206,9 @@ export default function ReportCategoriesPage() {
                   {isRTL ? 'الاسم (عربي)' : 'Name (Arabic)'}
                 </th>
                 <th className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {isRTL ? 'اللون' : 'Color'}
+                </th>
+                <th className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                   {isRTL ? 'الوصف' : 'Description'}
                 </th>
                 <th className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -187,7 +219,7 @@ export default function ReportCategoriesPage() {
             <tbody className="divide-y divide-gray-200">
               {categories.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     {isRTL ? 'لا توجد فئات' : 'No categories found'}
                   </td>
                 </tr>
@@ -202,6 +234,19 @@ export default function ReportCategoriesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {category.name_ar || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {category.color ? (
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-6 h-6 rounded-full border border-gray-300 shadow-sm"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="text-xs text-gray-500 font-mono">{category.color}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
                       {category.description || '-'}
@@ -264,6 +309,62 @@ export default function ReportCategoriesPage() {
                   placeholder={isRTL ? 'مثال: حفرة' : 'e.g., حفرة'}
                   dir="rtl"
                 />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'اللون' : 'Color'}
+                </label>
+                <div className="space-y-3">
+                  {/* Color preview and manual input */}
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-lg border-2 border-gray-300 shadow-sm cursor-pointer"
+                      style={{ backgroundColor: formData.color }}
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                    />
+                    <input
+                      type="text"
+                      value={formData.color}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        if (!value.startsWith('#')) value = '#' + value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                          setFormData({ ...formData, color: value.toUpperCase() });
+                        }
+                      }}
+                      className="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono text-sm"
+                      placeholder="#3B82F6"
+                      maxLength={7}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                      className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                    >
+                      {showColorPicker ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'اختيار' : 'Pick')}
+                    </button>
+                  </div>
+                  {/* Color palette */}
+                  {showColorPicker && (
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="grid grid-cols-10 gap-1.5">
+                        {COLOR_PALETTE.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, color });
+                              setShowColorPicker(false);
+                            }}
+                            className={`w-6 h-6 rounded-md border-2 transition hover:scale-110 ${formData.color === color ? 'border-gray-900 ring-2 ring-offset-1 ring-gray-400' : 'border-transparent'}`}
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
@@ -331,6 +432,62 @@ export default function ReportCategoriesPage() {
                   className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isRTL ? 'text-right' : ''}`}
                   dir="rtl"
                 />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'اللون' : 'Color'}
+                </label>
+                <div className="space-y-3">
+                  {/* Color preview and manual input */}
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-lg border-2 border-gray-300 shadow-sm cursor-pointer"
+                      style={{ backgroundColor: formData.color }}
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                    />
+                    <input
+                      type="text"
+                      value={formData.color}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        if (!value.startsWith('#')) value = '#' + value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                          setFormData({ ...formData, color: value.toUpperCase() });
+                        }
+                      }}
+                      className="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                      placeholder="#3B82F6"
+                      maxLength={7}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                      className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                    >
+                      {showColorPicker ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'اختيار' : 'Pick')}
+                    </button>
+                  </div>
+                  {/* Color palette */}
+                  {showColorPicker && (
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="grid grid-cols-10 gap-1.5">
+                        {COLOR_PALETTE.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, color });
+                              setShowColorPicker(false);
+                            }}
+                            className={`w-6 h-6 rounded-md border-2 transition hover:scale-110 ${formData.color === color ? 'border-gray-900 ring-2 ring-offset-1 ring-gray-400' : 'border-transparent'}`}
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
