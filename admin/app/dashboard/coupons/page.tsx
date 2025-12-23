@@ -3,9 +3,21 @@
 import ImageUpload from '@/components/ImageUpload';
 import { couponsAPI, getImageUrl } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { Building2, Plus, Tag } from 'lucide-react';
+import { Building2, Plus, RotateCcw, Tag, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+
+// Helper function to convert Arabic numerals to English and only allow digits
+const sanitizeToEnglishNumbers = (value: string): string => {
+  // Map Arabic numerals (٠١٢٣٤٥٦٧٨٩) to English (0-9)
+  const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  let sanitized = value;
+  arabicNumerals.forEach((arabic, index) => {
+    sanitized = sanitized.replaceAll(arabic, String(index));
+  });
+  // Remove any non-digit characters except empty string
+  return sanitized.replaceAll(/\D/g, '');
+};
 
 interface Coupon {
   id: number;
@@ -42,6 +54,9 @@ export default function CouponsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showTrashModal, setShowTrashModal] = useState(false);
+  const [deletedCoupons, setDeletedCoupons] = useState<Coupon[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [companySearch, setCompanySearch] = useState('');
   const [showCompanySuggestions, setShowCompanySuggestions] = useState(false);
@@ -134,6 +149,49 @@ export default function CouponsPage() {
       console.error('Failed to load coupons:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDeletedCoupons = async () => {
+    try {
+      setTrashLoading(true);
+      const companyId = isCompanyUser && userProfile?.company_id ? userProfile.company_id : undefined;
+      const data = await couponsAPI.getDeletedCoupons(companyId);
+      setDeletedCoupons(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load deleted coupons:', error);
+      setDeletedCoupons([]);
+    } finally {
+      setTrashLoading(false);
+    }
+  };
+
+  const handleOpenTrash = async () => {
+    setShowTrashModal(true);
+    await loadDeletedCoupons();
+  };
+
+  const handleRestoreCoupon = async (couponId: number) => {
+    try {
+      await couponsAPI.restoreCoupon(couponId);
+      setDeletedCoupons(deletedCoupons.filter(c => c.id !== couponId));
+      loadCoupons();
+    } catch (error) {
+      console.error('Failed to restore coupon:', error);
+      alert(isRTL ? 'فشل في استعادة الكوبون' : 'Failed to restore coupon');
+    }
+  };
+
+  const handlePermanentDelete = async (couponId: number) => {
+    if (!confirm(isRTL ? 'هل أنت متأكد من الحذف النهائي؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to permanently delete? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      await couponsAPI.permanentDeleteCoupon(couponId);
+      setDeletedCoupons(deletedCoupons.filter(c => c.id !== couponId));
+    } catch (error) {
+      console.error('Failed to permanently delete coupon:', error);
+      alert(isRTL ? 'فشل في الحذف النهائي' : 'Failed to permanently delete');
     }
   };
 
@@ -378,6 +436,13 @@ export default function CouponsPage() {
             </>
           )}
           <button
+            onClick={handleOpenTrash}
+            className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">{isRTL ? 'المحذوفات' : 'Trash'}</span>
+          </button>
+          <button
             onClick={() => {
               resetForm();
               setShowCreateModal(true);
@@ -577,6 +642,77 @@ export default function CouponsPage() {
           </div>
         </div>
       )}
+
+      {/* Trash Modal */}
+      {showTrashModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className={`flex justify-between items-center mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h2 className={`text-xl font-bold text-gray-900 ${isRTL ? 'text-right' : ''}`}>
+                {isRTL ? 'الكوبونات المحذوفة' : 'Deleted Coupons'}
+              </h2>
+              <button
+                onClick={() => setShowTrashModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto">
+              {trashLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : deletedCoupons.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Trash2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>{isRTL ? 'لا توجد كوبونات محذوفة' : 'No deleted coupons'}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {deletedCoupons.map((coupon) => {
+                    const company = companies.find(c => c.id === coupon.company_id);
+                    const category = categories.find(c => c.id === coupon.coupon_category_id);
+                    return (
+                      <div key={coupon.id} className="border rounded-lg p-4 bg-gray-50">
+                        <div className={`flex justify-between items-start mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div>
+                            <h3 className={`font-semibold text-gray-900 ${isRTL ? 'text-right' : ''}`}>{coupon.name}</h3>
+                            <p className={`text-sm text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+                              {company?.name || '-'} • {category?.name || '-'}
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-primary">{coupon.points_cost} pts</span>
+                        </div>
+                        <p className={`text-sm text-gray-600 mb-3 line-clamp-2 ${isRTL ? 'text-right' : ''}`}>
+                          {coupon.description}
+                        </p>
+                        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <button
+                            onClick={() => handleRestoreCoupon(coupon.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            {isRTL ? 'استعادة' : 'Restore'}
+                          </button>
+                          <button
+                            onClick={() => handlePermanentDelete(coupon.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            {isRTL ? 'حذف نهائي' : 'Delete Forever'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -613,15 +749,15 @@ function CouponForm({
       <div>
         <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.pointsCost} *</label>
         <input
-          type="number"
-          min="0"
-          max="100000"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={formData.points_cost}
           onChange={(e) => {
-            const value = e.target.value;
-            const numValue = parseInt(value) || 0;
-            if (value === '' || (numValue >= 0 && numValue <= 100000)) {
-              setFormData({ ...formData, points_cost: value });
+            const sanitizedValue = sanitizeToEnglishNumbers(e.target.value);
+            const numValue = parseInt(sanitizedValue) || 0;
+            if (sanitizedValue === '' || (numValue >= 0 && numValue <= 100000)) {
+              setFormData({ ...formData, points_cost: sanitizedValue });
             }
           }}
           className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
@@ -629,7 +765,7 @@ function CouponForm({
           required
         />
         <p className={`text-xs text-gray-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
-          {isRTL ? 'أدخل رقم بين 0 و 100000' : 'Enter a number between 0 and 100,000'}
+          {isRTL ? 'أدخل رقم بين 0 و 100000 (أرقام إنجليزية فقط)' : 'Enter a number between 0 and 100,000 (English numbers only)'}
         </p>
       </div>
 
@@ -717,20 +853,32 @@ function CouponForm({
       <div>
         <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.maxUsagePerUser}</label>
         <input
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={formData.max_usage_per_user}
-          onChange={(e) => setFormData({ ...formData, max_usage_per_user: e.target.value })}
+          onChange={(e) => {
+            const sanitizedValue = sanitizeToEnglishNumbers(e.target.value);
+            setFormData({ ...formData, max_usage_per_user: sanitizedValue });
+          }}
           className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          placeholder={isRTL ? 'أرقام إنجليزية فقط' : 'English numbers only'}
         />
       </div>
 
       <div>
         <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.totalAvailable}</label>
         <input
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={formData.total_available}
-          onChange={(e) => setFormData({ ...formData, total_available: e.target.value })}
+          onChange={(e) => {
+            const sanitizedValue = sanitizeToEnglishNumbers(e.target.value);
+            setFormData({ ...formData, total_available: sanitizedValue });
+          }}
           className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          placeholder={isRTL ? 'أرقام إنجليزية فقط' : 'English numbers only'}
         />
       </div>
 

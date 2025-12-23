@@ -273,6 +273,23 @@ export const couponsAPI = {
     return response.data;
   },
   
+  // Coupon Trash management
+  getDeletedCoupons: async (companyId?: number) => {
+    const params = companyId ? `?company_id=${companyId}` : '';
+    const response = await api.get(`/api/coupons/trash${params}`);
+    return response.data;
+  },
+  
+  restoreCoupon: async (couponId: number) => {
+    const response = await api.post(`/api/coupons/${couponId}/restore`);
+    return response.data;
+  },
+  
+  permanentDeleteCoupon: async (couponId: number) => {
+    const response = await api.delete(`/api/coupons/${couponId}/permanent`);
+    return response.data;
+  },
+  
   getCompanies: async () => {
     const response = await api.get('/api/coupons/companies');
     return response.data;

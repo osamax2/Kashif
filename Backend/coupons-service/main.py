@@ -322,6 +322,73 @@ async def delete_coupon(
     return deleted_coupon
 
 
+@app.get("/trash", response_model=List[schemas.Coupon])
+async def get_deleted_coupons(
+    company_id: Optional[int] = None,
+    user_role: str = Depends(get_user_role),
+    user_company_id: Optional[int] = Depends(get_user_company_id),
+    db: Session = Depends(get_db)
+):
+    """Get soft-deleted coupons (admin sees all, company sees own)"""
+    if user_role == "COMPANY":
+        return crud.get_deleted_coupons(db=db, company_id=user_company_id)
+    return crud.get_deleted_coupons(db=db, company_id=company_id)
+
+
+@app.post("/{coupon_id}/restore", response_model=schemas.Coupon)
+async def restore_coupon(
+    coupon_id: int,
+    user_role: str = Depends(get_user_role),
+    user_company_id: Optional[int] = Depends(get_user_company_id),
+    db: Session = Depends(get_db)
+):
+    """Restore a soft-deleted coupon"""
+    coupon = db.query(models.Coupon).filter(models.Coupon.id == coupon_id).first()
+    if not coupon:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Coupon not found"
+        )
+    
+    # COMPANY users can only restore their own coupons
+    if user_role == "COMPANY":
+        if coupon.company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only restore coupons for your own company"
+            )
+    
+    restored_coupon = crud.restore_coupon(db=db, coupon_id=coupon_id)
+    return restored_coupon
+
+
+@app.delete("/{coupon_id}/permanent")
+async def permanent_delete_coupon(
+    coupon_id: int,
+    user_role: str = Depends(get_user_role),
+    user_company_id: Optional[int] = Depends(get_user_company_id),
+    db: Session = Depends(get_db)
+):
+    """Permanently delete a coupon (admin or company owner only)"""
+    coupon = db.query(models.Coupon).filter(models.Coupon.id == coupon_id).first()
+    if not coupon:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Coupon not found"
+        )
+    
+    # COMPANY users can only delete their own coupons
+    if user_role == "COMPANY":
+        if coupon.company_id != user_company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only permanently delete coupons for your own company"
+            )
+    
+    crud.permanent_delete_coupon(db=db, coupon_id=coupon_id)
+    return {"message": "Coupon permanently deleted"}
+
+
 @app.post("/{coupon_id}/redeem", response_model=schemas.CouponRedemption)
 async def redeem_coupon(
     coupon_id: int,

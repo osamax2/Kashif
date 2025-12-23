@@ -332,8 +332,8 @@
   "coupons": {
     "screenTitle": "القسائم",
     "tabs": {
-      "active": "متاحة",
-      "inactive": "منتهية"
+      "active": "المتاحة",
+      "inactive": "المنتهية"
     },
     "searchPlaceholder": "ابحث عن قسيمة",
     "loading": "جاري جلب القسائم...",

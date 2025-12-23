@@ -2,7 +2,7 @@
 
 import { authAPI, couponsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { ArrowLeft, Edit, Plus, Trash2, Users, X } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, RotateCcw, Trash2, Users, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -31,6 +31,9 @@ export default function TeamPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showTrashModal, setShowTrashModal] = useState(false);
+  const [deletedMembers, setDeletedMembers] = useState<TeamMember[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [editFormData, setEditFormData] = useState({
     full_name: '',
@@ -96,6 +99,54 @@ export default function TeamPage() {
       console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDeletedMembers = async () => {
+    try {
+      setTrashLoading(true);
+      // Get deleted users and filter by company
+      const data = await usersAPI.getDeletedUsers();
+      const profile = await authAPI.getProfile();
+      // Filter deleted members that belong to the same company
+      const companyDeletedMembers = Array.isArray(data) 
+        ? data.filter((u: any) => u.company_id === profile.company_id)
+        : [];
+      setDeletedMembers(companyDeletedMembers);
+    } catch (error) {
+      console.error('Failed to load deleted members:', error);
+      setDeletedMembers([]);
+    } finally {
+      setTrashLoading(false);
+    }
+  };
+
+  const handleOpenTrash = async () => {
+    setShowTrashModal(true);
+    await loadDeletedMembers();
+  };
+
+  const handleRestoreMember = async (userId: number) => {
+    try {
+      await usersAPI.restoreUser(userId);
+      setDeletedMembers(deletedMembers.filter(m => m.id !== userId));
+      loadData();
+    } catch (error) {
+      console.error('Failed to restore member:', error);
+      alert(isRTL ? 'فشل في استعادة العضو' : 'Failed to restore member');
+    }
+  };
+
+  const handlePermanentDeleteMember = async (userId: number) => {
+    if (!confirm(isRTL ? 'هل أنت متأكد من الحذف النهائي؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to permanently delete? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      await usersAPI.permanentDeleteUser(userId);
+      setDeletedMembers(deletedMembers.filter(m => m.id !== userId));
+    } catch (error) {
+      console.error('Failed to permanently delete member:', error);
+      alert(isRTL ? 'فشل في الحذف النهائي' : 'Failed to permanently delete');
     }
   };
 
@@ -231,18 +282,27 @@ export default function TeamPage() {
           </div>
         </div>
         
-        <button
-          onClick={() => setShowAddModal(true)}
-          disabled={!canAddMore}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
-            canAddMore 
-              ? 'bg-primary text-white hover:bg-blue-700' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          } ${isRTL ? 'flex-row-reverse' : ''}`}
-        >
-          <Plus className="w-5 h-5" />
-          {isRTL ? 'إضافة عضو' : 'Add Member'}
-        </button>
+        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <button
+            onClick={handleOpenTrash}
+            className={`flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Trash2 className="w-5 h-5" />
+            {isRTL ? 'المحذوفات' : 'Trash'}
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            disabled={!canAddMore}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+              canAddMore 
+                ? 'bg-primary text-white hover:bg-blue-700' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            } ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Plus className="w-5 h-5" />
+            {isRTL ? 'إضافة عضو' : 'Add Member'}
+          </button>
+        </div>
       </div>
 
       {/* Limit Warning */}
@@ -552,6 +612,70 @@ export default function TeamPage() {
               >
                 {isRTL ? 'حفظ' : 'Save'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trash Modal */}
+      {showTrashModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className={`flex justify-between items-center mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h2 className={`text-xl font-bold text-gray-900 ${isRTL ? 'text-right' : ''}`}>
+                {isRTL ? 'الأعضاء المحذوفين' : 'Deleted Members'}
+              </h2>
+              <button
+                onClick={() => setShowTrashModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto">
+              {trashLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : deletedMembers.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Trash2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>{isRTL ? 'لا يوجد أعضاء محذوفين' : 'No deleted members'}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {deletedMembers.map((member) => (
+                    <div key={member.id} className="border rounded-lg p-4 bg-gray-50">
+                      <div className={`flex justify-between items-start ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div>
+                          <h3 className={`font-semibold text-gray-900 ${isRTL ? 'text-right' : ''}`}>{member.full_name}</h3>
+                          <p className={`text-sm text-gray-500 ${isRTL ? 'text-right' : ''}`}>{member.email}</p>
+                          {member.phone && (
+                            <p className={`text-sm text-gray-500 ${isRTL ? 'text-right' : ''}`}>{member.phone}</p>
+                          )}
+                        </div>
+                        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <button
+                            onClick={() => handleRestoreMember(member.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            {isRTL ? 'استعادة' : 'Restore'}
+                          </button>
+                          <button
+                            onClick={() => handlePermanentDeleteMember(member.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            {isRTL ? 'حذف نهائي' : 'Delete Forever'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
