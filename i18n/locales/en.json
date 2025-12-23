@@ -332,11 +332,13 @@
     "screenTitle": "Rewards",
     "tabs": {
       "active": "Available",
-      "inactive": "Expired"
+      "inactive": "Expired",
+      "used": "Used"
     },
     "searchPlaceholder": "Search for coupons",
     "loading": "Fetching coupons...",
     "empty": "No coupons found",
+    "emptyUsed": "No used coupons",
     "loadError": "We couldn't load coupons. Pull to refresh.",
     "badgeLabel": "Exclusive offer",
     "pointsLabel": "{{points}} pts",
@@ -347,6 +349,10 @@
       "expired": "Expired",
       "available": "Inactive"
     },
+    "verified": "Verified",
+    "showQR": "Show QR",
+    "alreadyVerifiedTitle": "Already Verified",
+    "alreadyVerifiedMessage": "This coupon has already been scanned and verified.",
     "redeemButton": "Redeem now",
     "viewDetails": "View details",
     "redeemInsufficientLabel": "You need {{points}} to redeem this reward.",

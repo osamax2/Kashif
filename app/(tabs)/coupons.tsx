@@ -3,11 +3,11 @@ import CouponCard from "@/components/CouponCard";
 import QRCodeModal from "@/components/QRCodeModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCoupons } from "@/hooks/useCoupons";
+import { useCoupons, type CouponWithRedemption } from "@/hooks/useCoupons";
 import { couponsAPI, type Coupon } from "@/services/coupons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -40,6 +40,7 @@ export default function CouponsScreen() {
 
   const {
     filteredCoupons,
+    usedCoupons,
     activeTab,
     setActiveTab,
     search,
@@ -52,6 +53,28 @@ export default function CouponsScreen() {
   } = useCoupons({ initialTab: "active" });
 
   const userPoints = user?.total_points ?? 0;
+
+  // Handle showing QR code for used coupons
+  const handleShowUsedCouponQR = useCallback((couponWithRedemption: CouponWithRedemption) => {
+    if (!couponWithRedemption.redemption) return;
+    
+    // If already verified (scanned), don't show QR
+    if (couponWithRedemption.redemption.verified_at) {
+      Alert.alert(
+        t("coupons.alreadyVerifiedTitle"),
+        t("coupons.alreadyVerifiedMessage")
+      );
+      return;
+    }
+    
+    // Show QR code for unverified redemption
+    setRedemptionData({
+      verificationCode: couponWithRedemption.redemption.verification_code,
+      couponName: couponWithRedemption.name,
+      pointsSpent: couponWithRedemption.redemption.points_spent,
+    });
+    setQrModalVisible(true);
+  }, [t]);
 
   useEffect(() => {
     if (loading) {
@@ -173,6 +196,23 @@ export default function CouponsScreen() {
         <TouchableOpacity
           style={[
             styles.tabItem,
+            activeTab === "used" && styles.tabItemActive,
+          ]}
+          onPress={() => setActiveTab("used")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "used" && styles.tabTextActive,
+            ]}
+          >
+            {t("coupons.tabs.used")}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
             activeTab === "active" && styles.tabItemActive,
           ]}
           onPress={() => setActiveTab("active")}
@@ -228,24 +268,51 @@ export default function CouponsScreen() {
               />
             }
           >
-            {filteredCoupons.map((c) => (
-              <CouponCard
-                key={c.id}
-                coupon={c}
-                onPress={() =>
-                  router.push({ pathname: "/coupon-details", params: { id: String(c.id) } })
-                }
-                onRedeem={handleRedeem}
-                isRedeeming={redeemingId === c.id}
-                canRedeem={canRedeemMap.get(c.id) ?? true}
-                showInsufficientMessage={!!user}
-              />
-            ))}
-
-            {filteredCoupons.length === 0 && (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>{t("coupons.empty")}</Text>
-              </View>
+            {/* Show used coupons for "used" tab */}
+            {activeTab === "used" ? (
+              <>
+                {usedCoupons.map((c) => (
+                  <TouchableOpacity
+                    key={`used-${c.id}-${c.redemption?.id}`}
+                    onPress={() => handleShowUsedCouponQR(c)}
+                    activeOpacity={0.7}
+                  >
+                    <CouponCard
+                      coupon={c}
+                      onPress={() => handleShowUsedCouponQR(c)}
+                      hideRedeemButton
+                      isVerified={!!c.redemption?.verified_at}
+                      showVerifiedBadge
+                    />
+                  </TouchableOpacity>
+                ))}
+                {usedCoupons.length === 0 && (
+                  <View style={styles.emptyBox}>
+                    <Text style={styles.emptyText}>{t("coupons.emptyUsed")}</Text>
+                  </View>
+                )}
+              </>
+            ) : (
+              <>
+                {filteredCoupons.map((c) => (
+                  <CouponCard
+                    key={c.id}
+                    coupon={c}
+                    onPress={() =>
+                      router.push({ pathname: "/coupon-details", params: { id: String(c.id) } })
+                    }
+                    onRedeem={handleRedeem}
+                    isRedeeming={redeemingId === c.id}
+                    canRedeem={canRedeemMap.get(c.id) ?? true}
+                    showInsufficientMessage={!!user}
+                  />
+                ))}
+                {filteredCoupons.length === 0 && (
+                  <View style={styles.emptyBox}>
+                    <Text style={styles.emptyText}>{t("coupons.empty")}</Text>
+                  </View>
+                )}
+              </>
             )}
           </ScrollView>
         </Animated.View>

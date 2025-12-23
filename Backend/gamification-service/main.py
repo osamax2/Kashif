@@ -109,7 +109,7 @@ async def award_points(
         publish_event("points.awarded", {
             "user_id": transaction.user_id,
             "points": transaction.points,
-            "transaction_type": transaction.transaction_type,
+            "transaction_type": transaction.type,
             "description": transaction.description
         })
     except Exception as e:
@@ -120,7 +120,7 @@ async def award_points(
         publish_event("points.transaction.created", {
             "user_id": transaction.user_id,
             "points": transaction.points,
-            "transaction_type": transaction.transaction_type,
+            "transaction_type": transaction.type,
             "description": transaction.description
         })
         logger.info(f"Published points.transaction.created event for admin award to user {transaction.user_id}")
@@ -155,7 +155,19 @@ async def redeem_points(
         description=f"Redeemed for coupon {redemption.coupon_id}"
     )
     
-    # Publish PointsRedeemed event
+    # Publish points.transaction.created to update auth-service total_points (negative points)
+    try:
+        publish_event("points.transaction.created", {
+            "user_id": user_id,
+            "points": -redemption.points,
+            "transaction_type": "redemption",
+            "description": f"Redeemed for coupon {redemption.coupon_id}"
+        })
+        logger.info(f"Published points.transaction.created event for redemption: user {user_id}, points -{redemption.points}")
+    except Exception as e:
+        logger.error(f"Failed to publish points.transaction.created event: {e}")
+    
+    # Publish PointsRedeemed event for notifications
     try:
         publish_event("points.redeemed", {
             "user_id": user_id,

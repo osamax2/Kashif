@@ -34,6 +34,7 @@
     "android": {
       "package": "com.kashif.app",
       "versionCode": 1,
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#0D2B66",
         "foregroundImage": "./assets/images/icon.png",

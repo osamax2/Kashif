@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useLanguage } from "@/contexts/LanguageContext";
-import { couponsAPI, isCouponActive, type Coupon } from "@/services/coupons";
+import { couponsAPI, isCouponActive, type Coupon, type CouponRedemption } from "@/services/coupons";
 
-export type CouponTab = "active" | "inactive";
+export type CouponTab = "active" | "inactive" | "used";
 
 export interface UseCouponsOptions {
   initialTab?: CouponTab;
   limit?: number;
 }
 
+export interface CouponWithRedemption extends Coupon {
+  redemption?: CouponRedemption;
+}
+
 interface UseCouponsResult {
   coupons: Coupon[];
   filteredCoupons: Coupon[];
+  usedCoupons: CouponWithRedemption[];
+  redemptions: CouponRedemption[];
   search: string;
   setSearch: (value: string) => void;
   activeTab: CouponTab;
@@ -26,6 +32,7 @@ interface UseCouponsResult {
 
 export function useCoupons({ initialTab = "active", limit = 200 }: UseCouponsOptions = {}): UseCouponsResult {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [redemptions, setRedemptions] = useState<CouponRedemption[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,12 +41,21 @@ export function useCoupons({ initialTab = "active", limit = 200 }: UseCouponsOpt
   const { t } = useLanguage();
 
   const loadCoupons = useCallback(async () => {
-    const data = await couponsAPI.getCoupons({ limit });
+    const [couponsData, redemptionsData] = await Promise.all([
+      couponsAPI.getCoupons({ limit }),
+      couponsAPI.getMyRedemptions({ limit: 100 }).catch(() => [] as CouponRedemption[]),
+    ]);
 
-    if (Array.isArray(data) && data.length > 0) {
-      setCoupons(data);
+    if (Array.isArray(couponsData) && couponsData.length > 0) {
+      setCoupons(couponsData);
     } else {
       setCoupons([]);
+    }
+
+    if (Array.isArray(redemptionsData)) {
+      setRedemptions(redemptionsData);
+    } else {
+      setRedemptions([]);
     }
 
     setError(null);
@@ -96,6 +112,11 @@ export function useCoupons({ initialTab = "active", limit = 200 }: UseCouponsOpt
   }, [loadCoupons, t]);
 
   const filteredCoupons = useMemo(() => {
+    // For "used" tab, we handle separately
+    if (activeTab === "used") {
+      return [];
+    }
+
     const normalizedSearch = search.trim().toLowerCase();
 
     return coupons.filter((coupon) => {
@@ -115,9 +136,29 @@ export function useCoupons({ initialTab = "active", limit = 200 }: UseCouponsOpt
     });
   }, [activeTab, coupons, search]);
 
+  // Create usedCoupons by matching redemptions with coupons
+  const usedCoupons = useMemo((): CouponWithRedemption[] => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return redemptions
+      .map((redemption) => {
+        const coupon = coupons.find((c) => c.id === redemption.coupon_id);
+        if (!coupon) return null;
+        return { ...coupon, redemption };
+      })
+      .filter((item): item is CouponWithRedemption => {
+        if (!item) return false;
+        if (normalizedSearch.length === 0) return true;
+        const haystack = `${item.name} ${item.description}`.toLowerCase();
+        return haystack.includes(normalizedSearch);
+      });
+  }, [redemptions, coupons, search]);
+
   return {
     coupons,
     filteredCoupons,
+    usedCoupons,
+    redemptions,
     search,
     setSearch,
     activeTab,
