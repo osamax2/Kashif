@@ -81,19 +81,11 @@ export default function ModernNotifications() {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (language === 'ar') {
-      if (seconds < 60) return "منذ لحظات";
-      if (minutes < 60) return `قبل ${minutes} دقيقة`;
-      if (hours < 24) return `قبل ${hours} ساعة`;
-      if (days === 1) return "أمس";
-      return `قبل ${days} أيام`;
-    } else {
-      if (seconds < 60) return "Just now";
-      if (minutes < 60) return `${minutes}m ago`;
-      if (hours < 24) return `${hours}h ago`;
-      if (days === 1) return "Yesterday";
-      return `${days}d ago`;
-    }
+    if (seconds < 60) return t('notifications.timeAgo.justNow');
+    if (minutes < 60) return t('notifications.timeAgo.minutesAgo', { minutes });
+    if (hours < 24) return t('notifications.timeAgo.hoursAgo', { hours });
+    if (days === 1) return t('notifications.timeAgo.yesterday');
+    return t('notifications.timeAgo.daysAgo', { days });
   };
 
   const renderItem = ({ item }: { item: any }) => {
@@ -124,7 +116,7 @@ export default function ModernNotifications() {
   if (loading && notifications.length === 0) {
     return (
       <View style={styles.root}>
-        <Header title="الإشعارات" rightIcon="chevron-forward" onRightPress={() => router.back()} />
+        <Header title={t('notifications.title')} rightIcon="chevron-forward" onRightPress={() => router.back()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={YELLOW} />
         </View>
@@ -134,7 +126,7 @@ export default function ModernNotifications() {
 
   return (
     <View style={styles.root}>
-      <Header title="الإشعارات" rightIcon="chevron-forward" onRightPress={() => router.back()} />
+      <Header title={t('notifications.title')} rightIcon="chevron-forward" onRightPress={() => router.back()} />
 
       <FlatList
         data={notifications}
@@ -153,9 +145,9 @@ export default function ModernNotifications() {
         ListEmptyComponent={() => (
           <View style={styles.emptyBox}>
             <Ionicons name="checkmark-circle" size={50} color={YELLOW} />
-            <Text style={styles.emptyText}>لا توجد إشعارات حالياً</Text>
+            <Text style={styles.emptyText}>{t('notifications.noNotifications')}</Text>
             <Text style={styles.emptySub}>
-              سنخبرك فور وصول تحديثات جديدة لبلاغاتك.
+              {t('notifications.noNotificationsSubtitle')}
             </Text>
           </View>
         )}
@@ -174,7 +166,7 @@ export default function ModernNotifications() {
             color={BLUE}
             style={{ marginLeft: 6 }}
           />
-          <Text style={styles.clearButtonText}>تعليم الكل كمقروء</Text>
+          <Text style={styles.clearButtonText}>{t('notifications.markAllRead')}</Text>
         </TouchableOpacity>
       )}
     </View>

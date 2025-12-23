@@ -71,6 +71,7 @@
   "profile": {
     "title": "Profile",
     "points": "Points",
+    "point": "Point",
     "level": "Level",
     "reports": "Reports",
     "achievements": "Achievements",
@@ -84,7 +85,8 @@
     "linkCopied": "✔️ Link copied successfully!",
     "whatsappNotInstalled": "❌ WhatsApp is not installed on this device",
     "loadingData": "Loading data...",
-    "userId": "User ID:"
+    "userId": "User ID:",
+    "progressTo": "to"
   },
   "reports": {
     "title": "Reports",
@@ -149,16 +151,28 @@
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark All as Read",
-    "noNotifications": "No notifications",
+    "noNotifications": "No notifications right now",
+    "noNotificationsSubtitle": "We'll let you know as soon as there are updates on your reports.",
     "types": {
       "report_created": "New Report",
       "report_updated": "Report Updated",
       "report_resolved": "Report Resolved",
+      "report_status_updated": "Report Status Updated",
+      "report_in_progress": "Report In Progress",
+      "report_rejected": "Report Rejected",
       "points_earned": "Points Earned",
+      "achievement": "New Achievement",
       "level_up": "Level Up",
       "general": "General Notification"
     },
-    "pullToRefresh": "Pull to refresh"
+    "pullToRefresh": "Pull to refresh",
+    "timeAgo": {
+      "justNow": "Just now",
+      "minutesAgo": "{minutes}m ago",
+      "hoursAgo": "{hours}h ago",
+      "yesterday": "Yesterday",
+      "daysAgo": "{days}d ago"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -167,6 +181,12 @@
     "changeEmail": "Change Email",
     "changePassword": "Change Password",
     "changePhone": "Change Phone Number",
+    "placeholders": {
+      "newName": "Enter new name",
+      "newEmail": "Enter new email",
+      "newPassword": "Enter new password",
+      "newPhone": "Enter new phone number"
+    },
     "language": "Language",
     "languages": {
       "ar": "العربية",

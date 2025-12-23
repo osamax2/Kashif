@@ -34,7 +34,7 @@ export default function SettingsScreen() {
     const [notifGeneral, setNotifGeneral] = useState(true);
     const [successVisible, setSuccessVisible] = useState(false);
     const [nameModal, setNameModal] = useState(false);
-    const [name, setName] = useState("");
+    const [name, setName] = useState(user?.full_name || "");
 
     const [languageSheet, setLanguageSheet] = useState(false);
     const selectedLanguage = language === 'ar' ? t('settings.languages.ar') : t('settings.languages.en');
@@ -43,9 +43,9 @@ export default function SettingsScreen() {
     const [passwordModal, setPasswordModal] = useState(false);
     const [phoneModal, setPhoneModal] = useState(false);
 
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(user?.email || "");
     const [password, setPassword] = useState("");
-    const [phone, setPhone] = useState("");
+    const [phone, setPhone] = useState(user?.phone || "");
 
     const router = useRouter();
 
@@ -123,18 +123,25 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* USER ID */}
+            {/* USER ID + USERNAME */}
             <Text style={styles.userId}>
                 <Text style={{ color: "#ccc" }}>   {t('profile.userId')} </Text>{user?.id ? `U-${user.id}` : 'U-2025-143'}
             </Text>
+            <Text style={styles.userName}>{user?.full_name || 'مستخدم'}</Text>
 
             {/* ACTIONS */}
             <View
                 style={styles.card}>
-                    <TouchableOpacity onPress={() => setNameModal(true)}>
+                    <TouchableOpacity onPress={() => {
+                        setName(user?.full_name || "");
+                        setNameModal(true);
+                    }}>
                     <Text style={styles.textItem}>{t('settings.changeName')}</Text>
                         </TouchableOpacity>
-                <TouchableOpacity onPress={() => setEmailModal(true)}>
+                <TouchableOpacity onPress={() => {
+                    setEmail(user?.email || "");
+                    setEmailModal(true);
+                }}>
                     <Text style={styles.textItem}>{t('settings.changeEmail')}</Text>
                 </TouchableOpacity>
 
@@ -142,7 +149,10 @@ export default function SettingsScreen() {
                     <Text style={styles.textItem}>{t('settings.changePassword')}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => setPhoneModal(true)}>
+                <TouchableOpacity onPress={() => {
+                    setPhone(user?.phone || "");
+                    setPhoneModal(true);
+                }}>
                     <Text style={styles.textItem}>{t('settings.changePhone')}</Text>
                 </TouchableOpacity>
 
@@ -225,7 +235,7 @@ export default function SettingsScreen() {
                 visible={emailModal}
                 onClose={() => setEmailModal(false)}
                 title={t('settings.changeEmail')}
-                placeholder={language === 'ar' ? 'اكتب بريدك الجديد' : 'Enter new email'}
+                placeholder={t('settings.placeholders.newEmail')}
                 value={email}
                 setValue={setEmail}
                 onSave={() => {
@@ -237,7 +247,7 @@ export default function SettingsScreen() {
             visible={nameModal}
                 onClose={() => setNameModal(false)}
         title={t('settings.changeName')}
-        placeholder={language === 'ar' ? 'اكتب اسمك الجديد' : 'Enter new name'}
+        placeholder={t('settings.placeholders.newName')}
         value={name}
         setValue={setName}
             onSave={() => {
@@ -250,7 +260,7 @@ export default function SettingsScreen() {
                 visible={passwordModal}
                 onClose={() => setPasswordModal(false)}
                 title={t('settings.changePassword')}
-                placeholder={language === 'ar' ? 'اكتب كلمة المرور الجديدة' : 'Enter new password'}
+                placeholder={t('settings.placeholders.newPassword')}
                 value={password}
                 setValue={setPassword}
                 onSave={() => {
@@ -263,7 +273,7 @@ export default function SettingsScreen() {
                 visible={phoneModal}
                 onClose={() => setPhoneModal(false)}
                 title={t('settings.changePhone')}
-                placeholder={language === 'ar' ? 'اكتب رقمك الجديد' : 'Enter new phone number'}
+                placeholder={t('settings.placeholders.newPhone')}
                 value={phone}
                 setValue={setPhone}
                 onSave={() => {
@@ -344,9 +354,17 @@ const styles = StyleSheet.create({
     userId: {
         color: "#fff",
         fontSize: 16,
-        marginBottom: 20,
+        marginBottom: 8,
         textAlign: "left",
         fontFamily: "Tajawal-Regular",
+    },
+
+    userName: {
+        color: YELLOW,
+        fontSize: 20,
+        marginBottom: 20,
+        textAlign: "left",
+        fontFamily: "Tajawal-Bold",
     },
 
     card: {

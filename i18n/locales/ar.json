@@ -71,6 +71,7 @@
   "profile": {
     "title": "الملف الشخصي",
     "points": "النقاط",
+    "point": "نقطة",
     "level": "المستوى",
     "reports": "البلاغات",
     "achievements": "الإنجازات",
@@ -84,7 +85,8 @@
     "linkCopied": "✔️ تم نسخ الرابط بنجاح!",
     "whatsappNotInstalled": "❌ WhatsApp غير مثبت على هذا الجهاز",
     "loadingData": "جاري تحميل البيانات...",
-    "userId": "رقم المستخدم:"
+    "userId": "رقم المستخدم:",
+    "progressTo": "إلى"
   },
   "reports": {
     "title": "البلاغات",
@@ -149,17 +151,29 @@
   },
   "notifications": {
     "title": "الإشعارات",
-    "markAllRead": "تعيين الكل كمقروء",
-    "noNotifications": "لا توجد إشعارات",
+    "markAllRead": "تعليم الكل كمقروء",
+    "noNotifications": "لا توجد إشعارات حالياً",
+    "noNotificationsSubtitle": "سنخبرك فور وصول تحديثات جديدة لبلاغاتك.",
     "types": {
       "report_created": "بلاغ جديد",
       "report_updated": "تحديث بلاغ",
       "report_resolved": "تم إصلاح البلاغ",
+      "report_status_updated": "تحديث حالة البلاغ",
+      "report_in_progress": "البلاغ قيد المعالجة",
+      "report_rejected": "تم رفض البلاغ",
       "points_earned": "نقاط جديدة",
+      "achievement": "إنجاز جديد",
       "level_up": "مستوى جديد",
       "general": "إشعار عام"
     },
-    "pullToRefresh": "اسحب للتحديث"
+    "pullToRefresh": "اسحب للتحديث",
+    "timeAgo": {
+      "justNow": "منذ لحظات",
+      "minutesAgo": "قبل {minutes} دقيقة",
+      "hoursAgo": "قبل {hours} ساعة",
+      "yesterday": "أمس",
+      "daysAgo": "قبل {days} أيام"
+    }
   },
   "settings": {
     "title": "الإعدادات",
@@ -168,6 +182,12 @@
     "changeEmail": "تغيير البريد الإلكتروني",
     "changePassword": "تغيير كلمة المرور",
     "changePhone": "تغيير رقم الموبايل",
+    "placeholders": {
+      "newName": "اكتب اسمك الجديد",
+      "newEmail": "اكتب بريدك الجديد",
+      "newPassword": "اكتب كلمة المرور الجديدة",
+      "newPhone": "اكتب رقمك الجديد"
+    },
     "language": "اللغة",
     "languages": {
       "ar": "العربية",
