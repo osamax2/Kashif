@@ -8,13 +8,16 @@ import {
     TouchableOpacity,
     Keyboard,
     Platform,
+    I18nManager,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {router} from "expo-router";
 import { useRouter } from "expo-router";
+import { useLanguage } from "../contexts/LanguageContext";
 const BLUE = "#0D2B66";
 
 export default function VerifyCodeScreen() {
+    const { t, isRTL } = useLanguage();
     const [code, setCode] = useState(["", "", "", "", "", ""]);
     const inputs = useRef<Array<TextInput | null>>([]);
     const router = useRouter();
@@ -49,17 +52,17 @@ export default function VerifyCodeScreen() {
         <View style={styles.root}>
             {/* Titel */}
             <Text style={styles.title}>
-                تحقق من هويتك <Ionicons name="lock-closed" size={22} color="#FFD166" />
+                {t('auth.verifyCode.title')} <Ionicons name="lock-closed" size={22} color="#FFD166" />
             </Text>
 
             {/* Info-Text */}
             <Text style={styles.subtitle}>
-                لقد أرسلنا رمزاً مكوّناً من ستة أرقام إلى رقم الهاتف
+                {t('auth.verifyCode.subtitle')}
             </Text>
-            <Text style={styles.phoneMasked}>453***</Text>
+            <Text style={styles.phoneMasked}>{t('auth.verifyCode.phoneMasked')}</Text>
 
             {/* Label */}
-            <Text style={styles.label}>رمز التفعيل</Text>
+            <Text style={styles.label}>{t('auth.verifyCode.codeLabel')}</Text>
 
             {/* Code-Boxen */}
             <View style={styles.codeRow}>
@@ -88,7 +91,7 @@ export default function VerifyCodeScreen() {
                 style={styles.submitBtn}
                 onPress={() => router.push("/reset-password")}   // ⇠ HIER verbinden
             >
-                <Text style={styles.submitText}>متابعة</Text>
+                <Text style={styles.submitText}>{t('auth.verifyCode.continueButton')}</Text>
             </TouchableOpacity>
 
             {/* Nicht erhalten / Nummer ändern */}
@@ -99,24 +102,24 @@ export default function VerifyCodeScreen() {
                         name="mail-outline"
                         size={18}
                         color="#FFD166"
-                        style={{ marginLeft: 4 }}
+                        style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }}
                     />
                     <Text style={styles.helperText}>
-                        لم تستلم الرمز؟ <Text style={styles.helperLink}>أعد الإرسال</Text>
+                        {t('auth.verifyCode.notReceived')} <Text style={styles.helperLink}>{t('auth.verifyCode.resend')}</Text>
                     </Text>
                 </TouchableOpacity>
 
                 {/* CHANGE PHONE → BACK TO FORGOT */}
                 <TouchableOpacity onPress={() => router.replace("/forgot")}>
-                    <Text style={styles.helperLink}>تغيير رقم الجوال</Text>
+                    <Text style={styles.helperLink}>{t('auth.verifyCode.changePhone')}</Text>
                 </TouchableOpacity>
             </View>
 
 
             {/* Zurück zu Login */}
-            <TouchableOpacity style={styles.backRow} onPress={() => router.replace("/index")}>
-                <Text style={styles.backText}>العودة إلى تسجيل الدخول</Text>
-            </TouchableOpacity>>
+            <TouchableOpacity style={styles.backRow} onPress={() => router.push("/")}>
+                <Text style={styles.backText}>{t('auth.verifyCode.backToLogin')}</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -127,7 +130,6 @@ const styles = StyleSheet.create({
         backgroundColor: BLUE,
         paddingTop: 80,
         paddingHorizontal: 30,
-        direction: "rtl",
     },
 
     title: {
@@ -158,12 +160,12 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 16,
         fontFamily: "Tajawal-Bold",
-        textAlign: "left",
+        textAlign: I18nManager.isRTL ? "right" : "left",
         marginBottom: 10,
     },
 
     codeRow: {
-        flexDirection: "row-reverse",
+        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
         justifyContent: "center",
         alignItems: "center",
         marginBottom: 28,
@@ -216,7 +218,7 @@ const styles = StyleSheet.create({
     },
 
     helperRow: {
-        flexDirection: "row-reverse",
+        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
         alignItems: "center",
     },
 
@@ -233,7 +235,7 @@ const styles = StyleSheet.create({
 
     backRow: {
         marginTop: 10,
-        flexDirection: "row-reverse",
+        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
         justifyContent: "center",
         alignItems: "center",
     },

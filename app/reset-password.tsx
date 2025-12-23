@@ -9,12 +9,15 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    I18nManager,
 } from "react-native";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const BLUE = "#0D2B66";
 
 export default function ResetPasswordScreen() {
     const router = useRouter();
+    const { t, isRTL } = useLanguage();
 
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
@@ -30,24 +33,22 @@ export default function ResetPasswordScreen() {
     return (
         <View style={styles.root}>
             {/* Titel */}
-            <Text style={styles.title}>كلمة مرور جديدة</Text>
+            <Text style={styles.title}>{t('auth.resetPassword.title')}</Text>
 
             {/* Erklärungstext */}
             <Text style={styles.subtitle}>
-                يجب أن تكون كلمة المرور الجديدة مختلفة عن السابقة،
-                {"\n"}
-                وأن تحتوي على ٨ أحرف على الأقل ومكوّنة من أحرف أرقام ورموز
+                {t('auth.resetPassword.subtitle')}
             </Text>
 
             {/* Neues Passwort */}
-            <Text style={styles.label}>كلمة المرور الجديدة</Text>
+            <Text style={styles.label}>{t('auth.resetPassword.newPassword')}</Text>
             <View style={styles.inputRow}>
                 {/* Schloss-Icon links (optisch rechts wegen RTL) */}
                 <Ionicons
                     name="lock-closed-outline"
                     size={20}
                     color="#ffffff"
-                    style={styles.iconLeft}
+                    style={isRTL ? styles.iconLeft : styles.iconRight}
                 />
 
                 <TextInput
@@ -57,13 +58,13 @@ export default function ResetPasswordScreen() {
                     placeholderTextColor="#DDE5FF"
                     secureTextEntry={!showPwd}
                     style={styles.input}
-                    textAlign="right"
+                    textAlign={isRTL ? 'right' : 'left'}
                 />
 
                 {/* Eye-Icon */}
                 <TouchableOpacity
                     onPress={() => setShowPwd((p) => !p)}
-                    style={styles.iconRightBtn}
+                    style={isRTL ? styles.iconRightBtn : styles.iconLeftBtn}
                 >
                     <Ionicons
                         name={showPwd ? "eye-off-outline" : "eye-outline"}
@@ -74,13 +75,13 @@ export default function ResetPasswordScreen() {
             </View>
 
             {/* Passwort bestätigen */}
-            <Text style={styles.label}>تأكيد كلمة المرور</Text>
+            <Text style={styles.label}>{t('auth.resetPassword.confirmPassword')}</Text>
             <View style={styles.inputRow}>
                 <Ionicons
                     name="lock-closed-outline"
                     size={20}
                     color="#ffffff"
-                    style={styles.iconLeft}
+                    style={isRTL ? styles.iconLeft : styles.iconRight}
                 />
 
                 <TextInput
@@ -90,12 +91,12 @@ export default function ResetPasswordScreen() {
                     placeholderTextColor="#DDE5FF"
                     secureTextEntry={!showConfirm}
                     style={styles.input}
-                    textAlign="right"
+                    textAlign={isRTL ? 'right' : 'left'}
                 />
 
                 <TouchableOpacity
                     onPress={() => setShowConfirm((p) => !p)}
-                    style={styles.iconRightBtn}
+                    style={isRTL ? styles.iconRightBtn : styles.iconLeftBtn}
                 >
                     <Ionicons
                         name={showConfirm ? "eye-off-outline" : "eye-outline"}
@@ -107,15 +108,15 @@ export default function ResetPasswordScreen() {
 
             {/* Button Passwort neu setzen */}
             <TouchableOpacity style={styles.primaryBtn} onPress={handleReset}>
-                <Text style={styles.primaryText}>إعادة تعيين كلمة المرور</Text>
+                <Text style={styles.primaryText}>{t('auth.resetPassword.resetButton')}</Text>
             </TouchableOpacity>
 
             {/* Zurück zum Login */}
             <TouchableOpacity
                 style={styles.backWrapper}
-                onPress={() => router.back("/index")}
+                onPress={() => router.push("/")}
             >
-                <Text style={styles.backText}>العودة إلى تسجيل الدخول</Text>
+                <Text style={styles.backText}>{t('auth.resetPassword.backToLogin')}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -127,7 +128,6 @@ const styles = StyleSheet.create({
         backgroundColor: BLUE,
         paddingTop: Platform.OS === "ios" ? 80 : 60,
         paddingHorizontal: 24,
-        direction: "rtl",
     },
 
     title: {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
         color: "#FFD166",
         fontSize: 14,
         fontFamily: "Tajawal-Regular",
-        textAlign: "left",
+        textAlign: I18nManager.isRTL ? "right" : "left",
         lineHeight: 22,
         marginBottom: 32,
     },
@@ -151,12 +151,12 @@ const styles = StyleSheet.create({
         color: "#FFD166",
         fontSize: 14,
         fontFamily: "Tajawal-Medium",
-        textAlign: "left",
+        textAlign: I18nManager.isRTL ? "right" : "left",
         marginBottom: 8,
     },
 
     inputRow: {
-        flexDirection: "row-reverse",
+        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
         alignItems: "center",
         backgroundColor: "#5B82D9",
         borderRadius: 10,
@@ -176,7 +176,16 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
 
+    iconRight: {
+        marginRight: 8,
+    },
+
     iconRightBtn: {
+        paddingHorizontal: 4,
+        paddingVertical: 4,
+    },
+
+    iconLeftBtn: {
         paddingHorizontal: 4,
         paddingVertical: 4,
     },
