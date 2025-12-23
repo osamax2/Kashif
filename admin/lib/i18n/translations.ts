@@ -199,7 +199,7 @@ export const translations = {
       maxUsagePerUser: 'Max Usage Per User',
       totalAvailable: 'Total Available',
       address: 'Address',
-      selectCompany: 'Select a company...',,
+      selectCompany: 'Select a company...',
       selectCategory: 'Select a category...',
       category: 'Category',
       types: {
