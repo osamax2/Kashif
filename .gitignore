@@ -43,3 +43,6 @@ app-example
 /android
 .android/
 .cache/
+
+# APK files
+*.apk
