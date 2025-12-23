@@ -63,6 +63,11 @@ export default function CouponsPage() {
   const [showCompanySuggestions, setShowCompanySuggestions] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState('');
   
+  // Filter states
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterCompany, setFilterCompany] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -112,33 +117,47 @@ export default function CouponsPage() {
     }
   }, [showCompanySuggestions]);
 
-  // Filter coupons based on search query
+  // Filter coupons based on search query and filters
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredCoupons(coupons);
-      return;
+    let filtered = [...coupons];
+    
+    // Apply category filter
+    if (filterCategory) {
+      filtered = filtered.filter(coupon => coupon.coupon_category_id === parseInt(filterCategory));
+    }
+    
+    // Apply company filter
+    if (filterCompany) {
+      filtered = filtered.filter(coupon => coupon.company_id === parseInt(filterCompany));
+    }
+    
+    // Apply status filter
+    if (filterStatus) {
+      filtered = filtered.filter(coupon => coupon.status === filterStatus);
+    }
+    
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(coupon => {
+        const matchesName = coupon.name.toLowerCase().includes(query);
+        const matchesDescription = coupon.description.toLowerCase().includes(query);
+        const matchesPoints = coupon.points_cost.toString().includes(query);
+        
+        // Check company name
+        const company = companies.find(c => c.id === coupon.company_id);
+        const matchesCompany = company?.name.toLowerCase().includes(query);
+        
+        // Check category name
+        const category = categories.find(c => c.id === coupon.coupon_category_id);
+        const matchesCategory = category?.name.toLowerCase().includes(query);
+
+        return matchesName || matchesDescription || matchesPoints || matchesCompany || matchesCategory;
+      });
     }
 
-    const query = searchQuery.toLowerCase();
-    const filtered = coupons.filter(coupon => {
-      const matchesName = coupon.name.toLowerCase().includes(query);
-      const matchesDescription = coupon.description.toLowerCase().includes(query);
-      const matchesPoints = coupon.points_cost.toString().includes(query);
-      const matchesStatus = coupon.status.toLowerCase().includes(query);
-      
-      // Check company name
-      const company = companies.find(c => c.id === coupon.company_id);
-      const matchesCompany = company?.name.toLowerCase().includes(query);
-      
-      // Check category name
-      const category = categories.find(c => c.id === coupon.coupon_category_id);
-      const matchesCategory = category?.name.toLowerCase().includes(query);
-
-      return matchesName || matchesDescription || matchesPoints || matchesStatus || matchesCompany || matchesCategory;
-    });
-
     setFilteredCoupons(filtered);
-  }, [searchQuery, coupons, companies, categories]);
+  }, [searchQuery, coupons, companies, categories, filterCategory, filterCompany, filterStatus]);
 
   const loadCoupons = async () => {
     try {
@@ -465,7 +484,7 @@ export default function CouponsPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
+      <div className="mb-4">
         <input
           type="text"
           value={searchQuery}
@@ -473,15 +492,85 @@ export default function CouponsPage() {
           placeholder={isRTL ? 'ابحث عن الكوبونات...' : 'Search coupons...'}
           className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
         />
-        {searchQuery && (
-          <p className={`text-sm text-gray-500 mt-2 ${isRTL ? 'text-right' : ''}`}>
+      </div>
+
+      {/* Filters */}
+      <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 ${isRTL ? 'text-right' : ''}`}>
+        {/* Category Filter */}
+        <div>
+          <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+            {t.coupons.category || (isRTL ? 'الفئة' : 'Category')}
+          </label>
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          >
+            <option value="">{isRTL ? 'كل الفئات' : 'All Categories'}</option>
+            {categories.map((cat: any) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Company Filter - Only for ADMIN */}
+        {!isCompanyUser && (
+          <div>
+            <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {t.coupons.couponCompany || (isRTL ? 'الشركة' : 'Company')}
+            </label>
+            <select
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+            >
+              <option value="">{isRTL ? 'كل الشركات' : 'All Companies'}</option>
+              {companies.map((comp: any) => (
+                <option key={comp.id} value={comp.id}>{comp.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Status Filter */}
+        <div>
+          <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+            {t.common.status || (isRTL ? 'الحالة' : 'Status')}
+          </label>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          >
+            <option value="">{isRTL ? 'كل الحالات' : 'All Status'}</option>
+            <option value="ACTIVE">{t.common.active || (isRTL ? 'نشط' : 'Active')}</option>
+            <option value="INACTIVE">{t.common.inactive || (isRTL ? 'غير نشط' : 'Inactive')}</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Results count */}
+      {(searchQuery || filterCategory || filterCompany || filterStatus) && (
+        <div className={`mb-4 flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <p className="text-sm text-gray-500">
             {isRTL 
               ? `تم العثور على ${filteredCoupons.length} من ${coupons.length} كوبون`
               : `Found ${filteredCoupons.length} of ${coupons.length} coupons`
             }
           </p>
-        )}
-      </div>
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setFilterCategory('');
+              setFilterCompany('');
+              setFilterStatus('');
+            }}
+            className="text-sm text-primary hover:underline"
+          >
+            {isRTL ? 'مسح الفلاتر' : 'Clear Filters'}
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filteredCoupons.map((coupon) => (
@@ -524,10 +613,10 @@ export default function CouponsPage() {
         ))}
       </div>
 
-      {filteredCoupons.length === 0 && coupons.length > 0 && searchQuery && (
+      {filteredCoupons.length === 0 && coupons.length > 0 && (searchQuery || filterCategory || filterCompany || filterStatus) && (
         <div className="text-center py-12">
           <p className="text-gray-500">
-            {isRTL ? 'لم يتم العثور على كوبونات مطابقة لبحثك' : 'No coupons found matching your search'}
+            {isRTL ? 'لم يتم العثور على كوبونات مطابقة للفلاتر' : 'No coupons found matching your filters'}
           </p>
         </div>
       )}
