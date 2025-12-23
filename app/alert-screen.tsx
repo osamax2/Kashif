@@ -163,17 +163,46 @@ export default function AlertScreen() {
   }, []);
 
   const playAlertSound = async () => {
+    console.log('🔊 playAlertSound called');
     try {
+      // Configure audio mode for playback
+      console.log('🔊 Setting audio mode...');
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+      console.log('🔊 Audio mode set successfully');
+      
       // Try to play alert sound if it exists
-      // If the sound file doesn't exist, this will silently fail
+      console.log('🔊 Creating sound from alert.mp3...');
       const { sound } = await Audio.Sound.createAsync(
         require('../assets/sounds/alert.mp3'),
         { shouldPlay: true, volume: 1.0 }
       );
+      console.log('🔊 Sound created, playing...');
+      
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded) {
+          console.log('🔊 Playback status:', {
+            isPlaying: status.isPlaying,
+            positionMillis: status.positionMillis,
+            durationMillis: status.durationMillis,
+          });
+          if (status.didJustFinish) {
+            console.log('🔊 Alert sound finished playing');
+            sound.unloadAsync();
+          }
+        }
+      });
+      
       await sound.playAsync();
+      console.log('🔊 playAsync completed');
     } catch (error) {
-      // Silently ignore if sound file doesn't exist
-      console.log('Alert sound not available, skipping audio');
+      console.error('❌ Alert sound error:', error);
+      console.error('❌ Error details:', JSON.stringify(error));
     }
   };
 
