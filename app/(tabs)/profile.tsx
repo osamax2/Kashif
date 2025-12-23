@@ -270,10 +270,10 @@ const changePhoto = () => {
             </View>
 
             <Text style={styles.pointsText}>
-                {user?.total_points || 0} نقطة <Text style={{ fontSize: 20 }}>🏅</Text>
+                {user?.total_points || 0} {t('profile.point')} <Text style={{ fontSize: 20 }}>🏅</Text>
             </Text>
             <Text style={styles.levelText}>
-                {currentLevel?.name || 'مبتدئ'} {nextLevel ? `(${Math.round(progressPercentage)}% إلى ${nextLevel.name})` : '🚀'}
+                {currentLevel?.name || t('profile.level')} {nextLevel ? `(${Math.round(progressPercentage)}% ${t('profile.progressTo')} ${nextLevel.name})` : '🚀'}
             </Text>
         
 
