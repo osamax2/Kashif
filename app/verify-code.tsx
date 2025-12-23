@@ -1,18 +1,16 @@
 // app/verify-code.tsx
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
-    View,
-    Text,
+    I18nManager,
+    Keyboard,
     StyleSheet,
+    Text,
     TextInput,
     TouchableOpacity,
-    Keyboard,
-    Platform,
-    I18nManager,
+    View
 } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import {router} from "expo-router";
-import { useRouter } from "expo-router";
 import { useLanguage } from "../contexts/LanguageContext";
 const BLUE = "#0D2B66";
 
