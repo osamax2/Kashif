@@ -2,7 +2,7 @@
 
 import { authAPI, couponsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
-import { ArrowLeft, Plus, Trash2, Users, X } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, Trash2, Users, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -29,8 +29,14 @@ export default function TeamPage() {
   const [userCount, setUserCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    full_name: '',
+    phone: '',
+    status: 'ACTIVE',
+  });
   
   const [formData, setFormData] = useState({
     email: '',
@@ -149,6 +155,41 @@ export default function TeamPage() {
     }
   };
 
+  const openEditModal = (member: TeamMember) => {
+    setSelectedMember(member);
+    setEditFormData({
+      full_name: member.full_name,
+      phone: member.phone || '',
+      status: member.status,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditMember = async () => {
+    if (!selectedMember) return;
+    
+    if (!editFormData.full_name) {
+      alert(isRTL ? 'يرجى إدخال الاسم الكامل' : 'Please enter full name');
+      return;
+    }
+    
+    try {
+      await usersAPI.updateUser(selectedMember.id, {
+        full_name: editFormData.full_name,
+        phone: editFormData.phone || undefined,
+        status: editFormData.status,
+      });
+      alert(isRTL ? 'تم تحديث العضو بنجاح' : 'Member updated successfully');
+      setShowEditModal(false);
+      setSelectedMember(null);
+      loadData();
+    } catch (error: any) {
+      console.error('Failed to update member:', error);
+      const message = error.response?.data?.detail || (isRTL ? 'فشل في تحديث العضو' : 'Failed to update member');
+      alert(message);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       email: '',
@@ -263,16 +304,25 @@ export default function TeamPage() {
                     </span>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
-                    <button
-                      onClick={() => {
-                        setSelectedMember(member);
-                        setShowDeleteModal(true);
-                      }}
-                      className="text-red-600 hover:text-red-800 p-1"
-                      title={isRTL ? 'حذف' : 'Delete'}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+                      <button
+                        onClick={() => openEditModal(member)}
+                        className="text-blue-600 hover:text-blue-800 p-1"
+                        title={isRTL ? 'تعديل' : 'Edit'}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedMember(member);
+                          setShowDeleteModal(true);
+                        }}
+                        className="text-red-600 hover:text-red-800 p-1"
+                        title={isRTL ? 'حذف' : 'Delete'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -412,6 +462,95 @@ export default function TeamPage() {
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
               >
                 {isRTL ? 'حذف' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {showEditModal && selectedMember && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className={`flex items-center justify-between p-4 border-b ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h2 className="text-lg font-semibold">
+                {isRTL ? 'تعديل العضو' : 'Edit Member'}
+              </h2>
+              <button onClick={() => { setShowEditModal(false); setSelectedMember(null); }} className="text-gray-500 hover:text-gray-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'الاسم الكامل' : 'Full Name'} *
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.full_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'البريد الإلكتروني' : 'Email'}
+                </label>
+                <input
+                  type="email"
+                  value={selectedMember.email}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-500"
+                  dir="ltr"
+                />
+                <p className={`text-xs text-gray-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'لا يمكن تغيير البريد الإلكتروني' : 'Email cannot be changed'}
+                </p>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'رقم الهاتف' : 'Phone'}
+                </label>
+                <input
+                  type="tel"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  dir="ltr"
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'الحالة' : 'Status'}
+                </label>
+                <select
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+                >
+                  <option value="ACTIVE">{isRTL ? 'نشط' : 'Active'}</option>
+                  <option value="INACTIVE">{isRTL ? 'غير نشط' : 'Inactive'}</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className={`flex gap-3 p-4 border-t ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => { setShowEditModal(false); setSelectedMember(null); }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
+                {isRTL ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                onClick={handleEditMember}
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                {isRTL ? 'حفظ' : 'Save'}
               </button>
             </div>
           </div>

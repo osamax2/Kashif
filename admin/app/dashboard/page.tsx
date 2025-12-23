@@ -28,6 +28,7 @@ interface SummaryStats {
 
 // Company Dashboard Component with Analytics
 function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | null; isRTL: boolean; t: any }) {
+  const router = useRouter();
   const [couponStats, setCouponStats] = useState<CouponStat[]>([]);
   const [timeData, setTimeData] = useState<TimeData[]>([]);
   const [summary, setSummary] = useState<SummaryStats | null>(null);
@@ -121,7 +122,10 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
 
       {/* Summary Stats - Company specific */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div 
+          className="bg-white rounded-xl shadow-sm p-4 sm:p-6 cursor-pointer hover:shadow-md hover:bg-blue-50 transition-all"
+          onClick={() => router.push('/dashboard/team')}
+        >
           <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <div className="bg-blue-500 p-2 sm:p-3 rounded-lg">
               <UsersRound className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -133,7 +137,10 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div 
+          className="bg-white rounded-xl shadow-sm p-4 sm:p-6 cursor-pointer hover:shadow-md hover:bg-purple-50 transition-all"
+          onClick={() => router.push('/dashboard/coupons')}
+        >
           <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <div className="bg-purple-500 p-2 sm:p-3 rounded-lg">
               <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
