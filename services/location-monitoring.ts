@@ -230,9 +230,17 @@ class LocationMonitoringService {
    * Play voice warning
    */
   private async playVoiceWarning(categoryId: number, distance: number) {
-    if (!this.alertSettings.soundEnabled) return;
+    console.log('🔊 playVoiceWarning called:', { categoryId, distance });
+    console.log('🔊 Sound enabled:', this.alertSettings.soundEnabled);
+    console.log('🔊 Volume:', this.alertSettings.appVolume);
+    
+    if (!this.alertSettings.soundEnabled) {
+      console.log('🔇 Sound is disabled, skipping voice warning');
+      return;
+    }
 
     const lang = this.alertSettings.language;
+    console.log('🔊 Language:', lang);
     let message = '';
 
     switch (categoryId) {
@@ -251,17 +259,38 @@ class LocationMonitoringService {
           ? `تنبيه! كاشف سرعة على بعد ${distance} متر`
           : `Alert! Speed camera ahead at ${distance} meters`;
         break;
+      default:
+        console.log('⚠️ Unknown category, no message set');
+        return;
     }
 
+    console.log('🔊 About to speak message:', message);
+    
     try {
+      // Check if Speech is available
+      const isSpeaking = await Speech.isSpeakingAsync();
+      console.log('🔊 Is currently speaking:', isSpeaking);
+      
+      if (isSpeaking) {
+        console.log('🔊 Stopping current speech before new one');
+        await Speech.stop();
+      }
+      
+      console.log('🔊 Starting Speech.speak...');
       await Speech.speak(message, {
         language: lang === 'ar' ? 'ar-SA' : 'en-US',
         rate: 0.9,
         pitch: 1.0,
         volume: this.alertSettings.appVolume,
+        onStart: () => console.log('🔊 Speech started'),
+        onDone: () => console.log('🔊 Speech completed'),
+        onStopped: () => console.log('🔊 Speech stopped'),
+        onError: (error) => console.error('🔊 Speech error callback:', error),
       });
+      console.log('🔊 Speech.speak call completed');
     } catch (error) {
-      console.error('Failed to play voice warning:', error);
+      console.error('❌ Failed to play voice warning:', error);
+      console.error('❌ Error details:', JSON.stringify(error));
     }
   }
 
