@@ -3,7 +3,7 @@
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
-import { Download, History, MapPin, RotateCcw, Search, Settings, Share2, Trash2 } from 'lucide-react';
+import { Calendar, Download, History, MapPin, RotateCcw, Search, Settings, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -14,6 +14,10 @@ export default function ReportsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [timeFrom, setTimeFrom] = useState('');
+  const [timeTo, setTimeTo] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -53,6 +57,46 @@ export default function ReportsPage() {
       filtered = filtered.filter((r) => r.category_id === parseInt(categoryFilter));
     }
     
+    // Date filter
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((r) => {
+        const reportDate = new Date(r.created_at);
+        return reportDate >= fromDate;
+      });
+    }
+    
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((r) => {
+        const reportDate = new Date(r.created_at);
+        return reportDate <= toDate;
+      });
+    }
+    
+    // Time filter
+    if (timeFrom) {
+      const [fromHours, fromMinutes] = timeFrom.split(':').map(Number);
+      filtered = filtered.filter((r) => {
+        const reportDate = new Date(r.created_at);
+        const reportMinutes = reportDate.getHours() * 60 + reportDate.getMinutes();
+        const filterMinutes = fromHours * 60 + fromMinutes;
+        return reportMinutes >= filterMinutes;
+      });
+    }
+    
+    if (timeTo) {
+      const [toHours, toMinutes] = timeTo.split(':').map(Number);
+      filtered = filtered.filter((r) => {
+        const reportDate = new Date(r.created_at);
+        const reportMinutes = reportDate.getHours() * 60 + reportDate.getMinutes();
+        const filterMinutes = toHours * 60 + toMinutes;
+        return reportMinutes <= filterMinutes;
+      });
+    }
+    
     if (search) {
       filtered = filtered.filter(
         (r) =>
@@ -62,7 +106,7 @@ export default function ReportsPage() {
     }
     
     setFilteredReports(filtered);
-  }, [search, statusFilter, categoryFilter, reports, statuses]);
+  }, [search, statusFilter, categoryFilter, dateFrom, dateTo, timeFrom, timeTo, reports, statuses]);
 
   const loadData = async () => {
     try {
@@ -408,6 +452,84 @@ export default function ReportsPage() {
               : `${filteredReports.length} of ${reports.length} reports`
             }
           </div>
+        </div>
+        
+        {/* Date and Time Filters */}
+        <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+          {/* Date From */}
+          <div className="flex-1 sm:max-w-[180px]">
+            <label className={`block text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'من تاريخ' : 'From Date'}
+            </label>
+            <div className="relative">
+              <Calendar className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'pr-10 text-right' : 'pl-10'}`}
+              />
+            </div>
+          </div>
+          
+          {/* Date To */}
+          <div className="flex-1 sm:max-w-[180px]">
+            <label className={`block text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'إلى تاريخ' : 'To Date'}
+            </label>
+            <div className="relative">
+              <Calendar className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'pr-10 text-right' : 'pl-10'}`}
+              />
+            </div>
+          </div>
+          
+          {/* Time From */}
+          <div className="flex-1 sm:max-w-[140px]">
+            <label className={`block text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'من وقت' : 'From Time'}
+            </label>
+            <input
+              type="time"
+              value={timeFrom}
+              onChange={(e) => setTimeFrom(e.target.value)}
+              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'text-right' : ''}`}
+            />
+          </div>
+          
+          {/* Time To */}
+          <div className="flex-1 sm:max-w-[140px]">
+            <label className={`block text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'إلى وقت' : 'To Time'}
+            </label>
+            <input
+              type="time"
+              value={timeTo}
+              onChange={(e) => setTimeTo(e.target.value)}
+              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'text-right' : ''}`}
+            />
+          </div>
+          
+          {/* Clear Filters Button */}
+          {(dateFrom || dateTo || timeFrom || timeTo) && (
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setDateFrom('');
+                  setDateTo('');
+                  setTimeFrom('');
+                  setTimeTo('');
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition"
+              >
+                {isRTL ? 'مسح' : 'Clear'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

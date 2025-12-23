@@ -3,7 +3,7 @@
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
-import { Download, FileText, History, MapPin, Search, Share2, Tag, X } from 'lucide-react';
+import { Calendar, ChevronDown, Download, FileText, History, MapPin, Search, Share2, Tag, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
@@ -46,9 +46,15 @@ export default function MapPage() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([24.7136, 46.6753]); // Riyadh default
   const [mapZoom, setMapZoom] = useState(10);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [textFilter, setTextFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [timeFrom, setTimeFrom] = useState('');
+  const [timeTo, setTimeTo] = useState('');
   const [isClient, setIsClient] = useState(false);
   
   // Report Card Modal states
@@ -70,6 +76,20 @@ export default function MapPage() {
   useEffect(() => {
     setIsClient(true);
     loadData();
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.category-dropdown') && !target.closest('.status-dropdown')) {
+        setShowCategoryDropdown(false);
+        setShowStatusDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const loadData = async () => {
@@ -208,7 +228,7 @@ export default function MapPage() {
       setMapCenter([parseFloat(result.location.lat), parseFloat(result.location.lon)]);
       setMapZoom(15);
     } else if (result.type === 'category' && result.category) {
-      setCategoryFilter(result.category.id.toString());
+      setCategoryFilter([result.category.id.toString()]);
       // Find center of all reports in this category
       const categoryReports = reports.filter(r => r.category_id === result.category.id);
       if (categoryReports.length > 0) {
@@ -440,11 +460,47 @@ export default function MapPage() {
   };
 
   const filteredReports = reports.filter(report => {
-    if (categoryFilter !== 'ALL' && report.category_id !== parseInt(categoryFilter)) return false;
-    if (statusFilter !== 'ALL') {
-      const status = statuses.find(s => s.name === statusFilter);
-      if (status && report.status_id !== status.id) return false;
+    // Category filter (multi-select)
+    if (categoryFilter.length > 0 && !categoryFilter.includes(report.category_id.toString())) return false;
+    
+    // Status filter (multi-select)
+    if (statusFilter.length > 0) {
+      const reportStatus = statuses.find(s => s.id === report.status_id);
+      if (reportStatus && !statusFilter.includes(reportStatus.name)) return false;
     }
+    
+    // Date filter
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      const reportDate = new Date(report.created_at);
+      if (reportDate < fromDate) return false;
+    }
+    
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      const reportDate = new Date(report.created_at);
+      if (reportDate > toDate) return false;
+    }
+    
+    // Time filter
+    if (timeFrom) {
+      const [fromHours, fromMinutes] = timeFrom.split(':').map(Number);
+      const reportDate = new Date(report.created_at);
+      const reportMinutes = reportDate.getHours() * 60 + reportDate.getMinutes();
+      const filterMinutes = fromHours * 60 + fromMinutes;
+      if (reportMinutes < filterMinutes) return false;
+    }
+    
+    if (timeTo) {
+      const [toHours, toMinutes] = timeTo.split(':').map(Number);
+      const reportDate = new Date(report.created_at);
+      const reportMinutes = reportDate.getHours() * 60 + reportDate.getMinutes();
+      const filterMinutes = toHours * 60 + toMinutes;
+      if (reportMinutes > filterMinutes) return false;
+    }
+    
     return true;
   });
 
@@ -575,31 +631,131 @@ export default function MapPage() {
         
         {/* Filters */}
         <div className={`flex flex-wrap gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className={`px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'text-right' : ''}`}
-          >
-            <option value="ALL">{isRTL ? 'جميع الفئات' : 'All Categories'}</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {isRTL ? cat.name_ar || cat.name : cat.name}
-              </option>
-            ))}
-          </select>
+          {/* Category Multi-Select Dropdown */}
+          <div className="relative category-dropdown">
+            <button
+              onClick={() => {
+                setShowCategoryDropdown(!showCategoryDropdown);
+                setShowStatusDropdown(false);
+              }}
+              className={`flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[160px] ${isRTL ? 'flex-row-reverse text-right' : ''}`}
+            >
+              <span className="flex-1 truncate">
+                {categoryFilter.length === 0 
+                  ? (isRTL ? 'جميع الفئات' : 'All Categories')
+                  : categoryFilter.length === 1
+                    ? (isRTL ? categories.find(c => c.id.toString() === categoryFilter[0])?.name_ar || categories.find(c => c.id.toString() === categoryFilter[0])?.name : categories.find(c => c.id.toString() === categoryFilter[0])?.name)
+                    : (isRTL ? `${categoryFilter.length} فئات محددة` : `${categoryFilter.length} selected`)
+                }
+              </span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showCategoryDropdown && (
+              <div className={`absolute z-[900] mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto ${isRTL ? 'right-0' : 'left-0'}`}>
+                {/* Select All / Clear */}
+                <div className="px-3 py-2 border-b border-gray-200 flex justify-between">
+                  <button
+                    onClick={() => setCategoryFilter(categories.map(c => c.id.toString()))}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    {isRTL ? 'تحديد الكل' : 'Select All'}
+                  </button>
+                  <button
+                    onClick={() => setCategoryFilter([])}
+                    className="text-xs text-gray-500 hover:underline"
+                  >
+                    {isRTL ? 'مسح' : 'Clear'}
+                  </button>
+                </div>
+                
+                {categories.map((cat) => (
+                  <label
+                    key={cat.id}
+                    className={`flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={categoryFilter.includes(cat.id.toString())}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setCategoryFilter([...categoryFilter, cat.id.toString()]);
+                        } else {
+                          setCategoryFilter(categoryFilter.filter(id => id !== cat.id.toString()));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-700">
+                      {isRTL ? cat.name_ar || cat.name : cat.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
           
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={`px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'text-right' : ''}`}
-          >
-            <option value="ALL">{isRTL ? 'جميع الحالات' : 'All Statuses'}</option>
-            {statuses.map((status) => (
-              <option key={status.id} value={status.name}>
-                {status.name}
-              </option>
-            ))}
-          </select>
+          {/* Status Multi-Select Dropdown */}
+          <div className="relative status-dropdown">
+            <button
+              onClick={() => {
+                setShowStatusDropdown(!showStatusDropdown);
+                setShowCategoryDropdown(false);
+              }}
+              className={`flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[160px] ${isRTL ? 'flex-row-reverse text-right' : ''}`}
+            >
+              <span className="flex-1 truncate">
+                {statusFilter.length === 0 
+                  ? (isRTL ? 'جميع الحالات' : 'All Statuses')
+                  : statusFilter.length === 1
+                    ? statusFilter[0]
+                    : (isRTL ? `${statusFilter.length} حالات محددة` : `${statusFilter.length} selected`)
+                }
+              </span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showStatusDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showStatusDropdown && (
+              <div className={`absolute z-[900] mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto ${isRTL ? 'right-0' : 'left-0'}`}>
+                {/* Select All / Clear */}
+                <div className="px-3 py-2 border-b border-gray-200 flex justify-between">
+                  <button
+                    onClick={() => setStatusFilter(statuses.map(s => s.name))}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    {isRTL ? 'تحديد الكل' : 'Select All'}
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter([])}
+                    className="text-xs text-gray-500 hover:underline"
+                  >
+                    {isRTL ? 'مسح' : 'Clear'}
+                  </button>
+                </div>
+                
+                {statuses.map((status) => (
+                  <label
+                    key={status.id}
+                    className={`flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={statusFilter.includes(status.name)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setStatusFilter([...statusFilter, status.name]);
+                        } else {
+                          setStatusFilter(statusFilter.filter(name => name !== status.name));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-700">{status.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
           
           {/* Export Button */}
           <button
@@ -621,6 +777,84 @@ export default function MapPage() {
               : `${filteredReports.length} reports on map`
             }
           </div>
+        </div>
+        
+        {/* Date and Time Filters */}
+        <div className={`flex flex-wrap gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          {/* Date From */}
+          <div className="flex flex-col">
+            <label className={`text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'من تاريخ' : 'From Date'}
+            </label>
+            <div className="relative">
+              <Calendar className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className={`px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'pr-10 text-right' : 'pl-10'}`}
+              />
+            </div>
+          </div>
+          
+          {/* Date To */}
+          <div className="flex flex-col">
+            <label className={`text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'إلى تاريخ' : 'To Date'}
+            </label>
+            <div className="relative">
+              <Calendar className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className={`px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'pr-10 text-right' : 'pl-10'}`}
+              />
+            </div>
+          </div>
+          
+          {/* Time From */}
+          <div className="flex flex-col">
+            <label className={`text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'من وقت' : 'From Time'}
+            </label>
+            <input
+              type="time"
+              value={timeFrom}
+              onChange={(e) => setTimeFrom(e.target.value)}
+              className={`px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'text-right' : ''}`}
+            />
+          </div>
+          
+          {/* Time To */}
+          <div className="flex flex-col">
+            <label className={`text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'إلى وقت' : 'To Time'}
+            </label>
+            <input
+              type="time"
+              value={timeTo}
+              onChange={(e) => setTimeTo(e.target.value)}
+              className={`px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-sm ${isRTL ? 'text-right' : ''}`}
+            />
+          </div>
+          
+          {/* Clear Filters */}
+          {(dateFrom || dateTo || timeFrom || timeTo) && (
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setDateFrom('');
+                  setDateTo('');
+                  setTimeFrom('');
+                  setTimeTo('');
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition"
+              >
+                {isRTL ? 'مسح' : 'Clear'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
