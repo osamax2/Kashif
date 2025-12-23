@@ -1,4 +1,5 @@
 // components/ReportDialog.tsx
+import { useLanguage } from '@/contexts/LanguageContext';
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -10,9 +11,10 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    View,
+    View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+
 const BLUE = "#0D2B66";
 const LIGHT_CARD = "#E6F0FF";
 const YELLOW = "#F4B400";
@@ -44,6 +46,7 @@ export default function ReportDialog({
                                          onClose,
                                          onSubmit,
                                      }: Props) {
+    const { t, isRTL } = useLanguage();
     const [severity, setSeverity] = useState<"low" | "medium" | "high">("low");
     const [address, setAddress] = useState("");
     const [notes, setNotes] = useState("");
@@ -81,7 +84,7 @@ async function takePhoto() {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
 
   if (!permission.granted) {
-    alert("يرجى السماح للوصول إلى الكاميرا");
+    alert(t('reportDialog.cameraPermission'));
     return;
   }
 
@@ -98,7 +101,7 @@ async function takePhoto() {
     useEffect(() => {
         if (visible) {
             setSuccessId(null);
-            setAddress(initialAddress || "الموقع التلقائي");
+            setAddress(initialAddress || t('reportDialog.locationAuto'));
             setSelectedPlace(null);
             setShowPlacesInput(false);
             Animated.spring(slideAnim, {
@@ -125,7 +128,7 @@ async function takePhoto() {
         // Verwende selectedPlace wenn vorhanden, sonst initialAddress (GPS)
         const finalAddress = selectedPlace 
             ? selectedPlace.address 
-            : (initialAddress || "الموقع التلقائي");
+            : (initialAddress || t('reportDialog.locationAuto'));
 
         // Call onSubmit and wait for completion
         if (onSubmit) {
@@ -158,12 +161,12 @@ async function takePhoto() {
     };
 
     const titleByType: Record<Exclude<ReportType, null>, string> = {
-        pothole: "بلاغ حفرة",
-        accident: "بلاغ حادث",
-        speed: "بلاغ رادار",
+        pothole: t('reportDialog.titlePothole'),
+        accident: t('reportDialog.titleAccident'),
+        speed: t('reportDialog.titleSpeed'),
     };
 
-    const title = type ? titleByType[type] : "بلاغ";
+    const title = type ? titleByType[type] : t('reportDialog.titleDefault');
 
     return (
         <Modal visible={visible} transparent animationType="fade">
@@ -186,9 +189,9 @@ async function takePhoto() {
                 >
                     
                    {/* Header */}
-<View style={styles.headerRow}>
+<View style={[styles.headerRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
     <Pressable onPress={onClose} hitSlop={10}>
-        <Text style={styles.backIcon}>↩︎</Text>
+        <Text style={styles.backIcon}>{isRTL ? '↩︎' : '←'}</Text>
     </Pressable>
 
     <Text style={styles.title}>{title}</Text>
@@ -221,48 +224,48 @@ async function takePhoto() {
 
 {/* Level / Typ */}
 <View style={styles.sectionRow}>
-    <Text style={styles.sectionLabel}>
-        {type === "speed" ? "نوعه:" : "مستوى الخطورة:"}
+    <Text style={[styles.sectionLabel, { textAlign: isRTL ? 'right' : 'left' }]}>
+        {type === "speed" ? t('reportDialog.typeLabel') : t('reportDialog.severityLabel')}
     </Text>
 </View>
 
                     {type === "speed" ? (
-                        <View style={styles.chipRow}>
+                        <View style={[styles.chipRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                             <Chip
-                                label="ثابتة"
+                                label={t('reportDialog.radarFixed')}
                                 active={severity === "low"}
                                 variant="radar"
                                 onPress={() => setSeverity("low")}
                             />
                             <Chip
-                                label="متنقلة"
+                                label={t('reportDialog.radarMobile')}
                                 active={severity === "medium"}
                                 variant="radar"
                                 onPress={() => setSeverity("medium")}
                             />
                             <Chip
-                                label="كاميرا مراقبة"
+                                label={t('reportDialog.radarCamera')}
                                 active={severity === "high"}
                                 variant="radar"
                                 onPress={() => setSeverity("high")}
                             />
                         </View>
                     ) : (
-                        <View style={styles.chipRow}>
+                        <View style={[styles.chipRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                             <Chip
-                                label="منخفضة"
+                                label={t('reportDialog.severityLow')}
                                 active={severity === "low"}
                                 color={YELLOW}
                                 onPress={() => setSeverity("low")}
                             />
                             <Chip
-                                label="وسط"
+                                label={t('reportDialog.severityMedium')}
                                 active={severity === "medium"}
                                 color="#FFA94D"
                                 onPress={() => setSeverity("medium")}
                             />
                             <Chip
-                                label="خطيرة"
+                                label={t('reportDialog.severityHigh')}
                                 active={severity === "high"}
                                 color="#FF6B6B"
                                 onPress={() => setSeverity("high")}
@@ -272,23 +275,23 @@ async function takePhoto() {
 
                     {/* Adresse */}
                     <View style={styles.sectionRow}>
-                        <Text style={styles.sectionLabel}>الموقع:</Text>
+                        <Text style={[styles.sectionLabel, { textAlign: isRTL ? 'right' : 'left' }]}>{t('reportDialog.locationLabel')}</Text>
                     </View>
 
                     {!showPlacesInput ? (
                         <Pressable 
-                            style={styles.addressRow}
+                            style={[styles.addressRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                             onPress={() => setShowPlacesInput(true)}
                         >
-                            <Text style={styles.addressInput}>
-                                {selectedPlace ? selectedPlace.address : (initialAddress || "الموقع التلقائي")}
+                            <Text style={[styles.addressInput, { textAlign: isRTL ? 'right' : 'left' }]}>
+                                {selectedPlace ? selectedPlace.address : (initialAddress || t('reportDialog.locationAuto'))}
                             </Text>
                             <Text style={styles.pinIcon}>📍</Text>
                         </Pressable>
                     ) : (
                         <View style={styles.placesContainer}>
                             <GooglePlacesAutocomplete
-                                placeholder='ابحث عن موقع'
+                                placeholder={t('reportDialog.locationSearch')}
                                 minLength={2}
                                 listViewDisplayed='auto'
                                 fetchDetails={true}
@@ -306,7 +309,7 @@ async function takePhoto() {
                                 }}
                                 query={{
                                     key: 'REMOVED_API_KEY',
-                                    language: 'ar',
+                                    language: isRTL ? 'ar' : 'en',
                                 }}
                                 textInputProps={{
                                     autoFocus: true,
@@ -326,7 +329,7 @@ async function takePhoto() {
                                         color: BLUE,
                                         fontSize: 14,
                                         fontFamily: 'Tajawal-Regular',
-                                        textAlign: 'right',
+                                        textAlign: isRTL ? 'right' : 'left',
                                         backgroundColor: 'transparent',
                                     },
                                     predefinedPlacesDescription: {
@@ -342,7 +345,7 @@ async function takePhoto() {
                                         backgroundColor: 'white',
                                         padding: 13,
                                         height: 'auto',
-                                        flexDirection: 'row-reverse',
+                                        flexDirection: isRTL ? 'row-reverse' : 'row',
                                     },
                                     separator: {
                                         height: 0.5,
@@ -350,7 +353,7 @@ async function takePhoto() {
                                     },
                                     description: {
                                         fontFamily: 'Tajawal-Regular',
-                                        textAlign: 'right',
+                                        textAlign: isRTL ? 'right' : 'left',
                                     },
                                     loader: {
                                         flexDirection: 'row',
@@ -369,14 +372,14 @@ async function takePhoto() {
                                 }}
                                 style={styles.cancelSearchBtn}
                             >
-                                <Text style={styles.cancelSearchText}>إلغاء</Text>
+                                <Text style={styles.cancelSearchText}>{t('reportDialog.locationCancel')}</Text>
                             </Pressable>
                         </View>
                     )}
 
                     {/* Weitere Infos */}
                     <View style={styles.sectionRow}>
-                        <Text style={styles.sectionLabel}>معلومات أخرى؟</Text>
+                        <Text style={[styles.sectionLabel, { textAlign: isRTL ? 'right' : 'left' }]}>{t('reportDialog.notesLabel')}</Text>
                     </View>
 
                     <TextInput
@@ -384,17 +387,17 @@ async function takePhoto() {
                         multiline
                         value={notes}
                         onChangeText={setNotes}
-                        placeholder="اكتب تفاصيل إضافية عن البلاغ"
+                        placeholder={t('reportDialog.notesPlaceholder')}
                         placeholderTextColor="#567"
-                        textAlign="right"
+                        textAlign={isRTL ? 'right' : 'left'}
                     />
 
                     {/* Zeitzeile */}
-                    <Text style={styles.timeText}>
-    🕒 وقت البلاغ:{" "}
-    {`م${new Date().getHours() % 12 || 12}:${String(new Date().getMinutes()).padStart(2, "0")}`}
+                    <Text style={[styles.timeText, { textAlign: isRTL ? 'right' : 'left' }]}>
+    {t('reportDialog.timeLabel')}{" "}
+    {`${new Date().getHours() % 12 || 12}:${String(new Date().getMinutes()).padStart(2, "0")}`}
     {" • "}
-    {new Date().toLocaleDateString("ar-SY", {
+    {new Date().toLocaleDateString(isRTL ? "ar-SY" : "en-US", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -406,12 +409,12 @@ async function takePhoto() {
                     {/* Erfolgsnachricht */}
                     {successId && (
                         <View style={styles.successBox}>
-                            <Text style={styles.successText}>
-                                تم إرسال بلاغك بنجاح! رقم البلاغ:{" "}
+                            <Text style={[styles.successText, { textAlign: isRTL ? 'right' : 'left' }]}>
+                                {t('reportDialog.successTitle')}{" "}
                                 <Text style={{ fontFamily: "Tajawal-Bold" }}>{successId}</Text>
                             </Text>
-                            <Text style={styles.successSub}>
-                                سيتم مراجعته من قبل الجهات المختصة.
+                            <Text style={[styles.successSub, { textAlign: isRTL ? 'right' : 'left' }]}>
+                                {t('reportDialog.successSubtitle')}
                             </Text>
                         </View>
                     )}
@@ -419,7 +422,7 @@ async function takePhoto() {
                     {/* Senden-Button unten rechts */}
                     <View style={styles.sendBtnWrapper}>
     <Pressable style={styles.sendBtn} onPress={handleSend}>
-        <Text style={styles.sendBtnText}>إرسال</Text>
+        <Text style={styles.sendBtnText}>{t('reportDialog.sendButton')}</Text>
     </Pressable>
 </View>
 
@@ -432,14 +435,14 @@ async function takePhoto() {
     <Pressable style={styles.photoOverlayBg} onPress={() => setPhotoMenu(false)} />
 
     <View style={styles.photoMenuBox}>
-      <Pressable style={styles.photoMenuItem} onPress={takePhoto}>
+      <Pressable style={[styles.photoMenuItem, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={takePhoto}>
         <Text style={styles.photoMenuIcon}>📷</Text>
-        <Text style={styles.photoMenuText}>التقاط صورة</Text>
+        <Text style={[styles.photoMenuText, { textAlign: isRTL ? 'right' : 'left' }]}>{t('reportDialog.photoMenuTake')}</Text>
       </Pressable>
 
-      <Pressable style={styles.photoMenuItem} onPress={pickImage}>
+      <Pressable style={[styles.photoMenuItem, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={pickImage}>
         <Text style={styles.photoMenuIcon}>🖼️</Text>
-        <Text style={styles.photoMenuText}>اختيار صورة من الهاتف</Text>
+        <Text style={[styles.photoMenuText, { textAlign: isRTL ? 'right' : 'left' }]}>{t('reportDialog.photoMenuPick')}</Text>
       </Pressable>
     </View>
   </View>
@@ -507,10 +510,8 @@ const styles = StyleSheet.create({
         shadowRadius: 18,
         shadowOffset: { width: 0, height: 8 },
         elevation: 10,
-        direction: "rtl",
     },
     headerRow: {
-        flexDirection: "row-reverse",
         alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 10,
@@ -564,10 +565,8 @@ const styles = StyleSheet.create({
         color: BLUE,
         fontSize: 15,
         fontFamily: "Tajawal-Bold",
-        textAlign: "left",
     },
     chipRow: {
-        flexDirection: "row-reverse",
         justifyContent: "space-between",
         marginBottom: 4,
     },
@@ -584,7 +583,6 @@ const styles = StyleSheet.create({
         fontFamily: "Tajawal-Bold",
     },
     addressRow: {
-        flexDirection: "row-reverse",
         alignItems: "center",
         backgroundColor: "#F5F7FF",
         borderRadius: 14,
@@ -596,7 +594,6 @@ const styles = StyleSheet.create({
         color: BLUE,
         fontSize: 14,
         fontFamily: "Tajawal-Regular",
-        textAlign: "left",
     },
     placesContainer: {
         zIndex: 1000,
@@ -638,7 +635,6 @@ const styles = StyleSheet.create({
         color: "#445",
         fontSize: 12,
         fontFamily: "Tajawal-Regular",
-        textAlign: "left",
     },
     successBox: {
         marginTop: 10,
@@ -651,14 +647,12 @@ const styles = StyleSheet.create({
         color: BLUE,
         fontSize: 14,
         fontFamily: "Tajawal-Regular",
-        textAlign: "left",
     },
     successSub: {
         color: "#333",
         fontSize: 12,
         fontFamily: "Tajawal-Regular",
         marginTop: 2,
-        textAlign: "left",
     },
     footerRow: {
         marginTop: 10,
@@ -705,7 +699,6 @@ photoMenuBox: {
 },
 
 photoMenuItem: {
-  flexDirection: "row-reverse",
   alignItems: "center",
   paddingVertical: 12,
 },
@@ -720,7 +713,6 @@ photoMenuText: {
   fontSize: 17,
   color: "white",
   fontFamily: "Tajawal-Bold",
-  textAlign: "left",
 },
 sendBtnWrapper: {
     marginTop: 20,

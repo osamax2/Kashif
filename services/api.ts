@@ -12,7 +12,7 @@ const USER_KEY = '@kashif_user';
 // Create axios instance
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 5000, // Reduced timeout for faster failures
+  timeout: 30000, // 30 seconds timeout for slower networks
   headers: {
     'Content-Type': 'application/json',
   },
