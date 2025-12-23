@@ -8,6 +8,7 @@ export interface Coupon {
     description: string;
     points_cost: number;
     image_url?: string | null;
+    address?: string | null;
     expiration_date?: string | null;
     max_usage_per_user?: number | null;
     total_available?: number | null;

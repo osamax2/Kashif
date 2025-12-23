@@ -198,7 +198,8 @@ export const translations = {
       imageUrl: 'Image URL',
       maxUsagePerUser: 'Max Usage Per User',
       totalAvailable: 'Total Available',
-      selectCompany: 'Select a company...',
+      address: 'Address',
+      selectCompany: 'Select a company...',,
       selectCategory: 'Select a category...',
       category: 'Category',
       types: {
@@ -488,6 +489,7 @@ export const translations = {
       imageUrl: 'رابط الصورة',
       maxUsagePerUser: 'الحد الأقصى لكل مستخدم',
       totalAvailable: 'المجموع المتاح',
+      address: 'العنوان',
       selectCompany: 'اختر شركة...',
       selectCategory: 'اختر فئة...',
       category: 'الفئة',

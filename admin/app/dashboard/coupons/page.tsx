@@ -27,6 +27,7 @@ interface Coupon {
   description: string;
   points_cost: number;
   image_url?: string;
+  address?: string;
   expiration_date: string;
   max_usage_per_user?: number;
   total_available?: number;
@@ -69,6 +70,7 @@ export default function CouponsPage() {
     company_id: '',
     coupon_category_id: '',
     image_url: '',
+    address: '',
     expiration_date: '',
     max_usage_per_user: '',
     total_available: '',
@@ -243,6 +245,9 @@ export default function CouponsPage() {
       if (formData.image_url && formData.image_url.trim()) {
         createData.image_url = formData.image_url.trim();
       }
+      if (formData.address && formData.address.trim()) {
+        createData.address = formData.address.trim();
+      }
       if (formData.expiration_date && formData.expiration_date.trim()) {
         createData.expiration_date = new Date(formData.expiration_date).toISOString();
       }
@@ -278,6 +283,7 @@ export default function CouponsPage() {
       company_id: coupon.company_id != null ? String(coupon.company_id) : '',
       coupon_category_id: coupon.coupon_category_id != null ? String(coupon.coupon_category_id) : '',
       image_url: coupon.image_url || '',
+      address: coupon.address || '',
       expiration_date: coupon.expiration_date ? coupon.expiration_date.split('T')[0] : '',
       max_usage_per_user: coupon.max_usage_per_user != null ? String(coupon.max_usage_per_user) : '',
       total_available: coupon.total_available != null ? String(coupon.total_available) : '',
@@ -307,6 +313,7 @@ export default function CouponsPage() {
         updateData.points_cost = parseInt(formData.points_cost);
       }
       if (formData.image_url && formData.image_url.trim()) updateData.image_url = formData.image_url.trim();
+      if (formData.address !== undefined) updateData.address = formData.address.trim() || null;
       if (formData.status && formData.status.trim()) updateData.status = formData.status.trim();
       if (formData.expiration_date && formData.expiration_date.trim()) {
         updateData.expiration_date = new Date(formData.expiration_date).toISOString();
@@ -367,6 +374,7 @@ export default function CouponsPage() {
       company_id: companyId,
       coupon_category_id: '',
       image_url: '',
+      address: '',
       expiration_date: '',
       max_usage_per_user: '',
       total_available: '',
@@ -847,6 +855,17 @@ function CouponForm({
           value={formData.expiration_date}
           onChange={(e) => setFormData({ ...formData, expiration_date: e.target.value })}
           className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.address || (isRTL ? 'العنوان' : 'Address')}</label>
+        <input
+          type="text"
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          placeholder={isRTL ? 'أدخل عنوان موقع الكوبون' : 'Enter coupon location address'}
         />
       </div>
 

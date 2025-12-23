@@ -373,7 +373,8 @@
       "usageLimitTitle": "حد الاستخدام",
       "usageLimit": "يمكن لكل مستخدم الاستبدال {{count}} مرة.",
       "totalAvailableTitle": "الكمية الإجمالية",
-      "totalAvailable": "متوفر {{count}} قسيمة."
+      "totalAvailable": "متوفر {{count}} قسيمة.",
+      "addressTitle": "العنوان"
     }
   }
 }
