@@ -262,10 +262,8 @@ export default function ReportsScreen() {
             if (result.success) {
                 // Show success message
                 Alert.alert(
-                    language === 'ar' ? 'تم التأكيد!' : 'Confirmed!',
-                    language === 'ar' 
-                        ? `تم تأكيد البلاغ! حصلت على ${result.points_awarded} نقاط`
-                        : `Report confirmed! You earned ${result.points_awarded} points`
+                    t('reports.confirmSuccess'),
+                    t('reports.confirmSuccessMessage', { points: result.points_awarded })
                 );
                 
                 // Reload data to reflect changes
@@ -276,8 +274,8 @@ export default function ReportsScreen() {
             console.error('Error confirming report:', error);
             const errorMsg = error?.response?.data?.detail || 'Error confirming report';
             Alert.alert(
-                language === 'ar' ? 'خطأ' : 'Error',
-                language === 'ar' ? 'حدث خطأ أثناء تأكيد البلاغ' : errorMsg
+                t('reports.confirmError'),
+                t('reports.confirmErrorMessage')
             );
         } finally {
             setConfirming(false);
@@ -323,7 +321,7 @@ export default function ReportsScreen() {
             <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
                 <ActivityIndicator size="large" color={YELLOW} />
                 <Text style={{ color: '#FFFFFF', marginTop: 10, fontFamily: 'Tajawal-Regular' }}>
-                    جاري تحميل البلاغات...
+                    {t('reports.loading')}
                 </Text>
             </View>
         );
@@ -339,7 +337,7 @@ export default function ReportsScreen() {
                 overshootRight={false}
                 renderRightActions={() => (
                     <View style={[styles.swipeAction, styles.swipeDetails]}>
-                        <Text style={styles.swipeText}>ℹ️ تفاصيل</Text>
+                        <Text style={styles.swipeText}>ℹ️ {t('reports.detailsButton')}</Text>
                     </View>
                 )}
                 onSwipeableRightOpen={() => openDetails(item)}
@@ -370,7 +368,7 @@ export default function ReportsScreen() {
                     <Ionicons name="notifications" size={22} color={BLUE} />
                 </TouchableOpacity>
 
-                <Text numberOfLines={1} style={styles.headerTitle}>البلاغات</Text>
+                <Text numberOfLines={1} style={styles.headerTitle}>{t('reports.title')}</Text>
 
                 {/* Back icon (wie im Profil) */}
                 <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
@@ -390,7 +388,7 @@ export default function ReportsScreen() {
                     paddingHorizontal: 29,
                 }}
             >
-                <Text style={styles.listHeaderText}>إحصائيات بلاغاتي</Text>
+                <Text style={styles.listHeaderText}>{t('reports.statistics')}</Text>
             </Text>
 
             {/* Drei Kreise */}
@@ -402,14 +400,14 @@ export default function ReportsScreen() {
                     marginBottom: 10,
                 }}
             >
-                <CircleStat percent={stats.open} label="البلاغات المفتوحة" color="#4DA3FF" />
-                <CircleStat percent={stats.inProgress} label="قيد المعالجة" color="#FFD166" />
-                <CircleStat percent={stats.resolved} label="تم إصلاحها" color="#4CD964" />
+                <CircleStat percent={stats.open} label={t('reports.openReports')} color="#4DA3FF" />
+                <CircleStat percent={stats.inProgress} label={t('reports.inProgressReports')} color="#FFD166" />
+                <CircleStat percent={stats.resolved} label={t('reports.resolvedReports')} color="#4CD964" />
             </View>
 
             {/* Überschrift Liste */}
             <View style={styles.listHeaderRow}>
-                <Text style={styles.listHeaderText}>قائمة بلاغاتي</Text>
+                <Text style={styles.listHeaderText}>{t('reports.myReportsList')}</Text>
             </View>
 
             {/* LISTE */}
@@ -427,10 +425,10 @@ export default function ReportsScreen() {
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 }}>
                     <Ionicons name="document-text-outline" size={64} color="rgba(255,255,255,0.3)" />
                     <Text style={{ color: '#FFFFFF', fontSize: 18, marginTop: 16, fontFamily: 'Tajawal-Regular' }}>
-                        لا توجد بلاغات حتى الآن
+                        {t('reports.noReports')}
                     </Text>
                     <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 8, fontFamily: 'Tajawal-Regular' }}>
-                        قم بإنشاء بلاغ جديد من الخريطة
+                        {t('reports.createNewReport')}
                     </Text>
                 </View>
             )}
@@ -481,20 +479,20 @@ export default function ReportsScreen() {
                                 {/* ID + Datum */}
                                 <View style={styles.modalMetaRow}>
                                     <Text style={styles.modalMetaText}>
-                                        رقم البلاغ: {selected.id}
+                                        {t('reports.reportNumber')}: {selected.id}
                                     </Text>
                                     <Text style={styles.modalMetaText}>
-                                        التاريخ: {formatDate(selected.created_at)}
+                                        {t('reports.date')}: {formatDate(selected.created_at)}
                                     </Text>
                                 </View>
 
                                 {/* Kategorie + Schweregrad */}
                                 <View style={styles.modalMetaRow}>
                                     <Text style={styles.modalMetaText}>
-                                        الفئة: {getCategoryName(selected.category_id)}
+                                        {t('reports.category')}: {getCategoryName(selected.category_id)}
                                     </Text>
                                     <Text style={styles.modalMetaText}>
-                                        الخطورة: {getSeverityName(selected.severity_id)}
+                                        {t('reports.severity')}: {getSeverityName(selected.severity_id)}
                                     </Text>
                                 </View>
 
@@ -572,7 +570,7 @@ export default function ReportsScreen() {
                                                 <ActivityIndicator size="small" color="#FFFFFF" />
                                             ) : (
                                                 <Text style={styles.stillThereButtonText}>
-                                                    {language === 'ar' ? '✓ لا يزال موجوداً' : '✓ Still There'}
+                                                    ✓ {t('reports.stillThere')}
                                                 </Text>
                                             )}
                                         </Pressable>
@@ -589,7 +587,7 @@ export default function ReportsScreen() {
                                         onPress={closeDetails}
                                     >
                                         <Text style={styles.modalButtonText}>
-                                            {language === 'ar' ? 'إغلاق' : 'Close'}
+                                            {t('reports.close')}
                                         </Text>
                                     </Pressable>
                                 </View>

@@ -1,11 +1,13 @@
 // app/(tabs)/_layout.tsx
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Tabs } from "expo-router";
 import React from "react";
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
+    const { t, isRTL } = useLanguage();
 
     return (
         <Tabs
@@ -26,15 +28,15 @@ export default function TabLayout() {
                 tabBarLabelStyle: {
                     fontSize: 11,
                     fontFamily: "Tajawal-Regular",
-                    textAlign: "center",
-                    writingDirection: "rtl",
+                    textAlign: isRTL ? "right" : "left",
+                    writingDirection: isRTL ? "rtl" : "ltr",
                 },
             }}
         >
             <Tabs.Screen
                 name="home"
                 options={{
-                    title: "الرئيسية",
+                    title: t('home.title'),
                     tabBarIcon: ({ color }) => (
                         <IconSymbol name="house.fill" size={26} color={color} />
                     ),
@@ -44,7 +46,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="reports"
                 options={{
-                    title: "البلاغات",
+                    title: t('reports.title'),
                     tabBarIcon: ({ color }) => (
                         <IconSymbol name="chart.bar.fill" size={24} color={color} />
                     ),
@@ -54,7 +56,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: "الملف الشخصي",
+                    title: t('profile.title'),
                     tabBarIcon: ({ color }) => (
                         <IconSymbol
                             name="person.crop.circle"
@@ -68,7 +70,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="coupons"
                 options={{
-                    title: "القسائم",
+                    title: t('coupons.screenTitle'),
                     tabBarIcon: ({ color }) => (
                         <IconSymbol name="tag.fill" size={24} color={color} />
                     ),
@@ -78,7 +80,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="settings"
                 options={{
-                    title: "الإعدادات",
+                    title: t('settings.title'),
                     tabBarIcon: ({ color }) => (
                         <IconSymbol
                             name="gearshape.fill"

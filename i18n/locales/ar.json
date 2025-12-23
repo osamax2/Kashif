@@ -90,18 +90,47 @@
     "title": "البلاغات",
     "myReports": "بلاغاتي",
     "allReports": "كل البلاغات",
+    "loading": "جاري تحميل البلاغات...",
+    "statistics": "إحصائيات بلاغاتي",
+    "openReports": "البلاغات المفتوحة",
+    "inProgressReports": "قيد المعالجة",
+    "resolvedReports": "تم إصلاحها",
+    "myReportsList": "قائمة بلاغاتي",
+    "reportNumber": "رقم البلاغ",
+    "date": "التاريخ",
+    "category": "الفئة",
+    "severity": "الخطورة",
+    "address": "العنوان",
+    "detailsButton": "تفاصيل",
+    "close": "إغلاق",
+    "stillThere": "لا يزال موجوداً",
+    "confirmationStatus": {
+      "pending": "قيد الانتظار",
+      "confirmed": "مؤكد",
+      "expired": "منتهي",
+      "waitingConfirmation": "في انتظار تأكيد من مستخدم آخر"
+    },
+    "confirmSuccess": "تم التأكيد!",
+    "confirmSuccessMessage": "تم تأكيد البلاغ! حصلت على {points} نقاط",
+    "confirmError": "خطأ",
+    "confirmErrorMessage": "حدث خطأ أثناء تأكيد البلاغ",
+    "noReports": "لا توجد بلاغات حتى الآن",
+    "createNewReport": "قم بإنشاء بلاغ جديد من الخريطة",
     "status": {
       "pending": "قيد المراجعة",
       "inProgress": "قيد الإصلاح",
       "resolved": "تم الإصلاح",
-      "rejected": "مرفوض"
+      "rejected": "مرفوض",
+      "open": "مفتوح",
+      "unknown": "غير معروف"
     },
     "categories": {
       "pothole": "حفرة",
       "accident": "حادث",
       "lighting": "إضاءة",
       "speedCamera": "كاشف سرعة",
-      "other": "أخرى"
+      "other": "أخرى",
+      "unknown": "غير معروف"
     },
     "filters": {
       "all": "الكل",

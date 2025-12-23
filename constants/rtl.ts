@@ -1,30 +1,29 @@
 import { I18nManager, StyleSheet } from 'react-native';
 
-// Setze standardmäßig LTR
-I18nManager.allowRTL(false);
-I18nManager.forceRTL(false);
+// Enable RTL support for Arabic
+I18nManager.allowRTL(true);
 
 export const rtlStyles = StyleSheet.create({
   screenContainer: {
     flex: 1,
     flexGrow: 1,
-    direction: 'ltr',
   },
   scrollContent: {
     flexGrow: 1,
-    direction: 'ltr',
   },
   rowReverse: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
   },
   textRight: {
+    textAlign: 'right',
+  },
+  textLeft: {
     textAlign: 'left',
-    writingDirection: 'ltr',
   },
 });
 
-export const ensureRTL = () => {
-  if (I18nManager.isRTL) {
-    I18nManager.forceRTL(false);
+export const ensureRTL = (isRTL: boolean) => {
+  if (I18nManager.isRTL !== isRTL) {
+    I18nManager.forceRTL(isRTL);
   }
 };

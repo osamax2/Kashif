@@ -15,7 +15,6 @@ import React, { useEffect, useRef, useState } from "react";
 
 import {
     Animated,
-    I18nManager,
     Image,
     Keyboard,
     PanResponder,
@@ -92,8 +91,7 @@ function Slider({ value = 0, minimumValue = 0, maximumValue = 1, onValueChange }
 }
 
 
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+// RTL is handled by LanguageContext
 
 const BLUE = "#0D2B66";
 const DEFAULT_REPORT_LIMIT = 200;
