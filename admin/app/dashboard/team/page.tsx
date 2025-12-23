@@ -324,6 +324,19 @@ export default function TeamPage() {
               
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'رقم الهاتف' : 'Phone'}
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  dir="ltr"
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
                   {isRTL ? 'كلمة المرور' : 'Password'} *
                 </label>
                 <input
@@ -353,19 +366,6 @@ export default function TeamPage() {
                 {passwordError && (
                   <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{passwordError}</p>
                 )}
-              </div>
-              
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
-                  {isRTL ? 'رقم الهاتف' : 'Phone'}
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  dir="ltr"
-                />
               </div>
             </div>
             

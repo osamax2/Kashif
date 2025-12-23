@@ -66,6 +66,13 @@ def start_consumer():
                 routing_key='points.transaction.created'
             )
             
+            # Also bind to points.awarded events (from admin panel)
+            channel.queue_bind(
+                exchange='kashif_events',
+                queue=queue_name,
+                routing_key='points.awarded'
+            )
+            
             def callback(ch, method, properties, body):
                 try:
                     message = json.loads(body)
@@ -74,7 +81,8 @@ def start_consumer():
                     
                     logger.info(f"Received event: {event_type}")
                     
-                    if event_type == 'points.transaction.created':
+                    # Handle both points.transaction.created and points.awarded events
+                    if event_type in ['points.transaction.created', 'points.awarded']:
                         handle_point_transaction(data)
                     
                     ch.basic_ack(delivery_tag=method.delivery_tag)
