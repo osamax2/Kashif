@@ -2,7 +2,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { isCouponActive, isCouponExpired, type Coupon } from "@/services/coupons";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const PRIMARY = "#0D2B66";
@@ -17,6 +17,9 @@ type Props = {
   isRedeeming?: boolean;
   canRedeem?: boolean;
   showInsufficientMessage?: boolean;
+  hideRedeemButton?: boolean;
+  isVerified?: boolean;
+  showVerifiedBadge?: boolean;
 };
 
 export default function CouponCard({
@@ -27,6 +30,9 @@ export default function CouponCard({
   isRedeeming = false,
   canRedeem = true,
   showInsufficientMessage = true,
+  hideRedeemButton = false,
+  isVerified = false,
+  showVerifiedBadge = false,
 }: Props) {
   const { t, language } = useLanguage();
 
@@ -136,7 +142,7 @@ export default function CouponCard({
         </View>
 
         {/* Button */}
-        {showActivateButton && (
+        {showActivateButton && !hideRedeemButton && (
           <View style={styles.footerRow}>
             <View style={styles.pointsChip}>
               <Text style={styles.pointsChipText}>{pointsLabel}</Text>
@@ -169,7 +175,27 @@ export default function CouponCard({
           </View>
         )}
 
-        {showActivateButton && active && !canRedeem && showInsufficientMessage && (
+        {/* Verified Badge for Used Coupons */}
+        {showVerifiedBadge && (
+          <View style={styles.footerRow}>
+            <View style={styles.pointsChip}>
+              <Text style={styles.pointsChipText}>{pointsLabel}</Text>
+            </View>
+            <View style={{ flex: 1 }} />
+            <View style={[styles.verifiedBadge, isVerified ? styles.verifiedBadgeUsed : styles.verifiedBadgePending]}>
+              <Ionicons 
+                name={isVerified ? "checkmark-circle" : "qr-code-outline"} 
+                size={16} 
+                color={isVerified ? "#16a34a" : "#eab308"} 
+              />
+              <Text style={[styles.verifiedBadgeText, isVerified ? styles.verifiedTextUsed : styles.verifiedTextPending]}>
+                {isVerified ? t("coupons.verified") : t("coupons.showQR")}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {showActivateButton && !hideRedeemButton && active && !canRedeem && showInsufficientMessage && (
           <Text style={styles.pointsWarning}>
             {t("coupons.redeemInsufficientLabel", { points: pointsLabel })}
           </Text>
@@ -307,5 +333,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "right",
     marginTop: 8,
+  },
+  verifiedBadge: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+  },
+  verifiedBadgeUsed: {
+    backgroundColor: "rgba(22, 163, 74, 0.12)",
+  },
+  verifiedBadgePending: {
+    backgroundColor: "rgba(234, 179, 8, 0.12)",
+  },
+  verifiedBadgeText: {
+    fontSize: 14,
+    fontFamily: "Tajawal-Bold",
+  },
+  verifiedTextUsed: {
+    color: "#16a34a",
+  },
+  verifiedTextPending: {
+    color: "#eab308",
   },
 });

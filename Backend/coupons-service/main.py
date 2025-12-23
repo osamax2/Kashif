@@ -4,6 +4,7 @@ from typing import Annotated, List, Optional
 
 import auth_client
 import crud
+import gamification_client
 import models
 import schemas
 from database import engine, get_db
@@ -427,6 +428,7 @@ async def permanent_delete_coupon(
 @app.post("/{coupon_id}/redeem", response_model=schemas.CouponRedemption)
 async def redeem_coupon(
     coupon_id: int,
+    authorization: Annotated[str, Header()],
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
@@ -453,14 +455,24 @@ async def redeem_coupon(
             detail="You have already redeemed this coupon"
         )
     
-    # TODO: Call gamification service to verify and deduct points
-    # For now, just create the redemption
+    # Get the points cost
+    points_cost = coupon.points_cost or coupon.points_required or 0
+    
+    # Call gamification service to redeem points
+    token = authorization.replace("Bearer ", "")
+    redeemed = await gamification_client.redeem_points(token, points_cost, coupon_id)
+    
+    if not redeemed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to redeem points. You may not have enough points."
+        )
     
     redemption = crud.create_redemption(
         db=db,
         user_id=user_id,
         coupon_id=coupon_id,
-        points_spent=coupon.points_cost
+        points_spent=points_cost
     )
     
     # Publish CouponRedeemed event
@@ -469,7 +481,7 @@ async def redeem_coupon(
             "redemption_id": redemption.id,
             "user_id": user_id,
             "coupon_id": coupon_id,
-            "points_spent": coupon.points_required
+            "points_spent": points_cost
         })
     except Exception as e:
         logger.error(f"Failed to publish CouponRedeemed event: {e}")

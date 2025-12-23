@@ -333,11 +333,13 @@
     "screenTitle": "القسائم",
     "tabs": {
       "active": "المتاحة",
-      "inactive": "المنتهية"
+      "inactive": "المنتهية",
+      "used": "المستخدمة"
     },
     "searchPlaceholder": "ابحث عن قسيمة",
     "loading": "جاري جلب القسائم...",
     "empty": "لا توجد قسائم حالياً",
+    "emptyUsed": "لا توجد قسائم مستخدمة",
     "loadError": "تعذر تحميل القسائم. اسحب للتحديث.",
     "badgeLabel": "عرض حصري",
     "pointsLabel": "{{points}} نقطة",
@@ -348,6 +350,10 @@
       "expired": "منتهية",
       "available": "غير مفعّلة"
     },
+    "verified": "تم التحقق",
+    "showQR": "عرض الرمز",
+    "alreadyVerifiedTitle": "تم التحقق مسبقاً",
+    "alreadyVerifiedMessage": "تم مسح هذه القسيمة والتحقق منها بالفعل.",
     "redeemButton": "استبدل الآن",
     "viewDetails": "عرض التفاصيل",
     "redeemInsufficientLabel": "تحتاج إلى {{points}} حتى تتمكن من الاستبدال.",
