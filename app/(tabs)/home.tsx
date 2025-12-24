@@ -5,6 +5,7 @@ import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, Severity } from "@/services/api";
 import locationMonitoringService from "@/services/location-monitoring";
+import { getPendingReports, removePendingReport, subscribeToNetworkChanges } from "@/services/offline-reports";
 import Ionicons from "@expo/vector-icons/Ionicons";
 // Lightweight local Slider fallback to avoid dependency on @react-native-community/slider
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -284,6 +285,70 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     useEffect(() => {
         requestLocation();
         loadSettings();
+    }, []);
+    
+    // Sync pending offline reports when network is available
+    useEffect(() => {
+        const syncPendingReports = async () => {
+            try {
+                const pendingReports = await getPendingReports();
+                if (pendingReports.length === 0) return;
+                
+                console.log(`Syncing ${pendingReports.length} pending reports...`);
+                
+                for (const report of pendingReports) {
+                    try {
+                        // Map type to category_id
+                        const categoryMap: Record<string, number> = {
+                            speed: 1,
+                            pothole: 2,
+                            accident: 3,
+                        };
+                        
+                        // Map severity
+                        const severityMap: Record<string, Severity> = {
+                            low: 'low',
+                            medium: 'medium',
+                            high: 'high',
+                        };
+                        
+                        await reportingAPI.createReport({
+                            title: report.type === 'speed' ? 'Speed Camera' : 
+                                   report.type === 'pothole' ? 'Pothole' : 'Accident',
+                            description: report.notes || `${report.type} report`,
+                            category_id: categoryMap[report.type || 'pothole'] || 2,
+                            severity: severityMap[report.severity] || 'medium',
+                            latitude: report.latitude || 0,
+                            longitude: report.longitude || 0,
+                            address: report.address,
+                        });
+                        
+                        await removePendingReport(report.id);
+                        console.log(`Synced pending report: ${report.id}`);
+                    } catch (err) {
+                        console.error(`Failed to sync report ${report.id}:`, err);
+                    }
+                }
+            } catch (error) {
+                console.error('Error syncing pending reports:', error);
+            }
+        };
+        
+        // Sync on mount
+        syncPendingReports();
+        
+        // Subscribe to network changes
+        const unsubscribe = subscribeToNetworkChanges(
+            () => {
+                console.log('Network available, syncing pending reports...');
+                syncPendingReports();
+            },
+            () => {
+                console.log('Network unavailable');
+            }
+        );
+        
+        return unsubscribe;
     }, []);
     
     // Reload data when refresh is triggered from other screens
