@@ -23,6 +23,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
@@ -550,6 +551,87 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         Keyboard.dismiss();
     };
 
+    // Fallback search using Google Geocoding API when no suggestions available
+    const searchWithGeocoding = async (query: string) => {
+        if (!query || query.trim().length < 2) {
+            console.log('⚠️ Search query too short');
+            return;
+        }
+        
+        console.log('🔍 Searching with Geocoding API:', query);
+        
+        try {
+            const apiKey = 'REMOVED_API_KEY';
+            // Add Syria bias to the search
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}&components=country:SY`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            console.log('📍 Geocoding response status:', data.status);
+            
+            if (data.status === 'OK' && data.results && data.results.length > 0) {
+                const result = data.results[0];
+                const { lat, lng } = result.geometry.location;
+                const formattedAddress = result.formatted_address;
+                
+                console.log('✅ Geocoding found:', { lat, lng, formattedAddress });
+                
+                lastSelectedCoords.current = {
+                    latitude: lat,
+                    longitude: lng,
+                    title: formattedAddress,
+                };
+                
+                // Update search text with formatted address
+                setSearchText(formattedAddress);
+                if (googlePlacesRef.current?.setAddressText) {
+                    googlePlacesRef.current.setAddressText(formattedAddress);
+                }
+                
+                navigateToPlace(lat, lng, formattedAddress);
+            } else {
+                console.log('⚠️ No geocoding results for:', query);
+                // If no results in Syria, try without country restriction
+                const urlGlobal = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}`;
+                const responseGlobal = await fetch(urlGlobal);
+                const dataGlobal = await responseGlobal.json();
+                
+                if (dataGlobal.status === 'OK' && dataGlobal.results && dataGlobal.results.length > 0) {
+                    const result = dataGlobal.results[0];
+                    const { lat, lng } = result.geometry.location;
+                    const formattedAddress = result.formatted_address;
+                    
+                    console.log('✅ Global geocoding found:', { lat, lng, formattedAddress });
+                    
+                    lastSelectedCoords.current = {
+                        latitude: lat,
+                        longitude: lng,
+                        title: formattedAddress,
+                    };
+                    
+                    setSearchText(formattedAddress);
+                    if (googlePlacesRef.current?.setAddressText) {
+                        googlePlacesRef.current.setAddressText(formattedAddress);
+                    }
+                    
+                    navigateToPlace(lat, lng, formattedAddress);
+                } else {
+                    console.log('❌ No geocoding results found globally');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Geocoding error:', error);
+        }
+    };
+
+    // Dismiss keyboard and hide suggestions when tapping outside search
+    const dismissSearchAndKeyboard = () => {
+        Keyboard.dismiss();
+        setForceHideSuggestions(true);
+        googlePlacesRef.current?.blur?.();
+    };
+
     /** RADIAL-MENÜ beim +-Button */
     const [menuOpen, setMenuOpen] = useState(false);
     const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -665,9 +747,11 @@ async function playBeep(value: number) {
     return (
         <View style={styles.root}>
             {/* HEADER */}
-            <View style={styles.appbar}>
-                <Text style={styles.title}>{t('home.title')}</Text>
-            </View>
+            <TouchableWithoutFeedback onPress={dismissSearchAndKeyboard}>
+                <View style={styles.appbar}>
+                    <Text style={styles.title}>{t('home.title')}</Text>
+                </View>
+            </TouchableWithoutFeedback>
 
             {/* SUCHE */}
             <View style={styles.searchContainer}>
@@ -734,6 +818,8 @@ async function playBeep(value: number) {
                         onSubmitEditing: () => {
                             console.log('⏎ ENTER/SEARCH pressed');
                             setForceHideSuggestions(true);
+                            Keyboard.dismiss();
+                            
                             const coords = lastSelectedCoords.current;
                             if (coords) {
                                 console.log('🗺️ Navigating to saved coordinates:', coords);
@@ -742,15 +828,33 @@ async function playBeep(value: number) {
                                     coords.longitude,
                                     coords.title
                                 );
+                            } else if (searchText && searchText.trim().length >= 2) {
+                                // No coordinates from autocomplete - use Geocoding API fallback
+                                console.log('🔄 No autocomplete selection, using Geocoding API for:', searchText);
+                                searchWithGeocoding(searchText);
                             } else {
-                                console.log('⚠️ No coordinates selected yet');
+                                console.log('⚠️ No coordinates and search text too short');
                             }
                         },
                     }}
                     renderRightButton={() => (
-                        <View style={styles.searchIconContainer}>
+                        <TouchableOpacity 
+                            style={styles.searchIconContainer}
+                            onPress={() => {
+                                // Trigger search when icon is pressed
+                                setForceHideSuggestions(true);
+                                Keyboard.dismiss();
+                                
+                                const coords = lastSelectedCoords.current;
+                                if (coords) {
+                                    navigateToPlace(coords.latitude, coords.longitude, coords.title);
+                                } else if (searchText && searchText.trim().length >= 2) {
+                                    searchWithGeocoding(searchText);
+                                }
+                            }}
+                        >
                             <Text style={styles.searchIcon}>🔍</Text>
-                        </View>
+                        </TouchableOpacity>
                     )}
                 />
             </View>
@@ -772,7 +876,10 @@ async function playBeep(value: number) {
                                 styles.categoryItem,
                                 isActive && styles.categoryItemActive,
                             ]}
-                            onPress={() => toggleFilter(category.id)}
+                            onPress={() => {
+                                dismissSearchAndKeyboard();
+                                toggleFilter(category.id);
+                            }}
                         >
                             <Text
                                 style={[
@@ -802,6 +909,8 @@ async function playBeep(value: number) {
                     initialRegion={mapRegion}
                     showsUserLocation={true}
                     showsMyLocationButton={true}
+                    onPress={dismissSearchAndKeyboard}
+                    onPanDrag={dismissSearchAndKeyboard}
                 >
                     {/* Search Result Marker */}
                     {searchMarker && (
