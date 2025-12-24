@@ -73,6 +73,8 @@ services:
       DATABASE_URL: postgresql://kashif_reports:report123@reporting-db:5432/kashif_reports
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
       AUTH_SERVICE_URL: http://auth-service:8000
+    volumes:
+      - reporting_uploads:/app/uploads
     depends_on:
       - reporting-db
       - rabbitmq
@@ -183,6 +185,7 @@ volumes:
   coupons_db_data:
   notification_db_data:
   uploads_data:
+  reporting_uploads:
 
 networks:
   kashif-network:

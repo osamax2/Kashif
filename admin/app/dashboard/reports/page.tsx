@@ -560,6 +560,28 @@ export default function ReportsPage() {
             
             <p className={`text-gray-600 text-sm mb-4 line-clamp-2 ${isRTL ? 'text-right' : ''}`}>{report.description}</p>
             
+            {/* Report Photo */}
+            {report.photo_urls && (
+              <div className="mb-4">
+                <a 
+                  href={report.photo_urls} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <img 
+                    src={report.photo_urls} 
+                    alt={report.title}
+                    className="w-full h-40 object-cover rounded-lg hover:opacity-90 transition cursor-pointer"
+                    onError={(e) => {
+                      // Hide image if it fails to load
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </a>
+              </div>
+            )}
+            
             {/* Reporter Info */}
             {(report.user_name || report.user_phone) && (
               <div className={`flex items-center text-sm text-gray-600 mb-3 bg-gray-50 p-2 rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
