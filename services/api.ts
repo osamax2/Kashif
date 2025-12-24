@@ -343,6 +343,47 @@ export interface ConfirmReportResponse {
 }
 
 export const reportingAPI = {
+  // Upload image for report
+  uploadImage: async (imageUri: string): Promise<{ url: string; filename: string }> => {
+    const formData = new FormData();
+    
+    // Get file extension from uri
+    const uriParts = imageUri.split('.');
+    const fileExtension = uriParts[uriParts.length - 1];
+    
+    // Create file object for form data
+    const file = {
+      uri: imageUri,
+      type: `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`,
+      name: `photo_${Date.now()}.${fileExtension}`,
+    } as any;
+    
+    formData.append('file', file);
+    
+    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    
+    const response = await fetch(`${API_BASE_URL}/api/reports/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to upload image');
+    }
+    
+    const data = await response.json();
+    // Return full URL for the uploaded image
+    return {
+      url: `${API_BASE_URL}/api/reports${data.url}`,
+      filename: data.filename,
+    };
+  },
+
   // Get user's reports (includes pending)
   getMyReports: async (skip: number = 0, limit: number = 100): Promise<Report[]> => {
     const response = await api.get<Report[]>('/api/reports/my-reports', {

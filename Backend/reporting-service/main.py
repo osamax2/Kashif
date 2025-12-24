@@ -1,5 +1,8 @@
 import logging
+import os
+import shutil
 import threading
+import uuid
 from typing import Annotated, List, Optional
 
 import auth_client
@@ -7,15 +10,23 @@ import crud
 import models
 import schemas
 from database import engine, get_db
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
 from sqlalchemy.orm import Session
 
 models.Base.metadata.create_all(bind=engine)
 
+# Create uploads directory if it doesn't exist
+UPLOAD_DIR = "/app/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 app = FastAPI(title="Reporting Service")
+
+# Mount static files for serving uploaded images
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Configure CORS
 app.add_middleware(
@@ -37,6 +48,49 @@ consumer_thread.start()
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "reporting"}
+
+
+@app.post("/upload")
+async def upload_image(
+    file: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id)
+):
+    """Upload an image file and return the URL"""
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File type {file.content_type} not allowed. Use: jpeg, png, gif, webp"
+        )
+    
+    # Validate file size (max 10MB)
+    max_size = 10 * 1024 * 1024  # 10MB
+    content = await file.read()
+    if len(content) > max_size:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large. Maximum size is 10MB"
+        )
+    
+    # Generate unique filename
+    file_extension = os.path.splitext(file.filename)[1] if file.filename else ".jpg"
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    
+    # Save file
+    with open(file_path, "wb") as buffer:
+        buffer.write(content)
+    
+    logger.info(f"File uploaded: {unique_filename} by user {user_id}")
+    
+    # Return the URL path (will be served via /uploads/)
+    return {
+        "filename": unique_filename,
+        "url": f"/uploads/{unique_filename}",
+        "size": len(content),
+        "content_type": file.content_type
+    }
 
 
 async def get_current_user_id(authorization: Annotated[str, Header()]):

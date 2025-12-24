@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 import * as Location from "expo-location";
 import * as Speech from "expo-speech";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
     Animated,
@@ -1139,6 +1139,20 @@ async function playBeep(value: number) {
                         const locationSource = data.latitude && data.longitude ? 'Google Places' : (searchMarker ? 'search' : 'GPS');
                         console.log(`📤 Creating report at ${locationSource}:`, { categoryId, severityId, location: locationToUse });
                         
+                        // Upload photo if provided
+                        let photoUrl: string | undefined = undefined;
+                        if (data.photoUri) {
+                            try {
+                                console.log('📷 Uploading photo...');
+                                const uploadResult = await reportingAPI.uploadImage(data.photoUri);
+                                photoUrl = uploadResult.url;
+                                console.log('✅ Photo uploaded:', photoUrl);
+                            } catch (uploadError) {
+                                console.warn('⚠️ Photo upload failed, continuing without photo:', uploadError);
+                                // Continue without photo if upload fails
+                            }
+                        }
+                        
                         // Create report
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole' 
@@ -1152,7 +1166,7 @@ async function playBeep(value: number) {
                             longitude: locationToUse.longitude,
                             address_text: data.address,
                             severity_id: severityId,
-                            photo_urls: data.photoUri || undefined,
+                            photo_urls: photoUrl,
                         });
                         
                         console.log('✅ Report created:', newReport.id);
