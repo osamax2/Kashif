@@ -30,8 +30,15 @@ export default function SettingsScreen() {
     const [notifPoints, setNotifPoints] = useState(false);
     const [notifGeneral, setNotifGeneral] = useState(true);
     const [successVisible, setSuccessVisible] = useState(false);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [nameModal, setNameModal] = useState(false);
     const [name, setName] = useState(user?.full_name || "");
+    const [hideNameMessage, setHideNameMessage] = useState<string | null>(null);
+
+    const showToast = (message: string) => {
+        setToastMessage(message);
+        setTimeout(() => setToastMessage(null), 2500);
+    };
 
     const [languageSheet, setLanguageSheet] = useState(false);
     const selectedLanguage = language === 'ar' ? t('settings.languages.ar') : t('settings.languages.en');
@@ -179,11 +186,23 @@ export default function SettingsScreen() {
                     <Text style={styles.switchText}>{t('settings.hideName')}</Text>
                     <Switch
                         value={hideName}
-                        onValueChange={setHideName}
+                        onValueChange={(value) => {
+                            setHideName(value);
+                            const message = value 
+                                ? (isRTL ? 'تم إخفاء الاسم من قائمة البلاغات' : 'The name has been hidden from the list of reports')
+                                : (isRTL ? 'تم تفعيل الاسم في قائمة البلاغات' : 'The name has been activated in the list of reports');
+                            setHideNameMessage(message);
+                            setTimeout(() => setHideNameMessage(null), 3000);
+                        }}
                         trackColor={{ false: "#888", true: YELLOW }}
                         thumbColor={hideName ? "#fff" : "#ccc"}
                     />
                 </View>
+                {hideNameMessage && (
+                    <Text style={[styles.hideNameMessage, { textAlign: isRTL ? 'right' : 'left' }]}>
+                        {hideNameMessage}
+                    </Text>
+                )}
             </View>
             <IOSActionSheet
                 visible={languageSheet}
@@ -236,7 +255,7 @@ export default function SettingsScreen() {
                 value={email}
                 setValue={setEmail}
                 onSave={() => {
-                    alert(t('common.success') + ' 👍');
+                    showToast(t('common.success') + ' 👍');
                     setEmailModal(false);
                 }}
             />
@@ -248,7 +267,7 @@ export default function SettingsScreen() {
         value={name}
         setValue={setName}
             onSave={() => {
-            alert(t('common.success') + ' 👍');
+            showToast(t('common.success') + ' 👍');
             setNameModal(false);
             }}
                     />
@@ -261,7 +280,7 @@ export default function SettingsScreen() {
                 value={password}
                 setValue={setPassword}
                 onSave={() => {
-                    alert(t('common.success') + ' 👍');
+                    showToast(t('common.success') + ' 👍');
                     setPasswordModal(false);
                 }}
             />
@@ -274,10 +293,17 @@ export default function SettingsScreen() {
                 value={phone}
                 setValue={setPhone}
                 onSave={() => {
-                    alert(t('common.success') + ' 👍');
+                    showToast(t('common.success') + ' 👍');
                     setPhoneModal(false);
                 }}
             />
+
+            {/* Toast Message */}
+            {toastMessage && (
+                <View style={styles.toastContainer}>
+                    <Text style={styles.toastText}>{toastMessage}</Text>
+                </View>
+            )}
         </ScrollView>
 
 
@@ -474,6 +500,31 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderColor: "rgba(255,255,255,0.25)",
         fontFamily: "Tajawal-Regular",
+    },
+
+    hideNameMessage: {
+        color: YELLOW,
+        fontSize: 14,
+        fontFamily: "Tajawal-Regular",
+        marginTop: 8,
+        paddingHorizontal: 4,
+    },
+
+    toastContainer: {
+        position: 'absolute',
+        bottom: 100,
+        left: 20,
+        right: 20,
+        backgroundColor: '#333',
+        borderRadius: 10,
+        padding: 14,
+        alignItems: 'center',
+    },
+
+    toastText: {
+        color: '#fff',
+        fontSize: 15,
+        fontFamily: 'Tajawal-Regular',
     },
 
 });
