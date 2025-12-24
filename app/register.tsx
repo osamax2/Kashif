@@ -5,7 +5,8 @@ import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
-    I18nManager,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Switch,
@@ -151,8 +152,17 @@ export default function Register() {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-            <Text style={styles.title}>{t('auth.register')}</Text>
+        <KeyboardAvoidingView
+            style={{ flex: 1, backgroundColor: "#0D2B66" }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
+            <ScrollView 
+                contentContainerStyle={styles.container} 
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                <Text style={styles.title}>{t('auth.register')}</Text>
 
             {/* 1. Full Name */}
             <View style={styles.field}>
@@ -224,15 +234,15 @@ export default function Register() {
                         />
                     </TouchableOpacity>
                 </View>
-                <Text style={styles.passwordHint}>{t('errors.passwordRequirements') || '8+ chars, number, uppercase, special char'}</Text>
+                <Text style={[styles.passwordHint, { textAlign: isRTL ? 'right' : 'left' }]}>{t('errors.passwordRequirements') || '8+ chars, number, uppercase, special char'}</Text>
             </View>
 
-            <View style={styles.switchRow}>
-                <Text style={styles.switchText}>{t('auth.agreeToTerms')}</Text>
+            <View style={[styles.switchRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Text style={[styles.switchText, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.agreeToTerms')}</Text>
                 <Switch value={tos} onValueChange={setTos} disabled={loading} />
             </View>
-            <View style={styles.switchRow}>
-                <Text style={styles.switchText}>{t('auth.receiveNews')}</Text>
+            <View style={[styles.switchRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Text style={[styles.switchText, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.receiveNews')}</Text>
                 <Switch value={news} onValueChange={setNews} disabled={loading} />
             </View>
 
@@ -256,7 +266,8 @@ export default function Register() {
             >
                 <Text style={styles.backToLogin}>{t('auth.alreadyHaveAccount')} {t('auth.login')}</Text>
             </TouchableOpacity>
-        </ScrollView>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -311,10 +322,8 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginTop: 4,
         fontFamily: "Tajawal-Regular",
-        textAlign: I18nManager.isRTL ? "right" : "left",
     },
     switchRow: { 
-        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
         alignItems: "center", 
         justifyContent: "space-between", 
         marginTop: 10,
@@ -323,7 +332,6 @@ const styles = StyleSheet.create({
     switchText: { 
         color: "#fff", 
         flex: 1, 
-        textAlign: I18nManager.isRTL ? "right" : "left",
         marginHorizontal: 8,
         fontFamily: "Tajawal-Regular",
     },

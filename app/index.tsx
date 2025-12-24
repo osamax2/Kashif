@@ -4,8 +4,9 @@ import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
-    I18nManager,
     Image,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -75,9 +76,18 @@ export default function Index() {
   };
 
   return (
-      <ScrollView contentContainerStyle={styles.container}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "#033076" }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <ScrollView 
+        contentContainerStyle={[styles.container, { flexDirection: 'column' }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header (logo + app name) */}
-        <View style={styles.header}>
+        <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <Image
               source={require("../assets/images/icon.png")}
               style={styles.logoHeader}
@@ -90,9 +100,9 @@ export default function Index() {
         </View>
 
         {/* Card / Form area */}
-        <View style={styles.card}>
-          <Text style={styles.title}>{t('auth.login')}</Text>
-          <Text style={styles.subtitle}>{t('auth.welcomeBack')}</Text>
+        <View style={[styles.card, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+          <Text style={[styles.title, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.login')}</Text>
+          <Text style={[styles.subtitle, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.welcomeBack')}</Text>
 
           {/* Form (wraps email, password, buttons, links) */}
           <View style={styles.form}>
@@ -150,21 +160,21 @@ export default function Index() {
             </TouchableOpacity>
 
             {/* Links unten */}
-            <View style={styles.linksContainer}>
-              <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/register')}>
-                {/* plus-icon bleibt optional */}
-                { <FontAwesome name="plus-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} /> }
-                <Text style={styles.link}>{t('auth.createNewAccount')}</Text>
+            <View style={[styles.linksContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+              <TouchableOpacity style={[styles.linkRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={() => router.push('/register')}>
+                <FontAwesome name="plus-circle" size={14} color="#F4B400" style={isRTL ? { marginLeft: 6 } : { marginRight: 6 }} />
+                <Text style={[styles.link, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.createNewAccount')}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/forgot')}>
-                <FontAwesome name="question-circle" size={14} color="#F4B400" style={I18nManager.isRTL ? { marginRight: 6 } : { marginLeft: 6 }} />
-                <Text style={styles.link}>{t('auth.forgotPassword')}</Text>
+              <TouchableOpacity style={[styles.linkRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={() => router.push('/forgot')}>
+                <FontAwesome name="question-circle" size={14} color="#F4B400" style={isRTL ? { marginLeft: 6 } : { marginRight: 6 }} />
+                <Text style={[styles.link, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.forgotPassword')}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -179,9 +189,7 @@ const styles = StyleSheet.create({
   },
   header: {
     width: "100%",
-    flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
     alignItems: "center",
-    justifyContent: I18nManager.isRTL ? "flex-end" : "flex-start",
     paddingTop: 14,
     paddingBottom: 15,
   },
@@ -198,14 +206,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 70,
     fontWeight: "800",
-    textAlign: I18nManager.isRTL ? "right" : "left",
     includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
   },
   appTag: {
     color: "#BFD7EA",
     fontSize: 25,
-    textAlign: I18nManager.isRTL ? "right" : "left",
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
@@ -214,7 +220,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     marginTop: -4,
-    textAlign: I18nManager.isRTL ? "right" : "left",
     includeFontPadding: false,
     fontFamily: 'Tajawal-Bold',
     marginVertical: 6,
@@ -223,7 +228,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#BFD7EA",
     marginBottom: 30,
-    textAlign: I18nManager.isRTL ? "right" : "left",
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
   },
@@ -232,23 +236,17 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 16,
     padding: 18,
-    display: "flex",
-    alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
     marginTop: 1,
     marginBottom: 20,
   },
   field: { 
     width: "100%", 
     marginBottom: 14,
-    alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
   },
   form: {
-    display: 'flex',
     width: '100%',
-    alignItems: I18nManager.isRTL ? 'flex-end' : 'flex-start',
   },
   label: {
-    alignSelf: I18nManager.isRTL ? 'flex-end' : 'flex-start',
     color: '#F4B400',
     marginBottom: 8,
     fontSize: 16,
