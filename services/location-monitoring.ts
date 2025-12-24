@@ -1,3 +1,4 @@
+import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
@@ -33,14 +34,39 @@ class LocationMonitoringService {
   private currentLocation: Location.LocationObject | null = null;
   private nearbyReports: Report[] = [];
   private alertedReportIds: Set<number> = new Set();
+  private audioInitialized = false;
   private alertSettings: AlertSettings = {
     soundEnabled: true,
     warnPothole: true,
     warnAccident: true,
     warnSpeed: true,
-    appVolume: 1.0,
+    appVolume: 1,
     language: 'ar',
   };
+
+  /**
+   * Initialize audio mode for background playback
+   */
+  async initializeAudio(): Promise<void> {
+    if (this.audioInitialized) return;
+    
+    try {
+      console.log('🔊 Initializing audio mode for background playback...');
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+        interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+      this.audioInitialized = true;
+      console.log('✅ Audio mode initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize audio mode:', error);
+    }
+  }
 
   /**
    * Update alert settings
@@ -173,16 +199,21 @@ class LocationMonitoringService {
 
   /**
    * Check if alert should be shown for this category
+   * Category IDs from backend:
+   * 1 = Speed Camera (كاميرا مراقبة)
+   * 2 = Pothole (حفرة)
+   * 3 = Accident (حادث)
+   * 4 = Public Services
+   * 5 = Other
    */
   private shouldShowAlertForCategory(categoryId: number): boolean {
-    // Category IDs: 1 = Pothole, 2 = Accident, 3 = Speed Camera
     switch (categoryId) {
-      case 1:
-        return this.alertSettings.warnPothole;
-      case 2:
-        return this.alertSettings.warnAccident;
-      case 3:
+      case 1: // Speed Camera
         return this.alertSettings.warnSpeed;
+      case 2: // Pothole
+        return this.alertSettings.warnPothole;
+      case 3: // Accident
+        return this.alertSettings.warnAccident;
       default:
         return true;
     }
@@ -195,26 +226,40 @@ class LocationMonitoringService {
     const lang = this.alertSettings.language;
     
     switch (categoryId) {
-      case 1: // Pothole
+      case 1: // Speed Camera (كاميرا مراقبة)
+        return {
+          title: lang === 'ar' ? '📷 تنبيه: كاشف سرعة' : '📷 Alert: Speed Camera',
+          message: lang === 'ar'
+            ? `يوجد كاشف سرعة على بعد ${distance} متر أمامك. التزم بالسرعة المحددة!`
+            : `There is a speed camera ${distance} meters ahead. Follow speed limit!`,
+        };
+      case 2: // Pothole (حفرة)
         return {
           title: lang === 'ar' ? '⚠️ تحذير: حفرة في الطريق' : '⚠️ Warning: Pothole Ahead',
           message: lang === 'ar' 
             ? `يوجد حفرة على بعد ${distance} متر أمامك. كن حذراً!`
             : `There is a pothole ${distance} meters ahead. Be careful!`,
         };
-      case 2: // Accident
+      case 3: // Accident (حادث)
         return {
           title: lang === 'ar' ? '🚨 تحذير: حادث مروري' : '🚨 Warning: Traffic Accident',
           message: lang === 'ar'
             ? `يوجد حادث مروري على بعد ${distance} متر أمامك. خفف السرعة!`
             : `There is a traffic accident ${distance} meters ahead. Slow down!`,
         };
-      case 3: // Speed Camera
+      case 4: // Public Services
         return {
-          title: lang === 'ar' ? '📷 تنبيه: كاشف سرعة' : '📷 Alert: Speed Camera',
+          title: lang === 'ar' ? '⚠️ تنبيه: خدمات عامة' : '⚠️ Alert: Public Services',
           message: lang === 'ar'
-            ? `يوجد كاشف سرعة على بعد ${distance} متر أمامك. التزم بالسرعة المحددة!`
-            : `There is a speed camera ${distance} meters ahead. Follow speed limit!`,
+            ? `يوجد تنبيه على بعد ${distance} متر أمامك`
+            : `Alert ${distance} meters ahead`,
+        };
+      case 5: // Other
+        return {
+          title: lang === 'ar' ? '⚠️ تنبيه' : '⚠️ Alert',
+          message: lang === 'ar'
+            ? `يوجد تنبيه على بعد ${distance} متر أمامك`
+            : `Alert ${distance} meters ahead`,
         };
       default:
         return {
@@ -243,30 +288,66 @@ class LocationMonitoringService {
     console.log('🔊 Language:', lang);
     let message = '';
 
+    // Category IDs from backend:
+    // 1 = Speed Camera (كاميرا مراقبة)
+    // 2 = Pothole (حفرة)
+    // 3 = Accident (حادث)
     switch (categoryId) {
-      case 1: // Pothole
-        message = lang === 'ar'
-          ? `تحذير! حفرة في الطريق على بعد ${distance} متر`
-          : `Warning! Pothole ahead at ${distance} meters`;
-        break;
-      case 2: // Accident
-        message = lang === 'ar'
-          ? `تحذير! حادث مروري على بعد ${distance} متر`
-          : `Warning! Traffic accident ahead at ${distance} meters`;
-        break;
-      case 3: // Speed Camera
+      case 1: // Speed Camera
         message = lang === 'ar'
           ? `تنبيه! كاشف سرعة على بعد ${distance} متر`
           : `Alert! Speed camera ahead at ${distance} meters`;
         break;
+      case 2: // Pothole
+        message = lang === 'ar'
+          ? `تحذير! حفرة في الطريق على بعد ${distance} متر`
+          : `Warning! Pothole ahead at ${distance} meters`;
+        break;
+      case 3: // Accident
+        message = lang === 'ar'
+          ? `تحذير! حادث مروري على بعد ${distance} متر`
+          : `Warning! Traffic accident ahead at ${distance} meters`;
+        break;
+      case 4: // Public Services
+        message = lang === 'ar'
+          ? `تنبيه على بعد ${distance} متر`
+          : `Alert ${distance} meters ahead`;
+        break;
+      case 5: // Other
+        message = lang === 'ar'
+          ? `تنبيه على بعد ${distance} متر`
+          : `Alert ${distance} meters ahead`;
+        break;
       default:
-        console.log('⚠️ Unknown category, no message set');
-        return;
+        console.log('⚠️ Unknown category, using generic message');
+        message = lang === 'ar'
+          ? `تنبيه على بعد ${distance} متر`
+          : `Alert ${distance} meters ahead`;
     }
 
     console.log('🔊 About to speak message:', message);
+    console.log('🔊 Language setting:', lang);
     
     try {
+      // Initialize audio if not already done
+      await this.initializeAudio();
+
+      // Play alert beep sound first (works on all devices)
+      try {
+        const { sound: alertSound } = await Audio.Sound.createAsync(
+          require('../assets/sounds/alert.mp3'),
+          { shouldPlay: true, volume: this.alertSettings.appVolume }
+        );
+        console.log('🔊 Alert beep sound played');
+        
+        // Unload sound after a delay
+        setTimeout(() => {
+          alertSound.unloadAsync().catch(() => {});
+        }, 2000);
+      } catch (soundError) {
+        console.warn('⚠️ Failed to play alert sound:', soundError);
+      }
+
       // Check if Speech is available
       const isSpeaking = await Speech.isSpeakingAsync();
       console.log('🔊 Is currently speaking:', isSpeaking);
@@ -276,18 +357,47 @@ class LocationMonitoringService {
         await Speech.stop();
       }
       
-      console.log('🔊 Starting Speech.speak...');
-      await Speech.speak(message, {
+      // Small delay to let the beep play first
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      // Get available voices and find the best one for the language
+      const voices = await Speech.getAvailableVoicesAsync();
+      console.log('🔊 Available voices count:', voices.length);
+      
+      // Find a voice for the target language
+      const targetLangCode = lang === 'ar' ? 'ar' : 'en';
+      const matchingVoices = voices.filter(v => 
+        v.language.toLowerCase().startsWith(targetLangCode)
+      );
+      console.log(`🔊 Found ${matchingVoices.length} voices for ${targetLangCode}`);
+      
+      // Prefer specific voice identifiers if available
+      let selectedVoice = matchingVoices.find(v => 
+        lang === 'ar' 
+          ? v.identifier?.includes('ar-SA') || v.identifier?.includes('ar_SA')
+          : v.identifier?.includes('en-US') || v.identifier?.includes('en_US')
+      ) || matchingVoices[0];
+      
+      const speechOptions: Speech.SpeechOptions = {
         language: lang === 'ar' ? 'ar-SA' : 'en-US',
-        rate: 0.9,
-        pitch: 1.0,
+        rate: lang === 'ar' ? 0.85 : 0.9, // Slightly slower for Arabic
+        pitch: 1,
         volume: this.alertSettings.appVolume,
         onStart: () => console.log('🔊 Speech started'),
         onDone: () => console.log('🔊 Speech completed'),
         onStopped: () => console.log('🔊 Speech stopped'),
         onError: (error) => console.error('🔊 Speech error callback:', error),
-      });
-      console.log('🔊 Speech.speak call completed');
+      };
+      
+      // Use selected voice if found
+      if (selectedVoice) {
+        console.log('🔊 Using voice:', selectedVoice.identifier, selectedVoice.name);
+        speechOptions.voice = selectedVoice.identifier;
+      }
+      
+      console.log('🔊 Starting Speech.speak with options:', JSON.stringify(speechOptions));
+      Speech.speak(message, speechOptions);
+      console.log('🔊 Speech.speak call initiated');
     } catch (error) {
       console.error('❌ Failed to play voice warning:', error);
       console.error('❌ Error details:', JSON.stringify(error));
@@ -325,6 +435,9 @@ class LocationMonitoringService {
         console.log('Location monitoring already active');
         return true;
       }
+
+      // Initialize audio for background playback
+      await this.initializeAudio();
 
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) {
