@@ -1,16 +1,22 @@
 // components/ReportDialog.tsx
 import { useLanguage } from '@/contexts/LanguageContext';
+import { isOnline, savePendingReport } from '@/services/offline-reports';
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
 import {
+    Alert,
     Animated,
     Image,
+    Keyboard,
+    KeyboardAvoidingView,
     Modal,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
+    TouchableWithoutFeedback,
     View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
@@ -123,29 +129,61 @@ async function takePhoto() {
             day: "2-digit",
         });
 
-        setSuccessId(id);
-
         // Verwende selectedPlace wenn vorhanden, sonst initialAddress (GPS)
         const finalAddress = selectedPlace 
             ? selectedPlace.address 
             : (initialAddress || t('reportDialog.locationAuto'));
 
+        const reportPayload = {
+            type,
+            severity,
+            address: finalAddress,
+            notes,
+            id,
+            time,
+            photoUri: selectedImage || undefined,
+            // Füge Koordinaten hinzu wenn aus Google Places
+            ...(selectedPlace && {
+                latitude: selectedPlace.lat,
+                longitude: selectedPlace.lng,
+            }),
+        };
+
+        // Check network connectivity
+        const online = await isOnline();
+        
+        if (!online) {
+            // Save report locally for later sync
+            await savePendingReport({
+                ...reportPayload,
+                savedAt: Date.now(),
+            });
+            
+            // Show offline message
+            Alert.alert(
+                isRTL ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection',
+                isRTL 
+                    ? 'تم حفظ البلاغ وسيتم إرساله تلقائياً عند الاتصال بالإنترنت' 
+                    : 'Report saved and will be sent automatically when connected to the internet',
+                [{ text: isRTL ? 'حسناً' : 'OK' }]
+            );
+            
+            // Close dialog
+            setTimeout(() => {
+                onClose();
+                setSeverity('low');
+                setNotes('');
+                setAddress('');
+                setSelectedImage(null);
+            }, 500);
+            return;
+        }
+
+        setSuccessId(id);
+
         // Call onSubmit and wait for completion
         if (onSubmit) {
-            await onSubmit({
-                type,
-                severity,
-                address: finalAddress,
-                notes,
-                id,
-                time,
-                photoUri: selectedImage || undefined,
-                // Füge Koordinaten hinzu wenn aus Google Places
-                ...(selectedPlace && {
-                    latitude: selectedPlace.lat,
-                    longitude: selectedPlace.lng,
-                }),
-            });
+            await onSubmit(reportPayload);
         }
         
         // Close dialog after a short delay to show success message
@@ -170,7 +208,13 @@ async function takePhoto() {
 
     return (
         <Modal visible={visible} transparent animationType="fade">
-            <View style={styles.backdrop}>
+            <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); onClose(); }}>
+            <KeyboardAvoidingView 
+                style={styles.backdrop}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+            >
+                <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
                 <Animated.View
                     style={[
                         styles.card,
@@ -184,10 +228,15 @@ async function takePhoto() {
                                 },
                             ],
                             opacity: slideAnim,
+                            maxHeight: '90%',
                         },
                     ]}
                 >
-                    
+                    <ScrollView 
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                    >
                    {/* Header */}
 <View style={[styles.headerRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
     <Pressable onPress={onClose} hitSlop={10}>
@@ -251,7 +300,7 @@ async function takePhoto() {
                             />
                         </View>
                     ) : (
-                        <View style={[styles.chipRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                        <View style={[styles.chipRow, { flexDirection: isRTL ? 'row' : 'row' }]}>
                             <Chip
                                 label={t('reportDialog.severityLow')}
                                 active={severity === "low"}
@@ -395,7 +444,7 @@ async function takePhoto() {
                     {/* Zeitzeile */}
                     <Text style={[styles.timeText, { textAlign: isRTL ? 'right' : 'left' }]}>
     {t('reportDialog.timeLabel')}{" "}
-    {`${new Date().getHours() % 12 || 12}:${String(new Date().getMinutes()).padStart(2, "0")}`}
+    {`${new Date().getHours() % 12 || 12}:${String(new Date().getMinutes()).padStart(2, "0")} ${new Date().getHours() >= 12 ? (isRTL ? 'م' : 'PM') : (isRTL ? 'ص' : 'AM')}`}
     {" • "}
     {new Date().toLocaleDateString(isRTL ? "ar-SY" : "en-US", {
         year: "numeric",
@@ -426,7 +475,11 @@ async function takePhoto() {
     </Pressable>
 </View>
 
+                    </ScrollView>
                 </Animated.View>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
                 
                 {/* --- PHOTO MENU --- */}
 {photoMenu && (
@@ -447,8 +500,6 @@ async function takePhoto() {
     </View>
   </View>
 )}
-
-            </View>
             
         </Modal>
         
