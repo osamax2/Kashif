@@ -25,7 +25,7 @@ const YELLOW = "#F4B400";
 
 export default function ModernNotifications() {
   const router = useRouter();
-  const { t, language } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   const { notifications, loading, refreshNotifications, markAsRead, markAllAsRead } = useNotifications();
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -44,9 +44,9 @@ export default function ModernNotifications() {
       await markAsRead(notification.id);
     }
 
-    // Navigate based on notification type
+    // Navigate based on notification type - go to reports tab
     if (notification.related_report_id) {
-      router.push(`/report-details?id=${notification.related_report_id}` as any);
+      router.push('/(tabs)/reports' as any);
     }
   };
 
@@ -116,7 +116,7 @@ export default function ModernNotifications() {
   if (loading && notifications.length === 0) {
     return (
       <View style={styles.root}>
-        <Header title={t('notifications.title')} rightIcon="chevron-forward" onRightPress={() => router.back()} />
+        <Header title={t('notifications.title')} leftIcon={isRTL ? "chevron-forward" : "chevron-back"} onLeftPress={() => router.back()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={YELLOW} />
         </View>
@@ -126,7 +126,7 @@ export default function ModernNotifications() {
 
   return (
     <View style={styles.root}>
-      <Header title={t('notifications.title')} rightIcon="chevron-forward" onRightPress={() => router.back()} />
+      <Header title={t('notifications.title')} leftIcon={isRTL ? "chevron-forward" : "chevron-back"} onLeftPress={() => router.back()} />
 
       <FlatList
         data={notifications}

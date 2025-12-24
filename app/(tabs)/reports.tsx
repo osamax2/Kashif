@@ -115,7 +115,7 @@ function CircleStat({ percent, label, color }: CircleStatProps) {
 export default function ReportsScreen() {
     const router = useRouter();
     const { user } = useAuth();
-    const { t, language } = useLanguage();
+    const { t, language, isRTL } = useLanguage();
     const { refreshKey } = useDataSync();
     const [reports, setReports] = useState<Report[]>([]);
     const [pendingNearby, setPendingNearby] = useState<Report[]>([]);
@@ -357,7 +357,14 @@ export default function ReportsScreen() {
     return (
         <View style={styles.root}>
             {/* HEADER */}
-            <View style={styles.header}>
+            <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
+                    <Ionicons name={isRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
+                </TouchableOpacity>
+
+                <Text numberOfLines={1} style={styles.headerTitle}>{t('reports.title')}</Text>
+
+                {/* Notifications icon */}
                 <TouchableOpacity
                     style={styles.bellBtn}
                     activeOpacity={0.85}
@@ -366,13 +373,6 @@ export default function ReportsScreen() {
                     accessibilityRole="button"
                 >
                     <Ionicons name="notifications" size={22} color={BLUE} />
-                </TouchableOpacity>
-
-                <Text numberOfLines={1} style={styles.headerTitle}>{t('reports.title')}</Text>
-
-                {/* Back icon (wie im Profil) */}
-                <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-                    <Ionicons name="chevron-forward" size={30} color={YELLOW} />
                 </TouchableOpacity>
             </View>
 

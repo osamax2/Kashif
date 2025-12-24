@@ -11,8 +11,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
-    Image, Linking,
+    Image,
+    Platform,
     ScrollView,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -25,9 +27,9 @@ const YELLOW = "#F4B400";
 export default function ProfileScreen() {
     const router = useRouter();
     const { user, refreshUser } = useAuth();
-    const { t, language } = useLanguage();
+    const { t, language, isRTL } = useLanguage();
     const { refreshKey } = useDataSync();
-    const shareLink = "https://your-app-link.com"; // hier deinen echten Link eintragen
+    const shareLink = "https://play.google.com/store/apps/details?id=com.kashif.app"; // App Store/Play Store Link
     const [profileImage, setProfileImage] = useState<string | null>(null);
     
     // Backend data state
@@ -168,17 +170,20 @@ const changePhoto = () => {
 
     const handleShareAchievement = async () => {
         const points = user?.total_points || 0;
-        // 1) Link kopieren
-        await Clipboard.setStringAsync(shareLink);
-        alert(t('profile.linkCopied'));
-
-        // 2) WhatsApp öffnen
-        const message = t('profile.shareMessage', { points, link: shareLink });
-        const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
-
-        Linking.openURL(url).catch(() => {
-            alert(t('profile.whatsappNotInstalled'));
-        });
+        const pointText = points === 1 ? t('profile.point') : t('profile.points');
+        const message = isRTL 
+            ? `🔥 إنجازي مع كاشف!\nحصلت على ${points} ${pointText}.\nحمّل التطبيق واحصل على نقاط!\n\n${shareLink}`
+            : `🔥 My achievement with Kashif!\nI got ${points} ${pointText}.\nDownload the app and get points!\n\n${shareLink}`;
+        
+        try {
+            await Share.share({
+                message: message,
+                url: Platform.OS === 'ios' ? shareLink : undefined,
+            });
+        } catch (error) {
+            // If share fails, copy to clipboard silently
+            await Clipboard.setStringAsync(message);
+        }
     };
 
     // Helper function to get transaction icon
@@ -229,14 +234,14 @@ const changePhoto = () => {
     return (
         <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 40 }}>
             {/* HEADER */}
-            <View style={[styles.header, { marginTop: 40 }]}> 
-                <TouchableOpacity onPress={() => router.push('/settings')} style={styles.iconBtn}>
-                        <Ionicons name="settings-sharp" size={28} color={YELLOW} />
+            <View style={[styles.header, { marginTop: 40, flexDirection: isRTL ? 'row-reverse' : 'row' }]}> 
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+                        <Ionicons name={isRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
                 </TouchableOpacity>
                     <Text numberOfLines={1} style={styles.headerTitle}>{t('profile.title')}</Text>
 
-                    <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-                        <Ionicons name="chevron-forward" size={30} color={YELLOW} />
+                    <TouchableOpacity onPress={() => router.push('/settings')} style={styles.iconBtn}>
+                        <Ionicons name="settings-sharp" size={28} color={YELLOW} />
                     </TouchableOpacity>
             </View>
 
@@ -291,11 +296,11 @@ const changePhoto = () => {
                     <Text style={styles.statLabel}>{t('profile.level')}</Text>
                 </View>
 
-                <View style={styles.statBox}>
+                <TouchableOpacity style={styles.statBox} onPress={() => router.push('/(tabs)/reports')}>
                     <Ionicons name="bar-chart" size={28} color={YELLOW} />
                     <Text style={styles.statNumber}>{reportCount}</Text>
                     <Text style={styles.statLabel}>{t('profile.reports')}</Text>
-                </View>
+                </TouchableOpacity>
             </View>
 
             {/* LAST POINTS */}

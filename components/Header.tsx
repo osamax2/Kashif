@@ -1,3 +1,4 @@
+import { useLanguage } from "@/contexts/LanguageContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -25,8 +26,10 @@ export default function Header({
     leftIconSize = 32,
     rightIconSize = 34,
 }: HeaderProps) {
+    const { isRTL } = useLanguage();
+    
     return (
-        <View style={styles.header}>
+        <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <TouchableOpacity onPress={onLeftPress} style={styles.iconBtn} accessibilityRole="button">
                 {leftIcon ? <Ionicons name={leftIcon as any} size={leftIconSize} color={leftIconColor} /> : null}
             </TouchableOpacity>
@@ -43,7 +46,6 @@ export default function Header({
 const styles = StyleSheet.create({
     header: {
         width: "100%",
-        flexDirection: "row-reverse",
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: 20,

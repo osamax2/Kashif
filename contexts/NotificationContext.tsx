@@ -48,9 +48,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       (response) => {
         const data = response.notification.request.content.data;
         
-        // Navigate based on notification type
+        // Navigate based on notification type - go to reports tab
         if (data.related_report_id) {
-          router.push(`/report-details?id=${data.related_report_id}`);
+          router.push('/(tabs)/reports');
         } else if (data.notification_id) {
           router.push('/notifications');
         }
