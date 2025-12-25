@@ -1,74 +1,79 @@
+// app/index.tsx ✅ VOLLSTÄNDIG – UMGEKEHRT wie du willst:
+// Arabisch = LTR  |  Englisch = RTL
+
 import { FontAwesome } from "@expo/vector-icons";
-import { useRouter } from 'expo-router';
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import RtlTextInput from '../components/ui/rtl-textinput';
-import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../contexts/LanguageContext';
-import { authAPI } from '../services/api';
+import RtlTextInput from "../components/ui/rtl-textinput";
+import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { authAPI } from "../services/api";
 
 export default function Index() {
   const router = useRouter();
   const { setUser } = useAuth();
   const { t, isRTL } = useLanguage();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  // ✅ UMGEKEHRT:
+  // Wenn LanguageContext isRTL=true (normal Arabisch), machen wir effektiv LTR.
+  // Wenn LanguageContext isRTL=false (normal Englisch), machen wir effektiv RTL.
+  const effectiveRTL = !isRTL;
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const dir = useMemo(
+    () => ({
+      textAlign: (effectiveRTL ? "right" : "left") as const,
+      writingDirection: (effectiveRTL ? "rtl" : "ltr") as const,
+    }),
+    [effectiveRTL]
+  );
+
   const handleLogin = async () => {
-    // Validation
     if (!email || !password) {
-      Alert.alert(t('errors.error'), t('errors.enterEmailPassword'));
+      Alert.alert(t("errors.error"), t("errors.enterEmailPassword"));
       return;
     }
-
-    if (!email.includes('@')) {
-      Alert.alert(t('errors.error'), t('errors.invalidEmailFormat'));
+    if (!email.includes("@")) {
+      Alert.alert(t("errors.error"), t("errors.invalidEmailFormat"));
       return;
     }
 
     setLoading(true);
-    
     try {
-      const response = await authAPI.login({
-        username: email,
-        password: password,
-      });
-
-      console.log('Login successful:', response);
-      
-      // Get user profile
+      await authAPI.login({ username: email, password });
       const user = await authAPI.getProfile();
-      
-      // Update auth context
       setUser(user);
-      
-      // Navigate to home (AuthContext will handle this)
-      // router.replace('/(tabs)/home');
-      
     } catch (error: any) {
-      console.error('Login error:', error);
-      
       if (error.response?.status === 401) {
-        Alert.alert(t('errors.error'), t('errors.invalidCredentials'));
-      } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        Alert.alert(t('errors.error'), t('errors.connectionTimeout'));
-      } else if (error.message?.includes('Network Error')) {
-        Alert.alert(t('errors.error'), t('errors.connectionError'));
+        Alert.alert(t("errors.error"), t("errors.invalidCredentials"));
+      } else if (
+        error.code === "ECONNABORTED" ||
+        error.message?.includes("timeout")
+      ) {
+        Alert.alert(t("errors.error"), t("errors.connectionTimeout"));
+      } else if (error.message?.includes("Network Error")) {
+        Alert.alert(t("errors.error"), t("errors.connectionError"));
       } else {
-        Alert.alert(t('errors.error'), error.response?.data?.detail || t('errors.loginError'));
+        Alert.alert(
+          t("errors.error"),
+          error.response?.data?.detail || t("errors.loginError")
+        );
       }
     } finally {
       setLoading(false);
@@ -77,98 +82,169 @@ export default function Index() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#033076" }}
+      style={styles.kav}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      keyboardVerticalOffset={0}
     >
-      <ScrollView 
-        contentContainerStyle={[styles.container, { flexDirection: 'column' }]}
+      <ScrollView
+        contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Header (logo + app name) */}
-        <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        {/* HEADER */}
+        <View
+          style={[
+            styles.header,
+            { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+          ]}
+        >
           <Image
-              source={require("../assets/images/icon.png")}
-              style={styles.logoHeader}
-              resizeMode="contain"
+            source={require("../assets/images/icon.png")}
+            style={[
+              styles.logoHeader,
+              effectiveRTL
+                ? { marginLeft: 12, marginRight: 0 }
+                : { marginRight: 12, marginLeft: 0 },
+            ]}
+            resizeMode="contain"
           />
-          <View style={styles.headerText}>
-            <Text style={styles.appName}>{t('auth.appName')}</Text>
-            <Text style={styles.appTag}>{t('auth.appTagline')}</Text>
+
+          <View
+            style={[
+              styles.headerText,
+              { alignItems: effectiveRTL ? "flex-end" : "flex-start" },
+            ]}
+          >
+            <Text style={[styles.appName, dir]}>{t("auth.appName")}</Text>
+            <Text style={[styles.appTag, dir]}>{t("auth.appTagline")}</Text>
           </View>
         </View>
 
-        {/* Card / Form area */}
-        <View style={[styles.card, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
-          <Text style={[styles.title, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.login')}</Text>
-          <Text style={[styles.subtitle, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.welcomeBack')}</Text>
+        {/* CARD */}
+        <View
+          style={[
+            styles.card,
+            { alignItems: effectiveRTL ? "flex-end" : "flex-start" },
+          ]}
+        >
+          <Text style={[styles.title, dir]}>{t("auth.login")}</Text>
+          <Text style={[styles.subtitle, dir]}>{t("auth.welcomeBack")}</Text>
 
-          {/* Form (wraps email, password, buttons, links) */}
           <View style={styles.form}>
-            {/* E-Mail */}
+            {/* EMAIL */}
             <View style={styles.field}>
-              <Text style={[styles.label, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.email')}</Text>
+              <Text style={[styles.label, dir]}>{t("auth.email")}</Text>
+
               <RtlTextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder={t('auth.emailPlaceholder')}
-                  placeholderTextColor="#AAB3C0"
-                  style={[styles.inputUnderline, { textAlign: isRTL ? 'right' : 'left' }]}
-                  textAlign={isRTL ? 'right' : 'left'}
+                // ✅ UMGEKEHRT Richtung rein geben
+                isRTL={effectiveRTL}
+                value={email}
+                onChangeText={setEmail}
+                placeholder={t("auth.emailPlaceholder")}
+                placeholderTextColor="#AAB3C0"
+                style={[styles.inputUnderline, dir]}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
               />
             </View>
 
-            {/* Passwort */}
+            {/* PASSWORD */}
             <View style={styles.field}>
-              <Text style={[styles.label, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.password')}</Text>
+              <Text style={[styles.label, dir]}>{t("auth.password")}</Text>
+
               <View style={styles.passwordContainer}>
                 <RtlTextInput
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={setPassword}
-                    style={[styles.inputUnderline, { textAlign: isRTL ? 'right' : 'left', paddingRight: isRTL ? 12 : 40, paddingLeft: isRTL ? 40 : 12 }]}
-                    placeholder={t('auth.passwordPlaceholder')}
-                    placeholderTextColor="#AAB3C0"
-                    textAlign={isRTL ? 'right' : 'left'}
+                  isRTL={effectiveRTL}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder={t("auth.passwordPlaceholder")}
+                  placeholderTextColor="#AAB3C0"
+                  style={[
+                    styles.inputUnderline,
+                    dir,
+                    {
+                      paddingRight: effectiveRTL ? 12 : 44,
+                      paddingLeft: effectiveRTL ? 44 : 12,
+                    },
+                  ]}
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
+
                 <TouchableOpacity
-                    style={[styles.eyeTouch, isRTL ? { left: 8 } : { right: 8 }]}
-                    onPress={() => setShowPassword(!showPassword)}
+                  style={[
+                    styles.eyeTouch,
+                    effectiveRTL ? { left: 6 } : { right: 6 },
+                  ]}
+                  onPress={() => setShowPassword((v) => !v)}
+                  activeOpacity={0.8}
                 >
                   <FontAwesome
-                      name={showPassword ? "eye" : "eye-slash"}
-                      size={18}
-                      color="#AAB3C0"
+                    name={showPassword ? "eye" : "eye-slash"}
+                    size={18}
+                    color="#AAB3C0"
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Login-Button */}
+            {/* LOGIN */}
             <TouchableOpacity
-                style={[styles.loginButton, loading && { opacity: 0.6 }]}
-                activeOpacity={0.9}
-                onPress={handleLogin}
-                disabled={loading}
+              style={[styles.loginButton, loading && { opacity: 0.6 }]}
+              activeOpacity={0.9}
+              onPress={handleLogin}
+              disabled={loading}
             >
               {loading ? (
-                  <ActivityIndicator color="#ffffff" size="small" />
+                <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                  <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
+                <Text style={styles.loginButtonText}>{t("auth.login")}</Text>
               )}
             </TouchableOpacity>
 
-            {/* Links unten */}
-            <View style={[styles.linksContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <TouchableOpacity style={[styles.linkRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={() => router.push('/register')}>
-                <FontAwesome name="plus-circle" size={14} color="#F4B400" style={isRTL ? { marginLeft: 6 } : { marginRight: 6 }} />
-                <Text style={[styles.link, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.createNewAccount')}</Text>
+            {/* LINKS */}
+            <View
+              style={[
+                styles.linksContainer,
+                { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.linkRow,
+                  { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+                ]}
+                onPress={() => router.push("/register")}
+              >
+                <FontAwesome
+                  name="plus-circle"
+                  size={14}
+                  color="#F4B400"
+                  style={effectiveRTL ? { marginLeft: 6 } : { marginRight: 6 }}
+                />
+                <Text style={[styles.link, dir]}>
+                  {t("auth.createNewAccount")}
+                </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.linkRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={() => router.push('/forgot')}>
-                <FontAwesome name="question-circle" size={14} color="#F4B400" style={isRTL ? { marginLeft: 6 } : { marginRight: 6 }} />
-                <Text style={[styles.link, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.forgotPassword')}</Text>
+              <TouchableOpacity
+                style={[
+                  styles.linkRow,
+                  { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+                ]}
+                onPress={() => router.push("/forgot")}
+              >
+                <FontAwesome
+                  name="question-circle"
+                  size={14}
+                  color="#F4B400"
+                  style={effectiveRTL ? { marginLeft: 6 } : { marginRight: 6 }}
+                />
+                <Text style={[styles.link, dir]}>
+                  {t("auth.forgotPassword")}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -179,80 +255,82 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  kav: { flex: 1, backgroundColor: "#033076" },
+
   container: {
     flexGrow: 1,
-    backgroundColor: "#033076", // Dunkelblau
+    backgroundColor: "#033076",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 45,
+    justifyContent: "flex-start",
+    paddingTop: 60,
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
+
   header: {
     width: "100%",
     alignItems: "center",
-    paddingTop: 14,
-    paddingBottom: 15,
+    paddingBottom: 18,
+    marginTop: -10,
   },
-  logoHeader: {
-    width: 140,
-    height: 140,
-    marginRight: 17,
-  },
-  headerText: {
-    flex: -1,
-    alignItems: "flex-end",
-  },
+
+  logoHeader: { width: 140, height: 140 },
+
+  headerText: {},
+
   appName: {
     color: "#FFFFFF",
     fontSize: 70,
     fontWeight: "800",
     includeFontPadding: false,
-    fontFamily: 'Tajawal-Bold',
+    fontFamily: "Tajawal-Bold",
   },
+
   appTag: {
     color: "#BFD7EA",
     fontSize: 25,
     includeFontPadding: false,
-    fontFamily: 'Tajawal-Regular',
+    fontFamily: "Tajawal-Regular",
   },
+
+  card: {
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    padding: 18,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+
   title: {
     fontSize: 25,
     fontWeight: "700",
     color: "#FFFFFF",
     marginTop: -4,
     includeFontPadding: false,
-    fontFamily: 'Tajawal-Bold',
+    fontFamily: "Tajawal-Bold",
     marginVertical: 6,
   },
+
   subtitle: {
     fontSize: 14,
     color: "#BFD7EA",
     marginBottom: 30,
     includeFontPadding: false,
-    fontFamily: 'Tajawal-Regular',
+    fontFamily: "Tajawal-Regular",
   },
-  card: {
-    width: "100%",
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
-    padding: 18,
-    marginTop: 1,
-    marginBottom: 20,
-  },
-  field: { 
-    width: "100%", 
-    marginBottom: 14,
-  },
-  form: {
-    width: '100%',
-  },
+
+  form: { width: "100%" },
+  field: { width: "100%", marginBottom: 14 },
+
   label: {
-    color: '#F4B400',
+    color: "#F4B400",
     marginBottom: 8,
     fontSize: 16,
-    fontFamily: 'Tajawal-Medium',
+    fontFamily: "Tajawal-Medium",
     includeFontPadding: false,
   },
+
   inputUnderline: {
     width: "100%",
     borderBottomWidth: 1,
@@ -261,25 +339,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     color: "#FFFFFF",
     includeFontPadding: false,
-    textAlignVertical: 'center',
+    textAlignVertical: "center",
     fontSize: 14,
-    fontFamily: 'Tajawal-Regular',
-    writingDirection: 'rtl',
+    fontFamily: "Tajawal-Regular",
   },
+
   passwordContainer: {
     width: "100%",
     position: "relative",
     justifyContent: "center",
   },
+
   eyeTouch: {
     position: "absolute",
-    top: 6,
-    padding: 6,
+    top: 4,
+    padding: 8,
   },
-  eyeIcon: {
-    color: "#AAB3C0",
-    fontSize: 18,
-  },
+
   loginButton: {
     backgroundColor: "#F4B400",
     paddingVertical: 12,
@@ -291,104 +367,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 3, // Android shadow
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
+
   loginButtonText: {
     color: "#ffffff",
     fontWeight: "700",
     fontSize: 24,
-    fontFamily: 'Tajawal-Medium',
-  },
-  boltIcon: { marginLeft: 8, backgroundColor: "#FFFFFF", padding: 2, borderRadius: 6 },
-  orText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    marginVertical: 15,
-    textAlign: 'center',
-    width: '100%',
-  },
-  socialRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 12,
-  },
-  socialButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginHorizontal: 6,
-  },
-  whatsapp: {
-    backgroundColor: "#25D366",
+    fontFamily: "Tajawal-Medium",
   },
 
-  socialText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    includeFontPadding: false,
-    fontFamily: 'Tajawal-Medium',
-  },
   linksContainer: {
-    flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
     marginTop: 8,
   },
-  linkRow: { flexDirection: "row", alignItems: "center" ,marginTop: 13,},
+
+  linkRow: { alignItems: "center", marginTop: 13 },
+
   link: {
     color: "#FFFFFF",
     fontSize: 14,
     textDecorationLine: "underline",
     includeFontPadding: false,
-    fontFamily: 'Tajawal-Regular',
+    fontFamily: "Tajawal-Regular",
     marginTop: 10,
   },
-  google: {
-    backgroundColor: "rgb(185,66,70)", // Google Red
-  },
-
-
-  socialButtonModern: {
-    flex: 1,
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginHorizontal: 6,
-    elevation: 3,
-  },
-
-  socialTextModern: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Tajawal-Medium",
-  },
-
-  appleButton: {
-    width: "100%",
-    backgroundColor: "#000",
-    paddingVertical: 14,
-    borderRadius: 14,
-    marginTop: 4,
-    flexDirection: "row-reverse",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-  },
-
-  appleText: {
-    color: "#fff",
-    fontSize: 17,
-    fontFamily: "Tajawal-Bold",
-    marginHorizontal: 8,
-  },
-
 });
