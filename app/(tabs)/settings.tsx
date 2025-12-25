@@ -9,7 +9,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
     Alert,
-    I18nManager,
     ScrollView,
     StyleSheet,
     Switch,
@@ -23,508 +22,547 @@ const YELLOW = "#F4B400";
 const CARD = "#133B7A";
 
 export default function SettingsScreen() {
-    const { user, logout } = useAuth();
-    const { language, setLanguage, t, isRTL } = useLanguage();
-    const [hideName, setHideName] = useState(false);
-    const [notifReports, setNotifReports] = useState(true);
-    const [notifPoints, setNotifPoints] = useState(false);
-    const [notifGeneral, setNotifGeneral] = useState(true);
-    const [successVisible, setSuccessVisible] = useState(false);
-    const [toastMessage, setToastMessage] = useState<string | null>(null);
-    const [nameModal, setNameModal] = useState(false);
-    const [name, setName] = useState(user?.full_name || "");
-    const [hideNameMessage, setHideNameMessage] = useState<string | null>(null);
+  const { user, logout } = useAuth();
+  const { language, setLanguage, t, isRTL } = useLanguage();
 
-    const showToast = (message: string) => {
-        setToastMessage(message);
-        setTimeout(() => setToastMessage(null), 2500);
+  // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
+  const effectiveRTL = !isRTL;
+
+  const [hideName, setHideName] = useState(false);
+  const [notifReports, setNotifReports] = useState(true);
+  const [notifPoints, setNotifPoints] = useState(false);
+  const [notifGeneral, setNotifGeneral] = useState(true);
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [nameModal, setNameModal] = useState(false);
+  const [name, setName] = useState(user?.full_name || "");
+  const [hideNameMessage, setHideNameMessage] = useState<string | null>(null);
+
+  const [languageSheet, setLanguageSheet] = useState(false);
+  const selectedLanguage =
+    language === "ar"
+      ? t("settings.languages.ar")
+      : t("settings.languages.en");
+
+  const [emailModal, setEmailModal] = useState(false);
+  const [passwordModal, setPasswordModal] = useState(false);
+  const [phoneModal, setPhoneModal] = useState(false);
+
+  const [email, setEmail] = useState(user?.email || "");
+  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState((user as any)?.phone || "");
+
+  const router = useRouter();
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(t("auth.logout"), t("auth.logoutConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("auth.logout"),
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+        },
+      },
+    ]);
+  };
+
+  const saveChanges = () => {
+    const payload = {
+      hideName,
+      notifReports,
+      notifPoints,
+      notifGeneral,
+      email,
+      phone,
     };
 
-    const [languageSheet, setLanguageSheet] = useState(false);
-    const selectedLanguage = language === 'ar' ? t('settings.languages.ar') : t('settings.languages.en');
+    console.log("Gespeicherte Daten:", payload);
+    setSuccessVisible(true);
+  };
 
-    const [emailModal, setEmailModal] = useState(false);
-    const [passwordModal, setPasswordModal] = useState(false);
-    const [phoneModal, setPhoneModal] = useState(false);
+  return (
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header */}
+      <View
+        style={[
+          styles.header,
+          { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+        ]}
+      >
+        <TouchableOpacity onPress={handleLogout} style={styles.iconBtn}>
+          <Ionicons name="log-out-outline" size={28} color={YELLOW} />
+        </TouchableOpacity>
 
-    const [email, setEmail] = useState(user?.email || "");
-    const [password, setPassword] = useState("");
-    const [phone, setPhone] = useState(user?.phone || "");
+        <Text style={styles.headerTitle}>{t("settings.title")}</Text>
 
-    const router = useRouter();
+        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+          <Ionicons
+            name={effectiveRTL ? "chevron-forward" : "chevron-back"}
+            size={30}
+            color={YELLOW}
+          />
+        </TouchableOpacity>
+      </View>
 
-    const handleLogout = () => {
-        Alert.alert(
-            t('auth.logout'),
-            t('auth.logoutConfirm'),
-            [
-                {
-                    text: t('common.cancel'),
-                    style: 'cancel',
-                },
-                {
-                    text: t('auth.logout'),
-                    style: 'destructive',
-                    onPress: async () => {
-                        await logout();
-                    },
-                },
-            ]
-        );
-    };
+      {/* USER */}
+      <Text style={[styles.userId, { textAlign: effectiveRTL ? "right" : "left" }]}>
+        <Text style={{ color: "#ccc" }}>   {t("profile.userId")} </Text>
+        {user?.id ? `U-${user.id}` : "U-2025-143"}
+      </Text>
 
-    const saveChanges = () => {
-        // Beispiel: Daten sammeln
+      <Text
+        style={[styles.userName, { textAlign: effectiveRTL ? "right" : "left" }]}
+      >
+        {user?.full_name || "مستخدم"}
+      </Text>
 
-        const payload = {
-            hideName,
-            notifReports,
-            notifPoints,
-            notifGeneral,
-            email,
-            phone
-        };
+      {/* ACTIONS */}
+      <View style={styles.card}>
+        <TouchableOpacity
+          onPress={() => {
+            setName(user?.full_name || "");
+            setNameModal(true);
+          }}
+        >
+          <Text style={[styles.textItem, { textAlign: effectiveRTL ? "right" : "left" }]}>
+            {t("settings.changeName")}
+          </Text>
+        </TouchableOpacity>
 
-        console.log("Gespeicherte Daten:", payload);
+        <TouchableOpacity
+          onPress={() => {
+            setEmail(user?.email || "");
+            setEmailModal(true);
+          }}
+        >
+          <Text style={[styles.textItem, { textAlign: effectiveRTL ? "right" : "left" }]}>
+            {t("settings.changeEmail")}
+          </Text>
+        </TouchableOpacity>
 
-        // Beispiel Backend Request (optional)
-        /*
-        fetch("https://deinserver/speichern", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        })
-        */
+        <TouchableOpacity onPress={() => setPasswordModal(true)}>
+          <Text style={[styles.textItem, { textAlign: effectiveRTL ? "right" : "left" }]}>
+            {t("settings.changePassword")}
+          </Text>
+        </TouchableOpacity>
 
-        // Erfolgsmeldung
+        <TouchableOpacity
+          onPress={() => {
+            setPhone((user as any)?.phone || "");
+            setPhoneModal(true);
+          }}
+        >
+          <Text style={[styles.textItem, { textAlign: effectiveRTL ? "right" : "left" }]}>
+            {t("settings.changePhone")}
+          </Text>
+        </TouchableOpacity>
 
-        setSuccessVisible(true); // Modernes Popup anzeigen
+        {/* Language */}
+        <TouchableOpacity
+          onPress={() => setLanguageSheet(true)}
+          style={[
+            styles.languageRow,
+            { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+          ]}
+        >
+          <View
+            style={[
+              styles.languageSelector,
+              {
+                flexDirection: effectiveRTL ? "row-reverse" : "row",
+                // ✅ damit value immer auf der "anderen" Seite bleibt wie in index
+                marginLeft: effectiveRTL ? 0 : "auto",
+                marginRight: effectiveRTL ? "auto" : 0,
+              },
+            ]}
+          >
+            <Text style={styles.languageValue}>{selectedLanguage}</Text>
+          </View>
 
-    };
+          <Text
+            style={[
+              styles.languageLabel,
+              { textAlign: effectiveRTL ? "right" : "left" },
+            ]}
+          >
+            {t("settings.language")}:
+          </Text>
+        </TouchableOpacity>
 
-    return (
-        <ScrollView
-    style={styles.root}
-    contentContainerStyle={{
-        paddingBottom: 120,
-        flexGrow: 1,
-    }}
-    showsVerticalScrollIndicator={false}
->
+        <SuccessModal
+          visible={successVisible}
+          message={t("settings.changesSaved")}
+          onClose={() => setSuccessVisible(false)}
+        />
 
-            {/* Header */}
-            <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                {/* Logout Icon */}
-                <TouchableOpacity onPress={handleLogout} style={styles.iconBtn}>
-                    <Ionicons name="log-out-outline" size={28} color={YELLOW} />
-                </TouchableOpacity>
+        {/* Hide name */}
+        <View
+          style={[
+            styles.switchRow,
+            { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.switchText,
+              { textAlign: effectiveRTL ? "right" : "left" },
+            ]}
+          >
+            {t("settings.hideName")}
+          </Text>
 
-                <Text style={styles.headerTitle}>{t('settings.title')}</Text>
+          <Switch
+            value={hideName}
+            onValueChange={(value) => {
+              setHideName(value);
+              const message = value
+                ? effectiveRTL
+                  ? "The name has been hidden from the list of reports"
+                  : "تم إخفاء الاسم من قائمة البلاغات"
+                : effectiveRTL
+                ? "The name has been activated in the list of reports"
+                : "تم تفعيل الاسم في قائمة البلاغات";
 
-                {/* Back icon */}
-                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-                    <Ionicons name={isRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
-                </TouchableOpacity>
-            </View>
+              setHideNameMessage(message);
+              setTimeout(() => setHideNameMessage(null), 3000);
+            }}
+            trackColor={{ false: "#888", true: YELLOW }}
+            thumbColor={hideName ? "#fff" : "#ccc"}
+          />
+        </View>
 
-            {/* USER ID + USERNAME */}
-            <Text style={[styles.userId, { textAlign: isRTL ? 'right' : 'left' }]}>
-                <Text style={{ color: "#ccc" }}>   {t('profile.userId')} </Text>{user?.id ? `U-${user.id}` : 'U-2025-143'}
-            </Text>
-            <Text style={[styles.userName, { textAlign: isRTL ? 'right' : 'left' }]}>{user?.full_name || 'مستخدم'}</Text>
+        {hideNameMessage && (
+          <Text
+            style={[
+              styles.hideNameMessage,
+              { textAlign: effectiveRTL ? "right" : "left" },
+            ]}
+          >
+            {hideNameMessage}
+          </Text>
+        )}
+      </View>
 
-            {/* ACTIONS */}
-            <View
-                style={styles.card}>
-                    <TouchableOpacity onPress={() => {
-                        setName(user?.full_name || "");
-                        setNameModal(true);
-                    }}>
-                    <Text style={styles.textItem}>{t('settings.changeName')}</Text>
-                        </TouchableOpacity>
-                <TouchableOpacity onPress={() => {
-                    setEmail(user?.email || "");
-                    setEmailModal(true);
-                }}>
-                    <Text style={styles.textItem}>{t('settings.changeEmail')}</Text>
-                </TouchableOpacity>
+      <IOSActionSheet
+        visible={languageSheet}
+        onClose={() => setLanguageSheet(false)}
+        options={[t("settings.languages.ar"), t("settings.languages.en")]}
+        onSelect={async (choice: string) => {
+          const newLang =
+            choice === "العربية" || choice === t("settings.languages.ar")
+              ? "ar"
+              : "en";
+          await setLanguage(newLang);
+        }}
+      />
 
-                <TouchableOpacity onPress={() => setPasswordModal(true)}>
-                    <Text style={styles.textItem}>{t('settings.changePassword')}</Text>
-                </TouchableOpacity>
+      {/* Notifications */}
+      <Text
+        style={[
+          styles.sectionTitle,
+          { textAlign: effectiveRTL ? "right" : "left" },
+        ]}
+      >
+        {"   "}
+        {t("settings.notifications")}
+      </Text>
 
-                <TouchableOpacity onPress={() => {
-                    setPhone(user?.phone || "");
-                    setPhoneModal(true);
-                }}>
-                    <Text style={styles.textItem}>{t('settings.changePhone')}</Text>
-                </TouchableOpacity>
+      <View style={styles.card}>
+        <SwitchRow
+          isRTL={effectiveRTL}
+          label={t("settings.notifReports")}
+          value={notifReports}
+          onChange={setNotifReports}
+        />
+        <SwitchRow
+          isRTL={effectiveRTL}
+          label={t("settings.notifPoints")}
+          value={notifPoints}
+          onChange={setNotifPoints}
+        />
+        <SwitchRow
+          isRTL={effectiveRTL}
+          label={t("settings.notifGeneral")}
+          value={notifGeneral}
+          onChange={setNotifGeneral}
+        />
+      </View>
 
-                {/* Language */}
-                <TouchableOpacity
-                    onPress={() => setLanguageSheet(true)}
-                    style={[styles.languageRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
-                >
-                     <View style={[styles.languageSelector, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                        <Text style={styles.languageValue}>{selectedLanguage}</Text>
-                       
-                    </View>
-                    <Text style={[styles.languageLabel, { textAlign: isRTL ? 'right' : 'left' }]}>{t('settings.language')}: </Text>
+      <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
+        <Text style={styles.saveButtonText}>{t("settings.saveChanges")}</Text>
+      </TouchableOpacity>
 
-                   
-                </TouchableOpacity>
+      {/* Logout Button */}
+      <TouchableOpacity
+        style={[
+          styles.logoutButton,
+          { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+        ]}
+        onPress={handleLogout}
+      >
+        <Ionicons
+          name="log-out-outline"
+          size={22}
+          color="#fff"
+          style={effectiveRTL ? { marginLeft: 8 } : { marginRight: 8 }}
+        />
+        <Text style={styles.logoutButtonText}>{t("auth.logout")}</Text>
+      </TouchableOpacity>
 
+      {/* MODALS */}
+      <ChangeModal
+        visible={emailModal}
+        onClose={() => setEmailModal(false)}
+        title={t("settings.changeEmail")}
+        placeholder={t("settings.placeholders.newEmail")}
+        value={email}
+        setValue={setEmail}
+        onSave={() => {
+          showToast(t("common.success") + " 👍");
+          setEmailModal(false);
+        }}
+      />
 
-                <SuccessModal
-                    visible={successVisible}
-                    message={t('settings.changesSaved')}
-                    onClose={() => setSuccessVisible(false)}
-                />
-
-                {/* Hide name */}
-                <View style={styles.switchRow}>
-                    <Text style={styles.switchText}>{t('settings.hideName')}</Text>
-                    <Switch
-                        value={hideName}
-                        onValueChange={(value) => {
-                            setHideName(value);
-                            const message = value 
-                                ? (isRTL ? 'تم إخفاء الاسم من قائمة البلاغات' : 'The name has been hidden from the list of reports')
-                                : (isRTL ? 'تم تفعيل الاسم في قائمة البلاغات' : 'The name has been activated in the list of reports');
-                            setHideNameMessage(message);
-                            setTimeout(() => setHideNameMessage(null), 3000);
-                        }}
-                        trackColor={{ false: "#888", true: YELLOW }}
-                        thumbColor={hideName ? "#fff" : "#ccc"}
-                    />
-                </View>
-                {hideNameMessage && (
-                    <Text style={[styles.hideNameMessage, { textAlign: isRTL ? 'right' : 'left' }]}>
-                        {hideNameMessage}
-                    </Text>
-                )}
-            </View>
-            <IOSActionSheet
-                visible={languageSheet}
-                onClose={() => setLanguageSheet(false)}
-                options={[t('settings.languages.ar'), t('settings.languages.en')]}
-                onSelect={async (choice: string) => {
-                    const newLang = choice === 'العربية' || choice === t('settings.languages.ar') ? 'ar' : 'en';
-                    await setLanguage(newLang);
-                }}
-            />
-
-            {/* Notifications */}
-            <Text style={[styles.sectionTitle, { textAlign: isRTL ? 'right' : 'left' }]}>   {t('settings.notifications')}</Text>
-
-            <View style={styles.card}>
-                <SwitchRow
-                    label={t('settings.notifReports')}
-                    value={notifReports}
-                    onChange={setNotifReports}
-                />
-                <SwitchRow
-                    label={t('settings.notifPoints')}
-                    value={notifPoints}
-                    onChange={setNotifPoints}
-                />
-                <SwitchRow
-                    label={t('settings.notifGeneral')}
-                    value={notifGeneral}
-                    onChange={setNotifGeneral}
-                />
-            </View>
-
-            <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
-                <Text style={styles.saveButtonText}>{t('settings.saveChanges')}</Text>
-            </TouchableOpacity>
-
-            {/* Logout Button */}
-            <TouchableOpacity style={[styles.logoutButton, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={handleLogout}>
-                <Ionicons name="log-out-outline" size={22} color="#fff" style={isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
-                <Text style={styles.logoutButtonText}>{t('auth.logout')}</Text>
-            </TouchableOpacity>
-
-
-            {/* ------- MODALS ------- */}
-            <ChangeModal
-                visible={emailModal}
-                onClose={() => setEmailModal(false)}
-                title={t('settings.changeEmail')}
-                placeholder={t('settings.placeholders.newEmail')}
-                value={email}
-                setValue={setEmail}
-                onSave={() => {
-                    showToast(t('common.success') + ' 👍');
-                    setEmailModal(false);
-                }}
-            />
-        <ChangeModal
-            visible={nameModal}
-                onClose={() => setNameModal(false)}
-        title={t('settings.changeName')}
-        placeholder={t('settings.placeholders.newName')}
+      <ChangeModal
+        visible={nameModal}
+        onClose={() => setNameModal(false)}
+        title={t("settings.changeName")}
+        placeholder={t("settings.placeholders.newName")}
         value={name}
         setValue={setName}
-            onSave={() => {
-            showToast(t('common.success') + ' 👍');
-            setNameModal(false);
-            }}
-                    />
+        onSave={() => {
+          showToast(t("common.success") + " 👍");
+          setNameModal(false);
+        }}
+      />
 
-            <ChangeModal
-                visible={passwordModal}
-                onClose={() => setPasswordModal(false)}
-                title={t('settings.changePassword')}
-                placeholder={t('settings.placeholders.newPassword')}
-                value={password}
-                setValue={setPassword}
-                onSave={() => {
-                    showToast(t('common.success') + ' 👍');
-                    setPasswordModal(false);
-                }}
-            />
+      <ChangeModal
+        visible={passwordModal}
+        onClose={() => setPasswordModal(false)}
+        title={t("settings.changePassword")}
+        placeholder={t("settings.placeholders.newPassword")}
+        value={password}
+        setValue={setPassword}
+        onSave={() => {
+          showToast(t("common.success") + " 👍");
+          setPasswordModal(false);
+        }}
+      />
 
-            <ChangeModal
-                visible={phoneModal}
-                onClose={() => setPhoneModal(false)}
-                title={t('settings.changePhone')}
-                placeholder={t('settings.placeholders.newPhone')}
-                value={phone}
-                setValue={setPhone}
-                onSave={() => {
-                    showToast(t('common.success') + ' 👍');
-                    setPhoneModal(false);
-                }}
-            />
+      <ChangeModal
+        visible={phoneModal}
+        onClose={() => setPhoneModal(false)}
+        title={t("settings.changePhone")}
+        placeholder={t("settings.placeholders.newPhone")}
+        value={phone}
+        setValue={setPhone}
+        onSave={() => {
+          showToast(t("common.success") + " 👍");
+          setPhoneModal(false);
+        }}
+      />
 
-            {/* Toast Message */}
-            {toastMessage && (
-                <View style={styles.toastContainer}>
-                    <Text style={styles.toastText}>{toastMessage}</Text>
-                </View>
-            )}
-        </ScrollView>
-
-
-    );
+      {toastMessage && (
+        <View style={styles.toastContainer}>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </View>
+      )}
+    </ScrollView>
+  );
 }
 
-/* COMPONENT: Row for main actions */
-//function SettingsItem({ label }: { label: string }) {
-//  return (
-//    <TouchableOpacity style={styles.settingsItem}>
-//   <Text style={styles.settingsLabel}>{label}</Text>
-//   </TouchableOpacity>
-//// );
-//}
+/* Switch Row ✅ ohne I18nManager – wie index: bekommt isRTL von außen */
+function SwitchRow({
+  isRTL,
+  label,
+  value,
+  onChange,
+}: {
+  isRTL: boolean;
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <View style={[styles.switchRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+      <Text style={[styles.switchText, { textAlign: isRTL ? "right" : "left" }]}>
+        {label}
+      </Text>
 
-
-
-
-
-
-/* COMPONENT: Switch Row */
-function SwitchRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
-    const isRTL = I18nManager.isRTL;
-    return (
-        <View style={[styles.switchRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <Text style={[styles.switchText, { textAlign: isRTL ? 'right' : 'left' }]}>{label}</Text>
-
-            <Switch
-                value={value}
-                onValueChange={onChange}
-                trackColor={{ false: "#777", true: YELLOW }}
-                thumbColor={value ? "#fff" : "#ccc"}
-                style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }}
-            />
-        </View>
-    );
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: "#777", true: YELLOW }}
+        thumbColor={value ? "#fff" : "#ccc"}
+        style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }}
+      />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    root: {
-        flex: 1,
-        backgroundColor: BLUE,
-        paddingHorizontal: 20,
-        paddingTop: 45,
-         minHeight: "100%",
-    },
+  root: {
+    flex: 1,
+    backgroundColor: BLUE,
+    paddingHorizontal: 20,
+    paddingTop: 45,
+    minHeight: "100%",
+  },
 
-    header: {
-        width: "100%",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 20,
-        
-    },
+  header: {
+    width: "100%",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
 
-    backIcon: {
-        color: YELLOW,
-        fontSize: 26,
-    },
+  headerTitle: {
+    color: "white",
+    fontSize: 24,
+    fontFamily: "Tajawal-Bold",
+  },
 
-    headerTitle: {
-        color: "white",
-        fontSize: 24,
-        fontFamily: "Tajawal-Bold",
-    },
-    iconBtn: {
-        padding: 6,
-    },
+  iconBtn: { padding: 6 },
 
-    userId: {
-        color: "#fff",
-        fontSize: 16,
-        marginBottom: 8,
-        fontFamily: "Tajawal-Regular",
-    },
+  userId: {
+    color: "#fff",
+    fontSize: 16,
+    marginBottom: 8,
+    fontFamily: "Tajawal-Regular",
+  },
 
-    userName: {
-        color: YELLOW,
-        fontSize: 20,
-        marginBottom: 20,
-        fontFamily: "Tajawal-Bold",
-    },
+  userName: {
+    color: YELLOW,
+    fontSize: 20,
+    marginBottom: 20,
+    fontFamily: "Tajawal-Bold",
+  },
 
-    card: {
-        backgroundColor: CARD,
-        borderRadius: 14,
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        marginBottom: 20,
-        gap: 10,
-    },
+  card: {
+    backgroundColor: CARD,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+    gap: 10,
+  },
 
-    settingsItem: {
-        paddingVertical: 4,
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.2)",
-    },
+  languageRow: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.25)",
+  },
 
-    settingsLabel: {
-        color: "#fff",
-        fontSize: 14,
-        textAlign: "left",
-        fontFamily: "Tajawal-Regular",
-    },
+  languageLabel: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "Tajawal-Medium",
+  },
 
-    languageRow: {
-        width: "100%",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.25)",
-    },
+  languageSelector: {
+    alignItems: "center",
+    gap: 8,
+  },
 
-    languageLabel: {
-        color: "#FFFFFF",
-        fontSize: 14,
-        fontFamily: "Tajawal-Medium",
-    },
+  languageValue: {
+    color: "#F4B400",
+    fontSize: 14,
+    fontFamily: "Tajawal-Bold",
+  },
 
-    languageSelector: {
-        alignItems: "center",
-        gap: 8,
-        marginRight: "auto",
-    },
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 14,
+    marginBottom: 14,
+    fontFamily: "Tajawal-Bold",
+  },
 
-    languageValue: {
-        color: "#F4B400",     // gelb wie dein Bild
-        fontSize: 14,
-        fontFamily: "Tajawal-Bold",
-    },
+  switchRow: {
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 0,
+  },
 
-    languageArrow: {
-        color: "#F4B400",
-        fontSize: 14,
-        marginTop: 2,
-    },
+  switchText: {
+    color: "white",
+    fontSize: 16,
+    fontFamily: "Tajawal-Regular",
+    flex: 1,
+  },
 
+  saveButton: {
+    backgroundColor: YELLOW,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
 
-    sectionTitle: {
-        color: "#fff",
-        fontSize: 14,
-        marginBottom: 14,
-        fontFamily: "Tajawal-Bold",
-    },
+  saveButtonText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontFamily: "Tajawal-Bold",
+  },
 
-    switchRow: {
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingVertical: 0,
-    },
+  logoutButton: {
+    backgroundColor: "#DC2626",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 16,
+    justifyContent: "center",
+  },
 
-    switchText: {
-        color: "white",
-        fontSize: 16,
-        fontFamily: "Tajawal-Regular",
-        flex: 1,
-    },
+  logoutButtonText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontFamily: "Tajawal-Bold",
+  },
 
-    saveButton: {
-        backgroundColor: YELLOW,
-        paddingVertical: 14,
-        borderRadius: 10,
-        alignItems: "center",
-        marginTop: 10,
-        textAlign: "right"
-    },
+  textItem: {
+    color: "#fff",
+    fontSize: 16,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+    fontFamily: "Tajawal-Regular",
+  },
 
-    saveButtonText: {
-        color: "#ffffff",
-        fontSize: 18,
-        fontFamily: "Tajawal-Bold",
-    },
-    
-    logoutButton: {
-        backgroundColor: "#DC2626",
-        paddingVertical: 14,
-        borderRadius: 10,
-        alignItems: "center",
-        marginTop: 16,
-        justifyContent: "center",
-    },
+  hideNameMessage: {
+    color: YELLOW,
+    fontSize: 14,
+    fontFamily: "Tajawal-Regular",
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
 
-    logoutButtonText: {
-        color: "#ffffff",
-        fontSize: 18,
-        fontFamily: "Tajawal-Bold",
-    },
+  toastContainer: {
+    position: "absolute",
+    bottom: 100,
+    left: 20,
+    right: 20,
+    backgroundColor: "#333",
+    borderRadius: 10,
+    padding: 14,
+    alignItems: "center",
+  },
 
-    textItem: {
-        color: "#fff",
-        fontSize: 16,
-        paddingVertical: 7,
-        borderBottomWidth: 1,
-        borderColor: "rgba(255,255,255,0.25)",
-        fontFamily: "Tajawal-Regular",
-    },
-
-    hideNameMessage: {
-        color: YELLOW,
-        fontSize: 14,
-        fontFamily: "Tajawal-Regular",
-        marginTop: 8,
-        paddingHorizontal: 4,
-    },
-
-    toastContainer: {
-        position: 'absolute',
-        bottom: 100,
-        left: 20,
-        right: 20,
-        backgroundColor: '#333',
-        borderRadius: 10,
-        padding: 14,
-        alignItems: 'center',
-    },
-
-    toastText: {
-        color: '#fff',
-        fontSize: 15,
-        fontFamily: 'Tajawal-Regular',
-    },
-
+  toastText: {
+    color: "#fff",
+    fontSize: 15,
+    fontFamily: "Tajawal-Regular",
+  },
 });

@@ -1,4 +1,5 @@
-// app/(tabs)/coupons.tsx
+// app/(tabs)/coupons.tsx ✅ wie index.tsx: Arabisch = LTR | Englisch = RTL (effectiveRTL = !isRTL)
+
 import CouponCard from "@/components/CouponCard";
 import QRCodeModal from "@/components/QRCodeModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,28 +10,31 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const PRIMARY = "#0D2B66";
 const YELLOW = "#F4B400";
 
 export default function CouponsScreen() {
-  const { t, locale } = useLanguage();
+  const { t, locale, isRTL } = useLanguage();
+
+  // ✅ WIE index.tsx: Arabisch=LTR | Englisch=RTL
+  const effectiveRTL = !isRTL;
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { user, refreshUser } = useAuth();
   const [redeemingId, setRedeemingId] = useState<number | null>(null);
-  
-  // QR Code Modal state
+
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [redemptionData, setRedemptionData] = useState<{
     verificationCode: string;
@@ -54,32 +58,27 @@ export default function CouponsScreen() {
 
   const userPoints = user?.total_points ?? 0;
 
-  // Handle showing QR code for used coupons
-  const handleShowUsedCouponQR = useCallback((couponWithRedemption: CouponWithRedemption) => {
-    if (!couponWithRedemption.redemption) return;
-    
-    // If already verified (scanned), don't show QR
-    if (couponWithRedemption.redemption.verified_at) {
-      Alert.alert(
-        t("coupons.alreadyVerifiedTitle"),
-        t("coupons.alreadyVerifiedMessage")
-      );
-      return;
-    }
-    
-    // Show QR code for unverified redemption
-    setRedemptionData({
-      verificationCode: couponWithRedemption.redemption.verification_code,
-      couponName: couponWithRedemption.name,
-      pointsSpent: couponWithRedemption.redemption.points_spent,
-    });
-    setQrModalVisible(true);
-  }, [t]);
+  const handleShowUsedCouponQR = useCallback(
+    (couponWithRedemption: CouponWithRedemption) => {
+      if (!couponWithRedemption.redemption) return;
+
+      if (couponWithRedemption.redemption.verified_at) {
+        Alert.alert(t("coupons.alreadyVerifiedTitle"), t("coupons.alreadyVerifiedMessage"));
+        return;
+      }
+
+      setRedemptionData({
+        verificationCode: couponWithRedemption.redemption.verification_code,
+        couponName: couponWithRedemption.name,
+        pointsSpent: couponWithRedemption.redemption.points_spent,
+      });
+      setQrModalVisible(true);
+    },
+    [t]
+  );
 
   useEffect(() => {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
     fadeAnim.setValue(0);
     Animated.timing(fadeAnim, {
@@ -112,8 +111,7 @@ export default function CouponsScreen() {
           setRedeemingId(coupon.id);
           const redemption = await couponsAPI.redeemCoupon(coupon.id);
           await Promise.all([refreshUser(), refetch()]);
-          
-          // Show QR Code Modal instead of Alert
+
           setRedemptionData({
             verificationCode: redemption.verification_code,
             couponName: coupon.name,
@@ -137,9 +135,7 @@ export default function CouponsScreen() {
           { text: t("common.cancel"), style: "cancel" },
           {
             text: t("coupons.redeem.confirmAction"),
-            onPress: () => {
-              executeRedeem().catch((err) => console.error("Redeem coupon error", err));
-            },
+            onPress: () => executeRedeem().catch((err) => console.error("Redeem coupon error", err)),
           },
         ]
       );
@@ -175,69 +171,50 @@ export default function CouponsScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabRow}>
+      <View style={[styles.tabRow, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
         <TouchableOpacity
-          style={[
-            styles.tabItem,
-            activeTab === "inactive" && styles.tabItemActive,
-          ]}
+          style={[styles.tabItem, activeTab === "inactive" && styles.tabItemActive]}
           onPress={() => setActiveTab("inactive")}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "inactive" && styles.tabTextActive,
-            ]}
-          >
+          <Text style={[styles.tabText, activeTab === "inactive" && styles.tabTextActive]}>
             {t("coupons.tabs.inactive")}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.tabItem,
-            activeTab === "used" && styles.tabItemActive,
-          ]}
+          style={[styles.tabItem, activeTab === "used" && styles.tabItemActive]}
           onPress={() => setActiveTab("used")}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "used" && styles.tabTextActive,
-            ]}
-          >
+          <Text style={[styles.tabText, activeTab === "used" && styles.tabTextActive]}>
             {t("coupons.tabs.used")}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.tabItem,
-            activeTab === "active" && styles.tabItemActive,
-          ]}
+          style={[styles.tabItem, activeTab === "active" && styles.tabItemActive]}
           onPress={() => setActiveTab("active")}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "active" && styles.tabTextActive,
-            ]}
-          >
+          <Text style={[styles.tabText, activeTab === "active" && styles.tabTextActive]}>
             {t("coupons.tabs.active")}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Suche */}
-      <View style={styles.searchBox}>
+      <View style={[styles.searchBox, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
         <Ionicons name="search" size={20} color={PRIMARY} />
         <TextInput
           value={search}
           onChangeText={setSearch}
           placeholder={t("coupons.searchPlaceholder")}
           placeholderTextColor="#9BB1D8"
-          style={styles.searchInput}
-          textAlign="right"
+          style={[
+            styles.searchInput,
+            {
+              textAlign: effectiveRTL ? "right" : "left",
+              writingDirection: effectiveRTL ? "rtl" : "ltr",
+            },
+          ]}
         />
       </View>
 
@@ -268,7 +245,6 @@ export default function CouponsScreen() {
               />
             }
           >
-            {/* Show used coupons for "used" tab */}
             {activeTab === "used" ? (
               <>
                 {usedCoupons.map((c) => (
@@ -327,7 +303,7 @@ const styles = StyleSheet.create({
     backgroundColor: PRIMARY,
     paddingTop: 48,
     paddingHorizontal: 14,
-    direction: "rtl",
+    // ❌ direction:"rtl" entfernen (sonst immer RTL!)
   },
   header: {
     alignItems: "center",
@@ -339,7 +315,6 @@ const styles = StyleSheet.create({
     fontFamily: "Tajawal-Bold",
   },
   tabRow: {
-    flexDirection: "row-reverse",
     backgroundColor: "rgba(255,255,255,0.12)",
     padding: 4,
     borderRadius: 16,
@@ -364,7 +339,6 @@ const styles = StyleSheet.create({
   },
   searchBox: {
     backgroundColor: "#FFF",
-    flexDirection: "row-reverse",
     alignItems: "center",
     borderRadius: 14,
     paddingHorizontal: 14,
