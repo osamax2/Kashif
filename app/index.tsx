@@ -78,8 +78,8 @@ export default function Index() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#033076" }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <ScrollView 
         contentContainerStyle={[styles.container, { flexDirection: 'column' }]}
@@ -263,6 +263,8 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     textAlignVertical: 'center',
     fontSize: 14,
+    fontFamily: 'Tajawal-Regular',
+    writingDirection: 'rtl',
   },
   passwordContainer: {
     width: "100%",
@@ -330,8 +332,6 @@ const styles = StyleSheet.create({
   socialText: {
     color: "#FFFFFF",
     fontWeight: "600",
-    textAlign: "left",
-    writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Medium',
   },
@@ -346,12 +346,9 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     textDecorationLine: "underline",
-    textAlign: "left",
-    writingDirection: 'ltr',
     includeFontPadding: false,
     fontFamily: 'Tajawal-Regular',
     marginTop: 10,
-
   },
   google: {
     backgroundColor: "rgb(185,66,70)", // Google Red

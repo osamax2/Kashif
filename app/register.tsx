@@ -154,8 +154,8 @@ export default function Register() {
     return (
         <KeyboardAvoidingView
             style={{ flex: 1, backgroundColor: "#0D2B66" }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
             <ScrollView 
                 contentContainerStyle={styles.container} 
@@ -306,6 +306,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         fontSize: 15,
         width: "100%",
+        fontFamily: 'Tajawal-Regular',
+        writingDirection: 'rtl',
     },
     passwordContainer: {
         width: "100%",
