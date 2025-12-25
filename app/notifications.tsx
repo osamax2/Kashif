@@ -3,20 +3,20 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    I18nManager,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+// ❌ WEG DAMIT (macht alles immer RTL und kaputt)
+// I18nManager.allowRTL(true);
+// I18nManager.forceRTL(true);
 
 const BLUE = "#0D2B66";
 const LIGHT_CARD = "rgba(255,255,255,0.09)";
@@ -25,12 +25,26 @@ const YELLOW = "#F4B400";
 
 export default function ModernNotifications() {
   const router = useRouter();
-  const { t, language, isRTL } = useLanguage();
-  const { notifications, loading, refreshNotifications, markAsRead, markAllAsRead } = useNotifications();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const { t, isRTL } = useLanguage();
+  const { notifications, loading, refreshNotifications, markAsRead, markAllAsRead } =
+    useNotifications();
+
+  // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
+  const effectiveRTL = !isRTL;
+
+  const dir = useMemo(
+    () => ({
+      row: { flexDirection: effectiveRTL ? "row-reverse" : "row" } as const,
+      textAlign: { textAlign: effectiveRTL ? "right" : "left" } as const,
+    }),
+    [effectiveRTL]
+  );
+
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     refreshNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = async () => {
@@ -43,10 +57,8 @@ export default function ModernNotifications() {
     if (!notification.is_read) {
       await markAsRead(notification.id);
     }
-
-    // Navigate based on notification type - go to reports tab
     if (notification.related_report_id) {
-      router.push('/(tabs)/reports' as any);
+      router.push("/(tabs)/reports" as any);
     }
   };
 
@@ -81,11 +93,11 @@ export default function ModernNotifications() {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (seconds < 60) return t('notifications.timeAgo.justNow');
-    if (minutes < 60) return t('notifications.timeAgo.minutesAgo', { minutes });
-    if (hours < 24) return t('notifications.timeAgo.hoursAgo', { hours });
-    if (days === 1) return t('notifications.timeAgo.yesterday');
-    return t('notifications.timeAgo.daysAgo', { days });
+    if (seconds < 60) return t("notifications.timeAgo.justNow");
+    if (minutes < 60) return t("notifications.timeAgo.minutesAgo", { minutes });
+    if (hours < 24) return t("notifications.timeAgo.hoursAgo", { hours });
+    if (days === 1) return t("notifications.timeAgo.yesterday");
+    return t("notifications.timeAgo.daysAgo", { days });
   };
 
   const renderItem = ({ item }: { item: any }) => {
@@ -93,30 +105,51 @@ export default function ModernNotifications() {
 
     return (
       <TouchableOpacity onPress={() => handleNotificationPress(item)} activeOpacity={0.8}>
-        <View style={[styles.card, !item.is_read && styles.unreadCard]}>
-          <View style={[styles.iconCircle, { backgroundColor: meta.color + "22" }]}>
+        <View style={[styles.card, dir.row, !item.is_read && styles.unreadCard]}>
+          <View
+            style={[
+              styles.iconCircle,
+              { backgroundColor: meta.color + "22" },
+              // ✅ Abstand je nach Richtung
+              effectiveRTL ? { marginLeft: 14, marginRight: 0 } : { marginRight: 14, marginLeft: 0 },
+            ]}
+          >
             <Ionicons name={meta.icon as any} size={26} color={meta.color} />
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={[styles.msg, !item.is_read && styles.unreadText]}>{item.title}</Text>
-            {item.body && <Text style={styles.body}>{item.body}</Text>}
-            <Text style={styles.time}>{formatTime(item.created_at)}</Text>
+            <Text style={[styles.msg, dir.textAlign, !item.is_read && styles.unreadText]}>
+              {item.title}
+            </Text>
+            {item.body && <Text style={[styles.body, dir.textAlign]}>{item.body}</Text>}
+            <Text style={[styles.time, dir.textAlign]}>{formatTime(item.created_at)}</Text>
           </View>
 
-          {!item.is_read && <View style={styles.unreadDot} />}
+          {!item.is_read && (
+            <View
+              style={[
+                styles.unreadDot,
+                // ✅ Dot auf der “Außenseite”
+                effectiveRTL ? { marginRight: 0, marginLeft: 8 } : { marginLeft: 0, marginRight: 8 },
+              ]}
+            />
+          )}
         </View>
       </TouchableOpacity>
     );
   };
 
-  const hasNotifications = notifications.length > 0;
-  const hasUnread = notifications.some(n => !n.is_read);
+  const hasUnread = notifications.some((n) => !n.is_read);
 
   if (loading && notifications.length === 0) {
     return (
       <View style={styles.root}>
-        <Header title={t('notifications.title')} leftIcon={isRTL ? "chevron-forward" : "chevron-back"} onLeftPress={() => router.back()} />
+        <Header
+          title={t("notifications.title")}
+          // ✅ WIE index: Richtung invertiert
+          leftIcon={effectiveRTL ? "chevron-forward" : "chevron-back"}
+          onLeftPress={() => router.back()}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={YELLOW} />
         </View>
@@ -126,7 +159,17 @@ export default function ModernNotifications() {
 
   return (
     <View style={styles.root}>
-      <Header title={t('notifications.title')} leftIcon={isRTL ? "chevron-forward" : "chevron-back"} onLeftPress={() => router.back()} />
+     <Header
+  title={t("notifications.title")}
+  leftIcon={!isRTL ? "chevron-back" : undefined}
+  rightIcon={isRTL ? "chevron-forward" : undefined}
+  onLeftPress={() => router.back()}
+  onRightPress={() => router.back()}
+/>
+
+
+
+      
 
       <FlatList
         data={notifications}
@@ -145,10 +188,8 @@ export default function ModernNotifications() {
         ListEmptyComponent={() => (
           <View style={styles.emptyBox}>
             <Ionicons name="checkmark-circle" size={50} color={YELLOW} />
-            <Text style={styles.emptyText}>{t('notifications.noNotifications')}</Text>
-            <Text style={styles.emptySub}>
-              {t('notifications.noNotificationsSubtitle')}
-            </Text>
+            <Text style={styles.emptyText}>{t("notifications.noNotifications")}</Text>
+            <Text style={styles.emptySub}>{t("notifications.noNotificationsSubtitle")}</Text>
           </View>
         )}
         showsVerticalScrollIndicator={false}
@@ -156,7 +197,7 @@ export default function ModernNotifications() {
 
       {hasUnread && (
         <TouchableOpacity
-          style={styles.clearButton}
+          style={[styles.clearButton, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}
           onPress={clearAll}
           activeOpacity={0.9}
         >
@@ -164,9 +205,9 @@ export default function ModernNotifications() {
             name="checkmark-done-outline"
             size={20}
             color={BLUE}
-            style={{ marginLeft: 6 }}
+            style={effectiveRTL ? { marginLeft: 6 } : { marginRight: 6 }}
           />
-          <Text style={styles.clearButtonText}>{t('notifications.markAllRead')}</Text>
+          <Text style={styles.clearButtonText}>{t("notifications.markAllRead")}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -188,7 +229,6 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    flexDirection: "row-reverse",
     alignItems: "center",
     padding: 16,
     borderRadius: 22,
@@ -212,7 +252,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: 14,
   },
 
   msg: {
@@ -220,7 +259,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Tajawal-Regular",
     marginBottom: 4,
-    textAlign: "left",
   },
 
   unreadText: {
@@ -232,14 +270,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Tajawal-Regular",
     marginBottom: 4,
-    textAlign: "left",
   },
 
   time: {
     color: "#B9CBF2",
     fontSize: 13,
     fontFamily: "Tajawal-Regular",
-    textAlign: "left",
   },
 
   unreadDot: {
@@ -247,7 +283,6 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: YELLOW,
-    marginRight: 8,
   },
 
   emptyBox: {
@@ -275,7 +310,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 24,
     alignSelf: "center",
-    flexDirection: "row-reverse",
     alignItems: "center",
     paddingHorizontal: 26,
     paddingVertical: 12,
