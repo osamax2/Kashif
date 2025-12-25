@@ -166,6 +166,7 @@ export default function CouponsScreen() {
       )}
 
       {/* HEADER */}
+      
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t("coupons.screenTitle")}</Text>
       </View>

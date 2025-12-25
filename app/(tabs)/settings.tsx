@@ -93,26 +93,34 @@ export default function SettingsScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { flexDirection: effectiveRTL ? "row-reverse" : "row" },
-        ]}
-      >
-        <TouchableOpacity onPress={handleLogout} style={styles.iconBtn}>
-          <Ionicons name="log-out-outline" size={28} color={YELLOW} />
-        </TouchableOpacity>
+      {/* Header ✅ UMGEKEHRT */}
+<View style={[styles.header, { flexDirection: "row" }]}>
+  {/* LEFT */}
+  <TouchableOpacity
+    onPress={isRTL ? () => router.back() : handleLogout}
+    style={styles.iconBtn}
+  >
+    <Ionicons
+      name={isRTL ? "chevron-back" : "log-out-outline"}
+      size={isRTL ? 30 : 28}
+      color={YELLOW}
+    />
+  </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>{t("settings.title")}</Text>
+  <Text style={styles.headerTitle}>{t("settings.title")}</Text>
 
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-          <Ionicons
-            name={effectiveRTL ? "chevron-forward" : "chevron-back"}
-            size={30}
-            color={YELLOW}
-          />
-        </TouchableOpacity>
-      </View>
+  {/* RIGHT */}
+  <TouchableOpacity
+    onPress={isRTL ? handleLogout : () => router.back()}
+    style={styles.iconBtn}
+  >
+    <Ionicons
+      name={isRTL ? "log-out-outline" : "chevron-forward"}
+      size={isRTL ? 28 : 30}
+      color={YELLOW}
+    />
+  </TouchableOpacity>
+</View>
 
       {/* USER */}
       <Text style={[styles.userId, { textAlign: effectiveRTL ? "right" : "left" }]}>
