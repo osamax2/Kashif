@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     closeText: {
-        color: "#0D2B66",
+        color: "#ffffffff",
         fontSize: 18,
         textAlign: "center",
         fontFamily: "Tajawal-Bold",

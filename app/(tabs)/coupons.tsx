@@ -168,8 +168,32 @@ export default function CouponsScreen() {
       {/* HEADER */}
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{t("coupons.screenTitle")}</Text>
-      </View>
+
+  {/* Back Icon – Englisch */}
+  {!isRTL && (
+    <TouchableOpacity
+      onPress={() => router.back()}
+      style={styles.backBtnRight}
+    >
+      <Ionicons name="chevron-back" size={30} color={YELLOW} />
+    </TouchableOpacity>
+  )}
+
+  {/* Titel bleibt in der Mitte */}
+  <Text style={styles.headerTitle}>
+    {t("coupons.screenTitle")}
+  </Text>
+
+  {/* Back Icon – Arabisch */}
+  {isRTL && (
+    <TouchableOpacity
+      onPress={() => router.back()}
+      style={styles.backBtnLeft}
+    >
+      <Ionicons name="chevron-back" size={30} color={YELLOW} />
+    </TouchableOpacity>
+  )}
+</View>
 
       {/* Tabs */}
       <View style={[styles.tabRow, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
@@ -382,4 +406,15 @@ const styles = StyleSheet.create({
     color: "#E3ECFF",
     fontFamily: "Tajawal-Regular",
   },
+  backBtnLeft: {
+  position: "absolute",
+  left: 0,
+  padding: 6,
+},
+
+backBtnRight: {
+  position: "absolute",
+  right: 0,
+  padding: 6,
+},
 });
