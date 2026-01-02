@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Connect to backend via internal Docker network
-const BACKEND_URL = 'http://87.106.51.243:8000';
+// Connect to backend via internal Docker network or HTTPS
+const BACKEND_URL = process.env.BACKEND_URL || 'https://api.kashifroad.com';
 
 export async function GET(
   request: NextRequest,

@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        protocol: 'https',
+        hostname: 'api.kashifroad.com',
+        pathname: '/api/reports/uploads/**',
+      },
+      {
         protocol: 'http',
         hostname: '87.106.51.243',
         port: '8000',

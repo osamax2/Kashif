@@ -4,7 +4,7 @@ import axios from 'axios';
 const API_BASE_URL = '';
 
 // Backend URL for direct image access (uploads are served from auth-service)
-export const BACKEND_URL = 'http://87.106.51.243:8000';
+export const BACKEND_URL = 'https://api.kashifroad.com';
 
 // Helper function to get full image URL
 export function getImageUrl(url: string | undefined | null): string {

@@ -22,6 +22,7 @@ SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
 
 # Frontend URL for verification links
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://kashifroad.com")
+ADMIN_URL = os.getenv("ADMIN_URL", "https://admin.kashifroad.com")
 
 
 def send_email(
