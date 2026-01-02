@@ -123,7 +123,7 @@ def create_report(db: Session, report: schemas.ReportCreate, user_id: int) -> Tu
             points_awarded=False
         )
     else:
-        # No matching reports - create as pending
+        # No matching reports - create as confirmed (only 1 user needed)
         db_report = models.Report(
             user_id=user_id,
             title=report.title,
@@ -136,7 +136,7 @@ def create_report(db: Session, report: schemas.ReportCreate, user_id: int) -> Tu
             severity_id=report.severity_id,
             user_hide=False,
             photo_urls=report.photo_urls,
-            confirmation_status="pending",
+            confirmation_status="confirmed",
             points_awarded=False
         )
     
