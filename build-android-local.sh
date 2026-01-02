@@ -2,6 +2,7 @@
 
 # Kashif App - Local Android APK Build
 # No Google Play Developer Account needed!
+# All caches and temp files are stored on /Volumes/WorkSSD
 
 set -e  # Exit on error
 
@@ -16,6 +17,30 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# ========================================
+# Configure all paths to use WorkSSD
+# ========================================
+WORK_DIR="/Volumes/WorkSSD/Kashif"
+CACHE_DIR="/Volumes/WorkSSD/.build-cache"
+
+# Create cache directories on WorkSSD
+mkdir -p "$CACHE_DIR/gradle"
+mkdir -p "$CACHE_DIR/npm"
+mkdir -p "$CACHE_DIR/tmp"
+
+# Set environment variables to use WorkSSD
+export GRADLE_USER_HOME="$CACHE_DIR/gradle"
+export npm_config_cache="$CACHE_DIR/npm"
+export TMPDIR="$CACHE_DIR/tmp"
+export TEMP="$CACHE_DIR/tmp"
+export TMP="$CACHE_DIR/tmp"
+
+echo -e "${GREEN}✓ All caches configured on /Volumes/WorkSSD${NC}"
+echo "  GRADLE_USER_HOME: $GRADLE_USER_HOME"
+echo "  npm_config_cache: $npm_config_cache"
+echo "  TMPDIR: $TMPDIR"
+echo ""
 
 # Step 1: Check if Java is installed
 echo -e "${BLUE}Step 1: Checking Java installation...${NC}"
@@ -63,9 +88,8 @@ echo -e "${GREEN}✓ Dependencies ready${NC}"
 echo ""
 
 # Step 4: Clean
-echo -e "${BLUE}Step 4: Cleaning...${NC}"
-rm -rf ~/.gradle/caches/
-rm -rf ~/.gradle/daemon/
+echo -e "${BLUE}Step 4: Cleaning previous builds...${NC}"
+# Only clean build directories, not the cache (reuse cache for faster builds)
 if [ -d "android" ]; then
     rm -rf android/app/build android/.gradle android/build
 fi
@@ -79,26 +103,27 @@ echo -e "${GREEN}✓ Generated${NC}"
 echo ""
 
 # Step 6: Choose build type
-echo -e "${BLUE}Step 6: Choose APK type:${NC}"
-echo "1) Debug APK"
-echo "2) Release APK"
-read -p "Enter choice (1-2): " APK_CHOICE
+echo -e "${BLUE}Step 6: Choosing APK type...${NC}"
 
-if [ "$APK_CHOICE" = "2" ]; then
-    BUILD_TYPE="Release"
-    GRADLE_TASK="assembleRelease"
-    APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
-else
+# Accept command line argument or use default (release)
+APK_CHOICE="${1:-2}"
+
+if [ "$APK_CHOICE" = "1" ] || [ "$APK_CHOICE" = "debug" ]; then
     BUILD_TYPE="Debug"
     GRADLE_TASK="assembleDebug"
     APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+else
+    BUILD_TYPE="Release"
+    GRADLE_TASK="assembleRelease"
+    APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
 fi
+
+echo -e "${GREEN}✓ Building $BUILD_TYPE APK${NC}"
 echo ""
 
 # Step 7: Build APK
 echo -e "${BLUE}Step 7: Building $BUILD_TYPE APK...${NC}"
 echo -e "${YELLOW}⚠ This will take 5-15 minutes${NC}"
-read -p "Press Enter to continue..."
 echo ""
 
 # Create gradle wrapper if needed
