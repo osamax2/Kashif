@@ -1,8 +1,11 @@
 // i18n/index.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { I18nManager } from 'react-native';
+import * as RN from 'react-native';
 import ar from './locales/ar.json';
 import en from './locales/en.json';
+
+// Safe I18nManager access
+const I18nManager = RN.I18nManager || { isRTL: false, allowRTL: () => {}, forceRTL: () => {} };
 
 export type Language = 'ar' | 'en';
 
@@ -24,11 +27,15 @@ export const initI18n = async (): Promise<Language> => {
       currentLanguage = savedLang;
     }
     
-    // Configure RTL/LTR
+    // Configure RTL/LTR (safe access)
     const shouldBeRTL = currentLanguage === 'ar';
-    if (I18nManager.isRTL !== shouldBeRTL) {
-      I18nManager.allowRTL(shouldBeRTL);
-      I18nManager.forceRTL(shouldBeRTL);
+    try {
+      if (I18nManager && typeof I18nManager.isRTL !== 'undefined' && I18nManager.isRTL !== shouldBeRTL) {
+        I18nManager.allowRTL(shouldBeRTL);
+        I18nManager.forceRTL(shouldBeRTL);
+      }
+    } catch (rtlError) {
+      console.warn('I18nManager not available:', rtlError);
     }
     
     return currentLanguage;
@@ -43,10 +50,16 @@ export const setLanguage = async (lang: Language): Promise<void> => {
     currentLanguage = lang;
     await AsyncStorage.setItem('app_language', lang);
     
-    // Configure RTL/LTR
+    // Configure RTL/LTR (safe access)
     const shouldBeRTL = lang === 'ar';
-    I18nManager.allowRTL(shouldBeRTL);
-    I18nManager.forceRTL(shouldBeRTL);
+    try {
+      if (I18nManager && typeof I18nManager.allowRTL === 'function') {
+        I18nManager.allowRTL(shouldBeRTL);
+        I18nManager.forceRTL(shouldBeRTL);
+      }
+    } catch (rtlError) {
+      console.warn('I18nManager not available:', rtlError);
+    }
   } catch (error) {
     console.error('Error setting language:', error);
   }
