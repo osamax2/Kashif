@@ -45,6 +45,23 @@ consumer_thread = threading.Thread(target=start_consumer, daemon=True)
 consumer_thread.start()
 
 
+async def get_current_user_id(authorization: Annotated[str, Header()]):
+    """Verify token with auth service and get user_id"""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header"
+        )
+    token = authorization.replace("Bearer ", "")
+    user = await auth_client.verify_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    return user["id"]
+
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "reporting"}
@@ -91,23 +108,6 @@ async def upload_image(
         "size": len(content),
         "content_type": file.content_type
     }
-
-
-async def get_current_user_id(authorization: Annotated[str, Header()]):
-    """Verify token with auth service and get user_id"""
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authorization header"
-        )
-    token = authorization.replace("Bearer ", "")
-    user = await auth_client.verify_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
-        )
-    return user["id"]
 
 
 @app.get("/categories", response_model=List[schemas.Category])

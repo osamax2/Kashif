@@ -82,7 +82,8 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
             "email": new_user.email,
             "full_name": new_user.full_name,
             "role": new_user.role,
-            "verification_token": verification_token
+            "verification_token": verification_token,
+            "language": new_user.language or "ar"
         })
         logger.info(f"Published UserRegistered event for user {new_user.id}")
     except Exception as e:
@@ -236,13 +237,82 @@ def resend_verification_email(
             "user_id": user.id,
             "email": user.email,
             "full_name": user.full_name,
-            "verification_token": verification_token
+            "verification_token": verification_token,
+            "language": user.language or "ar"
         })
         logger.info(f"Published verification resend event for user {user.id}")
     except Exception as e:
         logger.error(f"Failed to publish verification resend event: {e}")
     
     return {"message": "If the email exists, a verification link has been sent."}
+
+
+@app.post("/forgot-password")
+def forgot_password(
+    request: schemas.ForgotPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    """Request password reset email"""
+    user = crud.get_user_by_email(db, request.email)
+    
+    # Don't reveal if email exists for security
+    if not user:
+        return {"message": "If the email exists, a password reset link has been sent."}
+    
+    # Generate password reset token
+    reset_token = auth.create_password_reset_token(data={"user_id": user.id, "email": user.email})
+    
+    # Publish event to send password reset email
+    try:
+        publish_event("user.password_reset", {
+            "user_id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "reset_token": reset_token,
+            "language": user.language or "ar"
+        })
+        logger.info(f"Published password reset event for user {user.id}")
+    except Exception as e:
+        logger.error(f"Failed to publish password reset event: {e}")
+    
+    return {"message": "If the email exists, a password reset link has been sent."}
+
+
+@app.post("/reset-password")
+def reset_password(
+    request: schemas.ResetPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    """Reset password using token from email"""
+    try:
+        payload = auth.verify_password_reset_token(request.token)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired password reset token"
+            )
+        
+        user_id = payload.get("user_id")
+        user = crud.get_user(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Update password
+        crud.update_user_password(db, user_id, request.new_password)
+        
+        logger.info(f"Password reset successful for user {user_id}")
+        return {"message": "Password reset successfully. You can now login with your new password."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Password reset error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired password reset token"
+        )
 
 
 @app.post("/change-password")

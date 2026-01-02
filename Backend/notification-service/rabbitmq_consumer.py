@@ -3,6 +3,7 @@ import logging
 import os
 
 import crud
+import email_service
 import fcm_service
 import pika
 from database import SessionLocal
@@ -13,10 +14,14 @@ RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
 
 
 def handle_user_registered(event_data):
-    """Send welcome notification to new user"""
+    """Send welcome notification and verification email to new user"""
     try:
         db = SessionLocal()
         user_id = event_data.get("user_id")
+        email = event_data.get("email")
+        full_name = event_data.get("full_name", "User")
+        verification_token = event_data.get("verification_token")
+        language = event_data.get("language", "ar")
         
         if user_id:
             crud.create_notification(
@@ -27,6 +32,19 @@ def handle_user_registered(event_data):
                 notification_type="WELCOME"
             )
             logger.info(f"Created welcome notification for user {user_id}")
+        
+        # Send verification email if token is provided
+        if email and verification_token:
+            success = email_service.send_verification_email(
+                to_email=email,
+                full_name=full_name,
+                verification_token=verification_token,
+                language=language
+            )
+            if success:
+                logger.info(f"Verification email sent to {email}")
+            else:
+                logger.error(f"Failed to send verification email to {email}")
         
         db.close()
     except Exception as e:
@@ -143,6 +161,75 @@ def handle_coupon_redeemed(event_data):
         logger.error(f"Error handling coupon_redeemed event: {e}")
 
 
+def handle_verification_resend(event_data):
+    """Resend verification email"""
+    try:
+        email = event_data.get("email")
+        full_name = event_data.get("full_name", "User")
+        verification_token = event_data.get("verification_token")
+        language = event_data.get("language", "ar")
+        
+        if email and verification_token:
+            success = email_service.send_verification_email(
+                to_email=email,
+                full_name=full_name,
+                verification_token=verification_token,
+                language=language
+            )
+            if success:
+                logger.info(f"Verification email resent to {email}")
+            else:
+                logger.error(f"Failed to resend verification email to {email}")
+    except Exception as e:
+        logger.error(f"Error handling verification_resend event: {e}")
+
+
+def handle_password_reset(event_data):
+    """Send password reset email"""
+    try:
+        email = event_data.get("email")
+        full_name = event_data.get("full_name", "User")
+        reset_token = event_data.get("reset_token")
+        language = event_data.get("language", "ar")
+        
+        if email and reset_token:
+            success = email_service.send_password_reset_email(
+                to_email=email,
+                full_name=full_name,
+                reset_token=reset_token,
+                language=language
+            )
+            if success:
+                logger.info(f"Password reset email sent to {email}")
+            else:
+                logger.error(f"Failed to send password reset email to {email}")
+    except Exception as e:
+        logger.error(f"Error handling password_reset event: {e}")
+
+
+def handle_verification_code(event_data):
+    """Send verification code email"""
+    try:
+        email = event_data.get("email")
+        full_name = event_data.get("full_name", "User")
+        verification_code = event_data.get("verification_code")
+        language = event_data.get("language", "ar")
+        
+        if email and verification_code:
+            success = email_service.send_verification_code_email(
+                to_email=email,
+                full_name=full_name,
+                verification_code=verification_code,
+                language=language
+            )
+            if success:
+                logger.info(f"Verification code email sent to {email}")
+            else:
+                logger.error(f"Failed to send verification code email to {email}")
+    except Exception as e:
+        logger.error(f"Error handling verification_code event: {e}")
+
+
 def start_consumer():
     """Start consuming events from RabbitMQ"""
     try:
@@ -162,6 +249,9 @@ def start_consumer():
         # Bind to all relevant events
         events = [
             'user.registered',
+            'user.verification_resend',
+            'user.password_reset',
+            'user.verification_code',
             'report.created',
             'report.status_updated',
             'points.awarded',
@@ -185,6 +275,12 @@ def start_consumer():
                 
                 if event_type == 'user.registered':
                     handle_user_registered(data)
+                elif event_type == 'user.verification_resend':
+                    handle_verification_resend(data)
+                elif event_type == 'user.password_reset':
+                    handle_password_reset(data)
+                elif event_type == 'user.verification_code':
+                    handle_verification_code(data)
                 elif event_type == 'report.created':
                     handle_report_created(data)
                 elif event_type == 'report.status_updated':

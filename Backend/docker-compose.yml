@@ -159,6 +159,14 @@ services:
       DATABASE_URL: postgresql://kashif_notif:notif123@notification-db:5432/kashif_notifications
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
       FIREBASE_CREDENTIALS_PATH: /app/firebase-credentials.json
+      SMTP_HOST: mail.kashifroad.com
+      SMTP_PORT: 587
+      SMTP_USER: noreply@kashifroad.com
+      SMTP_PASSWORD: SecurePass123!
+      SMTP_FROM_EMAIL: noreply@kashifroad.com
+      SMTP_FROM_NAME: Kashif Road
+      SMTP_USE_TLS: "true"
+      FRONTEND_URL: https://kashifroad.com
     depends_on:
       - notification-db
       - rabbitmq
