@@ -49,7 +49,14 @@ export default function ForgotScreen() {
                 Alert.alert(
                     t('common.success'),
                     isRTL ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : 'Password reset link sent to your email',
-                    [{ text: 'OK', onPress: () => router.replace("/index") }]
+                    [{ 
+                        text: 'OK', 
+                        onPress: () => {
+                            // Navigate back to login screen
+                            router.dismissAll();
+                            router.replace("/");
+                        }
+                    }]
                 );
             } else {
                 // Phone-based reset would need SMS service
