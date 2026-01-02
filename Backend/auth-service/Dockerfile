@@ -15,5 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Create templates directory and copy templates
+RUN mkdir -p /app/templates
+COPY templates/ /app/templates/
+
 # Run migrations and start server
 CMD alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000

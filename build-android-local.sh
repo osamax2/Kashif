@@ -19,27 +19,41 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # ========================================
-# Configure all paths to use WorkSSD
+# Configure ALL paths to use WorkSSD
 # ========================================
 WORK_DIR="/Volumes/WorkSSD/Kashif"
 CACHE_DIR="/Volumes/WorkSSD/.build-cache"
 
-# Create cache directories on WorkSSD
+# Create all cache directories on WorkSSD
 mkdir -p "$CACHE_DIR/gradle"
+mkdir -p "$CACHE_DIR/gradle-home"
 mkdir -p "$CACHE_DIR/npm"
 mkdir -p "$CACHE_DIR/tmp"
+mkdir -p "$CACHE_DIR/metro"
+mkdir -p "$CACHE_DIR/expo"
+mkdir -p "$CACHE_DIR/yarn"
+mkdir -p "$CACHE_DIR/kotlin"
 
-# Set environment variables to use WorkSSD
-export GRADLE_USER_HOME="$CACHE_DIR/gradle"
+# Set ALL environment variables to use WorkSSD
+export GRADLE_USER_HOME="$CACHE_DIR/gradle-home"
+export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4096m -Djava.io.tmpdir=$CACHE_DIR/tmp"
 export npm_config_cache="$CACHE_DIR/npm"
+export YARN_CACHE_FOLDER="$CACHE_DIR/yarn"
 export TMPDIR="$CACHE_DIR/tmp"
 export TEMP="$CACHE_DIR/tmp"
 export TMP="$CACHE_DIR/tmp"
+export EXPO_CACHE_DIR="$CACHE_DIR/expo"
+export REACT_NATIVE_PACKAGER_HOSTNAME="localhost"
+export KOTLIN_DAEMON_HOME="$CACHE_DIR/kotlin"
+
+# Also set Java temp directory
+export _JAVA_OPTIONS="-Djava.io.tmpdir=$CACHE_DIR/tmp"
 
 echo -e "${GREEN}✓ All caches configured on /Volumes/WorkSSD${NC}"
 echo "  GRADLE_USER_HOME: $GRADLE_USER_HOME"
 echo "  npm_config_cache: $npm_config_cache"
 echo "  TMPDIR: $TMPDIR"
+echo "  EXPO_CACHE_DIR: $EXPO_CACHE_DIR"
 echo ""
 
 # Step 1: Check if Java is installed
