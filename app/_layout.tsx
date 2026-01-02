@@ -8,9 +8,10 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { DataSyncProvider } from '@/contexts/DataSyncContext';
-import { LanguageProvider } from '@/contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { checkAndPromptForUpdate } from '@/services/updateChecker';
 
 export const unstable_settings = {
     initialRouteName: "index",
@@ -19,6 +20,22 @@ export const unstable_settings = {
 function RootLayoutNav() {
     const colorScheme = useColorScheme();
     const { loading } = useAuth();
+    const { language } = useLanguage();
+
+    // Check for app updates on startup
+    React.useEffect(() => {
+        const checkUpdate = async () => {
+            try {
+                await checkAndPromptForUpdate(language as 'ar' | 'en' | 'de');
+            } catch (error) {
+                console.log('Update check failed:', error);
+            }
+        };
+        
+        // Delay update check to not block app startup
+        const timer = setTimeout(checkUpdate, 3000);
+        return () => clearTimeout(timer);
+    }, [language]);
 
     if (loading) {
         return (
