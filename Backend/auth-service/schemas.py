@@ -150,6 +150,17 @@ class ResendVerificationRequest(BaseModel):
     email: EmailStr
 
 
+class ForgotPasswordRequest(BaseModel):
+    """Schema for requesting password reset email"""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Schema for resetting password with token"""
+    token: str
+    new_password: str
+
+
 class CompanyMemberCreate(BaseModel):
     """Schema for adding a member to company by company user"""
     email: EmailStr
