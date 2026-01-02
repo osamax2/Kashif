@@ -2,8 +2,9 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
     Animated,
-    I18nManager,
     Modal,
     StyleSheet,
     Text,
@@ -12,22 +13,54 @@ import {
     View
 } from "react-native";
 import { useLanguage } from "../contexts/LanguageContext";
+import { authAPI } from "../services/api";
+
 const BLUE = "#0D2B66";
 
 export default function ForgotScreen() {
     const { t, isRTL } = useLanguage();
     const [method, setMethod] = useState<"email" | "phone" | null>(null);
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [loading, setLoading] = useState(false);
     const [successVisible, setSuccessVisible] = useState(false);
     const [showBottomActions, setShowBottomActions] = useState(false);
     const router = useRouter();
     const inputAnim = useRef(new Animated.Value(0)).current;
 
-    const handleSubmit = () => {
-        setSuccessVisible(true);
+    const handleSubmit = async () => {
+        if (method === "email" && !email) {
+            Alert.alert(t('common.error'), isRTL ? 'الرجاء إدخال البريد الإلكتروني' : 'Please enter your email');
+            return;
+        }
+        if (method === "phone" && !phone) {
+            Alert.alert(t('common.error'), isRTL ? 'الرجاء إدخال رقم الهاتف' : 'Please enter your phone number');
+            return;
+        }
 
-        setTimeout(() => {
-            setShowBottomActions(true);
-        }, 600);
+        setLoading(true);
+        try {
+            if (method === "email") {
+                await authAPI.forgotPassword(email);
+                Alert.alert(
+                    t('common.success'),
+                    isRTL ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : 'Password reset link sent to your email',
+                    [{ text: 'OK', onPress: () => router.replace("/index") }]
+                );
+            } else {
+                // Phone-based reset would need SMS service
+                Alert.alert(
+                    t('common.info'),
+                    isRTL ? 'إعادة التعيين عبر الهاتف غير متاح حالياً' : 'Phone reset is not available yet'
+                );
+            }
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.detail || 
+                (isRTL ? 'فشل في إرسال طلب إعادة التعيين' : 'Failed to send reset request');
+            Alert.alert(t('common.error'), errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const showInput = () => {
@@ -108,12 +141,16 @@ export default function ForgotScreen() {
                     },
                 ]}
             >
-                {method === "email" && (
+            {method === "email" && (
                     <TextInput
                         placeholder="example@email.com"
                         placeholderTextColor="#AAB3C0"
                         style={styles.input}
                         textAlign={isRTL ? 'right' : 'left'}
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
                     />
                 )}
 
@@ -124,14 +161,24 @@ export default function ForgotScreen() {
                         keyboardType="phone-pad"
                         style={styles.input}
                         textAlign={isRTL ? 'right' : 'left'}
+                        value={phone}
+                        onChangeText={setPhone}
                     />
                 )}
             </Animated.View>
 
             {/* RESET */}
             {method && (
-                <TouchableOpacity style={styles.resetButton} onPress={() => router.push("/verify-code")}>
-                    <Text style={styles.resetText}>{t('auth.forgot.resetButton')}</Text>
+                <TouchableOpacity 
+                    style={[styles.resetButton, loading && { opacity: 0.7 }]} 
+                    onPress={handleSubmit}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator size="small" color={BLUE} />
+                    ) : (
+                        <Text style={styles.resetText}>{t('auth.forgot.resetButton')}</Text>
+                    )}
                 </TouchableOpacity>
             )}
             {/* BOTTOM ACTIONS */}

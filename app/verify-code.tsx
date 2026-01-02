@@ -1,9 +1,10 @@
 // app/verify-code.tsx
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
-    I18nManager,
+    ActivityIndicator,
+    Alert,
     Keyboard,
     StyleSheet,
     Text,
@@ -12,13 +13,19 @@ import {
     View
 } from "react-native";
 import { useLanguage } from "../contexts/LanguageContext";
+import { authAPI } from "../services/api";
+
 const BLUE = "#0D2B66";
 
 export default function VerifyCodeScreen() {
     const { t, isRTL } = useLanguage();
     const [code, setCode] = useState(["", "", "", "", "", ""]);
+    const [loading, setLoading] = useState(false);
+    const [resending, setResending] = useState(false);
     const inputs = useRef<Array<TextInput | null>>([]);
     const router = useRouter();
+    const { email } = useLocalSearchParams<{ email: string }>();
+
     const handleChange = (value: string, index: number) => {
         const digit = value.replace(/[^0-9]/g, "").slice(-1); // nur 1 Ziffer
         const nextCode = [...code];
@@ -30,7 +37,8 @@ export default function VerifyCodeScreen() {
         }
         if (index === 5 && digit) {
             Keyboard.dismiss();
-            // hier kannst du später die Verifikation starten
+            // Auto-submit when all digits entered
+            handleSubmit([...nextCode]);
         }
     };
 
@@ -40,10 +48,58 @@ export default function VerifyCodeScreen() {
         }
     };
 
-    const handleSubmit = () => {
-        const fullCode = code.join("");
-        console.log("CODE:", fullCode);
-        // TODO: an Backend/Firebase schicken
+    const handleSubmit = async (codeArray?: string[]) => {
+        const fullCode = (codeArray || code).join("");
+        if (fullCode.length !== 6) {
+            Alert.alert(
+                t('common.error'),
+                isRTL ? 'الرجاء إدخال الرمز الكامل' : 'Please enter the full code'
+            );
+            return;
+        }
+
+        if (!email) {
+            Alert.alert(
+                t('common.error'),
+                isRTL ? 'البريد الإلكتروني مفقود' : 'Email is missing'
+            );
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await authAPI.verifyCode(email, fullCode);
+            Alert.alert(
+                t('common.success'),
+                isRTL ? 'تم التحقق بنجاح' : 'Verification successful',
+                [{ text: 'OK', onPress: () => router.replace("/index") }]
+            );
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.detail || 
+                (isRTL ? 'رمز التحقق غير صالح' : 'Invalid verification code');
+            Alert.alert(t('common.error'), errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendCode = async () => {
+        if (!email) return;
+        
+        setResending(true);
+        try {
+            await authAPI.resendVerificationCode(email);
+            Alert.alert(
+                t('common.success'),
+                isRTL ? 'تم إرسال رمز جديد' : 'New code sent successfully'
+            );
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.detail || 
+                (isRTL ? 'فشل في إرسال الرمز' : 'Failed to send code');
+            Alert.alert(t('common.error'), errorMessage);
+        } finally {
+            setResending(false);
+        }
     };
 
     return (
@@ -86,16 +142,21 @@ export default function VerifyCodeScreen() {
 
             {/* Button */}
             <TouchableOpacity
-                style={styles.submitBtn}
-                onPress={() => router.push("/reset-password")}   // ⇠ HIER verbinden
+                style={[styles.submitBtn, loading && { opacity: 0.7 }]}
+                onPress={() => handleSubmit()}
+                disabled={loading}
             >
-                <Text style={styles.submitText}>{t('auth.verifyCode.continueButton')}</Text>
+                {loading ? (
+                    <ActivityIndicator size="small" color={BLUE} />
+                ) : (
+                    <Text style={styles.submitText}>{t('auth.verifyCode.continueButton')}</Text>
+                )}
             </TouchableOpacity>
 
             {/* Nicht erhalten / Nummer ändern */}
             <View style={styles.helperContainer}>
                 {/* RESEND CODE */}
-                <TouchableOpacity style={styles.helperRow}>
+                <TouchableOpacity style={styles.helperRow} onPress={handleResendCode} disabled={resending}>
                     <Ionicons
                         name="mail-outline"
                         size={18}
@@ -103,7 +164,7 @@ export default function VerifyCodeScreen() {
                         style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }}
                     />
                     <Text style={styles.helperText}>
-                        {t('auth.verifyCode.notReceived')} <Text style={styles.helperLink}>{t('auth.verifyCode.resend')}</Text>
+                        {t('auth.verifyCode.notReceived')} <Text style={styles.helperLink}>{resending ? '...' : t('auth.verifyCode.resend')}</Text>
                     </Text>
                 </TouchableOpacity>
 
