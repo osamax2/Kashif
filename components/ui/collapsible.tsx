@@ -1,5 +1,9 @@
 import { PropsWithChildren, useState } from 'react';
-import { I18nManager, StyleSheet, TouchableOpacity } from 'react-native';
+import * as RN from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
+
+// Safe I18nManager access
+const I18nManager = RN.I18nManager || { isRTL: false };
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';

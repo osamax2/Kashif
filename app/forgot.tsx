@@ -1,6 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
+import * as RN from "react-native";
 import {
     ActivityIndicator,
     Alert,
@@ -14,6 +15,9 @@ import {
 } from "react-native";
 import { useLanguage } from "../contexts/LanguageContext";
 import { authAPI } from "../services/api";
+
+// Safe I18nManager access
+const I18nManager = RN.I18nManager || { isRTL: false };
 
 const BLUE = "#0D2B66";
 
