@@ -1,13 +1,16 @@
 // components/LanguageDropdown.tsx
 import React, { useState, useRef } from "react";
+import * as RN from "react-native";
 import {
     View,
     Text,
     TouchableOpacity,
     Animated,
     StyleSheet,
-    I18nManager,
 } from "react-native";
+
+// Safe I18nManager access
+const I18nManager = RN.I18nManager || { isRTL: false };
 
 const YELLOW = "#F4B400";
 const WHITE = "#FFFFFF";
