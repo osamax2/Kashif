@@ -12,7 +12,7 @@ export default function TestConnection() {
 
     try {
       // Test 1: Fetch API
-      const response = await fetch('http://87.106.51.243:8000/health', {
+      const response = await fetch('https://api.kashifroad.com/health', {
         method: 'GET',
       });
       const text = await response.text();
@@ -33,7 +33,7 @@ export default function TestConnection() {
       formData.append('username', 'admin@kashif.com');
       formData.append('password', 'admin123');
 
-      const response = await fetch('http://87.106.51.243:8000/api/auth/token', {
+      const response = await fetch('https://api.kashifroad.com/api/auth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -58,8 +58,8 @@ export default function TestConnection() {
         <div className="bg-white p-6 rounded-lg shadow mb-4">
           <h2 className="text-xl font-semibold mb-4">API Configuration</h2>
           <div className="font-mono text-sm">
-            <p><strong>API Base URL:</strong> http://87.106.51.243:8000</p>
-            <p><strong>Admin Panel:</strong> http://87.106.51.243:3001</p>
+            <p><strong>API Base URL:</strong> https://api.kashifroad.com</p>
+            <p><strong>Admin Panel:</strong> https://admin.kashifroad.com</p>
           </div>
         </div>
 
