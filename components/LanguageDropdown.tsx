@@ -1,12 +1,12 @@
 // components/LanguageDropdown.tsx
-import React, { useState, useRef } from "react";
+import React, { useRef, useState } from "react";
 import * as RN from "react-native";
 import {
-    View,
-    Text,
-    TouchableOpacity,
     Animated,
     StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 // Safe I18nManager access
