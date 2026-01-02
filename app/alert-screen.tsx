@@ -344,8 +344,9 @@ export default function AlertScreen() {
             onPress={handleDismiss}
             activeOpacity={0.7}
           >
+            <Ionicons name="close-circle" size={20} color={WHITE} style={{ marginRight: 8 }} />
             <Text style={styles.dismissButtonText}>
-              {language === 'ar' ? 'تجاهل' : 'Dismiss'}
+              {language === 'ar' ? 'تجاهل' : 'Ignore'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -497,10 +498,13 @@ const styles = StyleSheet.create({
   },
 
   dismissButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     paddingVertical: 16,
     paddingHorizontal: 24,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
