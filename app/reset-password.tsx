@@ -1,9 +1,10 @@
 // app/reset-password.tsx
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    I18nManager,
+    ActivityIndicator,
+    Alert,
     Platform,
     StyleSheet,
     Text,
@@ -12,22 +13,61 @@ import {
     View,
 } from "react-native";
 import { useLanguage } from "../contexts/LanguageContext";
+import { authAPI } from "../services/api";
 
 const BLUE = "#0D2B66";
 
 export default function ResetPasswordScreen() {
     const router = useRouter();
     const { t, isRTL } = useLanguage();
+    const { token } = useLocalSearchParams<{ token: string }>();
 
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [showPwd, setShowPwd] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const handleReset = () => {
-        // TODO: hier später Firebase / Backend-Aufruf zum Passwort-Setzen machen
-        // Nach Erfolg zurück zum Login:
-        router.replace("/index");
+    const handleReset = async () => {
+        if (!password || password.length < 6) {
+            Alert.alert(
+                t('common.error'),
+                isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters'
+            );
+            return;
+        }
+
+        if (password !== confirm) {
+            Alert.alert(
+                t('common.error'),
+                isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match'
+            );
+            return;
+        }
+
+        if (!token) {
+            Alert.alert(
+                t('common.error'),
+                isRTL ? 'رمز إعادة التعيين مفقود' : 'Reset token is missing'
+            );
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await authAPI.resetPassword(token, password);
+            Alert.alert(
+                t('common.success'),
+                isRTL ? 'تم تغيير كلمة المرور بنجاح' : 'Password changed successfully',
+                [{ text: 'OK', onPress: () => router.replace("/index") }]
+            );
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.detail || 
+                (isRTL ? 'فشل في تغيير كلمة المرور' : 'Failed to reset password');
+            Alert.alert(t('common.error'), errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
