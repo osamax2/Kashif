@@ -13,6 +13,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 VERIFICATION_TOKEN_EXPIRE_HOURS = 24
+PASSWORD_RESET_TOKEN_EXPIRE_HOURS = 1
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -75,6 +76,23 @@ def verify_verification_token(token: str):
     """Verify an email verification token"""
     payload = verify_token(token)
     if payload and payload.get("type") == "verification":
+        return payload
+    return None
+
+
+def create_password_reset_token(data: dict) -> str:
+    """Create a token for password reset"""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(hours=PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
+    to_encode.update({"exp": expire, "type": "password_reset"})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def verify_password_reset_token(token: str):
+    """Verify a password reset token"""
+    payload = verify_token(token)
+    if payload and payload.get("type") == "password_reset":
         return payload
     return None
 
