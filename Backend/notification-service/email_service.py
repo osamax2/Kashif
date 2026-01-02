@@ -20,8 +20,8 @@ SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@kashifroad.com")
 SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Kashif Road")
 SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
 
-# Frontend URL for verification links
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://kashifroad.com")
+# Frontend URL for verification links - use API domain for password reset page
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://api.kashifroad.com/api/auth")
 ADMIN_URL = os.getenv("ADMIN_URL", "https://admin.kashifroad.com")
 
 

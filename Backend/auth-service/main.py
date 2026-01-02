@@ -11,6 +11,7 @@ import schemas
 from database import engine, get_db
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from rabbitmq_consumer import start_consumer
@@ -22,7 +23,9 @@ models.Base.metadata.create_all(bind=engine)
 
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = "/app/uploads"
+TEMPLATES_DIR = "/app/templates"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(TEMPLATES_DIR, exist_ok=True)
 
 app = FastAPI(title="Auth Service")
 
@@ -51,6 +54,25 @@ consumer_thread.start()
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "auth"}
+
+
+@app.get("/reset-password", response_class=HTMLResponse)
+def reset_password_page():
+    """Serve the password reset HTML page"""
+    template_path = os.path.join(TEMPLATES_DIR, "reset-password.html")
+    
+    # Fallback to local templates directory
+    if not os.path.exists(template_path):
+        template_path = os.path.join(os.path.dirname(__file__), "templates", "reset-password.html")
+    
+    try:
+        with open(template_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<html><body><h1>Page not found</h1></body></html>",
+            status_code=404
+        )
 
 
 @app.get("/levels", response_model=list[schemas.Level])
