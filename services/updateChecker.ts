@@ -2,12 +2,12 @@
 // Checks GitHub releases for app updates
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert, Linking, Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { Alert, Linking, Platform } from 'react-native';
 
 // GitHub repository info
-const GITHUB_OWNER = 'AlabajiOsama'; // Replace with your GitHub username
-const GITHUB_REPO = 'kashif-app'; // Replace with your repository name
+const GITHUB_OWNER = 'osamax2'; // Replace with your GitHub username
+const GITHUB_REPO = 'Kashif'; // Replace with your repository name
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
 
 // Storage keys
