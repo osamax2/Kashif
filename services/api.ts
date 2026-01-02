@@ -145,6 +145,42 @@ export const authAPI = {
     await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
   },
 
+  // Forgot password - request reset code
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+      `${API_BASE_URL}/api/auth/forgot-password`,
+      { email }
+    );
+    return response.data;
+  },
+
+  // Reset password with token
+  resetPassword: async (token: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+      `${API_BASE_URL}/api/auth/reset-password`,
+      { token, new_password: newPassword }
+    );
+    return response.data;
+  },
+
+  // Verify email code (for registration verification)
+  verifyCode: async (email: string, code: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+      `${API_BASE_URL}/api/auth/verify-code`,
+      { email, code }
+    );
+    return response.data;
+  },
+
+  // Resend verification code
+  resendVerificationCode: async (email: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+      `${API_BASE_URL}/api/auth/resend-verification`,
+      { email }
+    );
+    return response.data;
+  },
+
   // Update user language preference
   updateLanguagePreference: async (language: string): Promise<void> => {
     await api.patch('/api/auth/me/language', { language });
