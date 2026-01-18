@@ -1,0 +1,8 @@
+FEATURE GRAPHIC ANFORDERUNGEN:
+- Größe: 1024x500px
+- Format: PNG oder JPG
+- Inhalt: App-Logo + "كاشف" Text + "Road Safety" Untertitel
+- Hintergrund: Gradient (Blau #0D2B66 zu Hellblau)
+- Design-Tool: Canva, Figma, oder Photoshop
+
+Erstelle die Grafik und speichere sie als: feature-graphic.png

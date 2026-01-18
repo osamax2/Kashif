@@ -18,6 +18,11 @@
     },
     "production": {
       "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "production-apk": {
+      "android": {
         "buildType": "apk"
       }
     }
