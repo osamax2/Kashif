@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kashif - Feature Graphic Generator</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #0D2B66;
+        }
+        #canvas-container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            max-width: 100%;
+            height: auto;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #0D2B66;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #1a4088;
+        }
+        .instructions {
+            background: #fff9e6;
+            border: 2px solid #ffd700;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #0D2B66;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 كاشف - Feature Graphic Generator</h1>
+        
+        <div class="instructions">
+            <h3>📋 التعليمات:</h3>
+            <ol>
+                <li>قم بتخصيص النصوص والألوان حسب رغبتك</li>
+                <li>اضغط على "تحديث" لمعاينة التغييرات</li>
+                <li>اضغط على "تنزيل Feature Graphic" لحفظ الصورة</li>
+                <li>الصورة ستكون بحجم 1024x500px (مطلوب للPlay Store)</li>
+            </ol>
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="featureCanvas" width="1024" height="500"></canvas>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>العنوان الرئيسي:</label>
+                <input type="text" id="mainTitle" value="كاشف" onchange="updateCanvas()">
+            </div>
+
+            <div class="control-group">
+                <label>العنوان الفرعي:</label>
+                <input type="text" id="subtitle" value="Road Safety Reporter" onchange="updateCanvas()">
+            </div>
+
+            <div class="control-group">
+                <label>الوصف:</label>
+                <input type="text" id="description" value="تطبيق الإبلاغ عن حفر الطرق وحماية سيارتك" onchange="updateCanvas()">
+            </div>
+
+            <div class="control-group">
+                <label>لون الخلفية 1:</label>
+                <input type="color" id="color1" value="#0D2B66" onchange="updateCanvas()">
+            </div>
+
+            <div class="control-group">
+                <label>لون الخلفية 2:</label>
+                <input type="color" id="color2" value="#1a4088" onchange="updateCanvas()">
+            </div>
+
+            <button onclick="updateCanvas()">🔄 تحديث المعاينة</button>
+            <button onclick="downloadImage()">💾 تنزيل Feature Graphic (1024x500)</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('featureCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function updateCanvas() {
+            const mainTitle = document.getElementById('mainTitle').value;
+            const subtitle = document.getElementById('subtitle').value;
+            const description = document.getElementById('description').value;
+            const color1 = document.getElementById('color1').value;
+            const color2 = document.getElementById('color2').value;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Add subtle pattern
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 10; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 
+                       Math.random() * 100 + 50, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Draw icon placeholder (circle)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.beginPath();
+            ctx.arc(200, 250, 120, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Icon text
+            ctx.fillStyle = color1;
+            ctx.font = 'bold 80px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚗', 200, 250);
+
+            // Main title (Arabic)
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 140px Arial';
+            ctx.textAlign = 'right';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillText(mainTitle, 900, 200);
+
+            // Subtitle (English)
+            ctx.font = 'bold 50px Arial';
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(subtitle, 900, 280);
+
+            // Description
+            ctx.font = '32px Arial';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillText(description, 900, 350);
+
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Add decorative elements
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(380, 250);
+            ctx.lineTo(450, 250);
+            ctx.stroke();
+
+            // Play Store badge placeholder
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(720, 410, 200, 60);
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GET IT ON', 820, 435);
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText('Google Play', 820, 460);
+        }
+
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = 'kashif-feature-graphic-1024x500.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            alert('✅ Feature Graphic wurde heruntergeladen!\n\nSpeichere es als:\nplaystore-assets/graphics/feature-graphic.png');
+        }
+
+        // Initial draw
+        updateCanvas();
+    </script>
+</body>
+</html>
