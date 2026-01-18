@@ -65,6 +65,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (isAuthenticated && user) {
       refreshNotifications();
       updateUnreadCount();
+      // Register for push notifications
+      registerForPushNotifications();
     } else {
       setNotifications([]);
       setUnreadCount(0);
