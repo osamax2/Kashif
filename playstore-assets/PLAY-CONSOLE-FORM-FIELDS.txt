@@ -1,0 +1,1198 @@
+# Google Play Console - App Access Form Fields
+
+## Copy these values into the Play Console form:
+
+---
+
+### Instruction name (60 characters max):
+```
+Instructions for accessing Kashif Road Safety App
+```
+
+---
+
+### Username, email address, or phone number (100 characters max):
+```
+reviewer@kashifroad.com
+```
+
+---
+
+### Password (100 characters max):
+```
+ReviewTest2026!
+```
+
+---
+
+### Any other information required to access your app (500 characters max):
+```
+No 2-step verification, QR codes, or biometric login required.
+
+ACCESS STEPS:
+1. Launch app, tap login ("تسجيل الدخول")
+2. Enter credentials above
+3. Grant permissions: Location (always/while using), Camera, Notifications
+4. All features now accessible
+
+Emulator: Set GPS to Baghdad, Iraq (33.3152°N, 44.3661°E)
+
+Backup: test@kashifroad.com / TestReview2026!
+```
+
+---
+
+### Checkbox Option:
+☐ No other information is required to access my app
+
+**DO NOT CHECK THIS BOX** - We need to provide the information above.
+
+---
+
+## Quick Copy (All Fields Together):
+
+**Instruction name:**
+Instructions for accessing Kashif Road Safety App
+
+**Username/Email:**
+reviewer@kashifroad.com
+
+**Password:**
+ReviewTest2026!
+
+**Other Information:**
+No 2-step verification, QR codes, or biometric login required.
+
+ACCESS STEPS:
+1. Launch app, tap login ("تسجيل الدخول")
+2. Enter credentials above
+3. Grant permissions: Location (always/while using), Camera, Notifications
+4. All features now accessible
+
+Emulator: Set GPS to Baghdad, Iraq (33.3152°N, 44.3661°E)
+
+Backup: test@kashifroad.com / TestReview2026!
+
+---
+
+**Character Counts:**
+- Instruction name: 51/60 ✓
+- Username: 24/100 ✓
+- Password: 16/100 ✓
+- Other information: 297/500 ✓
+
+All within limits! Ready to paste into Play Console.
+
+---
+
+# Content Ratings - IARC Questionnaire
+
+## Email for Content Ratings:
+```
+contact@kashifroad.com
+```
+
+## Category:
+**All Other App Types** ✓
+(Maps & Navigation / Utility App)
+
+## Terms:
+☑ I agree to the Terms of Use as outlined by the International Age Rating Coalition (IARC)
+
+---
+
+## IARC Questions - Answers for Kashif Road Safety App:
+
+### Downloaded App
+**Does the app contain any ratings-relevant content (e.g., sex, violence, language) downloaded as part of the app package?**
+→ **NO** ✓
+
+### User Content Sharing
+**Does the app natively allow users to interact or exchange content with other users?**
+→ **YES** ✓
+(Users can upload pothole reports with photos and text)
+
+### Online Content
+**Does the app feature or promote content that isn't part of the initial app download?**
+→ **YES** ✓
+(App displays reports from other users, map data, coupons)
+
+### Promotion or Sale of Age-Restricted Products
+**Does the app focus on promoting or selling age-restricted items (cigarettes, alcohol, firearms, gambling)?**
+→ **NO** ✓
+
+### Miscellaneous
+
+**Share precise physical location with other users?**
+→ **YES** ✓
+(App shares GPS coordinates of reported potholes)
+
+**Purchase digital goods?**
+→ **NO** ✓
+(No in-app purchases implemented)
+
+**Cash rewards, gift cards, play-to-earn, crypto, NFTs?**
+→ **NO** ✓
+(Points system only, no real money rewards)
+
+**Web browser or search engine?**
+→ **NO** ✓
+
+**Primarily news or educational product?**
+→ **NO** ✓
+(Traffic safety/navigation utility)
+
+---
+
+### User-Generated Content (Follow-up Questions)
+
+**Is shared, user-generated content the primary source of content in the app?**
+→ **YES** ✓
+(Main content is pothole reports uploaded by users)
+
+**Does the app permit the public sharing of nudity?**
+→ **NO** ✓
+(Only road safety reports allowed)
+
+**Does the app permit the public sharing of real-world, graphic violence outside of newsworthy context?**
+→ **NO** ✓
+(Only pothole/road damage photos)
+
+**Does the app include the ability to block users or user-generated content?**
+→ **NO**
+(Currently no blocking feature implemented)
+
+**Does the app include the ability to report users or user-generated content?**
+→ **NO**
+(Users can report potholes, but cannot report other users or flag inappropriate content)
+
+**Does the app include chat moderation?**
+→ **NO** ✓
+(No chat functionality)
+
+**Can interactions in the app be limited to invited friends only?**
+→ **NO** ✓
+(Public platform for all users)
+
+---
+
+**Expected Rating:** PEGI 3+ / ESRB Everyone / USK 0
+
+---
+
+# Data Safety
+
+## Does your app collect or share any of the required user data types?
+→ **YES** ✓
+
+## Is all of the user data collected by your app encrypted in transit?
+→ **YES** ✓
+(All API communication uses HTTPS/TLS encryption)
+
+## Which methods of account creation does your app support?
+→ **Username and password** ✓
+(Email address + password registration)
+
+## Delete account URL:
+```
+https://admin.kashifroad.com/delete-account
+```
+
+**This page includes:**
+- Step-by-step instructions for account deletion
+- Request process via email (contact@kashifroad.com)
+- Types of data deleted: Account info, rewards, tokens, preferences
+- Types of data retained: Public pothole reports (anonymized), photos, legal records
+- Processing time: 30 days
+- Additional retention period: Up to 12 months for anonymized analytics
+
+---
+
+### Data Collected:
+
+**Account Information:**
+- Email address (required for login)
+- Name (optional user profile)
+- Password (hashed, not stored in plain text)
+
+**Location:**
+- Precise location (GPS coordinates)
+- Purpose: Detect potholes, show map, safety alerts
+- Shared publicly: YES (pothole coordinates visible to all users)
+
+**Photos and Videos:**
+- Photos (of potholes/road damage)
+- Shared publicly: YES
+
+**Device or Other IDs:**
+- FCM device token (for push notifications)
+- Not shared with third parties
+
+**Personal Communications:**
+- In-app messages/notifications
+
+### Data Sharing:
+- Location data is shared publicly (pothole coordinates on map)
+- Photos are shared publicly (pothole reports)
+- User account info NOT shared with third parties
+
+### Data Security:
+- All data encrypted in transit (HTTPS)
+- Passwords hashed with bcrypt
+- User can request data deletion via contact@kashifroad.com
+
+### Data Usage:
+- App functionality (pothole detection, reporting)
+- Fraud prevention & security
+- Analytics (optional)
+
+---
+
+## Can users request data deletion without deleting their account?
+→ **YES** ✓
+
+**How users can request partial data deletion:**
+- Email: contact@kashifroad.com
+- Users can request deletion of:
+  - Their uploaded reports/photos (while keeping account active)
+  - Location history
+  - Device tokens
+  - Activity logs
+  - Profile information (except email required for login)
+- Processing time: 30 days
+- Data deletion requests handled on case-by-case basis
+- Some public reports may be retained anonymously for public safety
+
+**Automatic Deletion:**
+- Device tokens deleted automatically when user logs out or uninstalls app
+- Session data deleted after 30 days of inactivity
+- Temporary files/caches cleared automatically
+
+---
+
+## Additional Badges:
+
+**Independent security review:**
+→ Not currently available
+
+**UPI Payments verified:**
+→ Not applicable (no payment system)
+
+---
+
+## Data Types Collected/Shared (Step 3 of 5):
+
+### Location (2/2 selected):
+✅ **Precise location**
+- Purpose: Pothole detection, map display, safety alerts
+- Collection: Required for app functionality
+- Sharing: YES - Shared publicly (pothole coordinates visible to all users)
+
+✅ **Approximate location**
+- Purpose: General area for map view, regional alerts
+- Collection: Optional
+- Sharing: YES - Publicly visible on map
+
+---
+
+### Personal info (3/9 selected):
+✅ **Name**
+- Purpose: User profile display
+- Collection: Optional
+- Sharing: NO
+
+✅ **Email address**
+- Purpose: Account login, communication
+- Collection: Required
+- Sharing: NO
+
+✅ **User IDs**
+- Purpose: Account identification, backend operations
+- Collection: Required (auto-generated)
+- Sharing: NO
+
+---
+
+### Financial info (0/4):
+❌ None collected
+
+---
+
+### Health and fitness (0/2):
+❌ None collected
+
+---
+
+### Messages (0/3):
+❌ None collected
+(In-app notifications are not user-to-user messages)
+
+---
+
+### Photos and videos (1/2 selected):
+✅ **Photos**
+- Purpose: Document potholes/road damage
+- Collection: Optional (user uploads)
+- Sharing: YES - Publicly visible in reports
+
+---
+
+### Audio files (0/3):
+❌ None collected
+(Audio alerts played locally, not recorded/uploaded)
+
+---
+
+### Files and docs (0/1):
+❌ None collected
+
+---
+
+### Calendar (0/1):
+❌ None collected
+
+---
+
+### Contacts (0/1):
+❌ None collected
+
+---
+
+### App activity (2/5 selected):
+✅ **App interactions**
+- Purpose: Analytics, improve UX
+- Collection: Automatic
+- Sharing: NO
+
+✅ **Other user-generated content**
+- Purpose: Pothole reports (text descriptions, severity ratings)
+- Collection: User-submitted
+- Sharing: YES - Publicly visible
+
+---
+
+### Web browsing (0/1):
+❌ None collected
+
+---
+
+### App info and performance (3/3 selected):
+✅ **Crash logs**
+- Purpose: Fix bugs, improve stability
+- Collection: Automatic
+- Sharing: NO
+
+✅ **Diagnostics**
+- Purpose: Troubleshoot issues
+- Collection: Automatic
+- Sharing: NO
+
+✅ **Other app performance data**
+- Purpose: Monitor app health, optimize performance
+- Collection: Automatic
+- Sharing: NO
+
+---
+
+### Device or other IDs (1/1 selected):
+✅ **Device or other IDs**
+- Type: FCM push notification token
+- Purpose: Send push notifications
+- Collection: Automatic on login
+- Sharing: NO
+
+---
+
+**Total Data Types Selected: 13**
+- Location: 2
+- Personal info: 3
+- Photos: 1
+- App activity: 2
+- App info and performance: 3
+- Device IDs: 1
+
+---
+
+# Detailed Data Collection/Sharing Breakdown (Step 4 of 5)
+
+## 1. Precise Location
+
+**Collected or Shared?**
+☑ Collected
+☑ Shared
+
+**Processed ephemerally?**
+→ NO (stored in database for pothole reports)
+
+**Required or Optional?**
+→ REQUIRED (users cannot turn off)
+
+**Why is this data COLLECTED?**
+☑ App functionality (detect potholes, show map location)
+☑ Fraud prevention, security, and compliance (verify legitimate reports)
+
+**Why is this data SHARED?**
+☑ App functionality (display pothole locations to all users on map)
+
+---
+
+## 2. Approximate Location
+
+**Collected or Shared?**
+☑ Collected
+☑ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ Optional (users can choose)
+
+**Why is this data COLLECTED?**
+☑ App functionality (general area for map view)
+☑ Personalization (show nearby potholes, regional alerts)
+
+**Why is this data SHARED?**
+☑ App functionality (display general pothole areas)
+
+---
+
+## 3. Name
+
+**Collected or Shared?**
+☑ Collected
+☐ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ Optional (users can choose)
+
+**Why is this data COLLECTED?**
+☑ App functionality (user profile display)
+☑ Account management (personalize user experience)
+
+---
+
+## 4. Email Address
+
+**Collected or Shared?**
+☑ Collected
+☐ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ REQUIRED (cannot turn off)
+
+**Why is this data COLLECTED?**
+☑ App functionality (login authentication)
+☑ Account management (account creation, password reset)
+☑ Developer communications (important updates, notifications)
+
+---
+
+## 5. User IDs
+
+**Collected or Shared?**
+☑ Collected
+☐ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ REQUIRED (auto-generated, cannot turn off)
+
+**Why is this data COLLECTED?**
+☑ App functionality (identify users, link data to accounts)
+☑ Account management (manage user accounts)
+☑ Fraud prevention, security, and compliance (track user activity, prevent abuse)
+
+---
+
+## 6. Photos
+
+**Collected or Shared?**
+☑ Collected
+☑ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ Optional (users can choose whether to upload)
+
+**Why is this data COLLECTED?**
+☑ App functionality (document pothole evidence)
+
+**Why is this data SHARED?**
+☑ App functionality (show pothole photos to all users for verification)
+
+---
+
+## 7. App Interactions
+
+**Collected or Shared?**
+☑ Collected
+☐ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ Optional (users can choose)
+
+**Why is this data COLLECTED?**
+☑ Analytics (understand feature usage, improve UX)
+
+---
+
+## 8. Other User-Generated Content (Report Descriptions)
+
+**Collected or Shared?**
+☑ Collected
+☑ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ Optional (users choose to submit reports)
+
+**Why is this data COLLECTED?**
+☑ App functionality (provide pothole details, severity ratings)
+
+**Why is this data SHARED?**
+☑ App functionality (inform other drivers about road conditions)
+
+---
+
+## 9. Crash Logs
+
+**Collected or Shared?**
+☑ Collected
+☐ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ REQUIRED (automatic collection, cannot turn off)
+
+**Why is this data COLLECTED?**
+☑ Analytics (fix bugs, improve app stability)
+
+---
+
+## 10. Diagnostics
+
+**Collected or Shared?**
+☑ Collected
+☐ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ REQUIRED (automatic collection, cannot turn off)
+
+**Why is this data COLLECTED?**
+☑ Analytics (troubleshoot issues, optimize performance)
+
+---
+
+## 11. Other App Performance Data
+
+**Collected or Shared?**
+☑ Collected
+☐ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ REQUIRED (automatic collection, cannot turn off)
+
+**Why is this data COLLECTED?**
+☑ Analytics (monitor app health, identify performance issues)
+
+---
+
+## 12. Device or Other IDs (FCM Token)
+
+**Collected or Shared?**
+☑ Collected
+☐ Shared
+
+**Processed ephemerally?**
+→ NO
+
+**Required or Optional?**
+→ REQUIRED (cannot turn off)
+
+**Why is this data COLLECTED?**
+☑ App functionality (enable push notifications)
+☑ Developer communications (send safety alerts, important notifications)
+
+---
+
+# Summary
+
+**Data Shared Publicly (4 types):**
+1. Precise location
+2. Approximate location
+3. Photos
+4. Report descriptions
+
+**Data Collected Only (9 types):**
+1. Name
+2. Email
+3. User IDs
+4. App interactions
+5. Crash logs
+6. Diagnostics
+7. Performance data
+8. Device IDs
+
+**Required Data (7):** Precise location, Email, User IDs, Crash logs, Diagnostics, Performance data, Device IDs
+
+**Optional Data (6):** Approximate location, Name, Photos, App interactions, Report descriptions
+
+---
+
+# Financial Features (Step 1 of 2)
+
+## Does your app provide any financial features?
+
+☐ Banking and loans
+☐ Payments and transfers
+☐ Purchase agreements (Rewards, points, BNPL)
+☐ Trading and funds
+☐ Support services
+☐ Other
+
+☑ **My app doesn't provide any financial features** ✓
+
+**Reasoning:**
+- App has a **gamification points system** (like game achievements), NOT a financial rewards program
+- No real money involved - points are virtual and cannot be converted to cash
+- No in-app purchases or payment processing
+- Coupons are promotional discount codes only (no purchases made through app)
+- No financial transactions of any kind
+
+**Important distinction:**
+- Kashif's points = Game score/achievements (like collecting stars in a game)
+- Financial rewards = Cash, gift cards, cryptocurrency, transferable value
+- Our coupons = Discount codes shown to users (like a coupon app)
+- Financial purchase agreements = Buy now pay later, loyalty programs with monetary value
+
+---
+
+# Policy Declarations
+
+## Advertising ID Declaration
+
+**Required for apps targeting Android 13+**
+
+### Does your app use Advertising ID?
+
+**Answer: NO** ✓
+
+**Explanation:**
+- App does NOT display any advertisements
+- App does NOT use Google Ads, AdMob, or any ad networks
+- App does NOT use Advertising ID for tracking or analytics
+- App does NOT share Advertising ID with third parties
+- App uses FCM device tokens ONLY for push notifications (not advertising)
+
+**Select in Play Console:**
+☐ Yes, my app uses Advertising ID
+☑ **No, my app does not use Advertising ID**
+
+**Important:**
+- Advertising ID (AAID) is specifically for advertising/tracking purposes
+- FCM tokens and User IDs are NOT Advertising IDs
+- If you don't collect AAID explicitly for ads/analytics, answer NO
+
+---
+
+# Health Features Declaration
+
+## Does your app have any health features?
+
+☐ Health and fitness
+☐ Medical
+☐ Human subjects research
+☐ Other
+
+☑ **My app does not have any health features** ✓
+
+**Reasoning:**
+- App is a **road safety/navigation utility**, NOT a health app
+- "Safety alerts" refer to **road conditions** (potholes, road damage), NOT medical/health emergencies
+- No fitness tracking, no medical conditions monitoring, no health data collection
+- No emergency medical services or first aid information
+- Points system is for gamification, not health/fitness tracking
+
+**Important distinction:**
+- Kashif's "safety" = Traffic/road safety (avoiding potholes, road damage)
+- Health "safety" = Medical emergencies, first aid, health conditions
+- Our alerts = Dangerous road conditions notifications
+- Health alerts = Medical symptoms, vital signs, health monitoring
+
+**App Category:** Maps & Navigation / Utility
+**NOT:** Health & Fitness / Medical
+
+---
+
+# Store Listing Settings
+
+## Category *
+
+**Selected Category: Maps & Navigation** ✓
+
+**Why this category?**
+- Primary function: Real-time GPS tracking to detect and map road hazards
+- Map-based interface showing pothole locations
+- Navigation assistance (warns drivers about upcoming road damage)
+- Location-based safety alerts
+- Similar to: Waze (traffic/road condition reporting), Google Maps (navigation + user reports)
+
+**Alternative categories considered:**
+- ❌ Travel & Local (too broad, not focused enough on navigation)
+- ❌ Productivity (not the primary purpose)
+- ❌ Social (has user reports, but NOT primarily social networking)
+- ❌ Transportation (usually for booking/ride-sharing apps)
+- ✅ **Maps & Navigation** (BEST FIT - core function is mapping and navigation safety)
+
+**Category hierarchy in Play Console:**
+Main Category → **Maps & Navigation**
+
+---
+
+## Tags (Optional - Select up to 5)
+
+From the available tags list, select these for Kashif:
+
+1. **Maps & navigation** (Primary - matches main category)
+2. **Auto & vehicles** (App is for drivers, road conditions, vehicle safety)
+3. **Tools** (Utility app with practical road safety tools)
+4. **Travel & local** (Helps with local road conditions during travel)
+
+**Why these tags?**
+- Maps & navigation: Core functionality
+- Auto & vehicles: Target audience is drivers and vehicle owners
+- Tools: Practical utility for road safety
+- Travel & local: Provides local road condition information
+
+**Tags NOT selected:**
+- ❌ Social: Not primarily a social app
+- ❌ Sports: Not sports-related
+- ❌ Entertainment: Not for entertainment
+- ❌ Health & fitness: Not health-related
+- ❌ Photography: Photos are secondary feature, not primary purpose
+
+---
+
+## Store Listing Contact Details
+
+**Email address:** (Required)
+```
+contact@kashifroad.com
+```
+
+**Phone number:** (Optional)
+```
+(Leave blank - not required)
+```
+
+**Website:** (Optional but recommended)
+```
+https://kashifroad.com
+```
+
+**These contact details will be shown to users on Google Play store listing.**
+
+---
+
+# Store Listing in Arabic (ar)
+
+**IMPORTANT:** All fields below must be entered in Arabic (ar) language in Play Console.
+
+## App name * (30 characters max)
+```
+كاشف
+```
+**Character count:** 4/30 ✓
+
+---
+
+## Short description * (80 characters max)
+```
+تطبيق للإبلاغ عن حفر الطرق وتحذير السائقين - سلامتك أولويتنا
+```
+**Character count:** 58/80 ✓
+
+---
+
+## Full description * (4000 characters max)
+```
+🚗 كاشف - تطبيق السلامة على الطرق 🚗
+
+هل سئمت من مفاجآت الحفر على الطرق؟ كاشف هو التطبيق الذي يحمي سيارتك ويحافظ على سلامتك!
+
+✨ الميزات الرئيسية:
+
+📍 الإبلاغ السريع عن الحفر
+• التقط صورة للحفرة في الطريق
+• حدد الموقع تلقائياً
+• أضف وصفاً مختصراً
+• أرسل البلاغ في ثوانٍ
+
+🔔 تنبيهات ذكية
+• تحذيرات صوتية عند الاقتراب من حفر مُبلغ عنها
+• كشف تلقائي للحفر أثناء القيادة
+• تنبيهات فورية قبل الوصول للحفرة
+
+🎮 نظام النقاط والمكافآت
+• اكسب نقاطاً مع كل بلاغ
+• تنافس مع المستخدمين الآخرين
+• احصل على قسائم وخصومات حصرية من الشركات الراعية
+
+🎁 قسائم وعروض
+• خصومات على الصيانة وقطع الغيار
+• عروض من محطات الوقود والمطاعم
+• مكافآت حصرية للمستخدمين النشطين
+
+📱 سهل الاستخدام
+• واجهة بسيطة وبديهية
+• يعمل في الخلفية أثناء القيادة
+• لا يستهلك البطارية بشكل كبير
+
+🌍 مجتمع فعال
+• ساهم في تحسين حالة الطرق
+• ساعد السائقين الآخرين
+• كن جزءاً من مجتمع السلامة على الطرق
+
+لماذا كاشف؟
+• حماية سيارتك من الأضرار
+• توفير تكاليف الإصلاح
+• القيادة بأمان وراحة بال
+• المساهمة في تحسين البنية التحتية
+
+حمّل التطبيق الآن وابدأ القيادة بأمان!
+
+الأذونات المطلوبة:
+• الموقع: لتحديد موقع الحفر وإرسال التنبيهات
+• الكاميرا: لالتقاط صور الحفر
+• الإشعارات: لإرسال التنبيهات الفورية
+```
+**Character count:** ~950/4000 ✓
+
+---
+
+## Graphics Requirements
+
+### App Icon (Required)
+- **File:** assets/icon.png (already exists in project)
+- **Format:** PNG or JPEG
+- **Size:** 512 px × 512 px
+- **Max file size:** 1 MB
+- **Action:** Upload from /Volumes/WorkSSD/Kashif/assets/icon.png
+
+---
+
+### Feature Graphic (Required)
+- **File:** playstore-assets/graphics/feature-graphic.png
+- **Format:** PNG or JPEG
+- **Size:** 1024 px × 500 px
+- **Max file size:** 15 MB
+- **Action:** Generate using feature-graphic-generator.html (already created)
+- **Status:** ⚠️ Need to generate and download
+
+---
+
+### Video (Optional)
+```
+(Leave blank - no video available yet)
+```
+**Future consideration:** Create app demo video and upload to YouTube
+
+---
+
+### Phone Screenshots (Required: 2-8 screenshots)
+- **Format:** PNG or JPEG
+- **Max file size:** 8 MB each
+- **Aspect ratio:** 16:9 or 9:16
+- **Dimensions:** Each side between 320 px and 3,840 px
+- **Action:** Use take-screenshots.sh script (already created)
+- **Status:** ⚠️ Need to capture screenshots
+
+**Recommended screenshots:**
+1. Login screen (تسجيل الدخول)
+2. Map with pothole markers (الخريطة مع علامات الحفر)
+3. Report submission screen (إرسال البلاغ)
+4. Alert notification (التنبيه الصوتي)
+5. Coupons list (قائمة القسائم)
+6. User profile with points (الملف الشخصي والنقاط)
+
+---
+
+### Tablet Screenshots (Optional)
+```
+(Leave blank - focus on phone version first)
+```
+
+---
+
+### Chromebook Screenshots (Optional)
+```
+(Leave blank - not applicable)
+```
+
+---
+
+### Android XR Screenshots (Optional)
+```
+(Leave blank - not applicable)
+```
+
+---
+
+## Assets Checklist
+
+**Ready to Upload:**
+✅ App name (كاشف)
+✅ Short description (Arabic text)
+✅ Full description (Arabic text)
+✅ App icon (assets/icon.png)
+
+**Need to Generate:**
+⚠️ Feature graphic (use feature-graphic-generator.html)
+⚠️ Phone screenshots (2-8 required) - use take-screenshots.sh
+
+**Optional/Not Needed:**
+❌ Video (can add later)
+❌ Tablet screenshots
+❌ Chromebook screenshots
+❌ Android XR content
+
+---
+
+# Store Listing in German (de)
+
+**IMPORTANT:** All fields below must be entered in German (de) language in Play Console.
+
+## App name * (30 characters max)
+```
+Kashif - Straßensicherheit
+```
+**Character count:** 25/30 ✓
+
+---
+
+## Short description * (80 characters max)
+```
+Schlaglöcher melden & Fahrer warnen - Ihre Sicherheit ist unsere Priorität
+```
+**Character count:** 75/80 ✓
+
+---
+
+## Full description * (4000 characters max)
+```
+🚗 Kashif - Ihre Straßensicherheits-App 🚗
+
+Haben Sie genug von Schlagloch-Überraschungen auf der Straße? Kashif ist die App, die Ihr Auto schützt und Ihre Sicherheit gewährleistet!
+
+✨ Hauptfunktionen:
+
+📍 Schnelle Schlagloch-Meldung
+• Foto vom Schlagloch aufnehmen
+• Standort wird automatisch erkannt
+• Kurze Beschreibung hinzufügen
+• Meldung in Sekunden absenden
+
+🔔 Intelligente Warnungen
+• Akustische Warnungen bei Annäherung an gemeldete Schlaglöcher
+• Automatische Schlagloch-Erkennung während der Fahrt
+• Sofortige Benachrichtigungen vor dem Erreichen des Schlaglochs
+
+🎮 Punkte- und Belohnungssystem
+• Sammeln Sie Punkte bei jeder Meldung
+• Konkurrieren Sie mit anderen Nutzern
+• Erhalten Sie exklusive Gutscheine und Rabatte von Sponsoren
+
+🎁 Gutscheine und Angebote
+• Rabatte auf Wartung und Ersatzteile
+• Angebote von Tankstellen und Restaurants
+• Exklusive Belohnungen für aktive Nutzer
+
+📱 Einfach zu bedienen
+• Einfache und intuitive Benutzeroberfläche
+• Läuft im Hintergrund während der Fahrt
+• Minimaler Batterieverbrauch
+
+🌍 Aktive Community
+• Tragen Sie zur Verbesserung der Straßenverhältnisse bei
+• Helfen Sie anderen Fahrern
+• Werden Sie Teil der Straßensicherheits-Community
+
+Warum Kashif?
+• Schützen Sie Ihr Auto vor Schäden
+• Sparen Sie Reparaturkosten
+• Fahren Sie sicher und entspannt
+• Tragen Sie zur Verbesserung der Infrastruktur bei
+
+Laden Sie die App jetzt herunter und fahren Sie sicher!
+
+Erforderliche Berechtigungen:
+• Standort: Zur Ortung von Schlaglöchern und Versenden von Warnungen
+• Kamera: Zum Aufnehmen von Schlagloch-Fotos
+• Benachrichtigungen: Zum Senden von Sofortwarnungen
+```
+**Character count:** ~1050/4000 ✓
+
+---
+
+# Store Listing in English (en-US)
+
+**IMPORTANT:** All fields below must be entered in English (en-US) language in Play Console.
+
+## App name * (30 characters max)
+```
+Kashif - Road Safety
+```
+**Character count:** 21/30 ✓
+
+---
+
+## Short description * (80 characters max)
+```
+Report potholes & warn drivers - Your safety is our priority
+```
+**Character count:** 60/80 ✓
+
+---
+
+## Full description * (4000 characters max)
+```
+🚗 Kashif - Your Road Safety App 🚗
+
+Tired of pothole surprises on the road? Kashif is the app that protects your car and keeps you safe!
+
+✨ Key Features:
+
+📍 Quick Pothole Reporting
+• Take a photo of the pothole
+• Location automatically detected
+• Add a brief description
+• Submit report in seconds
+
+🔔 Smart Alerts
+• Audio warnings when approaching reported potholes
+• Automatic pothole detection while driving
+• Instant notifications before reaching the pothole
+
+🎮 Points and Rewards System
+• Earn points with every report
+• Compete with other users
+• Get exclusive coupons and discounts from sponsors
+
+🎁 Coupons and Offers
+• Discounts on maintenance and spare parts
+• Offers from gas stations and restaurants
+• Exclusive rewards for active users
+
+📱 Easy to Use
+• Simple and intuitive interface
+• Runs in the background while driving
+• Minimal battery consumption
+
+🌍 Active Community
+• Contribute to improving road conditions
+• Help other drivers
+• Be part of the road safety community
+
+Why Kashif?
+• Protect your car from damage
+• Save on repair costs
+• Drive safely and with peace of mind
+• Contribute to infrastructure improvement
+
+Download the app now and start driving safely!
+
+Required Permissions:
+• Location: To locate potholes and send alerts
+• Camera: To take photos of potholes
+• Notifications: To send instant alerts
+```
+**Character count:** ~1000/4000 ✓
+
+---
+
+# Release Details
+
+## Release name * (50 characters max)
+```
+Kashif v1.0.0 - Initial Release
+```
+**Character count:** 31/50 ✓
+
+---
+
+## Release Notes
+
+### Arabic (ar)
+```
+🎉 الإصدار الأول من كاشف!
+
+✨ الميزات الجديدة:
+• الإبلاغ السريع عن حفر الطرق بالصور والموقع
+• تنبيهات صوتية ذكية عند الاقتراب من الحفر
+• نظام النقاط والمكافآت
+• قسائم وخصومات حصرية من الشركات الراعية
+• واجهة بسيطة وسهلة الاستخدام
+• خريطة تفاعلية تظهر جميع الحفر المبلغ عنها
+
+🚗 ابدأ الآن في القيادة بأمان وساعد في تحسين الطرق!
+```
+
+---
+
+### German (de-DE)
+```
+🎉 Erste Version von Kashif!
+
+✨ Neue Funktionen:
+• Schnelle Schlagloch-Meldung mit Fotos und Standort
+• Intelligente akustische Warnungen bei Annäherung an Schlaglöcher
+• Punkte- und Belohnungssystem
+• Exklusive Gutscheine und Rabatte von Sponsoren
+• Einfache und benutzerfreundliche Oberfläche
+• Interaktive Karte mit allen gemeldeten Schlaglöchern
+
+🚗 Starten Sie jetzt sicher zu fahren und helfen Sie, die Straßen zu verbessern!
+```
+
+---
+
+### English (en-US)
+```
+🎉 First release of Kashif!
+
+✨ New Features:
+• Quick pothole reporting with photos and location
+• Smart audio warnings when approaching potholes
+• Points and rewards system
+• Exclusive coupons and discounts from sponsors
+• Simple and user-friendly interface
+• Interactive map showing all reported potholes
+
+🚗 Start driving safely now and help improve the roads!
+```
+
+---

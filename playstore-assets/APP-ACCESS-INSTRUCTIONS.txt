@@ -1,0 +1,161 @@
+# Google Play Console - App Access Instructions
+
+## ⚠️ IMPORTANT: Select "All or some functionality in my app is restricted"
+
+---
+
+## 📱 TEST ACCOUNT FOR REVIEWERS
+
+### Login Credentials
+```
+Email: reviewer@kashifroad.com
+Password: ReviewTest2026!
+```
+
+### Alternative Test Account (Backup)
+```
+Email: test@kashifroad.com
+Password: TestReview2026!
+```
+
+---
+
+## 🔓 How to Access All Features
+
+### Step 1: Install & Open App
+- Install the APK/AAB on device
+- Launch Kashif app
+
+### Step 2: Login
+- Tap "تسجيل الدخول" (Login button)
+- Enter: reviewer@kashifroad.com
+- Password: ReviewTest2026!
+- Tap Login
+
+### Step 3: Grant Permissions (Required)
+The app will request:
+- ✅ **Location** - Allow "Always" or "While using app"
+- ✅ **Camera** - Allow for taking pothole photos
+- ✅ **Notifications** - Allow for safety alerts
+
+---
+
+## ✨ Features Reviewers Can Test
+
+All features are accessible with the test account:
+
+### 1. View Map & Reports
+- Main screen shows map with pothole locations
+- Browse existing reports from other users
+- See real-time data
+
+### 2. Create Report
+- Tap "+" or Report button
+- Take photo or select from gallery
+- Add description
+- Submit (location auto-detected)
+
+### 3. Receive Alerts
+- Get notifications when near potholes
+- Voice warnings (Arabic)
+- Safety alerts system
+
+### 4. Coupons & Rewards
+- View available coupons
+- Redeem with earned points
+- QR code generation
+- Test account has points pre-loaded
+
+### 5. Notifications
+- View notification history
+- Real-time push notifications
+- Alert preferences
+
+### 6. Profile & Leaderboard
+- View user profile
+- Check earned points
+- See leaderboard rankings
+- Report history
+
+---
+
+## 🌍 Location Testing
+
+**For Emulator/Simulator:**
+- Set GPS coordinates to: **Baghdad, Iraq**
+  - Latitude: 33.3152° N
+  - Longitude: 44.3661° E
+
+**For Physical Device:**
+- Location services work worldwide
+- Best tested in any location with GPS
+
+---
+
+## 📝 Important Notes
+
+- ✅ **No 2-step verification** required
+- ✅ **No payment/subscription** needed
+- ✅ **No external device** required
+- ✅ **No memberships** required
+- ✅ **Free trial not needed** - full access with test account
+- ✅ **All features work** without restrictions
+- ✅ Language: Arabic (RTL) but intuitive UI
+
+---
+
+## 🆘 Troubleshooting
+
+### Can't Login?
+- Verify credentials exactly as shown above
+- Check internet connection
+- Use alternative account if needed
+
+### Permissions Not Working?
+- Go to: Settings → Apps → Kashif → Permissions
+- Manually enable Location, Camera, Notifications
+
+### Map Not Loading?
+- Grant location permission
+- Wait 10-15 seconds for initialization
+- Check internet connection
+
+---
+
+## 📞 Contact
+
+**Developer Support:** contact@kashifroad.com  
+**Privacy Policy:** https://admin.kashifroad.com/privacy  
+**Website:** https://kashifroad.com
+
+---
+
+## ✅ Copy-Paste for Play Console
+
+**In the Play Console "App access" section, paste this:**
+
+```
+TEST ACCOUNT CREDENTIALS:
+
+Email: reviewer@kashifroad.com
+Password: ReviewTest2026!
+
+INSTRUCTIONS:
+1. Install and launch the app
+2. Tap "تسجيل الدخول" (Login) on the welcome screen
+3. Enter the credentials above
+4. Allow Location, Camera, and Notifications permissions when prompted
+5. All features are now accessible
+
+The app requires login to create reports, view rewards, and receive alerts. No 2-step verification, payment, or external device is required. The test account has full access to all functionality.
+
+For detailed instructions, see: REVIEWER-INSTRUCTIONS.md (included in submission)
+
+Alternative account if needed:
+Email: test@kashifroad.com
+Password: TestReview2026!
+```
+
+---
+
+**Last Updated:** January 18, 2026

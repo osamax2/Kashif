@@ -8,6 +8,11 @@
     "scheme": "kashifapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "privacy": "public",
+    "extra": {
+      "privacyPolicyUrl": "https://admin.kashifroad.com/privacy",
+      "contactEmail": "contact@kashifroad.com"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kashif.app",

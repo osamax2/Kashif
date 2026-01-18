@@ -12,13 +12,16 @@ logger = logging.getLogger(__name__)
 # In production, load from environment variable or secret
 FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
+logger.info(f"Firebase credentials path: {FIREBASE_CREDENTIALS_PATH}")
+logger.info(f"File exists: {os.path.exists(FIREBASE_CREDENTIALS_PATH) if FIREBASE_CREDENTIALS_PATH else False}")
+
 if FIREBASE_CREDENTIALS_PATH and os.path.exists(FIREBASE_CREDENTIALS_PATH):
     try:
         cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
         firebase_admin.initialize_app(cred)
         logger.info("Firebase Admin SDK initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
+        logger.error(f"Failed to initialize Firebase Admin SDK: {e}", exc_info=True)
 else:
     logger.warning("Firebase credentials not found. Push notifications will not work.")
 
@@ -40,39 +43,40 @@ def send_push_notification(
             return
         
         tokens = [dt.token for dt in device_tokens]
+        logger.info(f"Sending push notification to user {user_id} with {len(tokens)} tokens")
         
-        # Create message
-        message = messaging.MulticastMessage(
-            notification=messaging.Notification(
-                title=title,
-                body=body
-            ),
-            data=data or {},
-            tokens=tokens
-        )
+        # Send to each token individually using HTTP v1 API
+        success_count = 0
+        failure_count = 0
         
-        # Send message
-        response = messaging.send_multicast(message)
+        for token in tokens:
+            try:
+                # Create message for single token
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title=title,
+                        body=body
+                    ),
+                    data=data or {},
+                    token=token
+                )
+                
+                # Send message using HTTP v1 API
+                message_id = messaging.send(message)
+                logger.info(f"Successfully sent notification to user {user_id}, message_id: {message_id}")
+                success_count += 1
+                
+            except Exception as token_error:
+                logger.error(f"Failed to send to token {token[:20]}...: {token_error}")
+                failure_count += 1
         
         logger.info(
             f"Push notification sent to user {user_id}: "
-            f"{response.success_count} successful, {response.failure_count} failed"
+            f"{success_count} successful, {failure_count} failed"
         )
         
-        # Handle failures (invalid tokens)
-        if response.failure_count > 0:
-            failed_tokens = []
-            for idx, resp in enumerate(response.responses):
-                if not resp.success:
-                    failed_tokens.append(tokens[idx])
-                    logger.warning(f"Failed to send to token {tokens[idx]}: {resp.exception}")
-            
-            # Remove invalid tokens
-            # TODO: Implement token cleanup
-        
-        return response
+        return {"success_count": success_count, "failure_count": failure_count}
         
     except Exception as e:
-        logger.error(f"Failed to send push notification: {e}")
-        return None
+        logger.error(f"Failed to send push notification: {e}", exc_info=True)
         return None
