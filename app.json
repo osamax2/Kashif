@@ -82,7 +82,12 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#F4B400",
-          "mode": "production"
+          "mode": "production",
+          "androidConfig": {
+            "projectId": "kashif-5177f",
+            "appId": "1:618886352296:android:b7e73f56c6e6a2e6d2a91d",
+            "messagingSenderId": "618886352296"
+          }
         }
       ]
     ],

@@ -57,20 +57,30 @@ class NotificationService {
         return null;
       }
 
-      // Get push token with project ID from app.json
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      // Get FCM token for Android, APNS for iOS
+      let token: string;
       
-      const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: projectId,
-      });
+      if (Platform.OS === 'android') {
+        // Get FCM token directly
+        const fcmToken = await Notifications.getDevicePushTokenAsync();
+        token = fcmToken.data;
+        console.log('FCM token obtained:', token);
+      } else {
+        // iOS uses Expo push token
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+        const tokenData = await Notifications.getExpoPushTokenAsync({
+          projectId: projectId,
+        });
+        token = tokenData.data;
+        console.log('Push token obtained:', token);
+      }
       
-      this.expoPushToken = tokenData.data;
-      console.log('Push token obtained:', this.expoPushToken);
+      this.expoPushToken = token;
 
       // Register with backend
-      await this.registerDeviceToken(this.expoPushToken);
+      await this.registerDeviceToken(token);
       
-      return this.expoPushToken;
+      return token;
     } catch (error) {
       console.error('Failed to register for push notifications:', error);
       return null;
