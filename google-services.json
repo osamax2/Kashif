@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "618886352296",
+    "project_id": "kashif-5177f",
+    "storage_bucket": "kashif-5177f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:618886352296:android:b7e73f56c6e6a2e6d2a91d",
+        "android_client_info": {
+          "package_name": "com.kashif.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
