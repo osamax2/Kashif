@@ -166,7 +166,7 @@ services:
       SMTP_FROM_EMAIL: noreply@kashifroad.com
       SMTP_FROM_NAME: Kashif Road
       SMTP_USE_TLS: "true"
-      FRONTEND_URL: https://kashifroad.com
+      FRONTEND_URL: https://api.kashifroad.com/api/auth
     depends_on:
       - notification-db
       - rabbitmq

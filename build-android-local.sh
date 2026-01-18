@@ -83,14 +83,24 @@ echo ""
 echo -e "${BLUE}Step 2: Checking Android SDK...${NC}"
 if [ -d "$HOME/Library/Android/sdk" ]; then
     export ANDROID_HOME=$HOME/Library/Android/sdk
-    echo -e "${GREEN}✓ Android SDK found${NC}"
+    echo -e "${GREEN}✓ Android SDK found: $ANDROID_HOME${NC}"
+elif [ -d "/Volumes/WorkSSD/.android-sdk" ]; then
+    export ANDROID_HOME=/Volumes/WorkSSD/.android-sdk
+    echo -e "${GREEN}✓ Android SDK found: $ANDROID_HOME${NC}"
+elif [ -d "/Volumes/Data/android-sdk" ]; then
+    export ANDROID_HOME=/Volumes/Data/android-sdk
+    echo -e "${GREEN}✓ Android SDK found: $ANDROID_HOME${NC}"
 elif [ -d "$HOME/Android/Sdk" ]; then
     export ANDROID_HOME=$HOME/Android/Sdk
-    echo -e "${GREEN}✓ Android SDK found${NC}"
+    echo -e "${GREEN}✓ Android SDK found: $ANDROID_HOME${NC}"
 else
     echo -e "${RED}✗ Android SDK not found${NC}"
+    echo "Please install Android SDK or set ANDROID_HOME environment variable"
     exit 1
 fi
+
+# Add Android SDK tools to PATH
+export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools:$PATH
 echo ""
 
 # Step 3: Install dependencies

@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import api from './api';
 
 // Push notifications are only available in standalone builds, not Expo Go
@@ -78,16 +79,14 @@ class NotificationService {
 
   /**
    * Register device token with backend
-   * Note: Currently disabled as notification service endpoints are not yet implemented
    */
   private async registerDeviceToken(token: string): Promise<void> {
     try {
-      // TODO: Implement when notification service backend is ready
-      // await api.post('/api/notifications/register-device', {
-      //   token,
-      //   device_type: Platform.OS,
-      // });
-      console.log('Device token registration skipped - backend not available');
+      await api.post('/api/notifications/register-device', {
+        token,
+        device_type: Platform.OS,
+      });
+      console.log('✅ Device token registered successfully');
     } catch (error) {
       console.error('Failed to register device token:', error);
     }
@@ -100,10 +99,9 @@ class NotificationService {
     if (!this.expoPushToken) return;
 
     try {
-      // TODO: Implement when notification service backend is ready
-      // await api.delete(`/api/notifications/unregister-device/${this.expoPushToken}`);
+      await api.delete(`/api/notifications/unregister-device/${this.expoPushToken}`);
       this.expoPushToken = null;
-      console.log('Device token unregistered');
+      console.log('✅ Device token unregistered');
     } catch (error) {
       console.error('Failed to unregister device token:', error);
     }
