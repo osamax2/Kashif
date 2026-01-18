@@ -35,6 +35,7 @@
       "package": "com.kashif.app",
       "versionCode": 1,
       "usesCleartextTraffic": true,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#0D2B66",
         "foregroundImage": "./assets/images/icon.png",

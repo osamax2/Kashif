@@ -42,47 +42,60 @@ class NotificationService {
       return null;
     }
 
+    console.log('🚀 Starting push notification registration...');
+
     try {
       // Request permissions
+      console.log('📱 Requesting permissions...');
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
+      
+      console.log('📱 Current permission status:', existingStatus);
       
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
+        console.log('📱 New permission status:', status);
       }
       
       if (finalStatus !== 'granted') {
-        console.log('Push notification permission denied');
+        console.log('❌ Push notification permission denied');
         return null;
       }
+
+      console.log('✅ Permissions granted, getting token...');
 
       // Get FCM token for Android, APNS for iOS
       let token: string;
       
       if (Platform.OS === 'android') {
+        console.log('📱 Getting FCM token for Android...');
         // Get FCM token directly
         const fcmToken = await Notifications.getDevicePushTokenAsync();
         token = fcmToken.data;
-        console.log('FCM token obtained:', token);
+        console.log('✅ FCM token obtained:', token.substring(0, 50) + '...');
       } else {
+        console.log('📱 Getting Expo push token for iOS...');
         // iOS uses Expo push token
         const projectId = Constants.expoConfig?.extra?.eas?.projectId;
         const tokenData = await Notifications.getExpoPushTokenAsync({
           projectId: projectId,
         });
         token = tokenData.data;
-        console.log('Push token obtained:', token);
+        console.log('✅ Push token obtained:', token.substring(0, 50) + '...');
       }
       
       this.expoPushToken = token;
 
+      console.log('📡 Registering token with backend...');
       // Register with backend
       await this.registerDeviceToken(token);
       
+      console.log('✅ Push notification registration complete!');
       return token;
     } catch (error) {
-      console.error('Failed to register for push notifications:', error);
+      console.error('❌ Failed to register for push notifications:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return null;
     }
   }
@@ -92,13 +105,22 @@ class NotificationService {
    */
   private async registerDeviceToken(token: string): Promise<void> {
     try {
-      await api.post('/api/notifications/register-device', {
+      console.log('📡 Sending token to backend API...');
+      console.log('API endpoint:', '/api/notifications/register-device');
+      console.log('Token length:', token.length);
+      console.log('Platform:', Platform.OS);
+      
+      const response = await api.post('/api/notifications/register-device', {
         token,
         device_type: Platform.OS,
       });
+      
       console.log('✅ Device token registered successfully');
+      console.log('Response:', response.data);
     } catch (error) {
-      console.error('Failed to register device token:', error);
+      console.error('❌ Failed to register device token with backend:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw error;
     }
   }
 
