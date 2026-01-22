@@ -108,8 +108,24 @@ async function proxyRequest(request: NextRequest, path: string[]) {
 
     clearTimeout(timeout);
 
-    const responseData = await response.text();
+    const responseContentType = response.headers.get('content-type') || 'application/json';
     const duration = Date.now() - startTime;
+    
+    // Handle binary responses (images, files) differently
+    if (responseContentType.startsWith('image/') || responseContentType.startsWith('application/octet-stream')) {
+      const imageData = await response.arrayBuffer();
+      process.stderr.write(`[PROXY] Image Response: ${response.status} (${duration}ms) - ${imageData.byteLength} bytes\n`);
+      
+      return new NextResponse(imageData, {
+        status: response.status,
+        headers: {
+          'Content-Type': responseContentType,
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        },
+      });
+    }
+
+    const responseData = await response.text();
     
     process.stderr.write(`[PROXY] Response: ${response.status} (${duration}ms) - ${responseData.substring(0, 200)}\n`);
 
@@ -117,7 +133,7 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     return new NextResponse(responseData, {
       status: response.status,
       headers: {
-        'Content-Type': response.headers.get('content-type') || 'application/json',
+        'Content-Type': responseContentType,
       },
     });
   } catch (error) {

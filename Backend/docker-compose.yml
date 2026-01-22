@@ -185,6 +185,40 @@ services:
     networks:
       - kashif-network
 
+  # Pothole Detection Service (Roboflow YOLOv8)
+  pothole-detection:
+    build:
+      context: ./pothole-detection-service
+      dockerfile: Dockerfile
+    container_name: kashif-pothole-detection
+    environment:
+      REPORTING_SERVICE_URL: http://kashif-reporting:8000
+      AUTH_SERVICE_URL: http://kashif-auth:8000
+      IMAGES_DIR: /app/images
+      PROCESSED_DIR: /app/processed
+      OUTPUT_DIR: /app/output
+      MODEL_PATH: /app/models/pothole_model.pt
+      CONFIDENCE_THRESHOLD: "0.25"
+      ADMIN_USER_ID: "2"
+      # Roboflow API for pretrained pothole detection model
+      # Get free API key at https://roboflow.com
+      ROBOFLOW_API_KEY: "${ROBOFLOW_API_KEY:-}"
+      ADMIN_EMAIL: "admin@kashif.com"
+      ADMIN_PASSWORD: "Admin123!"
+    volumes:
+      - ./images:/app/images
+      - pothole_processed:/app/processed
+      - pothole_output:/app/output
+      - pothole_models:/app/models
+    depends_on:
+      - reporting-service
+    networks:
+      - kashif-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
 volumes:
   rabbitmq_data:
   auth_db_data:
@@ -194,6 +228,9 @@ volumes:
   notification_db_data:
   uploads_data:
   reporting_uploads:
+  pothole_processed:
+  pothole_output:
+  pothole_models:
 
 networks:
   kashif-network:

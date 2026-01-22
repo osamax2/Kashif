@@ -7,6 +7,61 @@ import { Calendar, Download, History, MapPin, RotateCcw, Search, Settings, Share
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+// Helper function to extract photo URL from photo_urls field
+function getPhotoUrl(photoUrls: string | null | undefined): string | null {
+  if (!photoUrls) return null;
+  
+  try {
+    // Try to parse as JSON
+    const parsed = JSON.parse(photoUrls);
+    
+    // Check for different URL formats in order of preference
+    // 1. annotated (with pothole markings)
+    // 2. photo (original uploaded photo)
+    // 3. url (legacy format)
+    const photoPath = parsed.annotated || parsed.photo || parsed.url;
+    
+    if (!photoPath) return null;
+    
+    // If it's already an absolute URL with http/https, route through proxy
+    if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+      // Extract path from full URL and use proxy
+      try {
+        const url = new URL(photoPath);
+        return `/api/reports${url.pathname}`;
+      } catch {
+        return null;
+      }
+    }
+    
+    // If it's a relative path like /uploads/xxx.jpg, use proxy
+    if (photoPath.startsWith('/uploads/')) {
+      return `/api/reports${photoPath}`;
+    }
+    
+    // If it's just the path without leading slash
+    if (photoPath.startsWith('uploads/')) {
+      return `/api/reports/${photoPath}`;
+    }
+    
+    return null;
+  } catch {
+    // If not valid JSON, check if it's a direct URL
+    if (photoUrls.startsWith('/uploads/')) {
+      return `/api/reports${photoUrls}`;
+    }
+    if (photoUrls.startsWith('http')) {
+      try {
+        const url = new URL(photoUrls);
+        return `/api/reports${url.pathname}`;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
 export default function ReportsPage() {
   const { t, isRTL } = useLanguage();
   const [reports, setReports] = useState<Report[]>([]);
@@ -561,16 +616,16 @@ export default function ReportsPage() {
             <p className={`text-gray-600 text-sm mb-4 line-clamp-2 ${isRTL ? 'text-right' : ''}`}>{report.description}</p>
             
             {/* Report Photo */}
-            {report.photo_urls && (
+            {getPhotoUrl(report.photo_urls) && (
               <div className="mb-4">
                 <a 
-                  href={report.photo_urls} 
+                  href={getPhotoUrl(report.photo_urls) || '#'} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="block"
                 >
                   <img 
-                    src={report.photo_urls} 
+                    src={getPhotoUrl(report.photo_urls) || ''} 
                     alt={report.title}
                     className="w-full h-40 object-cover rounded-lg hover:opacity-90 transition cursor-pointer"
                     onError={(e) => {
