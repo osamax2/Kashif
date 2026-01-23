@@ -199,6 +199,156 @@ def get_current_user_info(
     return user
 
 
+@app.get("/verify", response_class=HTMLResponse)
+def verify_email_link(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """Verify user account using verification token from email link (GET request)"""
+    try:
+        payload = auth.verify_verification_token(token)
+        if not payload:
+            return HTMLResponse(content="""
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>فشل التحقق - كاشف</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+                    .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }
+                    .icon { font-size: 60px; margin-bottom: 20px; }
+                    h1 { color: #e74c3c; margin-bottom: 15px; }
+                    p { color: #666; line-height: 1.6; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="icon">❌</div>
+                    <h1>فشل التحقق</h1>
+                    <p>رابط التحقق غير صالح أو منتهي الصلاحية.</p>
+                    <p>يرجى طلب رابط تحقق جديد من التطبيق.</p>
+                </div>
+            </body>
+            </html>
+            """, status_code=400)
+        
+        user_id = payload.get("user_id")
+        user = crud.get_user(db, user_id)
+        if not user:
+            return HTMLResponse(content="""
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>المستخدم غير موجود - كاشف</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+                    .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }
+                    .icon { font-size: 60px; margin-bottom: 20px; }
+                    h1 { color: #e74c3c; margin-bottom: 15px; }
+                    p { color: #666; line-height: 1.6; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="icon">❌</div>
+                    <h1>المستخدم غير موجود</h1>
+                    <p>لم يتم العثور على الحساب المرتبط بهذا الرابط.</p>
+                </div>
+            </body>
+            </html>
+            """, status_code=404)
+        
+        if user.is_verified:
+            return HTMLResponse(content="""
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>تم التحقق مسبقاً - كاشف</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+                    .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }
+                    .icon { font-size: 60px; margin-bottom: 20px; }
+                    h1 { color: #3498db; margin-bottom: 15px; }
+                    p { color: #666; line-height: 1.6; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="icon">ℹ️</div>
+                    <h1>تم التحقق مسبقاً</h1>
+                    <p>حسابك مفعل بالفعل.</p>
+                    <p>يمكنك تسجيل الدخول من التطبيق.</p>
+                </div>
+            </body>
+            </html>
+            """, status_code=200)
+        
+        # Activate the account
+        crud.verify_user_account(db, user_id)
+        logger.info(f"Account verified successfully for user_id={user_id}")
+        
+        return HTMLResponse(content="""
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>تم التحقق بنجاح - كاشف</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+                .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }
+                .icon { font-size: 60px; margin-bottom: 20px; }
+                h1 { color: #27ae60; margin-bottom: 15px; }
+                p { color: #666; line-height: 1.6; }
+                .success-check { animation: pulse 1s ease-in-out; }
+                @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="icon success-check">✅</div>
+                <h1>تم التحقق بنجاح!</h1>
+                <p>تم تفعيل حسابك بنجاح.</p>
+                <p>يمكنك الآن تسجيل الدخول من التطبيق.</p>
+            </div>
+        </body>
+        </html>
+        """, status_code=200)
+    except Exception as e:
+        logger.error(f"Account verification error (GET /verify): {e}")
+        return HTMLResponse(content=f"""
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>خطأ في التحقق - كاشف</title>
+            <style>
+                body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }}
+                .container {{ background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }}
+                .icon {{ font-size: 60px; margin-bottom: 20px; }}
+                h1 {{ color: #e74c3c; margin-bottom: 15px; }}
+                p {{ color: #666; line-height: 1.6; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="icon">❌</div>
+                <h1>خطأ في التحقق</h1>
+                <p>حدث خطأ أثناء التحقق من حسابك.</p>
+                <p>يرجى المحاولة مرة أخرى أو التواصل مع الدعم.</p>
+            </div>
+        </body>
+        </html>
+        """, status_code=400)
+
+
 @app.post("/verify-account")
 def verify_account(
     request: schemas.VerifyAccountRequest,
