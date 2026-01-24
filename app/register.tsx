@@ -16,13 +16,11 @@ import {
     View,
 } from "react-native";
 import RtlTextInput from "../components/ui/rtl-textinput";
-import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { authAPI } from "../services/api";
 
 export default function Register() {
   const router = useRouter();
-  const { setUser } = useAuth();
   const { t, isRTL } = useLanguage();
 
   // ✅ GENAU WIE BEI LOGIN:
@@ -126,17 +124,12 @@ export default function Register() {
         phone_number: phoneNumber.trim(),
       });
 
-      await authAPI.login({
-        username: email.trim(),
-        password,
+      // Navigate to verify-pending page instead of auto-login
+      // User needs to verify email before they can login
+      router.replace({
+        pathname: "/verify-pending",
+        params: { email: email.trim() },
       });
-
-      const user = await authAPI.getProfile();
-      setUser(user);
-
-      Alert.alert(t("auth.registrationSuccess"), t("auth.accountCreated"), [
-        { text: t("auth.ok") },
-      ]);
     } catch (error: any) {
       if (error.response?.status === 400) {
         Alert.alert(t("errors.error"), t("errors.emailAlreadyRegistered"));
