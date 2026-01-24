@@ -742,21 +742,23 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         setFabPos({ x, y });
     };
 
+    // For Arabic (RTL), menu opens to the right (positive offset from left button)
+    // For English (LTR), menu opens to the left (negative offset from right button)
     const menuItems = [
         {
             id: "pothole",
             icon: require("../../assets/icons/pothole.png"),
-            offset: { top: 180, left: -190 },
+            offset: { top: 180, left: language === 'ar' ? -190 : 190 },
         },
         {
             id: "accident",
             icon: require("../../assets/icons/accident.png"),
-            offset: { top: 120, left: -220 },
+            offset: { top: 120, left: language === 'ar' ? -220 : 220 },
         },
         {
             id: "speed",
             icon: require("../../assets/icons/speed.png"),
-            offset: { top: 240, left: -220 },
+            offset: { top: 240, left: language === 'ar' ? -220 : 220 },
         },
     ] as const;
 
@@ -1040,7 +1042,11 @@ async function playBeep(value: number) {
 
                 {/* FAB */}
                 <TouchableOpacity
-                    style={styles.fab}
+                    style={[
+                        styles.fab,
+                        // For Arabic (RTL), button on left. For English (LTR), button on right
+                        language === 'ar' ? { left: 15 } : { right: 15, left: undefined }
+                    ]}
                     onPress={toggleMenu}
                     onLayout={onFabLayout}
                 >
@@ -1049,11 +1055,15 @@ async function playBeep(value: number) {
             </View>
             {/* SOUND BUTTON UNTER DEM + BUTTON */}
             <TouchableOpacity
-            style={styles.soundButton}
-            onPress={() => setAudioVisible(true)}
-                >
-            <Ionicons name="volume-high" style={styles.soundIcon} />
-                </TouchableOpacity>
+                style={[
+                    styles.soundButton,
+                    // For Arabic (RTL), button on left. For English (LTR), button on right
+                    language === 'ar' ? { left: 22 } : { right: 22, left: undefined }
+                ]}
+                onPress={() => setAudioVisible(true)}
+            >
+                <Ionicons name="volume-high" style={styles.soundIcon} />
+            </TouchableOpacity>
 
 
             {/* RADIAL-MENÜ UM DEN FAB */}
@@ -1379,7 +1389,7 @@ const styles = StyleSheet.create({
     fab: {
         position: "absolute",
         bottom: 90,
-        left: 15,
+        // left/right is set dynamically based on language
         width: 56,
         height: 56,
         borderRadius: 30,
@@ -1459,22 +1469,21 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     soundButton: {
-    position: "absolute",
-    bottom: 570,       // über dem unteren Menü
-    left: 22,         // gleiche Position wie der + Button
-    width: 54,
-    height: 54,
-    backgroundColor: "#F4B400",
-    borderRadius: 27,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-
-},
+        position: "absolute",
+        bottom: 570,       // über dem unteren Menü
+        // left/right is set dynamically based on language
+        width: 54,
+        height: 54,
+        backgroundColor: "#F4B400",
+        borderRadius: 27,
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 6,
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+    },
 soundIcon: {
     fontSize: 26,
     color: "#0D2B66",               // dunkelblau
