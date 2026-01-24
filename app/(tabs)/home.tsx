@@ -743,23 +743,23 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     };
 
     // Menu items for the radial menu
-    // For Arabic (left FAB), menu opens to the right (uses negative left offset)
-    // For English (right FAB), uses right positioning calculated in the render
+    // For Arabic (left FAB), menu opens to the right
+    // For English (right FAB), menu opens to the left
     const menuItems = [
         {
             id: "pothole",
             icon: require("../../assets/icons/pothole.png"),
-            offset: { top: 180, left: -190 },
+            offset: { top: 180, left: -190, right: 120 },
         },
         {
             id: "accident",
             icon: require("../../assets/icons/accident.png"),
-            offset: { top: 120, left: -220 },
+            offset: { top: 120, left: -220, right: 150 },
         },
         {
             id: "speed",
             icon: require("../../assets/icons/speed.png"),
-            offset: { top: 240, left: -220 },
+            offset: { top: 240, left: -220, right: 150 },
         },
     ] as const;
 
@@ -1080,7 +1080,7 @@ async function playBeep(value: number) {
                                 // For Arabic, use left positioning. For English, use right positioning
                                 ...(language === 'ar' 
                                     ? { left: fabPos.x + item.offset.left }
-                                    : { right: 15 + Math.abs(item.offset.left) - 28 }  // 15 is FAB right margin, 28 is button width/2
+                                    : { right: item.offset.right }
                                 ),
                             },
                         ]}
