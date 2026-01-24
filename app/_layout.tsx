@@ -11,7 +11,7 @@ import { DataSyncProvider } from '@/contexts/DataSyncContext';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { checkAndPromptForUpdate } from '@/services/updateChecker';
+import { checkAndPromptForUpdate, clearUpdateCache } from '@/services/updateChecker';
 
 export const unstable_settings = {
     initialRouteName: "index",
@@ -26,7 +26,10 @@ function RootLayoutNav() {
     React.useEffect(() => {
         const checkUpdate = async () => {
             try {
-                await checkAndPromptForUpdate(language as 'ar' | 'en' | 'de');
+                // Clear cache on each app start to ensure update dialog shows
+                await clearUpdateCache();
+                // Force check for updates
+                await checkAndPromptForUpdate(language as 'ar' | 'en' | 'de', true);
             } catch (error) {
                 console.log('Update check failed:', error);
             }
@@ -35,7 +38,7 @@ function RootLayoutNav() {
         // Delay update check to not block app startup
         const timer = setTimeout(checkUpdate, 3000);
         return () => clearTimeout(timer);
-    }, [language]);
+    }, []); // Only run once on mount, not on language change
 
     if (loading) {
         return (

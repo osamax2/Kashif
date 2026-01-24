@@ -69,6 +69,8 @@ const compareVersions = (v1: string, v2: string): number => {
  */
 const fetchLatestRelease = async (): Promise<GitHubRelease | null> => {
   try {
+    console.log('🌐 Fetching latest release from:', GITHUB_API_URL);
+    
     const response = await fetch(GITHUB_API_URL, {
       headers: {
         'Accept': 'application/vnd.github.v3+json',
@@ -77,13 +79,15 @@ const fetchLatestRelease = async (): Promise<GitHubRelease | null> => {
     });
     
     if (!response.ok) {
-      console.log('No releases found or API error');
+      console.log('❌ GitHub API error - Status:', response.status);
       return null;
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('✅ Got release:', data.tag_name, '-', data.name);
+    return data;
   } catch (error) {
-    console.error('Error fetching GitHub release:', error);
+    console.error('❌ Error fetching GitHub release:', error);
     return null;
   }
 };
@@ -93,13 +97,19 @@ const fetchLatestRelease = async (): Promise<GitHubRelease | null> => {
  */
 export const checkForUpdate = async (forceCheck: boolean = false): Promise<UpdateInfo | null> => {
   try {
+    const currentVersion = getCurrentVersion();
+    console.log('📱 Update Check - Current app version:', currentVersion);
+    
     // Check if we should skip this check (rate limiting)
+    // Reduced to 1 hour for better responsiveness
+    const effectiveCheckInterval = 60 * 60 * 1000; // 1 hour instead of 24 hours
+    
     if (!forceCheck) {
       const lastCheck = await AsyncStorage.getItem(LAST_CHECK_KEY);
       if (lastCheck) {
         const timeSinceLastCheck = Date.now() - parseInt(lastCheck, 10);
-        if (timeSinceLastCheck < CHECK_INTERVAL) {
-          console.log('Skipping update check - checked recently');
+        if (timeSinceLastCheck < effectiveCheckInterval) {
+          console.log('⏳ Skipping update check - checked recently (', Math.round(timeSinceLastCheck / 60000), 'min ago)');
           return null;
         }
       }
@@ -114,12 +124,17 @@ export const checkForUpdate = async (forceCheck: boolean = false): Promise<Updat
     // Save check timestamp
     await AsyncStorage.setItem(LAST_CHECK_KEY, Date.now().toString());
     
-    const currentVersion = getCurrentVersion();
     const latestVersion = release.tag_name.replace(/^v/, '');
     
+    console.log('🔄 Update Check - Latest version:', latestVersion);
+    console.log('🔄 Version comparison:', currentVersion, 'vs', latestVersion);
+    
     // Check if update is available
-    if (compareVersions(latestVersion, currentVersion) <= 0) {
-      console.log('App is up to date');
+    const comparison = compareVersions(latestVersion, currentVersion);
+    console.log('🔄 Comparison result:', comparison, '(1 = update available, 0 = same, -1 = older)');
+    
+    if (comparison <= 0) {
+      console.log('✅ App is up to date');
       return {
         hasUpdate: false,
         currentVersion,
@@ -130,10 +145,12 @@ export const checkForUpdate = async (forceCheck: boolean = false): Promise<Updat
       };
     }
     
+    console.log('🆕 Update available:', latestVersion);
+    
     // Check if user skipped this version
     const skippedVersion = await AsyncStorage.getItem(SKIPPED_VERSION_KEY);
     if (skippedVersion === latestVersion && !forceCheck) {
-      console.log('User skipped this version');
+      console.log('⏭️ User skipped this version:', skippedVersion);
       return null;
     }
     
@@ -224,6 +241,19 @@ export const showUpdateDialog = (
 };
 
 /**
+ * Clear update cache - useful for forcing update check
+ */
+export const clearUpdateCache = async (): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(LAST_CHECK_KEY);
+    await AsyncStorage.removeItem(SKIPPED_VERSION_KEY);
+    console.log('🧹 Update cache cleared');
+  } catch (error) {
+    console.error('Error clearing update cache:', error);
+  }
+};
+
+/**
  * Check for updates and show dialog if available
  * Call this on app startup
  */
@@ -232,16 +262,22 @@ export const checkAndPromptForUpdate = async (
   forceCheck: boolean = false
 ): Promise<boolean> => {
   try {
+    console.log('🔍 Starting update check... (forceCheck:', forceCheck, ')');
     const updateInfo = await checkForUpdate(forceCheck);
     
     if (updateInfo?.hasUpdate) {
+      console.log('📢 Showing update dialog for version:', updateInfo.latestVersion);
       showUpdateDialog(updateInfo, language);
       return true;
+    } else if (updateInfo) {
+      console.log('ℹ️ No update available - current:', updateInfo.currentVersion, 'latest:', updateInfo.latestVersion);
+    } else {
+      console.log('ℹ️ Update check returned null (skipped or error)');
     }
     
     return false;
   } catch (error) {
-    console.error('Error in checkAndPromptForUpdate:', error);
+    console.error('❌ Error in checkAndPromptForUpdate:', error);
     return false;
   }
 };
@@ -251,4 +287,5 @@ export default {
   checkForUpdate,
   showUpdateDialog,
   checkAndPromptForUpdate,
+  clearUpdateCache,
 };
