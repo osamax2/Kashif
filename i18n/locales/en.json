@@ -77,6 +77,14 @@
       "confirmPassword": "Confirm Password",
       "resetButton": "Reset Password",
       "backToLogin": "Back to Login"
+    },
+    "verifyPending": {
+      "title": "Verify Your Account",
+      "subtitle": "Your account has been created successfully! We've sent an activation link to your email.",
+      "instruction1": "1. Open your email inbox",
+      "instruction2": "2. Click on the activation link in the email",
+      "spamNote": "If you can't find the email, please check your spam folder",
+      "continue": "Continue"
     }
   },
   "home": {
