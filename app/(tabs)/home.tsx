@@ -1299,8 +1299,8 @@ async function playBeep(value: number) {
                                         : uploadResult.ai_analysis.ai_description) || undefined;
                                     
                                     // Get annotated image URL if available
-                                    if (uploadResult.annotated_url) {
-                                        aiAnnotatedUrl = uploadResult.annotated_url;
+                                    if (uploadResult.ai_analysis.annotated_url) {
+                                        aiAnnotatedUrl = uploadResult.ai_analysis.annotated_url;
                                         console.log('🎨 AI annotated image:', aiAnnotatedUrl);
                                     }
                                     
