@@ -210,7 +210,7 @@ async def create_report(
     # Create report - may also confirm a matching pending report
     db_report, confirmed_report = crud.create_report(db=db, report=report, user_id=user_id)
     
-    # Publish ReportCreated event (without awarding points - points come on confirmation)
+    # Publish ReportCreated event - award points since report is confirmed on creation
     try:
         publish_event("report.created", {
             "report_id": db_report.id,
@@ -221,16 +221,16 @@ async def create_report(
             },
             "category_id": db_report.category_id,
             "confirmation_status": db_report.confirmation_status,
-            "award_points": False  # Don't award points on creation
+            "award_points": True  # Award points for creating a report
         })
         logger.info(f"Published ReportCreated event for report {db_report.id} (status: {db_report.confirmation_status})")
     except Exception as e:
         logger.error(f"Failed to publish ReportCreated event: {e}")
     
-    # If a matching report was confirmed, award points to both users
+    # If a matching report was confirmed, award extra points to the original reporter
     if confirmed_report:
         try:
-            # Award points to original reporter
+            # Award bonus points to original reporter for confirmation
             publish_event("report.confirmed", {
                 "report_id": confirmed_report.id,
                 "original_user_id": confirmed_report.user_id,
@@ -239,15 +239,6 @@ async def create_report(
                 "award_points": True
             })
             logger.info(f"Published ReportConfirmed event for report {confirmed_report.id}")
-            
-            # Also award points to the new reporter (their report is also confirmed)
-            publish_event("report.confirmed", {
-                "report_id": db_report.id,
-                "original_user_id": user_id,
-                "confirming_user_id": confirmed_report.user_id,
-                "confirmation_type": "auto_match",
-                "award_points": True
-            })
         except Exception as e:
             logger.error(f"Failed to publish ReportConfirmed event: {e}")
     
