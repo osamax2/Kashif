@@ -50,13 +50,18 @@ const getPhotoUrl = (photoUrls: string | undefined): string | null => {
     return firstUrl;
   }
   
-  // If relative URL (starts with /), prepend API base
-  if (firstUrl.startsWith("/")) {
-    return `${API_BASE_URL}${firstUrl}`;
+  // If relative URL starting with /uploads/, convert to /api/reports/uploads/
+  if (firstUrl.startsWith("/uploads/")) {
+    return `${API_BASE_URL}/api/reports${firstUrl}`;
   }
   
-  // Otherwise prepend API base with /
-  return `${API_BASE_URL}/${firstUrl}`;
+  // If relative URL (starts with /), prepend API base with /api/reports
+  if (firstUrl.startsWith("/")) {
+    return `${API_BASE_URL}/api/reports${firstUrl}`;
+  }
+  
+  // Otherwise prepend API base with /api/reports/
+  return `${API_BASE_URL}/api/reports/${firstUrl}`;
 };
 
 // Get the best image to display (annotated if available, otherwise original)
@@ -67,10 +72,14 @@ const getDisplayImageUrl = (report: { photo_urls?: string; ai_annotated_url?: st
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
-    if (url.startsWith("/")) {
-      return `${API_BASE_URL}${url}`;
+    // Handle /uploads/ prefix
+    if (url.startsWith("/uploads/")) {
+      return `${API_BASE_URL}/api/reports${url}`;
     }
-    return `${API_BASE_URL}/${url}`;
+    if (url.startsWith("/")) {
+      return `${API_BASE_URL}/api/reports${url}`;
+    }
+    return `${API_BASE_URL}/api/reports/${url}`;
   }
   // Fall back to original photo
   return getPhotoUrl(report.photo_urls);
