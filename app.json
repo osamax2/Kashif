@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kashif",
     "slug": "kashif-app",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kashifapp",
@@ -39,7 +39,7 @@
     },
     "android": {
       "package": "com.kashif.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "usesCleartextTraffic": true,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
