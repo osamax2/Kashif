@@ -104,10 +104,21 @@ async def upload_image(
     
     # Run AI analysis on the uploaded image
     ai_result = None
+    annotated_filename = None
     try:
         ai_result = await ai_client.analyze_image(file_path, UPLOAD_DIR)
         if ai_result and ai_result.get("success"):
             logger.info(f"AI detected {ai_result.get('num_potholes', 0)} potholes in {unique_filename}")
+            
+            # If AI returned annotated image, save it
+            annotated_base64 = ai_result.get("annotated_image_base64")
+            if annotated_base64:
+                import base64
+                annotated_filename = f"annotated_{unique_filename}"
+                annotated_path = os.path.join(UPLOAD_DIR, annotated_filename)
+                with open(annotated_path, "wb") as f:
+                    f.write(base64.b64decode(annotated_base64))
+                logger.info(f"Saved annotated image: {annotated_filename}")
     except Exception as e:
         logger.warning(f"AI analysis failed for {unique_filename}: {e}")
     
@@ -128,6 +139,9 @@ async def upload_image(
             "ai_description_ar": ai_result.get("ai_description_ar"),
             "detections": ai_result.get("detections", [])
         }
+        # Add annotated image URL if available
+        if annotated_filename:
+            response["ai_analysis"]["annotated_url"] = f"/uploads/{annotated_filename}"
     
     return response
 
