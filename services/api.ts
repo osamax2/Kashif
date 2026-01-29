@@ -379,8 +379,18 @@ export interface ConfirmReportResponse {
 }
 
 export const reportingAPI = {
-  // Upload image for report
-  uploadImage: async (imageUri: string): Promise<{ url: string; filename: string }> => {
+  // Upload image for report - now includes AI analysis
+  uploadImage: async (imageUri: string): Promise<{ 
+    url: string; 
+    filename: string;
+    ai_analysis?: {
+      num_potholes: number;
+      max_severity: string | null;
+      ai_description: string | null;
+      ai_description_ar: string | null;
+      detections: any[];
+    };
+  }> => {
     const formData = new FormData();
     
     // Get file extension from uri
@@ -413,10 +423,11 @@ export const reportingAPI = {
     }
     
     const data = await response.json();
-    // Return full URL for the uploaded image
+    // Return full URL for the uploaded image plus AI analysis
     return {
       url: `${API_BASE_URL}/api/reports${data.url}`,
       filename: data.filename,
+      ai_analysis: data.ai_analysis,
     };
   },
 
