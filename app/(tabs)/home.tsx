@@ -1534,7 +1534,7 @@ const styles = StyleSheet.create({
     },
     longPressHint: {
         position: 'absolute',
-        bottom: 160,
+        top: 160,
         left: 16,
         right: 16,
         backgroundColor: 'rgba(255, 149, 0, 0.95)',
