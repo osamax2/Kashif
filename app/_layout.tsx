@@ -20,7 +20,7 @@ export const unstable_settings = {
 function RootLayoutNav() {
     const colorScheme = useColorScheme();
     const { loading } = useAuth();
-    const { language } = useLanguage();
+    const { language, isLoading: languageLoading } = useLanguage();
 
     // Check for app updates on startup
     React.useEffect(() => {
@@ -40,7 +40,8 @@ function RootLayoutNav() {
         return () => clearTimeout(timer);
     }, []); // Only run once on mount, not on language change
 
-    if (loading) {
+    // Wait for both auth and language to be loaded
+    if (loading || languageLoading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#033076' }}>
                 <ActivityIndicator size="large" color="#F4B400" />
