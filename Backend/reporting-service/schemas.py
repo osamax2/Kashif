@@ -66,6 +66,8 @@ class ReportBase(BaseModel):
     address_text: Optional[str] = None
     severity_id: int
     photo_urls: Optional[str] = None  # JSON string or comma-separated
+    ai_annotated_url: Optional[str] = None  # URL to annotated image with bounding boxes
+    ai_detections: Optional[str] = None  # JSON string of detection bounding boxes
 
 
 class ReportCreate(ReportBase):
@@ -82,6 +84,8 @@ class ReportUpdate(BaseModel):
     severity_id: Optional[int] = None
     status_id: Optional[int] = None
     photo_urls: Optional[str] = None
+    ai_annotated_url: Optional[str] = None
+    ai_detections: Optional[str] = None
 
 
 class Report(ReportBase):
