@@ -37,6 +37,27 @@ const CARD_BORDER = "rgba(255,255,255,0.18)";
 const YELLOW = "#F4B400";
 const PENDING_COLOR = "#FF9500";
 const CONFIRMED_COLOR = "#4CD964";
+const API_BASE_URL = "https://api.kashifroad.com";
+
+// Helper function to get full photo URL
+const getPhotoUrl = (photoUrls: string | undefined): string | null => {
+  if (!photoUrls) return null;
+  const firstUrl = photoUrls.split(",")[0].trim();
+  if (!firstUrl) return null;
+  
+  // If already a full URL, return as is
+  if (firstUrl.startsWith("http://") || firstUrl.startsWith("https://")) {
+    return firstUrl;
+  }
+  
+  // If relative URL (starts with /), prepend API base
+  if (firstUrl.startsWith("/")) {
+    return `${API_BASE_URL}${firstUrl}`;
+  }
+  
+  // Otherwise prepend API base with /
+  return `${API_BASE_URL}/${firstUrl}`;
+};
 
 const getConfirmationMeta = (
   status: string
@@ -404,8 +425,8 @@ export default function ReportsScreen() {
           <View style={styles.modalGlass}>
             {selected && (
               <>
-                {selected.photo_urls ? (
-                  <Image source={{ uri: selected.photo_urls.split(",")[0] }} style={styles.modalImage} />
+                {getPhotoUrl(selected.photo_urls) ? (
+                  <Image source={{ uri: getPhotoUrl(selected.photo_urls)! }} style={styles.modalImage} />
                 ) : (
                   <View
                     style={[
