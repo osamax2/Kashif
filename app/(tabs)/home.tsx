@@ -1,4 +1,5 @@
 // app/(tabs)/home.tsx
+import OnboardingTutorial, { shouldShowOnboarding } from "@/components/OnboardingTutorial";
 import ReportDialog from "@/components/ReportDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
@@ -160,6 +161,9 @@ export default function HomeScreen() {
     const { t, language } = useLanguage();
     const { reportCreated } = useDataSync();
     
+    /** ONBOARDING TUTORIAL */
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    
     /** BACKEND DATA */
     const [reports, setReports] = useState<Report[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -291,7 +295,21 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     useEffect(() => {
         requestLocation();
         loadSettings();
+        checkOnboarding();
     }, []);
+    
+    // Check if onboarding should be shown
+    const checkOnboarding = async () => {
+        const shouldShow = await shouldShowOnboarding();
+        if (shouldShow) {
+            setShowOnboarding(true);
+        }
+    };
+    
+    // Handle onboarding completion
+    const handleOnboardingComplete = () => {
+        setShowOnboarding(false);
+    };
     
     // Sync pending offline reports when network is available
     useEffect(() => {
@@ -857,6 +875,11 @@ async function playBeep(value: number) {
 
     return (
         <View style={styles.root}>
+            {/* ONBOARDING TUTORIAL */}
+            {showOnboarding && (
+                <OnboardingTutorial onComplete={handleOnboardingComplete} />
+            )}
+            
             {/* HEADER */}
             <TouchableWithoutFeedback onPress={dismissSearchAndKeyboard}>
                 <View style={styles.appbar}>
