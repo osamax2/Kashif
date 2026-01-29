@@ -187,7 +187,13 @@ export default function HomeScreen() {
         title: string;
     } | null>(null);
     
-    /** REPORT LOCATION - either from search or GPS */
+    /** LONG PRESS MARKER - when user long presses on map */
+    const [longPressMarker, setLongPressMarker] = useState<{
+        latitude: number;
+        longitude: number;
+    } | null>(null);
+    
+    /** REPORT LOCATION - either from search, long press, or GPS */
     const [reportLocation, setReportLocation] = useState<{
         latitude: number;
         longitude: number;
@@ -616,6 +622,43 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         Keyboard.dismiss();
     };
 
+    // Handle long press on map - place a marker for custom report location
+    const handleMapLongPress = async (event: any) => {
+        const { coordinate } = event.nativeEvent;
+        console.log('📍 Long press detected at:', coordinate);
+        
+        // Set the long press marker
+        setLongPressMarker({
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+        });
+        
+        // Update report location to use this position
+        setReportLocation({
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+        });
+        
+        // Vibrate to give feedback
+        try {
+            const Haptics = require('expo-haptics');
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        } catch (e) {
+            // Haptics not available, ignore
+        }
+        
+        console.log('✅ Long press marker set, report location updated');
+    };
+    
+    // Clear long press marker when menu is closed or report is submitted
+    const clearLongPressMarker = () => {
+        setLongPressMarker(null);
+        // Reset report location to GPS
+        if (userLocation) {
+            setReportLocation(userLocation);
+        }
+    };
+
     // Fallback search using Google Geocoding API when no suggestions available
     const searchWithGeocoding = async (query: string) => {
         if (!query || query.trim().length < 2) {
@@ -979,7 +1022,30 @@ async function playBeep(value: number) {
                     showsMyLocationButton={true}
                     onPress={dismissSearchAndKeyboard}
                     onPanDrag={dismissSearchAndKeyboard}
+                    onLongPress={handleMapLongPress}
                 >
+                    {/* Long Press Marker - Custom location for report */}
+                    {longPressMarker && (
+                        <Marker
+                            coordinate={{
+                                latitude: longPressMarker.latitude,
+                                longitude: longPressMarker.longitude,
+                            }}
+                            title={language === 'ar' ? 'موقع البلاغ' : 'Report Location'}
+                            pinColor="orange"
+                            draggable
+                            onDragEnd={(e) => {
+                                const { latitude, longitude } = e.nativeEvent.coordinate;
+                                setLongPressMarker({ latitude, longitude });
+                                setReportLocation({ latitude, longitude });
+                            }}
+                        >
+                            <View style={styles.longPressMarker}>
+                                <Text style={{ fontSize: 28 }}>📌</Text>
+                            </View>
+                        </Marker>
+                    )}
+                    
                     {/* Search Result Marker */}
                     {searchMarker && (
                         <Marker
@@ -1103,17 +1169,42 @@ async function playBeep(value: number) {
                     {language === 'ar' ? `عدد البلاغات النشطة: ${visibleMarkers.length} / ${reports.length} 📘` : `Active Reports: ${visibleMarkers.length} / ${reports.length} 📘`}
                 </Text>
             </View>
+            
+            {/* Long Press Hint - shows when marker is placed */}
+            {longPressMarker && (
+                <View style={styles.longPressHint}>
+                    <Text style={styles.longPressHintText}>
+                        {language === 'ar' 
+                            ? '📌 تم تحديد الموقع - اضغط + لإضافة بلاغ' 
+                            : '📌 Location set - tap + to add report'}
+                    </Text>
+                    <Pressable 
+                        onPress={clearLongPressMarker}
+                        style={styles.longPressHintClose}
+                    >
+                        <Text style={styles.longPressHintCloseText}>✕</Text>
+                    </Pressable>
+                </View>
+            )}
 
             {/* MELDUNGS-DIALOG */}
             <ReportDialog
                 visible={reportType !== null}
                 type={reportType}
-                address={searchMarker?.title || (language === 'ar' ? 'الموقع التلقائي' : 'Auto Location')}
-                onClose={() => setReportType(null)}
+                address={
+                    longPressMarker 
+                        ? (language === 'ar' ? 'موقع مختار على الخريطة' : 'Selected map location')
+                        : searchMarker?.title || (language === 'ar' ? 'الموقع التلقائي' : 'Auto Location')
+                }
+                onClose={() => {
+                    setReportType(null);
+                    // Don't clear long press marker on close - user might want to try again
+                }}
                 onSubmit={async (data) => {
                     try {
-                        // Use coordinates from Google Places if available, otherwise use reportLocation or GPS
+                        // Priority: Google Places > Long Press Marker > Search Marker > GPS
                         let locationToUse;
+                        let locationSource = 'GPS';
                         
                         if (data.latitude && data.longitude) {
                             // User selected a place from Google Places in the dialog
@@ -1121,10 +1212,20 @@ async function playBeep(value: number) {
                                 latitude: data.latitude,
                                 longitude: data.longitude,
                             };
+                            locationSource = 'Google Places';
                             console.log('📍 Using Google Places coordinates from dialog:', locationToUse);
+                        } else if (longPressMarker) {
+                            // User long-pressed on map to select location
+                            locationToUse = {
+                                latitude: longPressMarker.latitude,
+                                longitude: longPressMarker.longitude,
+                            };
+                            locationSource = 'Long Press';
+                            console.log('📍 Using long press marker coordinates:', locationToUse);
                         } else {
-                            // Fallback to search marker location or GPS
+                            // Fallback to reportLocation (search) or GPS
                             locationToUse = reportLocation || userLocation;
+                            locationSource = reportLocation ? 'Search' : 'GPS';
                             console.log('📍 Using GPS/search coordinates:', locationToUse);
                         }
                         
@@ -1151,7 +1252,6 @@ async function playBeep(value: number) {
                         };
                         let severityId = severityMap[data.severity] || 1;
                         
-                        const locationSource = data.latitude && data.longitude ? 'Google Places' : (searchMarker ? 'search' : 'GPS');
                         console.log(`📤 Creating report at ${locationSource}:`, { categoryId, severityId, location: locationToUse });
                         
                         // Upload photo if provided - AI will analyze it
@@ -1169,9 +1269,9 @@ async function playBeep(value: number) {
                                     console.log('🤖 AI detected', uploadResult.ai_analysis.num_potholes, 'pothole(s)');
                                     
                                     // Use AI description based on language
-                                    aiDescription = language === 'ar' 
+                                    aiDescription = (language === 'ar' 
                                         ? uploadResult.ai_analysis.ai_description_ar 
-                                        : uploadResult.ai_analysis.ai_description;
+                                        : uploadResult.ai_analysis.ai_description) || undefined;
                                     
                                     // Update severity based on AI if it detects higher severity
                                     if (uploadResult.ai_analysis.max_severity === 'HIGH') {
@@ -1207,6 +1307,12 @@ async function playBeep(value: number) {
                         });
                         
                         console.log('✅ Report created:', newReport.id);
+                        
+                        // Clear long press marker after successful submission
+                        if (longPressMarker) {
+                            setLongPressMarker(null);
+                            console.log('🗑️ Long press marker cleared');
+                        }
                         
                         // Refresh reports BEFORE closing dialog
                         await loadData(locationToUse);
@@ -1390,6 +1496,56 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 2,
         borderColor: '#fff',
+    },
+    longPressMarker: {
+        backgroundColor: "#FF9500",
+        padding: 4,
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: '#fff',
+        shadowColor: "#000",
+        shadowOpacity: 0.4,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+        elevation: 6,
+    },
+    longPressHint: {
+        position: 'absolute',
+        bottom: 160,
+        left: 16,
+        right: 16,
+        backgroundColor: 'rgba(255, 149, 0, 0.95)',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+        elevation: 6,
+    },
+    longPressHintText: {
+        color: '#fff',
+        fontSize: 14,
+        fontFamily: 'Tajawal-Medium',
+        flex: 1,
+    },
+    longPressHintClose: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 10,
+    },
+    longPressHintCloseText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 
     mapContainer: {
