@@ -59,6 +59,23 @@ const getPhotoUrl = (photoUrls: string | undefined): string | null => {
   return `${API_BASE_URL}/${firstUrl}`;
 };
 
+// Get the best image to display (annotated if available, otherwise original)
+const getDisplayImageUrl = (report: { photo_urls?: string; ai_annotated_url?: string }): string | null => {
+  // Prefer AI annotated image if available
+  if (report.ai_annotated_url) {
+    const url = report.ai_annotated_url.trim();
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    if (url.startsWith("/")) {
+      return `${API_BASE_URL}${url}`;
+    }
+    return `${API_BASE_URL}/${url}`;
+  }
+  // Fall back to original photo
+  return getPhotoUrl(report.photo_urls);
+};
+
 const getConfirmationMeta = (
   status: string
 ): { icon: string; color: string; label: string; labelAr: string } => {
@@ -425,8 +442,15 @@ export default function ReportsScreen() {
           <View style={styles.modalGlass}>
             {selected && (
               <>
-                {getPhotoUrl(selected.photo_urls) ? (
-                  <Image source={{ uri: getPhotoUrl(selected.photo_urls)! }} style={styles.modalImage} />
+                {getDisplayImageUrl(selected) ? (
+                  <View style={{ position: 'relative' }}>
+                    <Image source={{ uri: getDisplayImageUrl(selected)! }} style={styles.modalImage} />
+                    {selected.ai_annotated_url && (
+                      <View style={styles.aiAnalyzedBadge}>
+                        <Text style={styles.aiAnalyzedText}>🤖 AI</Text>
+                      </View>
+                    )}
+                  </View>
                 ) : (
                   <View
                     style={[
@@ -812,6 +836,22 @@ const styles = StyleSheet.create({
   },
 
   modalImage: { width: "100%", height: 200, borderRadius: 18, marginBottom: 12 },
+  
+  aiAnalyzedBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(88, 86, 214, 0.9)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  
+  aiAnalyzedText: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: 'Tajawal-Bold',
+  },
 
   modalTitle: {
     color: "#fff",

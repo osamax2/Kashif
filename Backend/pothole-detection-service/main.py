@@ -297,6 +297,7 @@ class AnalyzeResponse(BaseModel):
     ai_description: Optional[str] = None
     ai_description_ar: Optional[str] = None
     detections: list = []
+    annotated_image_base64: Optional[str] = None  # Base64 encoded annotated image
     processing_time_ms: float = 0
 
 
@@ -306,7 +307,7 @@ async def analyze_image_only(
 ):
     """
     Analyze an image for potholes WITHOUT creating a report.
-    Returns AI-generated description for the existing report.
+    Returns AI-generated description and annotated image for the existing report.
     Used by reporting-service when user uploads a photo.
     """
     global processor
@@ -327,6 +328,8 @@ async def analyze_image_only(
     
     try:
         import time
+        import cv2
+        import base64
         start_time = time.time()
         
         # Save uploaded file temporarily
@@ -347,10 +350,18 @@ async def analyze_image_only(
         else:
             detect_path = temp_path
         
-        # Run detection
-        result = detector.detect(detect_path)
+        # Run detection with annotated image
+        result = detector.detect(detect_path, save_annotated=True, output_dir=settings.OUTPUT_DIR)
         
         processing_time = (time.time() - start_time) * 1000
+        
+        # Read and encode annotated image if available
+        annotated_base64 = None
+        if result and result.annotated_image_path and os.path.exists(result.annotated_image_path):
+            with open(result.annotated_image_path, 'rb') as img_file:
+                annotated_base64 = base64.b64encode(img_file.read()).decode('utf-8')
+            # Clean up annotated image after encoding
+            os.remove(result.annotated_image_path)
         
         # Clean up temp files
         if os.path.exists(temp_path):
@@ -406,6 +417,7 @@ async def analyze_image_only(
             ai_description=ai_description,
             ai_description_ar=ai_description_ar,
             detections=detections,
+            annotated_image_base64=annotated_base64,
             processing_time_ms=processing_time
         )
     

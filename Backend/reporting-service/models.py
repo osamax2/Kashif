@@ -66,6 +66,9 @@ class Report(Base):
     severity_id = Column(Integer, ForeignKey("severities.id"), nullable=False)
     user_hide = Column(Boolean, default=False, nullable=False)
     photo_urls = Column(Text, nullable=True)  # JSON array as text or comma-separated
+    # AI analysis fields
+    ai_annotated_url = Column(Text, nullable=True)  # URL to annotated image with bounding boxes
+    ai_detections = Column(Text, nullable=True)  # JSON string of detection bounding boxes
     # New fields for confirmation system
     confirmation_status = Column(String(20), default="pending", nullable=False, index=True)  # pending, confirmed, expired
     confirmed_by_user_id = Column(Integer, nullable=True)  # User who confirmed this report

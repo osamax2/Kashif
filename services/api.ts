@@ -330,6 +330,8 @@ export interface Report {
   title?: string;
   description: string;
   photo_urls?: string;
+  ai_annotated_url?: string;  // URL to AI annotated image with bounding boxes
+  ai_detections?: string;      // JSON string of detection bounding boxes
   address_text?: string;
   user_hide: boolean;
   confirmation_status: 'pending' | 'confirmed' | 'expired';
@@ -349,6 +351,8 @@ export interface ReportCreate {
   address_text?: string;
   severity_id: number;
   photo_urls?: string;
+  ai_annotated_url?: string;
+  ai_detections?: string;
 }
 
 export interface ReportStatusUpdate {
@@ -429,6 +433,7 @@ export const reportingAPI = {
       url: data.url, // Keep relative URL like /uploads/xxx.jpg
       filename: data.filename,
       ai_analysis: data.ai_analysis,
+      annotated_url: data.ai_analysis?.annotated_url, // URL to AI annotated image
     };
   },
 

@@ -1280,6 +1280,8 @@ async function playBeep(value: number) {
                         // Upload photo if provided - AI will analyze it
                         let photoUrl: string | undefined = undefined;
                         let aiDescription: string | undefined = undefined;
+                        let aiAnnotatedUrl: string | undefined = undefined;
+                        let aiDetections: string | undefined = undefined;
                         if (data.photoUri) {
                             try {
                                 console.log('📷 Uploading photo with AI analysis...');
@@ -1295,6 +1297,18 @@ async function playBeep(value: number) {
                                     aiDescription = (language === 'ar' 
                                         ? uploadResult.ai_analysis.ai_description_ar 
                                         : uploadResult.ai_analysis.ai_description) || undefined;
+                                    
+                                    // Get annotated image URL if available
+                                    if (uploadResult.annotated_url) {
+                                        aiAnnotatedUrl = uploadResult.annotated_url;
+                                        console.log('🎨 AI annotated image:', aiAnnotatedUrl);
+                                    }
+                                    
+                                    // Store detections as JSON string
+                                    if (uploadResult.ai_analysis.detections && uploadResult.ai_analysis.detections.length > 0) {
+                                        aiDetections = JSON.stringify(uploadResult.ai_analysis.detections);
+                                        console.log('📦 AI detections stored:', uploadResult.ai_analysis.detections.length);
+                                    }
                                     
                                     // Update severity based on AI if it detects higher severity
                                     if (uploadResult.ai_analysis.max_severity === 'HIGH') {
@@ -1327,6 +1341,8 @@ async function playBeep(value: number) {
                             address_text: data.address,
                             severity_id: severityId,
                             photo_urls: photoUrl,
+                            ai_annotated_url: aiAnnotatedUrl,
+                            ai_detections: aiDetections,
                         });
                         
                         console.log('✅ Report created:', newReport.id);
