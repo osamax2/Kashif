@@ -5,6 +5,7 @@ import threading
 import uuid
 from typing import Annotated, List, Optional
 
+import ai_client
 import auth_client
 import crud
 import models
@@ -72,7 +73,7 @@ async def upload_image(
     file: UploadFile = File(...),
     user_id: int = Depends(get_current_user_id)
 ):
-    """Upload an image file and return the URL"""
+    """Upload an image file, run AI analysis, and return URL with AI description"""
     # Validate file type
     allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
     if file.content_type not in allowed_types:
@@ -101,13 +102,34 @@ async def upload_image(
     
     logger.info(f"File uploaded: {unique_filename} by user {user_id}")
     
-    # Return the URL path (will be served via /uploads/)
-    return {
+    # Run AI analysis on the uploaded image
+    ai_result = None
+    try:
+        ai_result = await ai_client.analyze_image(file_path, UPLOAD_DIR)
+        if ai_result and ai_result.get("success"):
+            logger.info(f"AI detected {ai_result.get('num_potholes', 0)} potholes in {unique_filename}")
+    except Exception as e:
+        logger.warning(f"AI analysis failed for {unique_filename}: {e}")
+    
+    # Build response with AI data
+    response = {
         "filename": unique_filename,
         "url": f"/uploads/{unique_filename}",
         "size": len(content),
         "content_type": file.content_type
     }
+    
+    # Add AI analysis results if available
+    if ai_result and ai_result.get("success"):
+        response["ai_analysis"] = {
+            "num_potholes": ai_result.get("num_potholes", 0),
+            "max_severity": ai_result.get("max_severity"),
+            "ai_description": ai_result.get("ai_description"),
+            "ai_description_ar": ai_result.get("ai_description_ar"),
+            "detections": ai_result.get("detections", [])
+        }
+    
+    return response
 
 
 @app.get("/categories", response_model=List[schemas.Category])
