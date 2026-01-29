@@ -288,6 +288,134 @@ async def get_stats():
     }
 
 
+class AnalyzeResponse(BaseModel):
+    """Response model for analyze-only endpoint"""
+    success: bool
+    message: str
+    num_potholes: int = 0
+    max_severity: Optional[str] = None
+    ai_description: Optional[str] = None
+    ai_description_ar: Optional[str] = None
+    detections: list = []
+    processing_time_ms: float = 0
+
+
+@app.post("/analyze", response_model=AnalyzeResponse)
+async def analyze_image_only(
+    file: UploadFile = File(...)
+):
+    """
+    Analyze an image for potholes WITHOUT creating a report.
+    Returns AI-generated description for the existing report.
+    Used by reporting-service when user uploads a photo.
+    """
+    global processor
+    
+    if not processor:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    # Check file extension
+    filename = file.filename.lower()
+    allowed_extensions = {'.heic', '.heif', '.jpg', '.jpeg', '.png'}
+    ext = os.path.splitext(filename)[1]
+    
+    if ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {ext}. Allowed: {allowed_extensions}"
+        )
+    
+    try:
+        import time
+        start_time = time.time()
+        
+        # Save uploaded file temporarily
+        temp_path = os.path.join(settings.IMAGES_DIR, f"temp_{file.filename}")
+        with open(temp_path, "wb") as f:
+            content = await file.read()
+            f.write(content)
+        
+        # Use RoboflowPotholeDetector directly
+        detector = RoboflowPotholeDetector()
+        
+        # Convert HEIC if needed
+        if ext in {'.heic', '.heif'}:
+            from heic_processor import process_heic_image
+            jpeg_path = temp_path.replace(ext, '.jpg')
+            process_heic_image(temp_path, jpeg_path)
+            detect_path = jpeg_path
+        else:
+            detect_path = temp_path
+        
+        # Run detection
+        result = detector.detect(detect_path)
+        
+        processing_time = (time.time() - start_time) * 1000
+        
+        # Clean up temp files
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        if ext in {'.heic', '.heif'} and os.path.exists(detect_path):
+            os.remove(detect_path)
+        
+        if not result or result.num_potholes == 0:
+            return AnalyzeResponse(
+                success=True,
+                message="No potholes detected",
+                num_potholes=0,
+                processing_time_ms=processing_time
+            )
+        
+        # Generate AI description
+        num_potholes = result.num_potholes
+        max_severity = result.max_severity or "MEDIUM"
+        
+        # Create detailed description based on detections
+        severity_map = {"LOW": "minor", "MEDIUM": "moderate", "HIGH": "severe"}
+        severity_ar_map = {"LOW": "خفيفة", "MEDIUM": "متوسطة", "HIGH": "شديدة"}
+        
+        severity_text = severity_map.get(max_severity, "moderate")
+        severity_ar = severity_ar_map.get(max_severity, "متوسطة")
+        
+        # Calculate average size if available
+        avg_width = sum(d.estimated_width_cm or 0 for d in result.detections) / max(len(result.detections), 1)
+        avg_area = sum(d.estimated_area_cm2 or 0 for d in result.detections) / max(len(result.detections), 1)
+        
+        if num_potholes == 1:
+            ai_description = f"AI detected 1 {severity_text} pothole"
+            ai_description_ar = f"الذكاء الاصطناعي اكتشف حفرة واحدة {severity_ar}"
+        else:
+            ai_description = f"AI detected {num_potholes} potholes with {severity_text} severity"
+            ai_description_ar = f"الذكاء الاصطناعي اكتشف {num_potholes} حفر بخطورة {severity_ar}"
+        
+        if avg_width > 0:
+            ai_description += f". Estimated average size: {avg_width:.0f}cm"
+            ai_description_ar += f". الحجم التقديري: {avg_width:.0f}سم"
+        
+        if avg_area > 0:
+            ai_description += f", area: {avg_area:.0f}cm²"
+            ai_description_ar += f", المساحة: {avg_area:.0f}سم²"
+        
+        detections = [d.to_dict() for d in result.detections]
+        
+        return AnalyzeResponse(
+            success=True,
+            message=f"Detected {num_potholes} pothole(s)",
+            num_potholes=num_potholes,
+            max_severity=max_severity,
+            ai_description=ai_description,
+            ai_description_ar=ai_description_ar,
+            detections=detections,
+            processing_time_ms=processing_time
+        )
+    
+    except Exception as e:
+        # Clean up on error
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8006)

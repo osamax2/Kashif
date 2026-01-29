@@ -1149,33 +1149,55 @@ async function playBeep(value: number) {
                             medium: 2,
                             high: 3,
                         };
-                        const severityId = severityMap[data.severity] || 1;
+                        let severityId = severityMap[data.severity] || 1;
                         
                         const locationSource = data.latitude && data.longitude ? 'Google Places' : (searchMarker ? 'search' : 'GPS');
                         console.log(`📤 Creating report at ${locationSource}:`, { categoryId, severityId, location: locationToUse });
                         
-                        // Upload photo if provided
+                        // Upload photo if provided - AI will analyze it
                         let photoUrl: string | undefined = undefined;
+                        let aiDescription: string | undefined = undefined;
                         if (data.photoUri) {
                             try {
-                                console.log('📷 Uploading photo...');
+                                console.log('📷 Uploading photo with AI analysis...');
                                 const uploadResult = await reportingAPI.uploadImage(data.photoUri);
                                 photoUrl = uploadResult.url;
                                 console.log('✅ Photo uploaded:', photoUrl);
+                                
+                                // Use AI analysis if available
+                                if (uploadResult.ai_analysis && uploadResult.ai_analysis.num_potholes > 0) {
+                                    console.log('🤖 AI detected', uploadResult.ai_analysis.num_potholes, 'pothole(s)');
+                                    
+                                    // Use AI description based on language
+                                    aiDescription = language === 'ar' 
+                                        ? uploadResult.ai_analysis.ai_description_ar 
+                                        : uploadResult.ai_analysis.ai_description;
+                                    
+                                    // Update severity based on AI if it detects higher severity
+                                    if (uploadResult.ai_analysis.max_severity === 'HIGH') {
+                                        severityId = 3;
+                                    } else if (uploadResult.ai_analysis.max_severity === 'MEDIUM' && severityId < 2) {
+                                        severityId = 2;
+                                    }
+                                }
                             } catch (uploadError) {
                                 console.warn('⚠️ Photo upload failed, continuing without photo:', uploadError);
                                 // Continue without photo if upload fails
                             }
                         }
                         
-                        // Create report
+                        // Create report - use AI description if available
+                        const finalDescription = aiDescription 
+                            ? (data.notes ? `${data.notes}\n\n${aiDescription}` : aiDescription)
+                            : (data.notes || (language === 'ar' ? 'بلاغ جديد' : 'New Report'));
+                        
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole' 
                                 ? (language === 'ar' ? 'حفرة في الطريق' : 'Pothole on Road')
                                 : data.type === 'accident'
                                 ? (language === 'ar' ? 'حادث مروري' : 'Traffic Accident')
                                 : (language === 'ar' ? 'كاشف سرعة' : 'Speed Camera'),
-                            description: data.notes || (language === 'ar' ? 'بلاغ جديد' : 'New Report'),
+                            description: finalDescription,
                             category_id: categoryId,
                             latitude: locationToUse.latitude,
                             longitude: locationToUse.longitude,
