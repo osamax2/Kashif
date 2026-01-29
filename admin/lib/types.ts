@@ -29,6 +29,8 @@ export interface Report {
   longitude: string;
   address_text?: string;
   photo_urls?: string;
+  ai_annotated_url?: string;  // AI annotated image with bounding boxes
+  ai_detections?: string;     // JSON string of AI detection data
   status_id: number;
   user_hide: boolean;
   admin_comment?: string;

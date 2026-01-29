@@ -8,7 +8,34 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 // Helper function to extract photo URL from photo_urls field
-function getPhotoUrl(photoUrls: string | null | undefined): string | null {
+// Prefers AI annotated image if available
+function getPhotoUrl(photoUrls: string | null | undefined, aiAnnotatedUrl?: string | null): string | null {
+  // First, check if we have an AI annotated URL
+  if (aiAnnotatedUrl) {
+    const url = aiAnnotatedUrl.trim();
+    if (url.startsWith('/uploads/')) {
+      return `/api/reports${url}`;
+    }
+    if (url.startsWith('uploads/')) {
+      return `/api/reports/${url}`;
+    }
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.pathname.startsWith('/api/reports')) {
+          return parsedUrl.pathname;
+        }
+        return `/api/reports${parsedUrl.pathname}`;
+      } catch {
+        return null;
+      }
+    }
+    if (url.startsWith('/')) {
+      return `/api/reports${url}`;
+    }
+  }
+  
+  // Fall back to photo_urls
   if (!photoUrls) return null;
   
   try {
@@ -623,17 +650,17 @@ export default function ReportsPage() {
             
             <p className={`text-gray-600 text-sm mb-4 line-clamp-2 ${isRTL ? 'text-right' : ''}`}>{report.description}</p>
             
-            {/* Report Photo */}
-            {getPhotoUrl(report.photo_urls) && (
-              <div className="mb-4">
+            {/* Report Photo - Prefer AI annotated image if available */}
+            {getPhotoUrl(report.photo_urls, report.ai_annotated_url) && (
+              <div className="mb-4 relative">
                 <a 
-                  href={getPhotoUrl(report.photo_urls) || '#'} 
+                  href={getPhotoUrl(report.photo_urls, report.ai_annotated_url) || '#'} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="block"
                 >
                   <img 
-                    src={getPhotoUrl(report.photo_urls) || ''} 
+                    src={getPhotoUrl(report.photo_urls, report.ai_annotated_url) || ''} 
                     alt={report.title}
                     className="w-full h-40 object-cover rounded-lg hover:opacity-90 transition cursor-pointer"
                     onError={(e) => {
@@ -641,6 +668,11 @@ export default function ReportsPage() {
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
+                  {report.ai_annotated_url && (
+                    <span className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-lg font-medium">
+                      🤖 AI
+                    </span>
+                  )}
                 </a>
               </div>
             )}
