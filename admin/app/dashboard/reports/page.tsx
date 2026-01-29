@@ -28,6 +28,10 @@ function getPhotoUrl(photoUrls: string | null | undefined): string | null {
       // Extract path from full URL and use proxy
       try {
         const url = new URL(photoPath);
+        // If pathname already contains /api/reports, just use it
+        if (url.pathname.startsWith('/api/reports')) {
+          return url.pathname;
+        }
         return `/api/reports${url.pathname}`;
       } catch {
         return null;
@@ -53,6 +57,10 @@ function getPhotoUrl(photoUrls: string | null | undefined): string | null {
     if (photoUrls.startsWith('http')) {
       try {
         const url = new URL(photoUrls);
+        // If pathname already contains /api/reports, just use it
+        if (url.pathname.startsWith('/api/reports')) {
+          return url.pathname;
+        }
         return `/api/reports${url.pathname}`;
       } catch {
         return null;
