@@ -423,9 +423,10 @@ export const reportingAPI = {
     }
     
     const data = await response.json();
-    // Return full URL for the uploaded image plus AI analysis
+    // Return relative URL for storage, full URL only for display
+    // The backend stores just /uploads/xxx.jpg which works with the proxy
     return {
-      url: `${API_BASE_URL}/api/reports${data.url}`,
+      url: data.url, // Keep relative URL like /uploads/xxx.jpg
       filename: data.filename,
       ai_analysis: data.ai_analysis,
     };
