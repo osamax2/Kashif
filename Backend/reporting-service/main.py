@@ -301,6 +301,8 @@ async def get_reports(
             "points_awarded": report.points_awarded,
             "created_at": report.created_at,
             "updated_at": report.updated_at,
+            "ai_annotated_url": report.ai_annotated_url,
+            "ai_detections": report.ai_detections,
             "user_name": None,
             "user_phone": None,
             "user_email": None,
