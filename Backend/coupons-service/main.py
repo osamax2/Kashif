@@ -187,6 +187,16 @@ async def create_category(
     db: Session = Depends(get_db)
 ):
     """Create a new coupon category"""
+    # Check if category name already exists
+    existing = db.query(models.CouponCategory).filter(
+        models.CouponCategory.name == category.name,
+        models.CouponCategory.status != "DELETED"
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Category with name '{category.name}' already exists"
+        )
     return crud.create_category(db=db, category=category)
 
 

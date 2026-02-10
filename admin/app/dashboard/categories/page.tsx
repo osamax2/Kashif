@@ -51,15 +51,20 @@ export default function CategoriesPage() {
   };
 
   const handleCreate = async () => {
+    if (!formData.name.trim()) {
+      alert('Category name is required');
+      return;
+    }
     try {
       await couponsAPI.createCategory(formData);
       alert('Category created successfully!');
       setShowCreateModal(false);
       resetForm();
       loadCategories();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create category:', error);
-      alert('Failed to create category');
+      const msg = error?.response?.data?.detail || 'Failed to create category';
+      alert(msg);
     }
   };
 
