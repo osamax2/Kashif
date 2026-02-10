@@ -83,16 +83,33 @@ export default function CompaniesPage() {
     }
   };
 
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      alert(isRTL ? 'اسم الشركة مطلوب' : 'Company name is required');
+      return false;
+    }
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      alert(isRTL ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
+      return false;
+    }
+    if (formData.phone && !/^[+]?[\d\s()-]{6,20}$/.test(formData.phone)) {
+      alert(isRTL ? 'رقم الهاتف غير صالح' : 'Invalid phone number');
+      return false;
+    }
+    return true;
+  };
+
   const handleCreate = async () => {
+    if (!validateForm()) return;
     try {
       await couponsAPI.createCompany(formData);
-      alert('Company created successfully!');
+      alert(isRTL ? 'تم إنشاء الشركة بنجاح!' : 'Company created successfully!');
       setShowCreateModal(false);
       resetForm();
       loadCompanies();
     } catch (error) {
       console.error('Failed to create company:', error);
-      alert('Failed to create company');
+      alert(isRTL ? 'فشل في إنشاء الشركة' : 'Failed to create company');
     }
   };
 
@@ -114,9 +131,10 @@ export default function CompaniesPage() {
 
   const handleUpdate = async () => {
     if (!selectedCompany) return;
+    if (!validateForm()) return;
     try {
       await couponsAPI.updateCompany(selectedCompany.id, formData);
-      alert('Company updated successfully!');
+      alert(isRTL ? 'تم تحديث الشركة بنجاح!' : 'Company updated successfully!');
       setShowEditModal(false);
       resetForm();
       loadCompanies();

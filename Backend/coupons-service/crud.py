@@ -24,7 +24,7 @@ def create_company(db: Session, company: schemas.CompanyCreate):
 
 def get_companies(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Company).filter(
-        models.Company.status == "ACTIVE"
+        models.Company.status != "DELETED"
     ).offset(skip).limit(limit).all()
 
 
