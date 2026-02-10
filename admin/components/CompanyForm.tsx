@@ -1,6 +1,13 @@
 import ImageUpload from './ImageUpload';
+import { useState } from 'react';
 
 export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  
+  const nameError = touched.name && !formData.name?.trim();
+  const emailError = touched.email && formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+  const phoneError = touched.phone && formData.phone && !/^[+]?[\d\s()-]{6,20}$/.test(formData.phone);
+
   return (
     <div className="space-y-4">
       <div>
@@ -11,9 +18,15 @@ export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
           type="text"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+          onBlur={() => setTouched({ ...touched, name: true })}
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''} ${nameError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
           required
         />
+        {nameError && (
+          <p className={`text-xs text-red-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
+            {isRTL ? 'اسم الشركة مطلوب' : 'Company name is required'}
+          </p>
+        )}
       </div>
       
       <ImageUpload
@@ -31,9 +44,15 @@ export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
           type="tel"
           value={formData.phone || ''}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+          onBlur={() => setTouched({ ...touched, phone: true })}
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''} ${phoneError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
           placeholder={isRTL ? 'مثال: +966501234567' : 'e.g., +966501234567'}
         />
+        {phoneError && (
+          <p className={`text-xs text-red-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
+            {isRTL ? 'رقم الهاتف غير صالح' : 'Invalid phone number'}
+          </p>
+        )}
       </div>
 
       <div>
@@ -44,9 +63,15 @@ export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
           type="email"
           value={formData.email || ''}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+          onBlur={() => setTouched({ ...touched, email: true })}
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${isRTL ? 'text-right' : ''} ${emailError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
           placeholder={isRTL ? 'مثال: info@company.com' : 'e.g., info@company.com'}
         />
+        {emailError && (
+          <p className={`text-xs text-red-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
+            {isRTL ? 'البريد الإلكتروني غير صالح' : 'Invalid email address'}
+          </p>
+        )}
       </div>
 
       <div>
