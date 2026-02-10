@@ -69,6 +69,12 @@ export default function UsersPage() {
   const [resetPasswordForm, setResetPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
   const [resetPasswordError, setResetPasswordError] = useState('');
 
+  // Field-level validation errors for all forms
+  const [companyFormErrors, setCompanyFormErrors] = useState<Record<string, string>>({});
+  const [governmentFormErrors, setGovernmentFormErrors] = useState<Record<string, string>>({});
+  const [normalFormErrors, setNormalFormErrors] = useState<Record<string, string>>({});
+  const [adminFormErrors, setAdminFormErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     loadUsers();
     loadDeletedUsers();
@@ -144,20 +150,44 @@ export default function UsersPage() {
     return { valid: true, error: '' };
   };
 
+  const validateEmail = (email: string): string => {
+    if (!email.trim()) return isRTL ? 'البريد الإلكتروني مطلوب' : 'Email is required';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return isRTL ? 'صيغة البريد الإلكتروني غير صحيحة' : 'Invalid email format';
+    return '';
+  };
+
+  const validatePhone = (phone: string): string => {
+    if (!phone.trim()) return isRTL ? 'رقم الهاتف مطلوب' : 'Phone number is required';
+    const cleaned = phone.replace(/[\s\-()]/g, '');
+    const phoneRegex = /^\+?[0-9]{7,15}$/;
+    if (!phoneRegex.test(cleaned)) return isRTL ? 'رقم الهاتف غير صحيح (7-15 رقم)' : 'Invalid phone number (7-15 digits)';
+    return '';
+  };
+
+  const validateName = (name: string): string => {
+    if (!name.trim()) return isRTL ? 'الاسم الكامل مطلوب' : 'Full name is required';
+    if (name.trim().length < 2) return isRTL ? 'الاسم قصير جداً' : 'Name is too short';
+    return '';
+  };
+
   const [passwordError, setPasswordError] = useState('');
 
   const handleCreateCompanyUser = async () => {
-    if (!companyUserForm.email || !companyUserForm.password || !companyUserForm.full_name || !companyUserForm.company_id) {
-      alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields');
-      return;
+    const errors: Record<string, string> = {};
+    errors.full_name = validateName(companyUserForm.full_name);
+    errors.email = validateEmail(companyUserForm.email);
+    if (companyUserForm.phone_number.trim()) {
+      errors.phone_number = validatePhone(companyUserForm.phone_number);
     }
-
-    // Validate password
+    if (!companyUserForm.company_id) errors.company_id = isRTL ? 'يرجى اختيار الشركة' : 'Please select a company';
     const passwordValidation = validatePassword(companyUserForm.password);
-    if (!passwordValidation.valid) {
-      setPasswordError(passwordValidation.error);
-      return;
-    }
+    if (!passwordValidation.valid) errors.password = passwordValidation.error;
+
+    // Filter out empty errors
+    const activeErrors = Object.fromEntries(Object.entries(errors).filter(([, v]) => v));
+    setCompanyFormErrors(activeErrors);
+    if (Object.keys(activeErrors).length > 0) return;
 
     try {
       await usersAPI.createCompanyUser({
@@ -171,27 +201,34 @@ export default function UsersPage() {
       setShowCreateCompanyUserModal(false);
       setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '', phone_number: '' });
       setPasswordError('');
+      setCompanyFormErrors({});
       loadUsers();
     } catch (error: any) {
       console.error('Failed to create company user:', error);
-      alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء مستخدم الشركة' : 'Failed to create company user'));
+      const detail = error.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : (isRTL ? 'فشل في إنشاء مستخدم الشركة' : 'Failed to create company user');
+      setCompanyFormErrors({ _general: msg });
     }
   };
 
   const [governmentPasswordError, setGovernmentPasswordError] = useState('');
 
   const handleCreateGovernmentUser = async () => {
-    if (!governmentUserForm.email || !governmentUserForm.password || !governmentUserForm.full_name || !governmentUserForm.city || !governmentUserForm.district || !governmentUserForm.job_description) {
-      alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields');
-      return;
+    const errors: Record<string, string> = {};
+    errors.full_name = validateName(governmentUserForm.full_name);
+    errors.email = validateEmail(governmentUserForm.email);
+    if (governmentUserForm.phone.trim()) {
+      errors.phone = validatePhone(governmentUserForm.phone);
     }
-
-    // Validate password
+    if (!governmentUserForm.city.trim()) errors.city = isRTL ? 'المدينة مطلوبة' : 'City is required';
+    if (!governmentUserForm.district.trim()) errors.district = isRTL ? 'الحي مطلوب' : 'District is required';
+    if (!governmentUserForm.job_description.trim()) errors.job_description = isRTL ? 'المسمى الوظيفي مطلوب' : 'Job description is required';
     const passwordValidation = validatePassword(governmentUserForm.password);
-    if (!passwordValidation.valid) {
-      setGovernmentPasswordError(passwordValidation.error);
-      return;
-    }
+    if (!passwordValidation.valid) errors.password = passwordValidation.error;
+
+    const activeErrors = Object.fromEntries(Object.entries(errors).filter(([, v]) => v));
+    setGovernmentFormErrors(activeErrors);
+    if (Object.keys(activeErrors).length > 0) return;
 
     try {
       await usersAPI.createGovernmentUser({
@@ -207,25 +244,27 @@ export default function UsersPage() {
       setShowCreateGovernmentUserModal(false);
       setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '', city: '', district: '', job_description: '' });
       setGovernmentPasswordError('');
+      setGovernmentFormErrors({});
       loadUsers();
     } catch (error: any) {
       console.error('Failed to create government user:', error);
-      alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء الموظف الحكومي' : 'Failed to create government employee'));
+      const detail = error.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : (isRTL ? 'فشل في إنشاء الموظف الحكومي' : 'Failed to create government employee');
+      setGovernmentFormErrors({ _general: msg });
     }
   };
 
   const handleCreateNormalUser = async () => {
-    if (!normalUserForm.email || !normalUserForm.password || !normalUserForm.full_name || !normalUserForm.phone) {
-      alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة (بما في ذلك رقم الهاتف)' : 'Please fill in all required fields (including phone number)');
-      return;
-    }
-
-    // Validate password
+    const errors: Record<string, string> = {};
+    errors.full_name = validateName(normalUserForm.full_name);
+    errors.email = validateEmail(normalUserForm.email);
+    errors.phone = validatePhone(normalUserForm.phone);
     const passwordValidation = validatePassword(normalUserForm.password);
-    if (!passwordValidation.valid) {
-      setNormalUserPasswordError(passwordValidation.error);
-      return;
-    }
+    if (!passwordValidation.valid) errors.password = passwordValidation.error;
+
+    const activeErrors = Object.fromEntries(Object.entries(errors).filter(([, v]) => v));
+    setNormalFormErrors(activeErrors);
+    if (Object.keys(activeErrors).length > 0) return;
 
     try {
       await usersAPI.createNormalUser({
@@ -238,25 +277,29 @@ export default function UsersPage() {
       setShowCreateNormalUserModal(false);
       setNormalUserForm({ email: '', password: '', full_name: '', phone: '' });
       setNormalUserPasswordError('');
+      setNormalFormErrors({});
       loadUsers();
     } catch (error: any) {
       console.error('Failed to create normal user:', error);
-      alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء المستخدم' : 'Failed to create user'));
+      const detail = error.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : (isRTL ? 'فشل في إنشاء المستخدم' : 'Failed to create user');
+      setNormalFormErrors({ _general: msg });
     }
   };
 
   const handleCreateAdminUser = async () => {
-    if (!adminUserForm.email || !adminUserForm.password || !adminUserForm.full_name) {
-      alert(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields');
-      return;
+    const errors: Record<string, string> = {};
+    errors.full_name = validateName(adminUserForm.full_name);
+    errors.email = validateEmail(adminUserForm.email);
+    if (adminUserForm.phone.trim()) {
+      errors.phone = validatePhone(adminUserForm.phone);
     }
-
-    // Validate password
     const passwordValidation = validatePassword(adminUserForm.password);
-    if (!passwordValidation.valid) {
-      setAdminUserPasswordError(passwordValidation.error);
-      return;
-    }
+    if (!passwordValidation.valid) errors.password = passwordValidation.error;
+
+    const activeErrors = Object.fromEntries(Object.entries(errors).filter(([, v]) => v));
+    setAdminFormErrors(activeErrors);
+    if (Object.keys(activeErrors).length > 0) return;
 
     try {
       await usersAPI.createAdminUser({
@@ -269,10 +312,13 @@ export default function UsersPage() {
       setShowCreateAdminUserModal(false);
       setAdminUserForm({ email: '', password: '', full_name: '', phone: '' });
       setAdminUserPasswordError('');
+      setAdminFormErrors({});
       loadUsers();
     } catch (error: any) {
       console.error('Failed to create admin user:', error);
-      alert(error.response?.data?.detail || (isRTL ? 'فشل في إنشاء المسؤول' : 'Failed to create admin'));
+      const detail = error.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : (isRTL ? 'فشل في إنشاء المسؤول' : 'Failed to create admin');
+      setAdminFormErrors({ _general: msg });
     }
   };
 
@@ -1091,6 +1137,11 @@ export default function UsersPage() {
             <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
               {t.users.createCompanyUserDesc}
             </p>
+            {companyFormErrors._general && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+                <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors._general}</p>
+              </div>
+            )}
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1099,10 +1150,14 @@ export default function UsersPage() {
                 <input
                   type="text"
                   value={companyUserForm.full_name}
-                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, full_name: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setCompanyUserForm({ ...companyUserForm, full_name: e.target.value });
+                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${companyFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="John Doe"
                 />
+                {companyFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.full_name}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1111,10 +1166,14 @@ export default function UsersPage() {
                 <input
                   type="email"
                   value={companyUserForm.email}
-                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, email: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setCompanyUserForm({ ...companyUserForm, email: e.target.value });
+                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${companyFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="user@company.com"
                 />
+                {companyFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.email}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1123,11 +1182,15 @@ export default function UsersPage() {
                 <input
                   type="tel"
                   value={companyUserForm.phone_number}
-                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, phone_number: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setCompanyUserForm({ ...companyUserForm, phone_number: e.target.value });
+                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.phone_number; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${companyFormErrors.phone_number ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
                   dir="ltr"
                 />
+                {companyFormErrors.phone_number && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.phone_number}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1139,8 +1202,9 @@ export default function UsersPage() {
                   onChange={(e) => {
                     setCompanyUserForm({ ...companyUserForm, password: e.target.value });
                     setPasswordError('');
+                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
                   }}
-                  className={`w-full px-4 py-2 border ${passwordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  className={`w-full px-4 py-2 border ${passwordError || companyFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="••••••••"
                   minLength={8}
                 />
@@ -1170,8 +1234,11 @@ export default function UsersPage() {
                 </label>
                 <select
                   value={companyUserForm.company_id}
-                  onChange={(e) => setCompanyUserForm({ ...companyUserForm, company_id: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setCompanyUserForm({ ...companyUserForm, company_id: e.target.value });
+                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.company_id; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${companyFormErrors.company_id ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 >
                   <option value="">{t.users.selectCompany}</option>
                   {companies.map((company: any) => (
@@ -1180,6 +1247,7 @@ export default function UsersPage() {
                     </option>
                   ))}
                 </select>
+                {companyFormErrors.company_id && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.company_id}</p>}
               </div>
             </div>
             <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -1188,6 +1256,7 @@ export default function UsersPage() {
                   setShowCreateCompanyUserModal(false);
                   setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '', phone_number: '' });
                   setPasswordError('');
+                  setCompanyFormErrors({});
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -1217,6 +1286,11 @@ export default function UsersPage() {
                 ? 'إنشاء حساب موظف حكومي للوصول إلى البلاغات والخريطة' 
                 : 'Create a government employee account with access to reports and map'}
             </p>
+            {governmentFormErrors._general && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+                <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors._general}</p>
+              </div>
+            )}
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1225,10 +1299,14 @@ export default function UsersPage() {
                 <input
                   type="text"
                   value={governmentUserForm.full_name}
-                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, full_name: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setGovernmentUserForm({ ...governmentUserForm, full_name: e.target.value });
+                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${governmentFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
                 />
+                {governmentFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.full_name}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1237,10 +1315,14 @@ export default function UsersPage() {
                 <input
                   type="email"
                   value={governmentUserForm.email}
-                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, email: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setGovernmentUserForm({ ...governmentUserForm, email: e.target.value });
+                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${governmentFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="user@gov.sa"
                 />
+                {governmentFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.email}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1249,11 +1331,15 @@ export default function UsersPage() {
                 <input
                   type="tel"
                   value={governmentUserForm.phone}
-                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, phone: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setGovernmentUserForm({ ...governmentUserForm, phone: e.target.value });
+                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${governmentFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
                   dir="ltr"
                 />
+                {governmentFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.phone}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1262,10 +1348,14 @@ export default function UsersPage() {
                 <input
                   type="text"
                   value={governmentUserForm.city}
-                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, city: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setGovernmentUserForm({ ...governmentUserForm, city: e.target.value });
+                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.city; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${governmentFormErrors.city ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? 'الرياض' : 'Riyadh'}
                 />
+                {governmentFormErrors.city && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.city}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1274,10 +1364,14 @@ export default function UsersPage() {
                 <input
                   type="text"
                   value={governmentUserForm.district}
-                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, district: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setGovernmentUserForm({ ...governmentUserForm, district: e.target.value });
+                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.district; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${governmentFormErrors.district ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? 'العليا' : 'Al Olaya'}
                 />
+                {governmentFormErrors.district && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.district}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1286,10 +1380,14 @@ export default function UsersPage() {
                 <input
                   type="text"
                   value={governmentUserForm.job_description}
-                  onChange={(e) => setGovernmentUserForm({ ...governmentUserForm, job_description: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setGovernmentUserForm({ ...governmentUserForm, job_description: e.target.value });
+                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.job_description; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${governmentFormErrors.job_description ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? 'مراقب بلدي' : 'Municipal Inspector'}
                 />
+                {governmentFormErrors.job_description && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.job_description}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1301,8 +1399,9 @@ export default function UsersPage() {
                   onChange={(e) => {
                     setGovernmentUserForm({ ...governmentUserForm, password: e.target.value });
                     setGovernmentPasswordError('');
+                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
                   }}
-                  className={`w-full px-4 py-2 border ${governmentPasswordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  className={`w-full px-4 py-2 border ${governmentPasswordError || governmentFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="••••••••"
                   minLength={8}
                 />
@@ -1333,6 +1432,7 @@ export default function UsersPage() {
                   setShowCreateGovernmentUserModal(false);
                   setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '', city: '', district: '', job_description: '' });
                   setGovernmentPasswordError('');
+                  setGovernmentFormErrors({});
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -1362,6 +1462,11 @@ export default function UsersPage() {
                 ? 'إنشاء حساب مستخدم عادي يمكنه الإبلاغ وكسب النقاط' 
                 : 'Create a normal user account who can report issues and earn points'}
             </p>
+            {normalFormErrors._general && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+                <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors._general}</p>
+              </div>
+            )}
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1370,10 +1475,14 @@ export default function UsersPage() {
                 <input
                   type="text"
                   value={normalUserForm.full_name}
-                  onChange={(e) => setNormalUserForm({ ...normalUserForm, full_name: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setNormalUserForm({ ...normalUserForm, full_name: e.target.value });
+                    setNormalFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${normalFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
                 />
+                {normalFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.full_name}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1382,10 +1491,14 @@ export default function UsersPage() {
                 <input
                   type="email"
                   value={normalUserForm.email}
-                  onChange={(e) => setNormalUserForm({ ...normalUserForm, email: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setNormalUserForm({ ...normalUserForm, email: e.target.value });
+                    setNormalFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${normalFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="user@example.com"
                 />
+                {normalFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.email}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1394,11 +1507,15 @@ export default function UsersPage() {
                 <input
                   type="tel"
                   value={normalUserForm.phone}
-                  onChange={(e) => setNormalUserForm({ ...normalUserForm, phone: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setNormalUserForm({ ...normalUserForm, phone: e.target.value });
+                    setNormalFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${normalFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
                   dir="ltr"
                 />
+                {normalFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.phone}</p>}
                 <p className={`mt-1 text-xs text-gray-500 ${isRTL ? 'text-right' : ''}`}>
                   {isRTL ? 'رقم الهاتف مطلوب للمستخدمين العاديين' : 'Phone number is required for normal users'}
                 </p>
@@ -1413,8 +1530,9 @@ export default function UsersPage() {
                   onChange={(e) => {
                     setNormalUserForm({ ...normalUserForm, password: e.target.value });
                     setNormalUserPasswordError('');
+                    setNormalFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
                   }}
-                  className={`w-full px-4 py-2 border ${normalUserPasswordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  className={`w-full px-4 py-2 border ${normalUserPasswordError || normalFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="••••••••"
                   minLength={8}
                 />
@@ -1441,6 +1559,7 @@ export default function UsersPage() {
                   setShowCreateNormalUserModal(false);
                   setNormalUserForm({ email: '', password: '', full_name: '', phone: '' });
                   setNormalUserPasswordError('');
+                  setNormalFormErrors({});
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -1470,6 +1589,11 @@ export default function UsersPage() {
                 ? 'إنشاء حساب مسؤول بصلاحيات كاملة للوصول إلى لوحة التحكم' 
                 : 'Create an admin account with full access to the dashboard'}
             </p>
+            {adminFormErrors._general && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+                <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors._general}</p>
+              </div>
+            )}
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1478,10 +1602,14 @@ export default function UsersPage() {
                 <input
                   type="text"
                   value={adminUserForm.full_name}
-                  onChange={(e) => setAdminUserForm({ ...adminUserForm, full_name: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setAdminUserForm({ ...adminUserForm, full_name: e.target.value });
+                    setAdminFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${adminFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
                 />
+                {adminFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.full_name}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1490,10 +1618,14 @@ export default function UsersPage() {
                 <input
                   type="email"
                   value={adminUserForm.email}
-                  onChange={(e) => setAdminUserForm({ ...adminUserForm, email: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setAdminUserForm({ ...adminUserForm, email: e.target.value });
+                    setAdminFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${adminFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="admin@example.com"
                 />
+                {adminFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.email}</p>}
               </div>
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -1502,11 +1634,15 @@ export default function UsersPage() {
                 <input
                   type="tel"
                   value={adminUserForm.phone}
-                  onChange={(e) => setAdminUserForm({ ...adminUserForm, phone: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  onChange={(e) => {
+                    setAdminUserForm({ ...adminUserForm, phone: e.target.value });
+                    setAdminFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
+                  }}
+                  className={`w-full px-4 py-2 border ${adminFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
                   dir="ltr"
                 />
+                {adminFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.phone}</p>}
                 <p className={`mt-1 text-xs text-gray-500 ${isRTL ? 'text-right' : ''}`}>
                   {isRTL ? 'رقم الهاتف اختياري للمسؤولين' : 'Phone number is optional for admins'}
                 </p>
@@ -1521,8 +1657,9 @@ export default function UsersPage() {
                   onChange={(e) => {
                     setAdminUserForm({ ...adminUserForm, password: e.target.value });
                     setAdminUserPasswordError('');
+                    setAdminFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
                   }}
-                  className={`w-full px-4 py-2 border ${adminUserPasswordError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  className={`w-full px-4 py-2 border ${adminUserPasswordError || adminFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                   placeholder="••••••••"
                   minLength={8}
                 />
@@ -1549,6 +1686,7 @@ export default function UsersPage() {
                   setShowCreateAdminUserModal(false);
                   setAdminUserForm({ email: '', password: '', full_name: '', phone: '' });
                   setAdminUserPasswordError('');
+                  setAdminFormErrors({});
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
