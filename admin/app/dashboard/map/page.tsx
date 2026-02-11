@@ -527,7 +527,7 @@ export default function MapPage() {
       <div className="mb-4 space-y-3">
         {/* Smart Search Bar */}
         <div className="relative">
-          <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className="flex gap-2">
             <div className="flex-1 relative">
               <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
               <input
@@ -567,7 +567,7 @@ export default function MapPage() {
                   onClick={() => handleSelectResult(result)}
                   className={`w-full px-4 py-2.5 text-sm hover:bg-green-50 border-b border-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}
                 >
-                  <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className="flex items-start gap-3">
                     {getResultIcon(result.type)}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 truncate">{result.displayName}</p>
@@ -588,7 +588,7 @@ export default function MapPage() {
                   onClick={() => handleSelectResult(result)}
                   className={`w-full px-4 py-2.5 text-sm hover:bg-purple-50 border-b border-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}
                 >
-                  <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className="flex items-start gap-3">
                     {getResultIcon(result.type)}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 truncate">{result.displayName}</p>
@@ -609,7 +609,7 @@ export default function MapPage() {
                   onClick={() => handleSelectResult(result)}
                   className={`w-full px-4 py-2.5 text-sm hover:bg-blue-50 border-b border-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}
                 >
-                  <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className="flex items-start gap-3">
                     {getResultIcon(result.type)}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 truncate">{result.displayName}</p>
@@ -630,7 +630,7 @@ export default function MapPage() {
         </div>
         
         {/* Filters */}
-        <div className={`flex flex-wrap gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className="flex flex-wrap gap-3">
           {/* Category Multi-Select Dropdown */}
           <div className="relative category-dropdown">
             <button
@@ -638,7 +638,7 @@ export default function MapPage() {
                 setShowCategoryDropdown(!showCategoryDropdown);
                 setShowStatusDropdown(false);
               }}
-              className={`flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[160px] ${isRTL ? 'flex-row-reverse text-right' : ''}`}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[160px]"
             >
               <span className="flex-1 truncate">
                 {categoryFilter.length === 0 
@@ -672,7 +672,7 @@ export default function MapPage() {
                 {categories.map((cat) => (
                   <label
                     key={cat.id}
-                    className={`flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}
+                    className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -702,7 +702,7 @@ export default function MapPage() {
                 setShowStatusDropdown(!showStatusDropdown);
                 setShowCategoryDropdown(false);
               }}
-              className={`flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[160px] ${isRTL ? 'flex-row-reverse text-right' : ''}`}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[160px]"
             >
               <span className="flex-1 truncate">
                 {statusFilter.length === 0 
@@ -736,7 +736,7 @@ export default function MapPage() {
                 {statuses.map((status) => (
                   <label
                     key={status.id}
-                    className={`flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}
+                    className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -761,7 +761,7 @@ export default function MapPage() {
           <button
             onClick={exportToCSV}
             disabled={exporting || filteredReports.length === 0}
-            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
             <Download className="w-4 h-4" />
             {exporting 
@@ -770,7 +770,7 @@ export default function MapPage() {
             }
           </button>
           
-          <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'mr-auto' : 'ml-auto'}`}>
+          <div className="flex items-center text-sm text-gray-500 ms-auto">
             <MapPin className="w-4 h-4 mr-1" />
             {isRTL 
               ? `${filteredReports.length} تقرير على الخريطة`
@@ -780,7 +780,7 @@ export default function MapPage() {
         </div>
         
         {/* Date and Time Filters */}
-        <div className={`flex flex-wrap gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className="flex flex-wrap gap-3">
           {/* Date From */}
           <div className="flex flex-col">
             <label className={`text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
@@ -904,7 +904,7 @@ export default function MapPage() {
       </div>
 
       {/* Legend */}
-      <div className={`mt-3 flex flex-wrap gap-4 text-xs ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className="mt-3 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded-full bg-blue-500"></span>
           <span>NEW</span>

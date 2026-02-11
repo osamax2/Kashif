@@ -74,6 +74,7 @@ class LanguageUpdate(BaseModel):
 class UserUpdate(BaseModel):
     """Schema for updating user by admin"""
     full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     role: Optional[str] = None
     company_id: Optional[int] = None

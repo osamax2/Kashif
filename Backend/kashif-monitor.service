@@ -1,0 +1,15 @@
+[Unit]
+Description=Kashif Server Security Monitor
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /root/server-monitor.sh
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/server-monitor.log
+StandardError=append:/var/log/server-monitor.log
+
+[Install]
+WantedBy=multi-user.target

@@ -59,18 +59,11 @@ def start_consumer():
             result = channel.queue_declare(queue='auth_service_queue', durable=True)
             queue_name = result.method.queue
             
-            # Bind to point transaction events
+            # Bind to point transaction events (single source of truth)
             channel.queue_bind(
                 exchange='kashif_events',
                 queue=queue_name,
                 routing_key='points.transaction.created'
-            )
-            
-            # Also bind to points.awarded events (from admin panel)
-            channel.queue_bind(
-                exchange='kashif_events',
-                queue=queue_name,
-                routing_key='points.awarded'
             )
             
             def callback(ch, method, properties, body):
@@ -81,9 +74,11 @@ def start_consumer():
                     
                     logger.info(f"Received event: {event_type}")
                     
-                    # Handle both points.transaction.created and points.awarded events
-                    if event_type in ['points.transaction.created', 'points.awarded']:
+                    # Only handle points.transaction.created to avoid double-counting
+                    if event_type == 'points.transaction.created':
                         handle_point_transaction(data)
+                    else:
+                        logger.info(f"Ignoring event type: {event_type}")
                     
                     ch.basic_ack(delivery_tag=method.delivery_tag)
                     

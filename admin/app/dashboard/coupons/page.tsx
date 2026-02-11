@@ -19,6 +19,17 @@ const sanitizeToEnglishNumbers = (value: string): string => {
   return sanitized.replaceAll(/\D/g, '');
 };
 
+// Helper function to determine effective coupon status based on expiration date
+const getEffectiveStatus = (coupon: { status: string; expiration_date: string }): string => {
+  if (coupon.status === 'INACTIVE') return 'INACTIVE';
+  if (coupon.expiration_date) {
+    const now = new Date();
+    const expirationDate = new Date(coupon.expiration_date);
+    if (expirationDate < now) return 'EXPIRED';
+  }
+  return coupon.status;
+};
+
 interface Coupon {
   id: number;
   company_id: number;
@@ -62,6 +73,7 @@ export default function CouponsPage() {
   const [companySearch, setCompanySearch] = useState('');
   const [showCompanySuggestions, setShowCompanySuggestions] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   // Filter states
   const [filterCategory, setFilterCategory] = useState('');
@@ -131,9 +143,9 @@ export default function CouponsPage() {
       filtered = filtered.filter(coupon => coupon.company_id === parseInt(filterCompany));
     }
     
-    // Apply status filter
+    // Apply status filter (using effective status that accounts for expiration)
     if (filterStatus) {
-      filtered = filtered.filter(coupon => coupon.status === filterStatus);
+      filtered = filtered.filter(coupon => getEffectiveStatus(coupon) === filterStatus);
     }
     
     // Apply search query
@@ -243,12 +255,33 @@ export default function CouponsPage() {
   };
 
   const handleCreate = async () => {
+    // Validate required fields
+    const errors: Record<string, string> = {};
+    
+    if (!formData.name || !formData.name.trim()) {
+      errors.name = isRTL ? 'اسم الكوبون مطلوب' : 'Coupon name is required';
+    }
+    if (!formData.description || !formData.description.trim()) {
+      errors.description = isRTL ? 'وصف الكوبون مطلوب' : 'Description is required';
+    }
+    if (!formData.company_id) {
+      errors.company_id = isRTL ? 'الشركة مطلوبة' : 'Company is required';
+    }
+    if (!formData.points_cost && formData.points_cost !== '0') {
+      errors.points_cost = isRTL ? 'تكلفة النقاط مطلوبة' : 'Points cost is required';
+    }
+    
     // Validate points_cost
     const pointsCost = parseInt(formData.points_cost);
-    if (isNaN(pointsCost) || pointsCost < 0 || pointsCost > 100000) {
-      alert(isRTL ? 'تكلفة النقاط يجب أن تكون بين 0 و 100000' : 'Points cost must be between 0 and 100,000');
+    if (!errors.points_cost && (isNaN(pointsCost) || pointsCost < 0 || pointsCost > 100000)) {
+      errors.points_cost = isRTL ? 'تكلفة النقاط يجب أن تكون بين 0 و 100000' : 'Points cost must be between 0 and 100,000';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
       return;
     }
+    setValidationErrors({});
     
     try {
       const createData: any = {
@@ -314,14 +347,35 @@ export default function CouponsPage() {
   const handleUpdate = async () => {
     if (!selectedCoupon) return;
 
+    // Validate required fields
+    const errors: Record<string, string> = {};
+    
+    if (!formData.name || !formData.name.trim()) {
+      errors.name = isRTL ? 'اسم الكوبون مطلوب' : 'Coupon name is required';
+    }
+    if (!formData.description || !formData.description.trim()) {
+      errors.description = isRTL ? 'وصف الكوبون مطلوب' : 'Description is required';
+    }
+    if (!formData.company_id) {
+      errors.company_id = isRTL ? 'الشركة مطلوبة' : 'Company is required';
+    }
+    if (!formData.points_cost && formData.points_cost !== '0') {
+      errors.points_cost = isRTL ? 'تكلفة النقاط مطلوبة' : 'Points cost is required';
+    }
+
     // Validate points_cost if provided
-    if (formData.points_cost && formData.points_cost.toString().trim()) {
+    if (!errors.points_cost && formData.points_cost && formData.points_cost.toString().trim()) {
       const pointsCost = parseInt(formData.points_cost);
       if (isNaN(pointsCost) || pointsCost < 0 || pointsCost > 100000) {
-        alert(isRTL ? 'تكلفة النقاط يجب أن تكون بين 0 و 100000' : 'Points cost must be between 0 and 100,000');
-        return;
+        errors.points_cost = isRTL ? 'تكلفة النقاط يجب أن تكون بين 0 و 100000' : 'Points cost must be between 0 and 100,000';
       }
     }
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    setValidationErrors({});
 
     try {
       const updateData: any = {};
@@ -331,7 +385,13 @@ export default function CouponsPage() {
       if (formData.points_cost && formData.points_cost.toString().trim()) {
         updateData.points_cost = parseInt(formData.points_cost);
       }
-      if (formData.image_url && formData.image_url.trim()) updateData.image_url = formData.image_url.trim();
+      // Send image_url as null when cleared, so the backend removes it
+      if (formData.image_url && formData.image_url.trim()) {
+        updateData.image_url = formData.image_url.trim();
+      } else if (selectedCoupon.image_url && !formData.image_url) {
+        // Image was removed by user
+        updateData.image_url = null;
+      }
       if (formData.address !== undefined) updateData.address = formData.address.trim() || null;
       if (formData.status && formData.status.trim()) updateData.status = formData.status.trim();
       if (formData.expiration_date && formData.expiration_date.trim()) {
@@ -472,6 +532,7 @@ export default function CouponsPage() {
           <button
             onClick={() => {
               resetForm();
+              setValidationErrors({});
               setShowCreateModal(true);
             }}
             className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
@@ -545,6 +606,7 @@ export default function CouponsPage() {
             <option value="">{isRTL ? 'كل الحالات' : 'All Status'}</option>
             <option value="ACTIVE">{t.common.active || (isRTL ? 'نشط' : 'Active')}</option>
             <option value="INACTIVE">{t.common.inactive || (isRTL ? 'غير نشط' : 'Inactive')}</option>
+            <option value="EXPIRED">{t.common.expired || (isRTL ? 'منتهي الصلاحية' : 'Expired')}</option>
           </select>
         </div>
       </div>
@@ -587,9 +649,17 @@ export default function CouponsPage() {
             <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <span className="text-yellow-600 font-bold">{coupon.points_cost} {t.coupons.points}</span>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                coupon.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                getEffectiveStatus(coupon) === 'ACTIVE' 
+                  ? 'bg-green-100 text-green-700' 
+                  : getEffectiveStatus(coupon) === 'EXPIRED'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-gray-100 text-gray-700'
               }`}>
-                {coupon.status}
+                {getEffectiveStatus(coupon) === 'ACTIVE' 
+                  ? (t.common.active || 'Active')
+                  : getEffectiveStatus(coupon) === 'EXPIRED'
+                    ? (t.common.expired || 'Expired')
+                    : (t.common.inactive || 'Inactive')}
               </span>
             </div>
             <div className={`flex flex-col xs:flex-row gap-2 ${isRTL ? 'xs:flex-row-reverse' : ''}`}>
@@ -647,12 +717,15 @@ export default function CouponsPage() {
               filteredCompanies={filteredCompanies}
               handleCompanySelect={handleCompanySelect}
               handleCompanySearchChange={handleCompanySearchChange}
+              validationErrors={validationErrors}
+              setValidationErrors={setValidationErrors}
             />
             <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowCreateModal(false);
                   resetForm();
+                  setValidationErrors({});
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -689,12 +762,15 @@ export default function CouponsPage() {
               filteredCompanies={filteredCompanies}
               handleCompanySelect={handleCompanySelect}
               handleCompanySearchChange={handleCompanySearchChange}
+              validationErrors={validationErrors}
+              setValidationErrors={setValidationErrors}
             />
             <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   resetForm();
+                  setValidationErrors({});
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -828,8 +904,21 @@ function CouponForm({
   setShowCompanySuggestions,
   filteredCompanies,
   handleCompanySelect,
-  handleCompanySearchChange
+  handleCompanySearchChange,
+  validationErrors = {},
+  setValidationErrors,
 }: any) {
+  // Clear specific error when user types
+  const clearError = (field: string) => {
+    if (validationErrors[field] && setValidationErrors) {
+      setValidationErrors((prev: Record<string, string>) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
@@ -837,10 +926,11 @@ function CouponForm({
         <input
           type="text"
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clearError('name'); }}
+          className={`w-full px-3 py-2 border ${validationErrors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
           required
         />
+        {validationErrors.name && <p className={`text-sm text-red-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{validationErrors.name}</p>}
       </div>
       
       <div>
@@ -856,25 +946,30 @@ function CouponForm({
             if (sanitizedValue === '' || (numValue >= 0 && numValue <= 100000)) {
               setFormData({ ...formData, points_cost: sanitizedValue });
             }
+            clearError('points_cost');
           }}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          className={`w-full px-3 py-2 border ${validationErrors.points_cost ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
           placeholder="0 - 100000"
           required
         />
-        <p className={`text-xs text-gray-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
-          {isRTL ? 'أدخل رقم بين 0 و 100000 (أرقام إنجليزية فقط)' : 'Enter a number between 0 and 100,000 (English numbers only)'}
-        </p>
+        {validationErrors.points_cost 
+          ? <p className={`text-sm text-red-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{validationErrors.points_cost}</p>
+          : <p className={`text-xs text-gray-500 mt-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'أدخل رقم بين 0 و 100000 (أرقام إنجليزية فقط)' : 'Enter a number between 0 and 100,000 (English numbers only)'}
+            </p>
+        }
       </div>
 
       <div className="md:col-span-2">
         <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>{t.coupons.couponDescription} *</label>
         <textarea
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+          onChange={(e) => { setFormData({ ...formData, description: e.target.value }); clearError('description'); }}
+          className={`w-full px-3 py-2 border ${validationErrors.description ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
           rows={3}
           required
         />
+        {validationErrors.description && <p className={`text-sm text-red-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{validationErrors.description}</p>}
       </div>
 
       {/* Only show company search for ADMIN users */}
@@ -884,12 +979,13 @@ function CouponForm({
           <input
             type="text"
             value={companySearch}
-            onChange={(e) => handleCompanySearchChange(e.target.value)}
+            onChange={(e) => { handleCompanySearchChange(e.target.value); clearError('company_id'); }}
             onFocus={() => setShowCompanySuggestions(true)}
             placeholder={isRTL ? 'ابحث عن شركة...' : 'Search for a company...'}
-            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
+            className={`w-full px-3 py-2 border ${validationErrors.company_id ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary ${isRTL ? 'text-right' : ''}`}
             required
           />
+          {validationErrors.company_id && <p className={`text-sm text-red-600 mt-1 ${isRTL ? 'text-right' : ''}`}>{validationErrors.company_id}</p>}
           {showCompanySuggestions && companySearch && filteredCompanies.length > 0 && (
             <div className={`absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto ${isRTL ? 'text-right' : ''}`}>
               {filteredCompanies.map((company: any) => (

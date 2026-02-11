@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import time
 
 import crud
 import email_service
@@ -11,6 +12,8 @@ from database import SessionLocal
 logger = logging.getLogger(__name__)
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
+RECONNECT_DELAY = 5  # seconds between reconnection attempts
+MAX_RECONNECT_DELAY = 60  # maximum delay between attempts
 
 
 def handle_user_registered(event_data):
@@ -231,76 +234,95 @@ def handle_verification_code(event_data):
 
 
 def start_consumer():
-    """Start consuming events from RabbitMQ"""
-    try:
-        parameters = pika.URLParameters(RABBITMQ_URL)
-        connection = pika.BlockingConnection(parameters)
-        channel = connection.channel()
-        
-        channel.exchange_declare(
-            exchange='kashif_events',
-            exchange_type='topic',
-            durable=True
-        )
-        
-        result = channel.queue_declare(queue='notification_service_queue', durable=True)
-        queue_name = result.method.queue
-        
-        # Bind to all relevant events
-        events = [
-            'user.registered',
-            'user.verification_resend',
-            'user.password_reset',
-            'user.verification_code',
-            'report.created',
-            'report.status_updated',
-            'points.awarded',
-            'coupon.redeemed'
-        ]
-        
-        for event in events:
-            channel.queue_bind(
+    """Start consuming events from RabbitMQ with auto-reconnect"""
+    retry_delay = RECONNECT_DELAY
+    
+    while True:
+        try:
+            parameters = pika.URLParameters(RABBITMQ_URL)
+            parameters.heartbeat = 600  # 10 minutes heartbeat
+            parameters.blocked_connection_timeout = 300  # 5 minutes blocked timeout
+            connection = pika.BlockingConnection(parameters)
+            channel = connection.channel()
+            
+            # Reset retry delay on successful connection
+            retry_delay = RECONNECT_DELAY
+            
+            channel.exchange_declare(
                 exchange='kashif_events',
-                queue=queue_name,
-                routing_key=event
+                exchange_type='topic',
+                durable=True
             )
-        
-        def callback(ch, method, properties, body):
+            
+            result = channel.queue_declare(queue='notification_service_queue', durable=True)
+            queue_name = result.method.queue
+            
+            # Bind to all relevant events
+            events = [
+                'user.registered',
+                'user.verification_resend',
+                'user.password_reset',
+                'user.verification_code',
+                'report.created',
+                'report.status_updated',
+                'points.awarded',
+                'coupon.redeemed'
+            ]
+            
+            for event in events:
+                channel.queue_bind(
+                    exchange='kashif_events',
+                    queue=queue_name,
+                    routing_key=event
+                )
+            
+            def callback(ch, method, properties, body):
+                try:
+                    message = json.loads(body)
+                    event_type = message.get('event_type')
+                    data = message.get('data')
+                    
+                    logger.info(f"Received event: {event_type}")
+                    
+                    if event_type == 'user.registered':
+                        handle_user_registered(data)
+                    elif event_type == 'user.verification_resend':
+                        handle_verification_resend(data)
+                    elif event_type == 'user.password_reset':
+                        handle_password_reset(data)
+                    elif event_type == 'user.verification_code':
+                        handle_verification_code(data)
+                    elif event_type == 'report.created':
+                        handle_report_created(data)
+                    elif event_type == 'report.status_updated':
+                        handle_report_status_updated(data)
+                    elif event_type == 'points.awarded':
+                        handle_points_awarded(data)
+                    elif event_type == 'coupon.redeemed':
+                        handle_coupon_redeemed(data)
+                    
+                    ch.basic_ack(delivery_tag=method.delivery_tag)
+                    
+                except Exception as e:
+                    logger.error(f"Error processing message: {e}")
+                    ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+            
+            channel.basic_consume(queue=queue_name, on_message_callback=callback)
+            
+            logger.info("Notification service started consuming events from RabbitMQ")
+            channel.start_consuming()
+            
+        except KeyboardInterrupt:
+            logger.info("Consumer stopped by user")
             try:
-                message = json.loads(body)
-                event_type = message.get('event_type')
-                data = message.get('data')
-                
-                logger.info(f"Received event: {event_type}")
-                
-                if event_type == 'user.registered':
-                    handle_user_registered(data)
-                elif event_type == 'user.verification_resend':
-                    handle_verification_resend(data)
-                elif event_type == 'user.password_reset':
-                    handle_password_reset(data)
-                elif event_type == 'user.verification_code':
-                    handle_verification_code(data)
-                elif event_type == 'report.created':
-                    handle_report_created(data)
-                elif event_type == 'report.status_updated':
-                    handle_report_status_updated(data)
-                elif event_type == 'points.awarded':
-                    handle_points_awarded(data)
-                elif event_type == 'coupon.redeemed':
-                    handle_coupon_redeemed(data)
-                
-                ch.basic_ack(delivery_tag=method.delivery_tag)
-                
-            except Exception as e:
-                logger.error(f"Error processing message: {e}")
-                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-        
-        channel.basic_consume(queue=queue_name, on_message_callback=callback)
-        
-        logger.info("Notification service started consuming events from RabbitMQ")
-        channel.start_consuming()
-        
-    except Exception as e:
-        logger.error(f"Failed to start RabbitMQ consumer: {e}")
-        logger.error(f"Failed to start RabbitMQ consumer: {e}")
+                connection.close()
+            except Exception:
+                pass
+            break
+            
+        except Exception as e:
+            logger.error(f"RabbitMQ consumer connection lost: {e}")
+            logger.info(f"Reconnecting in {retry_delay} seconds...")
+            time.sleep(retry_delay)
+            # Exponential backoff up to MAX_RECONNECT_DELAY
+            retry_delay = min(retry_delay * 2, MAX_RECONNECT_DELAY)

@@ -228,7 +228,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
             {isRTL ? 'إحصائيات ورؤى الكوبونات' : 'Coupon statistics and insights'}
           </p>
         </div>
-        <div className={`flex items-center gap-2 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-2 flex-wrap`}>
           <Calendar className="w-5 h-5 text-gray-500" />
           <select
             value={dateRange}
@@ -263,7 +263,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
           <button
             onClick={exportCompanyAnalytics}
             disabled={exporting}
-            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 ${isRTL ? 'flex-row-reverse' : ''}`}
+            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50`}
           >
             <Download className="w-4 h-4" />
             {exporting 
@@ -277,7 +277,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-purple-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
               <Gift className="w-5 h-5 text-purple-600" />
             </div>
@@ -290,7 +290,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
         </div>
 
         <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
@@ -302,7 +302,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
         </div>
 
         <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-yellow-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-yellow-600" />
             </div>
@@ -314,7 +314,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
         </div>
 
         <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-blue-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-blue-600" />
             </div>
@@ -329,7 +329,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
 
       {/* Coupon Performance */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
-        <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-3 mb-4`}>
           <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
             <BarChart3 className="w-5 h-5 text-purple-600" />
           </div>
@@ -346,12 +346,12 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
         {couponStats.length > 0 ? (
           <div className="space-y-3">
             {couponStats.slice(0, 10).map((coupon, index) => (
-              <div key={coupon.coupon_id} className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div key={coupon.coupon_id} className={`flex items-center gap-3`}>
                 <div className="w-6 h-6 flex items-center justify-center bg-purple-100 text-purple-600 rounded-full text-xs font-bold">
                   {index + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className={`flex items-center justify-between mb-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center justify-between mb-1`}>
                     <span className="font-medium text-gray-900 truncate text-sm">
                       {isRTL ? coupon.title_ar || coupon.title : coupon.title}
                     </span>
@@ -365,7 +365,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
                       style={{ width: `${(coupon.redemption_count / maxRedemptions) * 100}%` }}
                     />
                   </div>
-                  <div className={`flex items-center justify-between mt-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center justify-between mt-1`}>
                     <span className="text-xs text-gray-500">
                       {coupon.points_cost} {isRTL ? 'نقطة' : 'points'}
                     </span>
@@ -391,7 +391,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
       {/* Redemptions Over Time */}
       {timeData.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
-          <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3 mb-4`}>
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
@@ -423,7 +423,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
               );
             })}
           </div>
-          <div className={`flex justify-between mt-2 text-xs text-gray-500 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex justify-between mt-2 text-xs text-gray-500`}>
             <span>{timeData[0]?.date}</span>
             <span>{timeData[timeData.length - 1]?.date}</span>
           </div>
@@ -432,7 +432,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, t }: { companyId: num
 
       {/* All Coupons List */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-        <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-3 mb-4`}>
           <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
             <Gift className="w-5 h-5 text-indigo-600" />
           </div>
@@ -838,7 +838,7 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.analytics.title}</h1>
           <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{isRTL ? 'إحصائيات ورؤى المنصة' : 'Platform statistics and insights'}</p>
         </div>
-        <div className={`flex items-center gap-2 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-2 flex-wrap`}>
           <Filter className="w-5 h-5 text-gray-500" />
           <select
             value={timeFilter}
@@ -874,7 +874,7 @@ export default function AnalyticsPage() {
           <button
             onClick={exportPlatformAnalytics}
             disabled={exporting}
-            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 ${isRTL ? 'flex-row-reverse' : ''}`}
+            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50`}
           >
             <Download className="w-4 h-4" />
             {exporting 
@@ -889,7 +889,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
         {/* Reports Stats */}
         <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-blue-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <FileText className="w-5 h-5 text-blue-600" />
             </div>
@@ -902,7 +902,7 @@ export default function AnalyticsPage() {
 
         {/* Users Stats */}
         <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-green-600" />
             </div>
@@ -916,7 +916,7 @@ export default function AnalyticsPage() {
 
         {/* Companies Stats */}
         <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-purple-500 ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-purple-600" />
             </div>
@@ -930,7 +930,7 @@ export default function AnalyticsPage() {
 
         {/* Redemptions Stats */}
         <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-yellow ${isRTL ? 'text-right border-l-0 border-r-4' : ''}`}>
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-10 h-10 bg-yellow/20 rounded-lg flex items-center justify-center">
               <Trophy className="w-5 h-5 text-yellow" />
             </div>
@@ -964,7 +964,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Reports by Category */}
         <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-          <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3 mb-4`}>
             <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-orange-600" />
             </div>
@@ -982,9 +982,9 @@ export default function AnalyticsPage() {
                 const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500', 'bg-red-500'];
                 
                 return (
-                  <div key={cat.id} className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div key={cat.id} className={`flex items-center gap-3`}>
                     <div className="flex-1 min-w-0">
-                      <div className={`flex items-center justify-between mb-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <div className={`flex items-center justify-between mb-1`}>
                         <span className="font-medium text-gray-700 text-sm truncate">{isRTL ? cat.name_ar : cat.name}</span>
                         <span className="font-bold text-gray-600 text-sm">{cat.count}</span>
                       </div>
@@ -1005,7 +1005,7 @@ export default function AnalyticsPage() {
 
         {/* Reports by Status */}
         <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-          <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-3 mb-4`}>
             <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
               <Calendar className="w-5 h-5 text-teal-600" />
             </div>
@@ -1020,7 +1020,7 @@ export default function AnalyticsPage() {
               {/* Pie-like representation */}
               <div className="flex items-center justify-center gap-2 flex-wrap mb-4">
                 {statusStats.map((s) => (
-                  <div key={s.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div key={s.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50`}>
                     <div className={`w-3 h-3 rounded-full ${s.color}`} />
                     <span className="text-sm font-medium text-gray-700">{isRTL ? s.name_ar : s.name}</span>
                     <span className="text-sm font-bold text-gray-900">{s.count}</span>
@@ -1035,7 +1035,7 @@ export default function AnalyticsPage() {
                   const percentage = total > 0 ? (s.count / total) * 100 : 0;
                   
                   return (
-                    <div key={s.id} className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div key={s.id} className={`flex items-center gap-2`}>
                       <div className="w-24 text-sm text-gray-600 truncate">{isRTL ? s.name_ar : s.name}</div>
                       <div className="flex-1 bg-gray-200 rounded-full h-4">
                         <div className={`h-4 rounded-full ${s.color} flex items-center justify-end px-2`} style={{ width: `${Math.max(percentage, 10)}%` }}>
@@ -1057,7 +1057,7 @@ export default function AnalyticsPage() {
 
       {/* Map Section */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
-        <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-3 mb-4`}>
           <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
             <MapPin className="w-5 h-5 text-red-600" />
           </div>
@@ -1108,16 +1108,16 @@ export default function AnalyticsPage() {
         )}
         
         {/* Map Legend */}
-        <div className={`flex items-center gap-4 mt-3 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-4 mt-3 flex-wrap`}>
+          <div className={`flex items-center gap-2`}>
             <div className="w-3 h-3 rounded-full bg-yellow-500" />
             <span className="text-xs text-gray-600">{isRTL ? 'قيد الانتظار' : 'Pending'}</span>
           </div>
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2`}>
             <div className="w-3 h-3 rounded-full bg-blue-500" />
             <span className="text-xs text-gray-600">{isRTL ? 'قيد المعالجة' : 'In Progress'}</span>
           </div>
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2`}>
             <div className="w-3 h-3 rounded-full bg-green-500" />
             <span className="text-xs text-gray-600">{isRTL ? 'تم الحل' : 'Resolved'}</span>
           </div>
@@ -1126,7 +1126,7 @@ export default function AnalyticsPage() {
 
       {/* Company Redemptions Chart */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6 sm:mb-8">
-        <div className={`flex items-center gap-3 mb-4 sm:mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-3 mb-4 sm:mb-6`}>
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
             <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
           </div>
@@ -1159,7 +1159,7 @@ export default function AnalyticsPage() {
               ];
               
               return (
-                <div key={company.company_id} className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div key={company.company_id} className={`flex items-center gap-3`}>
                   <div className={`w-8 text-center font-semibold text-gray-500 ${isRTL ? 'text-right' : 'text-left'}`}>
                     #{index + 1}
                   </div>
@@ -1175,7 +1175,7 @@ export default function AnalyticsPage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className={`flex items-center justify-between mb-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center justify-between mb-1`}>
                       <span className="font-medium text-gray-900 text-sm truncate">
                         {company.company_name}
                       </span>
@@ -1206,7 +1206,7 @@ export default function AnalyticsPage() {
 
       {/* Leaderboard */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-        <div className={`flex items-center gap-3 mb-4 sm:mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-3 mb-4 sm:mb-6`}>
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow rounded-lg flex items-center justify-center">
             <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
           </div>
@@ -1238,7 +1238,7 @@ export default function AnalyticsPage() {
               {leaderboard.map((entry, index) => (
                 <tr key={entry.user_id} className="hover:bg-gray-50">
                   <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                    <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center`}>
                       {index === 0 && <span className={`text-lg sm:text-2xl ${isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2'}`}>🥇</span>}
                       {index === 1 && <span className={`text-lg sm:text-2xl ${isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2'}`}>🥈</span>}
                       {index === 2 && <span className={`text-lg sm:text-2xl ${isRTL ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2'}`}>🥉</span>}
@@ -1246,7 +1246,7 @@ export default function AnalyticsPage() {
                     </div>
                   </td>
                   <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                    <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center`}>
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
                         {entry.full_name?.[0]?.toUpperCase() || 'U'}
                       </div>
