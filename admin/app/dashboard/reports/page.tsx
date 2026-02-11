@@ -452,12 +452,12 @@ export default function ReportsPage() {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className={`mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className={isRTL ? 'text-right' : ''}>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.reports.title}</h1>
           <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.reports.subtitle}</p>
         </div>
-        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className="flex gap-2">
           <Link
             href="/dashboard/report-categories"
             className={`flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
@@ -502,7 +502,7 @@ export default function ReportsPage() {
         </div>
         
         {/* Filter Row */}
-        <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+        <div className="flex flex-col sm:flex-row gap-3">
           {/* Category Filter */}
           <div className="flex-1 sm:max-w-[200px]">
             <select
@@ -536,7 +536,7 @@ export default function ReportsPage() {
           </div>
           
           {/* Results count */}
-          <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'sm:mr-auto' : 'sm:ml-auto'}`}>
+          <div className="flex items-center text-sm text-gray-500 sm:ms-auto">
             {isRTL 
               ? `${filteredReports.length} من ${reports.length} تقرير`
               : `${filteredReports.length} of ${reports.length} reports`
@@ -545,7 +545,7 @@ export default function ReportsPage() {
         </div>
         
         {/* Date and Time Filters */}
-        <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+        <div className="flex flex-col sm:flex-row gap-3">
           {/* Date From */}
           <div className="flex-1 sm:max-w-[180px]">
             <label className={`block text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>

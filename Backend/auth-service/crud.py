@@ -138,10 +138,11 @@ def get_levels(db: Session):
 
 
 def update_user_total_points(db: Session, user_id: int, points_to_add: int):
-    """Update user's total_points by adding points"""
+    """Update user's total_points by adding points (never goes below 0)"""
     user = get_user(db, user_id)
     if user:
-        user.total_points = (user.total_points or 0) + points_to_add
+        new_total = (user.total_points or 0) + points_to_add
+        user.total_points = max(0, new_total)
         db.commit()
         db.refresh(user)
         return user
@@ -166,6 +167,18 @@ def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
         return None
     
     # Update only provided fields
+    if user_update.email is not None and user_update.email != user.email:
+        existing = db.query(models.User).filter(
+            models.User.email == user_update.email,
+            models.User.id != user_id
+        ).first()
+        if existing:
+            from fastapi import HTTPException, status
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already in use by another user"
+            )
+        user.email = user_update.email
     if user_update.full_name is not None:
         user.full_name = user_update.full_name
     if user_update.phone is not None:
