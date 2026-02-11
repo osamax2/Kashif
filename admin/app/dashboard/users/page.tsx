@@ -563,9 +563,9 @@ export default function UsersPage() {
               className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
             >
               <option value="ALL">{isRTL ? 'جميع الحالات' : 'All Statuses'}</option>
-              <option value="ACTIVE">{t.common.active}</option>
-              <option value="SUSPENDED">{isRTL ? 'موقوف' : 'Suspended'}</option>
-              <option value="BANNED">{isRTL ? 'محظور' : 'Banned'}</option>
+              <option value="ACTIVE">{t.users.userStatuses.active}</option>
+              <option value="SUSPENDED">{t.users.userStatuses.suspended}</option>
+              <option value="BANNED">{t.users.userStatuses.banned}</option>
             </select>
           </div>
           
@@ -613,12 +613,12 @@ export default function UsersPage() {
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleEdit(user)}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
+                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold flex-shrink-0">
                         {user.full_name[0]?.toUpperCase()}
                       </div>
-                      <div className={isRTL ? 'mr-3 text-right' : 'ml-3'}>
+                      <div className={isRTL ? 'text-right' : 'text-left'}>
                         <p className="font-medium text-gray-900">{user.full_name}</p>
                       </div>
                     </div>
@@ -636,10 +636,12 @@ export default function UsersPage() {
                           ? 'bg-purple-100 text-purple-700'
                           : user.role === 'COMPANY'
                           ? 'bg-green-100 text-green-700'
+                          : user.role === 'GOVERNMENT'
+                          ? 'bg-orange-100 text-orange-700'
                           : 'bg-blue-100 text-blue-700'
                       }`}
                     >
-                      {user.role}
+                      {user.role === 'ADMIN' ? t.users.roles.admin : user.role === 'COMPANY' ? t.users.roles.company : user.role === 'GOVERNMENT' ? t.users.roles.government : t.users.roles.user}
                     </span>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
@@ -647,10 +649,12 @@ export default function UsersPage() {
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         user.status === 'ACTIVE'
                           ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
+                          : user.status === 'SUSPENDED'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-red-100 text-red-700'
                       }`}
                     >
-                      {user.status}
+                      {user.status === 'ACTIVE' ? t.users.userStatuses.active : user.status === 'SUSPENDED' ? t.users.userStatuses.suspended : user.status === 'BANNED' ? t.users.userStatuses.banned : user.status}
                     </span>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
@@ -739,12 +743,12 @@ export default function UsersPage() {
             <tbody className="divide-y divide-gray-200">
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-red-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <div className="w-10 h-10 rounded-full bg-red-400 text-white flex items-center justify-center font-semibold">
+                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <div className="w-10 h-10 rounded-full bg-red-400 text-white flex items-center justify-center font-semibold flex-shrink-0">
                         {user.full_name[0]?.toUpperCase()}
                       </div>
-                      <div className={isRTL ? 'mr-3 text-right' : 'ml-3'}>
+                      <div className={isRTL ? 'text-right' : 'text-left'}>
                         <p className="font-medium text-gray-900">{user.full_name}</p>
                       </div>
                     </div>
@@ -759,10 +763,12 @@ export default function UsersPage() {
                           ? 'bg-purple-100 text-purple-700'
                           : user.role === 'COMPANY'
                           ? 'bg-green-100 text-green-700'
+                          : user.role === 'GOVERNMENT'
+                          ? 'bg-orange-100 text-orange-700'
                           : 'bg-blue-100 text-blue-700'
                       }`}
                     >
-                      {user.role}
+                      {user.role === 'ADMIN' ? t.users.roles.admin : user.role === 'COMPANY' ? t.users.roles.company : user.role === 'GOVERNMENT' ? t.users.roles.government : t.users.roles.user}
                     </span>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 ${isRTL ? 'text-right' : ''}`}>
@@ -818,6 +824,41 @@ export default function UsersPage() {
             <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
               {t.users.awardPointsTo} {selectedUser.full_name}
             </h2>
+
+            {/* Current Points & Points After Summary */}
+            <div className="flex gap-4 mb-4">
+              <div className="flex-1 bg-gray-50 rounded-lg p-3 text-center">
+                <div className="text-xs text-gray-500 mb-1">{t.users.currentPoints}</div>
+                <div className="text-xl font-bold text-gray-900">{selectedUser.total_points ?? 0}</div>
+              </div>
+              <div className="flex items-center text-gray-400 text-xl">→</div>
+              <div className={`flex-1 rounded-lg p-3 text-center ${
+                parseInt(points) < 0
+                    ? 'bg-orange-50'
+                    : points
+                      ? 'bg-green-50'
+                      : 'bg-gray-50'
+              }`}>
+                <div className="text-xs text-gray-500 mb-1">{t.users.pointsAfter}</div>
+                <div className={`text-xl font-bold ${
+                  parseInt(points) < 0
+                      ? 'text-orange-600'
+                      : points
+                        ? 'text-green-600'
+                        : 'text-gray-900'
+                }`}>
+                  {points ? Math.max(0, (selectedUser.total_points ?? 0) + parseInt(points)) : selectedUser.total_points ?? 0}
+                </div>
+              </div>
+            </div>
+
+            {/* Info if deduction exceeds current points */}
+            {points && (selectedUser.total_points ?? 0) + parseInt(points) < 0 && (
+              <div className="mb-4 p-2 bg-orange-50 border border-orange-200 rounded-lg text-orange-600 text-sm text-center">
+                ℹ️ {isRTL ? 'سيتم خصم النقاط المتاحة فقط - النتيجة ستكون 0' : 'Only available points will be deducted - result will be 0'}
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
@@ -828,7 +869,7 @@ export default function UsersPage() {
                   value={points}
                   onChange={(e) => setPoints(e.target.value)}
                   className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="100"
+                  placeholder={t.users.pointsPlaceholder}
                 />
               </div>
               <div>
@@ -857,9 +898,9 @@ export default function UsersPage() {
               </button>
               <button
                 onClick={handleAwardPoints}
-                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
+                className="flex-1 px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-800"
               >
-                {t.users.awardPoints}
+                {parseInt(points) < 0 ? (isRTL ? 'خصم نقاط' : 'Deduct Points') : t.users.awardPoints}
               </button>
             </div>
           </div>
@@ -920,9 +961,9 @@ export default function UsersPage() {
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                   className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
                 >
-                  <option value="ACTIVE">{t.common.active}</option>
-                  <option value="SUSPENDED">SUSPENDED</option>
-                  <option value="BANNED">BANNED</option>
+                  <option value="ACTIVE">{t.users.userStatuses.active}</option>
+                  <option value="SUSPENDED">{t.users.userStatuses.suspended}</option>
+                  <option value="BANNED">{t.users.userStatuses.banned}</option>
                 </select>
               </div>
             </div>

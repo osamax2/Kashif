@@ -119,7 +119,7 @@ def get_coupons(
     coupon_category_id: Optional[int] = None,
     company_id: Optional[int] = None
 ):
-    query = db.query(models.Coupon).filter(models.Coupon.status == "ACTIVE")
+    query = db.query(models.Coupon).filter(models.Coupon.status != "DELETED")
     
     if coupon_category_id:
         query = query.filter(models.Coupon.coupon_category_id == coupon_category_id)
