@@ -12,6 +12,7 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    Modal,
     Platform,
     ScrollView,
     Share,
@@ -43,6 +44,7 @@ export default function ProfileScreen() {
 
   const shareLink = "https://play.google.com/store/apps/details?id=com.kashif.app";
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -138,9 +140,7 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setProfileImage(uri);
-      await AsyncStorage.setItem("profileImage", uri);
+      setPendingImage(result.assets[0].uri);
     }
   };
 
@@ -152,9 +152,7 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setProfileImage(uri);
-      await AsyncStorage.setItem("profileImage", uri);
+      setPendingImage(result.assets[0].uri);
     }
   };
 
@@ -234,6 +232,68 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 40 }}>
+      {/* PHOTO PREVIEW MODAL */}
+      <Modal visible={!!pendingImage} transparent animationType="fade">
+        <View style={{
+          flex: 1,
+          backgroundColor: "rgba(0,0,0,0.7)",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 20,
+        }}>
+          <View style={{
+            backgroundColor: "#0D2B66",
+            borderRadius: 24,
+            padding: 24,
+            alignItems: "center",
+            width: "90%",
+          }}>
+            {pendingImage && (
+              <Image
+                source={{ uri: pendingImage }}
+                style={{ width: 200, height: 200, borderRadius: 100, borderWidth: 3, borderColor: "#FFD166", marginBottom: 20 }}
+              />
+            )}
+            <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", gap: 16 }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: YELLOW,
+                  paddingVertical: 12,
+                  paddingHorizontal: 36,
+                  borderRadius: 14,
+                  elevation: 4,
+                }}
+                onPress={async () => {
+                  if (pendingImage) {
+                    setProfileImage(pendingImage);
+                    await AsyncStorage.setItem("profileImage", pendingImage);
+                  }
+                  setPendingImage(null);
+                }}
+              >
+                <Text style={{ color: "#fff", fontSize: 18, fontFamily: "Tajawal-Bold" }}>
+                  {t("common.save")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                  paddingVertical: 12,
+                  paddingHorizontal: 36,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.3)",
+                }}
+                onPress={() => setPendingImage(null)}
+              >
+                <Text style={{ color: "#fff", fontSize: 18, fontFamily: "Tajawal-Bold" }}>
+                  {t("common.cancel")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       {/* HEADER */}
       <View style={[styles.header, { marginTop: 40, flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
