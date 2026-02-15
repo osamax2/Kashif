@@ -62,6 +62,7 @@ export default function ReportDialog({
   const [notes, setNotes] = useState("");
   const [successId, setSuccessId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [photoMenu, setPhotoMenu] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<{
     lat: number;
@@ -81,7 +82,8 @@ export default function ReportDialog({
       });
 
       if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+        setPendingImage(result.assets[0].uri);
+        setPhotoMenu(false);
       }
     } catch (e) {
       console.log("Image pick error:", e);
@@ -102,7 +104,8 @@ export default function ReportDialog({
     });
 
     if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
+      setPendingImage(result.assets[0].uri);
+      setPhotoMenu(false);
     }
   }
 
@@ -551,6 +554,58 @@ export default function ReportDialog({
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
+
+      {/* PHOTO PREVIEW - Save/Cancel after cropping */}
+      {pendingImage && (
+        <View style={styles.photoOverlay}>
+          <Pressable
+            style={styles.photoOverlayBg}
+            onPress={() => setPendingImage(null)}
+          />
+          <View style={styles.photoMenuBox}>
+            <View style={{ alignItems: "center", marginBottom: 16 }}>
+              <Image
+                source={{ uri: pendingImage }}
+                style={{ width: 200, height: 200, borderRadius: 20 }}
+              />
+            </View>
+            <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", justifyContent: "space-around" }}>
+              <Pressable
+                style={{
+                  backgroundColor: YELLOW,
+                  paddingVertical: 12,
+                  paddingHorizontal: 36,
+                  borderRadius: 14,
+                  elevation: 4,
+                }}
+                onPress={() => {
+                  setSelectedImage(pendingImage);
+                  setPendingImage(null);
+                }}
+              >
+                <Text style={{ color: "#fff", fontSize: 18, fontFamily: "Tajawal-Bold" }}>
+                  {t("common.save")}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                  paddingVertical: 12,
+                  paddingHorizontal: 36,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.3)",
+                }}
+                onPress={() => setPendingImage(null)}
+              >
+                <Text style={{ color: "#fff", fontSize: 18, fontFamily: "Tajawal-Bold" }}>
+                  {t("common.cancel")}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* PHOTO MENU */}
       {photoMenu && (

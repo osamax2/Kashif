@@ -8,7 +8,6 @@ import { Category, lookupAPI, Report, reportingAPI, ReportStatus, Severity } fro
 import locationMonitoringService from "@/services/location-monitoring";
 import { getPendingReports, removePendingReport, subscribeToNetworkChanges } from "@/services/offline-reports";
 import Ionicons from "@expo/vector-icons/Ionicons";
-// Lightweight local Slider fallback to avoid dependency on @react-native-community/slider
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 import * as Location from "expo-location";
@@ -22,6 +21,7 @@ import {
     PanResponder,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -31,67 +31,7 @@ import {
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import MapView, { Marker } from "react-native-maps";
 
-function Slider({ value = 0, minimumValue = 0, maximumValue = 1, onValueChange }: any) {
-    const [width, setWidth] = useState(0);
 
-    const handleTouch = (evt: any) => {
-        if (!width) return;
-        // Calculate from right side - right is 0, left is max
-        let x = width - evt.nativeEvent.locationX;
-        if (x < 0) x = 0;
-        if (x > width) x = width;
-
-        const newVal = minimumValue + (x / width) * (maximumValue - minimumValue);
-        onValueChange && onValueChange(newVal);
-    };
-
-    const pct = (value - minimumValue) / (maximumValue - minimumValue);
-
-    return (
-        <View
-            onLayout={e => setWidth(e.nativeEvent.layout.width)}
-            onStartShouldSetResponder={() => true}
-            onResponderMove={handleTouch}
-            onResponderGrant={handleTouch}
-            style={{
-                height: 22,
-                borderRadius: 25,
-                backgroundColor: "rgba(128, 128, 128, 0.3)",
-                justifyContent: "center",
-                paddingHorizontal: 2,
-            }}
-        >
-            {/* Füllung - fills from left based on value */}
-            <View
-                style={{
-                    position: "absolute",
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: `${pct * 100}%`,
-                    backgroundColor: "#F4B400",
-                    borderRadius: 20,
-                }}
-            />
-
-            {/* Thumb - positioned from left */}
-            <View
-                style={{
-                    position: "absolute",
-                    left: pct * width - 14,
-                    width: 28,
-                    height: 28,
-                    borderRadius: 14,
-                    backgroundColor: "#F4B400",
-                    shadowColor: "#F4B400",
-                    shadowOpacity: 0.5,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowRadius: 6,
-                }}
-            />
-        </View>
-    );
-}
 
 
 // RTL is handled by LanguageContext
@@ -214,21 +154,9 @@ export default function HomeScreen() {
     const [forceHideSuggestions, setForceHideSuggestions] = useState(false);
 
     
-    async function playTestSound() {
-        // Use speech as a safe fallback when no audio file is available.
-        try {
-            await Speech.speak(t('home.testSoundText'), { 
-                language: language === 'ar' ? "ar-SA" : "en-US", 
-                rate: 0.9,
-                volume: appVolume
-            });
-        } catch (e) {
-            console.warn("playTestSound (speech) failed", e);
-        }
-    }
+
 
 const [audioVisible, setAudioVisible] = useState(false);
-const [volume, setVolume] = useState(0.6);
 const audioSheetY = useRef(new Animated.Value(0)).current;
 
 const toggleSound = () => {
@@ -491,7 +419,6 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 setWarningsEnabled(!!settings.warningsEnabled);
                 setNavigationEnabled(!!settings.navigationEnabled);
                 setAppVolume(typeof settings.appVolume === 'number' ? settings.appVolume : 1.0);
-                if (typeof settings.appVolume === 'number') setVolume(settings.appVolume);
                 
                 // Load alert type settings
                 setWarnPothole(settings.warnPothole !== false);
@@ -863,15 +790,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         });
     }
 }
-async function playBeep(value: number) {
-    setAppVolume(value);
-    // Play a short spoken beep using expo-speech (no audio-asset required)
-    try {
-        await Speech.speak("بيب", { language: "ar-SA", rate: 1.0, pitch: 1.0 });
-    } catch (err) {
-        console.warn("playBeep (speech) failed", err);
-    }
-}
+
 
     return (
         <View style={styles.root}>
@@ -993,15 +912,42 @@ async function playBeep(value: number) {
                 />
             </View>
 
-            {/* FILTER-LEISTE (ALLE 3 KLICKBAR, MULTI-SELECT) */}
-            <View style={styles.categoriesRow}>
-                {categories.slice(0, 3).map((category) => {
+            {/* FILTER-LEISTE (ALLE KATEGORIEN, HORIZONTAL SCROLLBAR, MULTI-SELECT) */}
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoriesRow}
+                style={styles.categoriesScroll}
+            >
+                {/* "All" button to reset filters */}
+                <TouchableOpacity
+                    style={[
+                        styles.categoryItem,
+                        activeFilters.length === 0 && styles.categoryItemActive,
+                    ]}
+                    onPress={() => {
+                        dismissSearchAndKeyboard();
+                        setActiveFilters([]);
+                    }}
+                >
+                    <Text
+                        style={[
+                            styles.categoryText,
+                            activeFilters.length === 0 && styles.categoryTextActive,
+                        ]}
+                    >
+                        {language === 'ar' ? 'الكل' : 'All'}
+                    </Text>
+                </TouchableOpacity>
+
+                {categories.map((category) => {
                     const isActive = activeFilters.includes(category.id);
-                    // Use color from database with getCategoryColor helper
                     const color = getCategoryColor(category.id);
                     
-                    // Display Arabic name if available, otherwise English
-                    const displayName = category.name_ar || category.name_en || category.name;
+                    // Display name based on current language
+                    const displayName = language === 'ar'
+                        ? (category.name_ar || category.name)
+                        : (category.name_en || category.name);
                     
                     return (
                         <TouchableOpacity
@@ -1015,14 +961,6 @@ async function playBeep(value: number) {
                                 toggleFilter(category.id);
                             }}
                         >
-                            <Text
-                                style={[
-                                    styles.categoryText,
-                                    isActive && styles.categoryTextActive,
-                                ]}
-                            >
-                                {displayName}
-                            </Text>
                             <View
                                 style={[
                                     styles.dot,
@@ -1030,10 +968,19 @@ async function playBeep(value: number) {
                                     isActive && styles.dotActive,
                                 ]}
                             />
+                            <Text
+                                style={[
+                                    styles.categoryText,
+                                    isActive && styles.categoryTextActive,
+                                ]}
+                                numberOfLines={1}
+                            >
+                                {displayName}
+                            </Text>
                         </TouchableOpacity>
                     );
                 })}
-            </View>
+            </ScrollView>
 
             {/* KARTE */}
             <View style={styles.mapContainer}>
@@ -1395,28 +1342,7 @@ async function playBeep(value: number) {
 
       <Text style={styles.audioTitle}>{t('home.soundSettings')}</Text>
 
-      {/* Lautstärke + Test */}
-      <View style={styles.volumeSection}>
-        <Text style={styles.audioLabel}>{t('home.volume')}</Text>
 
-        <Slider
-          style={{ width: "100%", height: 35 }}
-          minimumValue={0}
-          maximumValue={1}
-          value={volume}
-          onValueChange={(v: number) => {
-            setVolume(v);
-            setAppVolume(v);
-          }}
-          minimumTrackTintColor="#FFD166"
-          maximumTrackTintColor="rgba(255,255,255,0.25)"
-          thumbTintColor="#FFD166"
-        />
-
-        <TouchableOpacity style={styles.testBtn} onPress={playTestSound}>
-          <Text style={styles.testBtnText}>{t('home.testSound')}</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* AUDIO MODES */}
 <View style={styles.modeRow}>
@@ -1631,33 +1557,38 @@ const styles = StyleSheet.create({
     infoText: { color: "#fff", fontSize: 13, fontFamily: "Tajawal-Medium" },
 
     /* FILTER-LEISTE */
-    categoriesRow: {
+    categoriesScroll: {
         width: "100%",
-        flexDirection: "row-reverse",
-        justifyContent: "space-between",
-        alignItems: "center",
         marginTop: 9,
-        paddingHorizontal: 37,
+        maxHeight: 44,
+    },
+    categoriesRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 12,
+        gap: 6,
     },
 
     categoryItem: {
-        flexDirection: "row-reverse",
+        flexDirection: "row",
         alignItems: "center",
-        gap: 4,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 16,
+        gap: 5,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.15)",
     },
 
     categoryItemActive: {
-        backgroundColor: "rgba(255,255,255,0.12)",
+        backgroundColor: "rgba(255,210,100,0.15)",
+        borderColor: "#FFD166",
     },
 
     categoryText: {
         color: "#FFFFFF",
-        fontSize: 15,
+        fontSize: 13,
         fontFamily: "Tajawal-Bold",
-        textAlign: "right",
     },
     categoryTextActive: {
         color: "#FFD166",
@@ -1751,30 +1682,7 @@ sheetTitle: {
     fontFamily: "Tajawal-Bold",
 },
 
-sliderRow: {
-    marginBottom: 25,
-},
 
-sliderLabel: {
-    color: "#EEE",
-    fontSize: 16,
-    marginBottom: 8,
-    fontFamily: "Tajawal-Regular",
-},
-
-fakeSlider: {
-    width: "100%",
-    height: 5,
-    borderRadius: -6,
-    backgroundColor: "#ffffffff",
-},
-
-fakeSliderFill: {
-    width: "60%",
-    height: "100%",
-    backgroundColor: "#28d653",
-    borderRadius: -6,
-},
 
 optionsRow: {
     flexDirection: "row-reverse",
@@ -1862,34 +1770,7 @@ audioTitle: {
     marginBottom: 20,
     fontFamily: "Tajawal-Bold",
 },
-volumeSection: {
-  marginBottom: 22,
-},
 
-audioLabel: {
-    color: "#000000",
-    fontSize: 16,
-    marginBottom: 8,
-    fontFamily: "Tajawal-Regular",
-},
-
-testBtn: {
-  marginTop: 10,
-  alignSelf: "flex-start",
-  paddingHorizontal: 18,
-  paddingVertical: 8,
-  borderRadius: 999,
-  backgroundColor: "rgba(224, 224, 157, 0.16)",
-  borderWidth: 1,
-  borderColor: "#F4B400",
-},
-
-testBtnText: {
-    color: "#000000",
-    fontSize: 16,
-    textAlign: "center",
-    fontFamily: "Tajawal-Bold",
-},
 
 modeRow: {
     flexDirection: "row-reverse",
