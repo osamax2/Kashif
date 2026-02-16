@@ -86,3 +86,67 @@ class AchievementWithStatus(AchievementResponse):
 class AchievementCheckResult(BaseModel):
     new_achievements: List[AchievementResponse] = []
     total_unlocked: int = 0
+
+
+# ── Weekly Challenge Schemas ─────────────────────────────────────────
+
+class WeeklyChallengeBase(BaseModel):
+    title_en: str
+    title_ar: str
+    description_en: Optional[str] = None
+    description_ar: Optional[str] = None
+    icon: str = "🎯"
+    condition_type: str
+    target_value: int = 5
+    bonus_points: int = 50
+
+
+class WeeklyChallengeResponse(WeeklyChallengeBase):
+    id: int
+    week_start: datetime
+    week_end: datetime
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ChallengeWithProgress(WeeklyChallengeResponse):
+    """Challenge with user-specific progress"""
+    current_value: int = 0
+    completed: bool = False
+    completed_at: Optional[datetime] = None
+    progress_percent: float = 0.0
+
+
+class ChallengeCheckResult(BaseModel):
+    completed_challenges: List[WeeklyChallengeResponse] = []
+    total_active: int = 0
+    total_completed: int = 0
+
+
+# ── Friends / Social Schemas ────────────────────────────────────────
+
+class FriendRequest(BaseModel):
+    friend_id: int
+
+
+class FriendshipResponse(BaseModel):
+    id: int
+    user_id: int
+    friend_id: int
+    status: str
+    created_at: datetime
+    friend_name: Optional[str] = None
+    friend_points: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FriendLeaderboardEntry(BaseModel):
+    user_id: int
+    full_name: Optional[str] = None
+    total_points: int
+    rank: int

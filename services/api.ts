@@ -456,6 +456,102 @@ export const achievementAPI = {
   },
 };
 
+// Weekly Challenge types
+export interface WeeklyChallenge {
+  id: number;
+  title_en: string;
+  title_ar: string;
+  description_en: string;
+  description_ar: string;
+  icon: string;
+  condition_type: string;
+  target_value: number;
+  bonus_points: number;
+  week_start: string;
+  week_end: string;
+  is_active: boolean;
+  created_at: string;
+  current_value: number;
+  completed: boolean;
+  completed_at?: string;
+  progress_percent: number;
+}
+
+export interface ChallengeCheckResult {
+  completed_challenges: WeeklyChallenge[];
+  total_active: number;
+  total_completed: number;
+}
+
+export const challengeAPI = {
+  getActive: async (): Promise<WeeklyChallenge[]> => {
+    const response = await api.get<WeeklyChallenge[]>('/api/gamification/challenges/active');
+    return response.data;
+  },
+
+  check: async (): Promise<ChallengeCheckResult> => {
+    const response = await api.post<ChallengeCheckResult>('/api/gamification/challenges/check');
+    return response.data;
+  },
+};
+
+// Friends / Social types
+export interface FriendLeaderboardEntry {
+  user_id: number;
+  full_name: string;
+  total_points: number;
+  rank: number;
+}
+
+export interface FriendInfo {
+  friendship_id: number;
+  friend_user_id: number;
+  status: string;
+  created_at: string;
+}
+
+export interface FriendshipRequest {
+  id: number;
+  user_id: number;
+  friend_id: number;
+  status: string;
+  created_at: string;
+  friend_name: string;
+  friend_points: number;
+}
+
+export const friendsAPI = {
+  sendRequest: async (friendId: number) => {
+    const response = await api.post('/api/gamification/friends/request', { friend_id: friendId });
+    return response.data;
+  },
+
+  getPendingRequests: async (): Promise<FriendshipRequest[]> => {
+    const response = await api.get<FriendshipRequest[]>('/api/gamification/friends/requests');
+    return response.data;
+  },
+
+  acceptRequest: async (friendshipId: number) => {
+    const response = await api.post(`/api/gamification/friends/${friendshipId}/accept`);
+    return response.data;
+  },
+
+  rejectRequest: async (friendshipId: number) => {
+    const response = await api.post(`/api/gamification/friends/${friendshipId}/reject`);
+    return response.data;
+  },
+
+  getFriends: async (): Promise<FriendInfo[]> => {
+    const response = await api.get<FriendInfo[]>('/api/gamification/friends');
+    return response.data;
+  },
+
+  getLeaderboard: async (): Promise<FriendLeaderboardEntry[]> => {
+    const response = await api.get<FriendLeaderboardEntry[]>('/api/gamification/friends/leaderboard');
+    return response.data;
+  },
+};
+
 // Reporting API
 export interface Report {
   id: number;

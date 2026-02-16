@@ -3,7 +3,7 @@
 import { analyticsAPI, couponsAPI, getImageUrl, reportsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { LeaderboardEntry, Report } from '@/lib/types';
-import { BarChart3, Building2, Calendar, Download, FileText, Filter, Gift, MapPin, TrendingUp, Trophy, Users } from 'lucide-react';
+import { BarChart3, Building2, Calendar, Clock, Download, FileText, Filter, Gift, MapPin, Star, TrendingDown, TrendingUp, Trophy, Users } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
@@ -958,6 +958,191 @@ export default function AnalyticsPage() {
             {stats.totalReports > 0 ? Math.round((stats.resolvedReports / stats.totalReports) * 100) : 0}%
           </p>
         </div>
+      </div>
+
+      {/* ═══════ Extended Dashboard: Day/Week Comparison ═══════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        {/* Day vs Previous Day */}
+        {(() => {
+          const now = new Date();
+          const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
+          const todayReports = reports.filter((r) => new Date(r.created_at) >= todayStart).length;
+          const yesterdayReports = reports.filter((r) => {
+            const d = new Date(r.created_at);
+            return d >= yesterdayStart && d < todayStart;
+          }).length;
+          const dayDiff = yesterdayReports > 0 ? Math.round(((todayReports - yesterdayReports) / yesterdayReports) * 100) : (todayReports > 0 ? 100 : 0);
+          const isUp = dayDiff >= 0;
+
+          return (
+            <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-5 ${isRTL ? 'text-right' : ''}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="w-5 h-5 text-blue-500" />
+                <h3 className="font-bold text-gray-900 text-sm">{isRTL ? 'مقارنة يومية' : 'Day Comparison'}</h3>
+              </div>
+              <div className="flex items-end gap-4">
+                <div>
+                  <p className="text-xs text-gray-500">{isRTL ? 'اليوم' : 'Today'}</p>
+                  <p className="text-2xl font-bold text-gray-900">{todayReports}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">{isRTL ? 'أمس' : 'Yesterday'}</p>
+                  <p className="text-2xl font-bold text-gray-400">{yesterdayReports}</p>
+                </div>
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${isUp ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {dayDiff > 0 ? '+' : ''}{dayDiff}%
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Week vs Previous Week */}
+        {(() => {
+          const now = new Date();
+          const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          const prevWeekStart = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+          const thisWeek = reports.filter((r) => new Date(r.created_at) >= weekStart).length;
+          const prevWeek = reports.filter((r) => {
+            const d = new Date(r.created_at);
+            return d >= prevWeekStart && d < weekStart;
+          }).length;
+          const weekDiff = prevWeek > 0 ? Math.round(((thisWeek - prevWeek) / prevWeek) * 100) : (thisWeek > 0 ? 100 : 0);
+          const isUp = weekDiff >= 0;
+
+          return (
+            <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-5 ${isRTL ? 'text-right' : ''}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="w-5 h-5 text-purple-500" />
+                <h3 className="font-bold text-gray-900 text-sm">{isRTL ? 'مقارنة أسبوعية' : 'Week Comparison'}</h3>
+              </div>
+              <div className="flex items-end gap-4">
+                <div>
+                  <p className="text-xs text-gray-500">{isRTL ? 'هذا الأسبوع' : 'This Week'}</p>
+                  <p className="text-2xl font-bold text-gray-900">{thisWeek}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">{isRTL ? 'الأسبوع الماضي' : 'Last Week'}</p>
+                  <p className="text-2xl font-bold text-gray-400">{prevWeek}</p>
+                </div>
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${isUp ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {weekDiff > 0 ? '+' : ''}{weekDiff}%
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Top Reporter of the Month */}
+        {(() => {
+          const now = new Date();
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthReports = reports.filter((r) => new Date(r.created_at) >= monthStart);
+          const userCounts: { [uid: number]: number } = {};
+          monthReports.forEach((r) => {
+            userCounts[r.user_id] = (userCounts[r.user_id] || 0) + 1;
+          });
+          const topUserId = Object.entries(userCounts).sort((a, b) => b[1] - a[1])[0];
+          const topUser = topUserId ? users.find((u: any) => u.id === Number(topUserId[0])) : null;
+
+          return (
+            <div className={`bg-gradient-to-br from-yellow/20 to-yellow/5 rounded-xl shadow-sm p-4 sm:p-5 border border-yellow/30 ${isRTL ? 'text-right' : ''}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="w-5 h-5 text-yellow-600" />
+                <h3 className="font-bold text-gray-900 text-sm">{isRTL ? 'أفضل مُبلّغ هذا الشهر' : 'Top Reporter This Month'}</h3>
+              </div>
+              {topUser ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg">
+                    {topUser.full_name?.[0]?.toUpperCase() || '?'}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">{topUser.full_name}</p>
+                    <p className="text-xs text-gray-600">{topUserId?.[1]} {isRTL ? 'بلاغات هذا الشهر' : 'reports this month'}</p>
+                  </div>
+                  <span className="text-2xl ml-auto">🏆</span>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">{isRTL ? 'لا توجد بلاغات هذا الشهر' : 'No reports this month'}</p>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* ═══════ Average Resolution Time per Category ═══════ */}
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <Clock className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div className={isRTL ? 'text-right' : ''}>
+            <h2 className="text-lg font-bold text-gray-900">{isRTL ? 'متوسط وقت الحل حسب الفئة' : 'Avg. Resolution Time by Category'}</h2>
+            <p className="text-xs text-gray-500">{isRTL ? 'الوقت المتوسط لحل البلاغات بالأيام' : 'Average days to resolve reports'}</p>
+          </div>
+        </div>
+
+        {(() => {
+          // Calculate average resolution time per category
+          const resolvedReports = reports.filter((r) => r.status_id === 3 && r.updated_at);
+          const catTimes: { [catId: number]: { total: number; count: number } } = {};
+
+          resolvedReports.forEach((r) => {
+            const created = new Date(r.created_at).getTime();
+            const resolved = new Date(r.updated_at!).getTime();
+            const daysDiff = Math.max(0, (resolved - created) / (1000 * 60 * 60 * 24));
+
+            if (!catTimes[r.category_id]) {
+              catTimes[r.category_id] = { total: 0, count: 0 };
+            }
+            catTimes[r.category_id].total += daysDiff;
+            catTimes[r.category_id].count++;
+          });
+
+          const avgTimes = categories
+            .filter((c) => catTimes[c.id]?.count > 0)
+            .map((c) => ({
+              id: c.id,
+              name: isRTL ? c.name_ar : c.name,
+              avgDays: catTimes[c.id].total / catTimes[c.id].count,
+              count: catTimes[c.id].count,
+            }))
+            .sort((a, b) => a.avgDays - b.avgDays);
+
+          const maxDays = avgTimes.length > 0 ? Math.max(...avgTimes.map((a) => a.avgDays)) : 1;
+
+          if (avgTimes.length === 0) {
+            return (
+              <div className="text-center py-8">
+                <p className="text-gray-500">{isRTL ? 'لا توجد بيانات كافية' : 'Not enough data'}</p>
+              </div>
+            );
+          }
+
+          return (
+            <div className="space-y-3">
+              {avgTimes.map((item, i) => {
+                const pct = (item.avgDays / maxDays) * 100;
+                const color = item.avgDays <= 2 ? 'bg-green-500' : item.avgDays <= 7 ? 'bg-yellow-500' : 'bg-red-500';
+
+                return (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <div className="w-32 text-sm text-gray-700 truncate font-medium">{item.name}</div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4">
+                      <div className={`h-4 rounded-full ${color}`} style={{ width: `${Math.max(pct, 8)}%` }}>
+                        <span className="text-xs font-bold text-white px-2">{item.avgDays.toFixed(1)}d</span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-500 w-16 text-right">{item.count} {isRTL ? 'بلاغ' : 'reports'}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Charts Row */}
