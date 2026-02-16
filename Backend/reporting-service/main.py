@@ -27,8 +27,12 @@ INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "kashif-internal-secret-2026")
 models.Base.metadata.create_all(bind=engine)
 
 # Create uploads directory if it doesn't exist
-UPLOAD_DIR = "/app/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads")
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except PermissionError:
+    UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title="Reporting Service")
 
