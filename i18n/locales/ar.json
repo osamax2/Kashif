@@ -389,6 +389,15 @@
       "totalAvailableTitle": "الكمية الإجمالية",
       "totalAvailable": "متوفر {{count}} قسيمة.",
       "addressTitle": "العنوان"
+    },
+    "route": {
+      "enterDestination": "أدخل الوجهة...",
+      "loadingRoute": "جاري تحميل المسار...",
+      "warningsOnRoute": "{{count}} تحذير على الطريق",
+      "hazard": "خطر",
+      "fromRoute": "من الطريق",
+      "noHazards": "لا توجد مخاطر على هذا الطريق",
+      "routeWarning": "تحذير المسار"
     }
   }
 }

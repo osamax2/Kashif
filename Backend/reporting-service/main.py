@@ -248,6 +248,54 @@ async def create_report(
     return db_report
 
 
+@app.post("/along-route", response_model=schemas.RouteReportsResponse)
+async def get_reports_along_route(
+    request: schemas.RouteReportsRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Find confirmed reports along a route defined by waypoints.
+    Accepts a list of lat/lng waypoints and a buffer distance.
+    Returns hazards sorted by position along the route.
+    """
+    waypoints = [{"latitude": w.latitude, "longitude": w.longitude} for w in request.waypoints]
+    
+    results = crud.get_reports_along_route(
+        db=db,
+        waypoints=waypoints,
+        buffer_meters=request.buffer_meters
+    )
+    
+    # Build response
+    summary: dict = {}
+    route_reports = []
+    
+    for report, distance, wp_idx in results:
+        cat_id = report.category_id
+        summary[cat_id] = summary.get(cat_id, 0) + 1
+        route_reports.append(schemas.RouteReport(
+            id=report.id,
+            title=report.title,
+            description=report.description,
+            category_id=report.category_id,
+            latitude=report.latitude,
+            longitude=report.longitude,
+            address_text=report.address_text,
+            status_id=report.status_id,
+            created_at=report.created_at,
+            distance_from_route_meters=round(distance, 1),
+            nearest_waypoint_index=wp_idx,
+            photo_urls=report.photo_urls,
+            confirmation_status=report.confirmation_status or "pending",
+        ))
+    
+    return schemas.RouteReportsResponse(
+        total_hazards=len(route_reports),
+        reports=route_reports,
+        summary=summary
+    )
+
+
 @app.get("/", response_model=List[schemas.Report])
 async def get_reports(
     skip: int = 0,

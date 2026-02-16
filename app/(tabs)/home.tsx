@@ -4,7 +4,7 @@ import ReportDialog from "@/components/ReportDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Category, lookupAPI, Report, reportingAPI, ReportStatus, Severity } from "@/services/api";
+import { Category, lookupAPI, Report, reportingAPI, ReportStatus, RouteReport, Severity } from "@/services/api";
 import locationMonitoringService from "@/services/location-monitoring";
 import { getPendingReports, removePendingReport, subscribeToNetworkChanges } from "@/services/offline-reports";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 import * as Location from "expo-location";
 import * as Speech from "expo-speech";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
     Animated,
@@ -29,7 +29,7 @@ import {
     View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline, Region } from "react-native-maps";
 
 
 
@@ -153,7 +153,14 @@ export default function HomeScreen() {
     const [searchText, setSearchText] = useState('');
     const [forceHideSuggestions, setForceHideSuggestions] = useState(false);
 
-    
+    // ─── ROUTE WARNING STATE ────────────────────────────────────────────
+    const [routeMode, setRouteMode] = useState(false);
+    const [routeCoords, setRouteCoords] = useState<{latitude: number; longitude: number}[]>([]);
+    const [routeHazards, setRouteHazards] = useState<RouteReport[]>([]);
+    const [routeSummary, setRouteSummary] = useState<Record<number, number>>({});
+    const [routeLoading, setRouteLoading] = useState(false);
+    const [routeDestination, setRouteDestination] = useState<string>('');
+    // ────────────────────────────────────────────────────────────────────
 
 
 const [audioVisible, setAudioVisible] = useState(false);
@@ -495,6 +502,116 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         console.log(`🔍 Active filters: ${activeFilters.length}`);
     }, [reports.length, visibleMarkers.length, activeFilters.length]);
     
+    // ─── MARKER CLUSTERING ─────────────────────────────────────────────
+    const [currentRegion, setCurrentRegion] = useState<Region>(mapRegion);
+    
+    type ClusterItem = {
+        type: 'cluster';
+        id: string;
+        latitude: number;
+        longitude: number;
+        count: number;
+        reports: Report[];
+        primaryCategoryId: number;
+    };
+    type SingleItem = {
+        type: 'single';
+        report: Report;
+    };
+    type MapItem = ClusterItem | SingleItem;
+    
+    const clusteredMarkers: MapItem[] = useMemo(() => {
+        if (!visibleMarkers.length) return [];
+        
+        const delta = currentRegion.latitudeDelta;
+        // Cluster radius ~ 8% of the visible area
+        const clusterRadius = delta * 0.08;
+        
+        // If zoomed in close enough, show individual markers
+        if (delta < 0.015) {
+            return visibleMarkers.map(r => ({ type: 'single' as const, report: r }));
+        }
+        
+        const used = new Set<number>();
+        const items: MapItem[] = [];
+        
+        for (let i = 0; i < visibleMarkers.length; i++) {
+            if (used.has(i)) continue;
+            
+            const r = visibleMarkers[i];
+            const lat = Number.parseFloat(r.latitude.toString());
+            const lng = Number.parseFloat(r.longitude.toString());
+            if (Number.isNaN(lat) || Number.isNaN(lng)) continue;
+            
+            const nearby: Report[] = [r];
+            used.add(i);
+            
+            for (let j = i + 1; j < visibleMarkers.length; j++) {
+                if (used.has(j)) continue;
+                const other = visibleMarkers[j];
+                const oLat = Number.parseFloat(other.latitude.toString());
+                const oLng = Number.parseFloat(other.longitude.toString());
+                if (Number.isNaN(oLat) || Number.isNaN(oLng)) continue;
+                
+                const dLat = Math.abs(lat - oLat);
+                const dLng = Math.abs(lng - oLng);
+                
+                if (dLat < clusterRadius && dLng < clusterRadius) {
+                    nearby.push(other);
+                    used.add(j);
+                }
+            }
+            
+            if (nearby.length === 1) {
+                items.push({ type: 'single', report: r });
+            } else {
+                // Calculate centroid & most common category
+                let sumLat = 0, sumLng = 0;
+                const catCounts: Record<number, number> = {};
+                for (const nr of nearby) {
+                    sumLat += Number.parseFloat(nr.latitude.toString());
+                    sumLng += Number.parseFloat(nr.longitude.toString());
+                    catCounts[nr.category_id] = (catCounts[nr.category_id] || 0) + 1;
+                }
+                const primaryCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0];
+                items.push({
+                    type: 'cluster',
+                    id: `cluster-${i}`,
+                    latitude: sumLat / nearby.length,
+                    longitude: sumLng / nearby.length,
+                    count: nearby.length,
+                    reports: nearby,
+                    primaryCategoryId: Number.parseInt(primaryCat[0], 10),
+                });
+            }
+        }
+        return items;
+    }, [visibleMarkers, currentRegion.latitudeDelta]);
+    
+    // Zoom into cluster on tap
+    const onClusterPress = useCallback((cluster: ClusterItem) => {
+        if (!mapRef.current) return;
+        // Find bounding box
+        let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+        for (const r of cluster.reports) {
+            const lat = Number.parseFloat(r.latitude.toString());
+            const lng = Number.parseFloat(r.longitude.toString());
+            if (lat < minLat) minLat = lat;
+            if (lat > maxLat) maxLat = lat;
+            if (lng < minLng) minLng = lng;
+            if (lng > maxLng) maxLng = lng;
+        }
+        const padLat = (maxLat - minLat) * 0.3 || 0.005;
+        const padLng = (maxLng - minLng) * 0.3 || 0.005;
+        mapRef.current.animateToRegion({
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLng + maxLng) / 2,
+            latitudeDelta: (maxLat - minLat) + padLat,
+            longitudeDelta: (maxLng - minLng) + padLng,
+        }, 500);
+    }, []);
+    // ─── END MARKER CLUSTERING ─────────────────────────────────────────
+    
     // Helper functions
     const getCategoryByName = (name: string): Category | undefined => {
         return categories.find(c => c.name === name);
@@ -603,6 +720,112 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             setReportLocation(userLocation);
         }
     };
+
+    // ─── ROUTE WARNING FUNCTIONS ────────────────────────────────────────
+    const GOOGLE_API_KEY = 'REMOVED_API_KEY';
+
+    const fetchRouteToDestination = async (destLat: number, destLng: number) => {
+        if (!userLocation) return;
+        setRouteLoading(true);
+        try {
+            // 1. Get directions from Google
+            const origin = `${userLocation.latitude},${userLocation.longitude}`;
+            const dest = `${destLat},${destLng}`;
+            const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}&key=${GOOGLE_API_KEY}&mode=driving`;
+            
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data.status !== 'OK' || !data.routes?.length) {
+                console.warn('No route found');
+                setRouteLoading(false);
+                return;
+            }
+            
+            // 2. Decode polyline
+            const points = decodePolyline(data.routes[0].overview_polyline.points);
+            setRouteCoords(points);
+            
+            // 3. Sample waypoints for the backend query (every ~500m, max 100 points)
+            const sampled = sampleWaypoints(points, 100);
+            
+            // 4. Fetch hazards along route
+            const routeData = await reportingAPI.getReportsAlongRoute(sampled, 200);
+            setRouteHazards(routeData.reports);
+            setRouteSummary(routeData.summary);
+            
+            // 5. Fit map to show entire route
+            if (mapRef.current && points.length > 1) {
+                mapRef.current.fitToCoordinates(points, {
+                    edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
+                    animated: true,
+                });
+            }
+            
+            // 6. Speak summary
+            if (routeData.total_hazards > 0 && soundEnabled) {
+                const msg = language === 'ar'
+                    ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
+                    : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
+                Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+            }
+        } catch (err) {
+            console.error('Route error:', err);
+        } finally {
+            setRouteLoading(false);
+        }
+    };
+
+    const clearRoute = () => {
+        setRouteMode(false);
+        setRouteCoords([]);
+        setRouteHazards([]);
+        setRouteSummary({});
+        setRouteDestination('');
+    };
+
+    // Decode Google encoded polyline
+    const decodePolyline = (encoded: string): {latitude: number; longitude: number}[] => {
+        const points: {latitude: number; longitude: number}[] = [];
+        let index = 0, lat = 0, lng = 0;
+
+        while (index < encoded.length) {
+            let shift = 0, result = 0, byte: number;
+            do {
+                byte = encoded.charCodeAt(index++) - 63;
+                result |= (byte & 0x1f) << shift;
+                shift += 5;
+            } while (byte >= 0x20);
+            lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+            shift = 0; result = 0;
+            do {
+                byte = encoded.charCodeAt(index++) - 63;
+                result |= (byte & 0x1f) << shift;
+                shift += 5;
+            } while (byte >= 0x20);
+            lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+            points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+        }
+        return points;
+    };
+
+    // Sample waypoints evenly from a polyline
+    const sampleWaypoints = (points: {latitude: number; longitude: number}[], maxPoints: number) => {
+        if (points.length <= maxPoints) return points;
+        const step = Math.ceil(points.length / maxPoints);
+        const sampled: {latitude: number; longitude: number}[] = [];
+        for (let i = 0; i < points.length; i += step) {
+            sampled.push(points[i]);
+        }
+        // Always include last point
+        if (sampled[sampled.length - 1] !== points[points.length - 1]) {
+            sampled.push(points[points.length - 1]);
+        }
+        return sampled;
+    };
+    // ─── END ROUTE WARNING FUNCTIONS ────────────────────────────────────
 
     // Fallback search using Google Geocoding API when no suggestions available
     const searchWithGeocoding = async (query: string) => {
@@ -993,6 +1216,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     onPress={dismissSearchAndKeyboard}
                     onPanDrag={dismissSearchAndKeyboard}
                     onLongPress={handleMapLongPress}
+                    onRegionChangeComplete={(region: Region) => setCurrentRegion(region)}
                 >
                     {/* Long Press Marker - Custom location for report */}
                     {longPressMarker && (
@@ -1041,15 +1265,38 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         />
                     )}
                     
-                    {/* Report Markers */}
-                    {visibleMarkers.map((report) => {
+                    {/* Report Markers (Clustered) */}
+                    {clusteredMarkers.map((item) => {
                         try {
+                            if (item.type === 'cluster') {
+                                const clusterColor = getCategoryColor(item.primaryCategoryId);
+                                // Size scales with count (min 36, max 60)
+                                const size = Math.min(60, 36 + Math.log2(item.count) * 6);
+                                return (
+                                    <Marker
+                                        key={item.id}
+                                        coordinate={{ latitude: item.latitude, longitude: item.longitude }}
+                                        onPress={() => onClusterPress(item)}
+                                        tracksViewChanges={false}
+                                    >
+                                        <View style={[styles.clusterMarker, { 
+                                            backgroundColor: clusterColor, 
+                                            width: size, 
+                                            height: size, 
+                                            borderRadius: size / 2 
+                                        }]}>
+                                            <Text style={styles.clusterText}>{item.count}</Text>
+                                        </View>
+                                    </Marker>
+                                );
+                            }
+
+                            // Single marker
+                            const report = item.report;
                             const lat = parseFloat(report.latitude.toString());
                             const lng = parseFloat(report.longitude.toString());
                             
-                            // Validiere Koordinaten
                             if (isNaN(lat) || isNaN(lng)) {
-                                console.warn(`⚠️ Invalid coordinates for report ${report.id}`);
                                 return null;
                             }
                             
@@ -1064,6 +1311,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                     }}
                                     title={report.title || categories.find(c => c.id === report.category_id)?.name || (language === 'ar' ? 'بلاغ' : 'Report')}
                                     description={report.description}
+                                    tracksViewChanges={false}
                                 >
                                     <View style={[styles.marker, { backgroundColor: categoryColor }]}>
                                         <Text style={{ fontSize: 14, color: '#FFFFFF' }}>{getCategoryIcon(report.category_id)}</Text>
@@ -1071,10 +1319,35 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                 </Marker>
                             );
                         } catch (error) {
-                            console.error(`❌ Error rendering marker for report ${report.id}:`, error);
+                            console.error(`❌ Error rendering marker:`, error);
                             return null;
                         }
                     })}
+                    
+                    {/* Route Polyline */}
+                    {routeCoords.length > 1 && (
+                        <Polyline
+                            coordinates={routeCoords}
+                            strokeColor="#4A90D9"
+                            strokeWidth={5}
+                            lineDashPattern={[0]}
+                        />
+                    )}
+                    
+                    {/* Route Hazard Markers */}
+                    {routeHazards.map((hazard) => (
+                        <Marker
+                            key={`hazard-${hazard.id}`}
+                            coordinate={{ latitude: hazard.latitude, longitude: hazard.longitude }}
+                            title={hazard.title || (language === 'ar' ? 'خطر' : 'Hazard')}
+                            description={`${Math.round(hazard.distance_from_route_meters)}m ${language === 'ar' ? 'من الطريق' : 'from route'}`}
+                            tracksViewChanges={false}
+                        >
+                            <View style={styles.routeHazardMarker}>
+                                <Text style={{ fontSize: 18 }}>{getCategoryIcon(hazard.category_id)}</Text>
+                            </View>
+                        </Marker>
+                    ))}
                 </MapView>
 
                 {/* FAB */}
@@ -1101,6 +1374,117 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             >
                 <Ionicons name="volume-high" style={styles.soundIcon} />
             </TouchableOpacity>
+
+            {/* ROUTE WARNING BUTTON */}
+            <TouchableOpacity
+                style={[
+                    styles.routeButton,
+                    language === 'ar' ? { left: 22 } : { right: 22, left: undefined },
+                    routeMode && styles.routeButtonActive,
+                ]}
+                onPress={() => {
+                    if (routeMode) {
+                        clearRoute();
+                    } else {
+                        setRouteMode(true);
+                    }
+                }}
+            >
+                <Ionicons name={routeMode ? "close" : "navigate"} size={22} color={routeMode ? "#fff" : "#0D2B66"} />
+            </TouchableOpacity>
+
+            {/* ROUTE DESTINATION INPUT */}
+            {routeMode && routeCoords.length === 0 && (
+                <View style={[styles.routeInputContainer, language === 'ar' ? { direction: 'rtl' } : {}]}>
+                    <GooglePlacesAutocomplete
+                        placeholder={language === 'ar' ? 'أدخل الوجهة...' : 'Enter destination...'}
+                        onPress={(data, details = null) => {
+                            if (details?.geometry?.location) {
+                                setRouteDestination(data.description);
+                                fetchRouteToDestination(
+                                    details.geometry.location.lat,
+                                    details.geometry.location.lng
+                                );
+                            }
+                        }}
+                        query={{
+                            key: 'REMOVED_API_KEY',
+                            language: language === 'ar' ? 'ar' : 'en',
+                        }}
+                        fetchDetails={true}
+                        styles={{
+                            container: { flex: 0 },
+                            textInputContainer: {
+                                backgroundColor: '#fff',
+                                borderRadius: 12,
+                                paddingHorizontal: 8,
+                                height: 44,
+                            },
+                            textInput: {
+                                backgroundColor: 'transparent',
+                                color: '#0D2B66',
+                                fontSize: 15,
+                                textAlign: language === 'ar' ? 'right' : 'left',
+                                height: 44,
+                            },
+                            listView: {
+                                backgroundColor: '#fff',
+                                borderRadius: 10,
+                                marginTop: 4,
+                            },
+                            row: { backgroundColor: '#fff', paddingVertical: 12 },
+                            description: { color: '#333', fontSize: 14 },
+                        }}
+                        enablePoweredByContainer={false}
+                        textInputProps={{
+                            placeholderTextColor: '#999',
+                        }}
+                    />
+                    {routeLoading && (
+                        <View style={styles.routeLoadingOverlay}>
+                            <Text style={{ color: '#0D2B66', fontSize: 14 }}>
+                                {language === 'ar' ? 'جاري تحميل المسار...' : 'Loading route...'}
+                            </Text>
+                        </View>
+                    )}
+                </View>
+            )}
+
+            {/* ROUTE HAZARD SUMMARY PANEL */}
+            {routeMode && routeHazards.length > 0 && (
+                <View style={[styles.routeSummaryPanel, language === 'ar' ? { direction: 'rtl' } : {}]}>
+                    <View style={styles.routeSummaryHeader}>
+                        <Ionicons name="warning" size={20} color="#F59E0B" />
+                        <Text style={styles.routeSummaryTitle}>
+                            {language === 'ar'
+                                ? `${routeHazards.length} تحذير على الطريق`
+                                : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`
+                            }
+                        </Text>
+                        <TouchableOpacity onPress={clearRoute} style={{ marginLeft: 'auto' }}>
+                            <Ionicons name="close-circle" size={22} color="#666" />
+                        </TouchableOpacity>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+                        {Object.entries(routeSummary).map(([catId, count]) => {
+                            const catColor = getCategoryColor(Number(catId));
+                            const catIcon = getCategoryIcon(Number(catId));
+                            const catName = categories.find(c => c.id === Number(catId));
+                            const displayName = language === 'ar' 
+                                ? (catName?.name_ar || catName?.name || '') 
+                                : (catName?.name_en || catName?.name || '');
+                            return (
+                                <View key={catId} style={[styles.routeSummaryCat, { backgroundColor: catColor + '20', borderColor: catColor }]}>
+                                    <Text style={{ fontSize: 16 }}>{catIcon}</Text>
+                                    <Text style={[styles.routeSummaryCatText, { color: catColor }]}>
+                                        {count} {displayName}
+                                    </Text>
+                                </View>
+                            );
+                        })}
+                    </ScrollView>
+                </View>
+            )}
 
 
             {/* RADIAL-MENÜ UM DEN FAB */}
@@ -1602,6 +1986,25 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 4,
     },
+    clusterMarker: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        shadowColor: '#000',
+        shadowOpacity: 0.4,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 5,
+        elevation: 6,
+    },
+    clusterText: {
+        color: '#FFFFFF',
+        fontWeight: '800',
+        fontSize: 14,
+        textShadowColor: 'rgba(0,0,0,0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+    },
 
     fab: {
         position: "absolute",
@@ -1710,6 +2113,93 @@ soundIcon: {
     fontSize: 26,
     color: "#0D2B66",               // dunkelblau
 },
+    routeButton: {
+        position: "absolute",
+        bottom: 630,
+        width: 48,
+        height: 48,
+        backgroundColor: "#fff",
+        borderRadius: 24,
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 6,
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+    },
+    routeButtonActive: {
+        backgroundColor: "#EF4444",
+    },
+    routeInputContainer: {
+        position: "absolute",
+        top: 140,
+        left: 16,
+        right: 16,
+        zIndex: 900,
+    },
+    routeLoadingOverlay: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(255,255,255,0.8)",
+        borderRadius: 12,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    routeSummaryPanel: {
+        position: "absolute",
+        bottom: 100,
+        left: 12,
+        right: 12,
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        padding: 14,
+        shadowColor: "#000",
+        shadowOpacity: 0.15,
+        shadowOffset: { width: 0, height: -2 },
+        shadowRadius: 8,
+        elevation: 8,
+        zIndex: 800,
+    },
+    routeSummaryHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    routeSummaryTitle: {
+        fontSize: 15,
+        fontWeight: "700",
+        color: "#0D2B66",
+    },
+    routeSummaryCat: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        borderWidth: 1,
+        marginRight: 8,
+    },
+    routeSummaryCatText: {
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    routeHazardMarker: {
+        backgroundColor: "#FFFFFF",
+        padding: 4,
+        borderRadius: 16,
+        borderWidth: 2,
+        borderColor: "#EF4444",
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 1 },
+        shadowRadius: 3,
+        elevation: 4,
+    },
 
 bottomOverlay: {
     position: "absolute",
