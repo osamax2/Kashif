@@ -982,3 +982,105 @@ def export_user_data(
         "reports": reports_data,
         "confirmations": confirmations_data,
     }
+
+
+# ════════════════════════════════════════════════════════
+#  IN-APP FEEDBACK
+# ════════════════════════════════════════════════════════
+
+@app.post("/feedback", response_model=schemas.FeedbackResponse, status_code=201)
+async def create_feedback(
+    data: schemas.FeedbackCreate,
+    x_user_id: Annotated[str | None, Header()] = None,
+    db: Session = Depends(get_db),
+):
+    """Submit user feedback (authenticated users)."""
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    valid_categories = ["bug", "suggestion", "complaint", "other"]
+    category = data.category if data.category in valid_categories else "other"
+
+    fb = models.Feedback(
+        user_id=int(x_user_id),
+        subject=data.subject,
+        message=data.message,
+        category=category,
+    )
+    db.add(fb)
+    db.commit()
+    db.refresh(fb)
+    logger.info(f"Feedback #{fb.id} created by user {x_user_id}")
+    return fb
+
+
+@app.get("/feedback/my", response_model=List[schemas.FeedbackResponse])
+async def get_my_feedback(
+    x_user_id: Annotated[str | None, Header()] = None,
+    db: Session = Depends(get_db),
+):
+    """Get all feedback submitted by current user."""
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    items = (
+        db.query(models.Feedback)
+        .filter(models.Feedback.user_id == int(x_user_id))
+        .order_by(models.Feedback.created_at.desc())
+        .all()
+    )
+    return items
+
+
+@app.get("/feedback", response_model=List[schemas.FeedbackResponse])
+async def get_all_feedback(
+    x_user_id: Annotated[str | None, Header()] = None,
+    x_user_role: Annotated[str | None, Header()] = None,
+    status_filter: Optional[str] = None,
+    category: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    """Get all feedback (admin only)."""
+    if not x_user_role or x_user_role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    query = db.query(models.Feedback)
+    if status_filter:
+        query = query.filter(models.Feedback.status == status_filter)
+    if category:
+        query = query.filter(models.Feedback.category == category)
+
+    items = query.order_by(models.Feedback.created_at.desc()).offset(skip).limit(limit).all()
+    return items
+
+
+@app.put("/feedback/{feedback_id}", response_model=schemas.FeedbackResponse)
+async def update_feedback(
+    feedback_id: int,
+    data: schemas.FeedbackUpdate,
+    x_user_id: Annotated[str | None, Header()] = None,
+    x_user_role: Annotated[str | None, Header()] = None,
+    db: Session = Depends(get_db),
+):
+    """Update feedback status/notes (admin only)."""
+    if not x_user_role or x_user_role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    fb = db.query(models.Feedback).filter(models.Feedback.id == feedback_id).first()
+    if not fb:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+
+    if data.status:
+        valid_statuses = ["new", "in_progress", "resolved", "dismissed"]
+        if data.status not in valid_statuses:
+            raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+        fb.status = data.status
+    if data.admin_notes is not None:
+        fb.admin_notes = data.admin_notes
+
+    db.commit()
+    db.refresh(fb)
+    logger.info(f"Feedback #{feedback_id} updated by admin {x_user_id}")
+    return fb

@@ -411,6 +411,40 @@
       "cachedData": "Showing cached data",
       "reportSaved": "Report saved offline",
       "willSyncAuto": "Will sync automatically when online"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "viewTerms": "View Terms",
+      "accept": "Accept & Continue",
+      "version": "Version",
+      "loadError": "Could not load Terms of Service",
+      "retry": "Retry",
+      "close": "Close",
+      "updatedTerms": "Our terms have been updated. Please review and accept.",
+      "acceptRequired": "You must accept the terms to continue."
+    },
+    "feedback": {
+      "title": "Send Feedback",
+      "subject": "Subject",
+      "message": "Your Message",
+      "category": "Category",
+      "categoryBug": "Bug Report",
+      "categorySuggestion": "Suggestion",
+      "categoryComplaint": "Complaint",
+      "categoryOther": "Other",
+      "submit": "Send Feedback",
+      "success": "Thank you! Your feedback has been sent.",
+      "error": "Could not send feedback. Please try again.",
+      "placeholder": "Describe your feedback in detail...",
+      "subjectPlaceholder": "Brief summary of your feedback",
+      "menuTitle": "Send Feedback"
+    },
+    "imageQuality": {
+      "tooSmall": "Image resolution is too low. Please use a higher quality image.",
+      "tooDark": "The image appears too dark. Please try with better lighting.",
+      "tooBlurry": "The image appears blurry. Please take a clearer photo.",
+      "checking": "Checking image quality...",
+      "validationFailed": "Image Quality Issue"
     }
   }
 }

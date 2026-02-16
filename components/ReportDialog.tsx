@@ -3,8 +3,11 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { isOnline, savePendingReport } from "@/services/offline-reports";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import React, { useEffect, useRef, useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
     Animated,
     Image,
@@ -70,8 +73,63 @@ export default function ReportDialog({
     address: string;
   } | null>(null);
   const [showPlacesInput, setShowPlacesInput] = useState(false);
+  const [checkingImage, setCheckingImage] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // ──── Image Quality Check ────
+  const MIN_WIDTH = 640;
+  const MIN_HEIGHT = 480;
+  const MIN_FILE_SIZE = 50 * 1024; // 50 KB
+
+  async function validateImageQuality(uri: string): Promise<{ valid: boolean; reason?: string }> {
+    try {
+      // Check file size
+      const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
+      if (fileInfo.exists && (fileInfo as any).size < MIN_FILE_SIZE) {
+        return { valid: false, reason: t("imageQuality.tooSmall") };
+      }
+
+      // Check resolution by manipulating to get dimensions
+      const manipResult = await manipulateAsync(uri, [], { format: SaveFormat.JPEG });
+      
+      // Get image dimensions via Image.getSize
+      const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        Image.getSize(
+          manipResult.uri,
+          (width, height) => resolve({ width, height }),
+          (error) => reject(error)
+        );
+      });
+
+      if (dimensions.width < MIN_WIDTH || dimensions.height < MIN_HEIGHT) {
+        return { valid: false, reason: t("imageQuality.tooSmall") };
+      }
+
+      return { valid: true };
+    } catch (e) {
+      console.log("Image quality check error:", e);
+      // Don't block on validation failure — allow the image
+      return { valid: true };
+    }
+  }
+
+  async function processImage(uri: string): Promise<boolean> {
+    setCheckingImage(true);
+    try {
+      const result = await validateImageQuality(uri);
+      if (!result.valid) {
+        Alert.alert(
+          t("imageQuality.validationFailed"),
+          result.reason || t("imageQuality.tooSmall")
+        );
+        return false;
+      }
+      return true;
+    } finally {
+      setCheckingImage(false);
+    }
+  }
 
   async function pickImage() {
     try {
@@ -82,8 +140,12 @@ export default function ReportDialog({
       });
 
       if (!result.canceled) {
-        setPendingImage(result.assets[0].uri);
-        setPhotoMenu(false);
+        const uri = result.assets[0].uri;
+        const isValid = await processImage(uri);
+        if (isValid) {
+          setPendingImage(uri);
+          setPhotoMenu(false);
+        }
       }
     } catch (e) {
       console.log("Image pick error:", e);
@@ -104,8 +166,12 @@ export default function ReportDialog({
     });
 
     if (!result.canceled) {
-      setPendingImage(result.assets[0].uri);
-      setPhotoMenu(false);
+      const uri = result.assets[0].uri;
+      const isValid = await processImage(uri);
+      if (isValid) {
+        setPendingImage(uri);
+        setPhotoMenu(false);
+      }
     }
   }
 
@@ -554,6 +620,18 @@ export default function ReportDialog({
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
+
+      {/* IMAGE QUALITY CHECK OVERLAY */}
+      {checkingImage && (
+        <View style={[styles.photoOverlay, { justifyContent: 'center', alignItems: 'center' }]}>
+          <View style={{ backgroundColor: BLUE, padding: 30, borderRadius: 16, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={YELLOW} />
+            <Text style={{ color: '#fff', fontFamily: 'Tajawal-Medium', fontSize: 16, marginTop: 12 }}>
+              {t("imageQuality.checking")}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* PHOTO PREVIEW - Save/Cancel after cropping */}
       {pendingImage && (

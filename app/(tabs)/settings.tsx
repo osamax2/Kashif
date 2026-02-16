@@ -1,7 +1,9 @@
 import ChangeModal from "@/components/ChangeModal";
 import IOSActionSheet from "@/components/IOSActionSheet";
 import SuccessModal from "@/components/SuccessModal";
+import TermsModal from "@/components/TermsModal";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState, useCallback } from "react";
 
@@ -56,6 +58,7 @@ export default function SettingsScreen() {
   const [emailModal, setEmailModal] = useState(false);
   const [passwordModal, setPasswordModal] = useState(false);
   const [phoneModal, setPhoneModal] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const [email, setEmail] = useState(user?.email || "");
   const [password, setPassword] = useState("");
@@ -430,6 +433,40 @@ export default function SettingsScreen() {
         )}
       </TouchableOpacity>
 
+      {/* Send Feedback */}
+      <TouchableOpacity
+        style={[
+          styles.feedbackButton,
+          { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+        ]}
+        onPress={() => router.push("/feedback")}
+      >
+        <FontAwesome
+          name="comment"
+          size={18}
+          color="#F4B400"
+          style={effectiveRTL ? { marginLeft: 8 } : { marginRight: 8 }}
+        />
+        <Text style={styles.feedbackButtonText}>{t("feedback.menuTitle")}</Text>
+      </TouchableOpacity>
+
+      {/* View Terms of Service */}
+      <TouchableOpacity
+        style={[
+          styles.feedbackButton,
+          { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+        ]}
+        onPress={() => setShowTerms(true)}
+      >
+        <FontAwesome
+          name="file-text-o"
+          size={18}
+          color="#F4B400"
+          style={effectiveRTL ? { marginLeft: 8 } : { marginRight: 8 }}
+        />
+        <Text style={styles.feedbackButtonText}>{t("terms.title")}</Text>
+      </TouchableOpacity>
+
       {/* Logout Button */}
       <TouchableOpacity
         style={[
@@ -505,6 +542,11 @@ export default function SettingsScreen() {
           <Text style={styles.toastText}>{toastMessage}</Text>
         </View>
       )}
+
+      <TermsModal
+        visible={showTerms}
+        onClose={() => setShowTerms(false)}
+      />
     </ScrollView>
   );
 }
@@ -658,6 +700,23 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 18,
     fontFamily: "Tajawal-Bold",
+  },
+
+  feedbackButton: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "rgba(244,180,0,0.3)",
+  },
+
+  feedbackButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Tajawal-Medium",
   },
 
   textItem: {

@@ -16,6 +16,7 @@ import {
     View,
 } from "react-native";
 import RtlTextInput from "../components/ui/rtl-textinput";
+import TermsModal from "../components/TermsModal";
 import { useLanguage } from "../contexts/LanguageContext";
 import { authAPI } from "../services/api";
 
@@ -36,6 +37,7 @@ export default function Register() {
   const [tos, setTos] = useState(false);
   const [news, setNews] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const dir = useMemo(
     () => ({
@@ -273,9 +275,17 @@ export default function Register() {
             { flexDirection: effectiveRTL ? "row-reverse" : "row" },
           ]}
         >
-          <Text style={[styles.switchText, styles.fullWidthText, dir]}>
-            {t("auth.agreeToTerms")}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.switchText, styles.fullWidthText, dir]}>
+              {t("auth.agreeToTerms")}{" "}
+              <Text
+                style={{ color: '#FFD700', textDecorationLine: 'underline' }}
+                onPress={() => setShowTerms(true)}
+              >
+                {t("terms.viewTerms")}
+              </Text>
+            </Text>
+          </View>
           <Switch value={tos} onValueChange={setTos} disabled={loading} />
         </View>
 
@@ -316,6 +326,16 @@ export default function Register() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <TermsModal
+        visible={showTerms}
+        onClose={() => setShowTerms(false)}
+        showAcceptButton={!tos}
+        onAccept={() => {
+          setTos(true);
+          setShowTerms(false);
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }
