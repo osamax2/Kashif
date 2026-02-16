@@ -1,5 +1,5 @@
-import ImageUpload from './ImageUpload';
 import { useState } from 'react';
+import ImageUpload from './ImageUpload';
 
 export default function CompanyForm({ formData, setFormData, t, isRTL }: any) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});

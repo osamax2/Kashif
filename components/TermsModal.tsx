@@ -3,14 +3,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { authAPI, TermsOfService } from "@/services/api";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
@@ -24,6 +25,8 @@ interface Props {
 
 export default function TermsModal({ visible, onClose, onAccept, showAcceptButton = false }: Props) {
   const { t, isRTL } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const effectiveRTL = !isRTL;
   const [tos, setTos] = useState<TermsOfService | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -48,8 +51,13 @@ export default function TermsModal({ visible, onClose, onAccept, showAcceptButto
     }
   };
 
-  const title = tos ? (isRTL ? tos.title_ar : tos.title_en) : "";
-  const content = tos ? (isRTL ? tos.content_ar : tos.content_en) : "";
+  const title = tos ? (effectiveRTL ? tos.title_ar : tos.title_en) : "";
+  const content = tos ? (effectiveRTL ? tos.content_ar : tos.content_en) : "";
+
+  const dir: { textAlign: "right" | "left"; writingDirection: "rtl" | "ltr" } = {
+    textAlign: effectiveRTL ? "right" : "left",
+    writingDirection: effectiveRTL ? "rtl" : "ltr",
+  };
 
   return (
     <Modal
@@ -58,13 +66,13 @@ export default function TermsModal({ visible, onClose, onAccept, showAcceptButto
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Text style={styles.closeBtnText}>✕</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, dir]}>
             {title || t("terms.title")}
           </Text>
           <View style={{ width: 40 }} />
@@ -89,11 +97,11 @@ export default function TermsModal({ visible, onClose, onAccept, showAcceptButto
             showsVerticalScrollIndicator={true}
           >
             {tos?.version && (
-              <Text style={styles.version}>
+              <Text style={[styles.version, dir]}>
                 {t("terms.version")}: {tos.version}
               </Text>
             )}
-            <Text style={[styles.contentText, { textAlign: isRTL ? "right" : "left" }]}>
+            <Text style={[styles.contentText, dir]}>
               {content}
             </Text>
           </ScrollView>
@@ -121,11 +129,9 @@ const styles = StyleSheet.create({
     backgroundColor: BLUE,
   },
   header: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.1)",

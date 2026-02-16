@@ -12,9 +12,9 @@ import {
     ReportStatusHistory,
     Severity,
 } from "@/services/api";
+import { cacheUserReports, checkConnectivity, getCachedUserReports } from "@/services/offline-service";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { checkConnectivity, getCachedUserReports, cacheUserReports } from "@/services/offline-service";
 import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -104,24 +104,84 @@ const getConfirmationMeta = (
   }
 };
 
-const getStatusMeta = (statusName: string, language: string): { icon: string; color: string } => {
-  const statusMapAr: { [key: string]: { icon: string; color: string } } = {
-    "مفتوح": { icon: "🔍", color: "#4DA3FF" },
-    "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
-    "قيد المعالجة": { icon: "🔧", color: "#FF9500" },
-    "تم الإصلاح": { icon: "✔", color: "#4CD964" },
-    "مرفوض": { icon: "✖", color: "#FF3B30" },
-  };
-  const statusMapEn: { [key: string]: { icon: string; color: string } } = {
-    "open": { icon: "🔍", color: "#4DA3FF" },
-    "under review": { icon: "⏳", color: "#FFD166" },
-    "in progress": { icon: "🔧", color: "#FF9500" },
-    "resolved": { icon: "✔", color: "#4CD964" },
-    "rejected": { icon: "✖", color: "#FF3B30" },
-  };
+// Translation map for backend status keys → display names
+const STATUS_TRANSLATIONS: { [key: string]: { en: string; ar: string } } = {
+  "new": { en: "New", ar: "جديد" },
+  "open": { en: "Open", ar: "مفتوح" },
+  "in_progress": { en: "In Progress", ar: "قيد المعالجة" },
+  "resolved": { en: "Resolved", ar: "تم الإصلاح" },
+  "rejected": { en: "Rejected", ar: "مرفوض" },
+  "closed": { en: "Closed", ar: "مغلق" },
+  "under review": { en: "Under Review", ar: "قيد المراجعة" },
+  "being handled": { en: "In Progress", ar: "قيد المعالجة" },
+  "completed": { en: "Completed", ar: "مكتمل" },
+};
 
-  const statusMap = language === "ar" ? statusMapAr : statusMapEn;
-  return statusMap[statusName.toLowerCase()] || { icon: "📋", color: "#8E8E93" };
+const CATEGORY_TRANSLATIONS: { [key: string]: { en: string; ar: string } } = {
+  "infrastructure": { en: "Infrastructure", ar: "البنية التحتية" },
+  "environment": { en: "Environment", ar: "البيئة" },
+  "safety": { en: "Safety", ar: "السلامة" },
+  "pothole": { en: "Pothole", ar: "حفرة" },
+  "accident": { en: "Accident", ar: "حادث" },
+  "lighting": { en: "Lighting", ar: "إضاءة" },
+  "speed_camera": { en: "Speed Camera", ar: "كاشف سرعة" },
+  "speedcamera": { en: "Speed Camera", ar: "كاشف سرعة" },
+  "other": { en: "Other", ar: "أخرى" },
+};
+
+const SEVERITY_TRANSLATIONS: { [key: string]: { en: string; ar: string } } = {
+  "low": { en: "Low", ar: "منخفضة" },
+  "medium": { en: "Medium", ar: "متوسطة" },
+  "high": { en: "High", ar: "عالية" },
+};
+
+const translateCategory = (name: string, language: string): string => {
+  const key = name.toLowerCase().trim();
+  const entry = CATEGORY_TRANSLATIONS[key];
+  if (entry) return language === "ar" ? entry.ar : entry.en;
+  if (/[\u0600-\u06FF]/.test(name)) return name;
+  return name;
+};
+
+const translateSeverity = (name: string, language: string): string => {
+  const key = name.toLowerCase().trim();
+  const entry = SEVERITY_TRANSLATIONS[key];
+  if (entry) return language === "ar" ? entry.ar : entry.en;
+  if (/[\u0600-\u06FF]/.test(name)) return name;
+  return name;
+};
+
+const translateStatus = (statusName: string, language: string): string => {
+  const key = statusName.toLowerCase().trim();
+  const entry = STATUS_TRANSLATIONS[key];
+  if (entry) return language === "ar" ? entry.ar : entry.en;
+  // Fallback: check if it's already an Arabic name
+  if (/[\u0600-\u06FF]/.test(statusName)) return statusName;
+  return statusName;
+};
+
+const getStatusMeta = (statusName: string, _language: string): { icon: string; color: string } => {
+  const metaMap: { [key: string]: { icon: string; color: string } } = {
+    "new": { icon: "🔍", color: "#4DA3FF" },
+    "open": { icon: "🔍", color: "#4DA3FF" },
+    "جديد": { icon: "🔍", color: "#4DA3FF" },
+    "مفتوح": { icon: "🔍", color: "#4DA3FF" },
+    "under review": { icon: "⏳", color: "#FFD166" },
+    "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
+    "in_progress": { icon: "🔧", color: "#FF9500" },
+    "in progress": { icon: "🔧", color: "#FF9500" },
+    "being handled": { icon: "🔧", color: "#FF9500" },
+    "قيد المعالجة": { icon: "🔧", color: "#FF9500" },
+    "resolved": { icon: "✔", color: "#4CD964" },
+    "completed": { icon: "✔", color: "#4CD964" },
+    "تم الإصلاح": { icon: "✔", color: "#4CD964" },
+    "مكتمل": { icon: "✔", color: "#4CD964" },
+    "rejected": { icon: "✖", color: "#FF3B30" },
+    "مرفوض": { icon: "✖", color: "#FF3B30" },
+    "closed": { icon: "🔒", color: "#8E8E93" },
+    "مغلق": { icon: "🔒", color: "#8E8E93" },
+  };
+  return metaMap[statusName.toLowerCase().trim()] || { icon: "📋", color: "#8E8E93" };
 };
 
 type CircleStatProps = {
@@ -365,9 +425,22 @@ export default function ReportsScreen() {
     setHistoryExpanded(false);
   };
 
-  const getStatusName = (statusId: number): string => statuses.find((s) => s.id === statusId)?.name || "غير معروف";
-  const getCategoryName = (categoryId: number): string => categories.find((c) => c.id === categoryId)?.name || "غير معروف";
-  const getSeverityName = (severityId: number): string => severities.find((s) => s.id === severityId)?.name || "غير معروف";
+  const getStatusName = (statusId: number): string => {
+    const raw = statuses.find((s) => s.id === statusId)?.name || "غير معروف";
+    return translateStatus(raw, language);
+  };
+  const getCategoryName = (categoryId: number): string => {
+    const cat = categories.find((c) => c.id === categoryId);
+    if (!cat) return language === "ar" ? "غير معروف" : "Unknown";
+    if (language === "ar" && cat.name_ar) return cat.name_ar;
+    if (language !== "ar" && cat.name_en) return cat.name_en;
+    return translateCategory(cat.name, language);
+  };
+  const getSeverityName = (severityId: number): string => {
+    const sev = severities.find((s) => s.id === severityId);
+    if (!sev) return language === "ar" ? "غير معروف" : "Unknown";
+    return translateSeverity(sev.name, language);
+  };
 
   // Filtered reports based on search + filters
   const filteredReports = reports.filter((r) => {
@@ -559,7 +632,7 @@ export default function ReportsScreen() {
             >
               <Text style={{ fontSize: 12, marginRight: 3 }}>{meta.icon}</Text>
               <Text style={[styles.filterChipText, activeStatusFilter === st.id && styles.filterChipTextActive]}>
-                {st.name}
+                {translateStatus(st.name, language)}
               </Text>
             </TouchableOpacity>
           );

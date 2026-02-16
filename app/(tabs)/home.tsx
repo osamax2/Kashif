@@ -4,11 +4,11 @@ import ReportDialog from "@/components/ReportDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useOffline } from "@/contexts/OfflineContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, RouteReport, Severity } from "@/services/api";
 import locationMonitoringService from "@/services/location-monitoring";
 import { getPendingReports, removePendingReport, subscribeToNetworkChanges } from "@/services/offline-reports";
-import { cacheNearbyReports, getCachedNearbyReports, checkConnectivity } from "@/services/offline-service";
-import { useOffline } from "@/contexts/OfflineContext";
+import { cacheNearbyReports, checkConnectivity, getCachedNearbyReports } from "@/services/offline-service";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
@@ -17,6 +17,7 @@ import * as Speech from "expo-speech";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+    Alert,
     Animated,
     Image,
     Keyboard,
@@ -724,9 +725,14 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         return "#3B82F6"; // Default blue
     };
     
-    // Navigate to selected place
+    // Navigate to selected place and automatically start route
     const navigateToPlace = (latitude: number, longitude: number, title: string) => {
-        console.log('\ud83e\uddedNavigating to place:', { latitude, longitude, title });
+        console.log('🧭 Navigating to place:', { latitude, longitude, title });
+        
+        // Clear any existing route first
+        if (routeCoords.length > 0) {
+            clearRoute();
+        }
         
         const newRegion = {
             latitude,
@@ -739,31 +745,25 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         setReportLocation({ latitude, longitude }); // Use search location for reports
         setMapRegion(newRegion); // Update map region state
         
-        console.log('\u2705 Search marker set:', { latitude, longitude, title });
-        console.log('\u2705 Report location updated to search location');
-        console.log('\u2705 Map region updated');
+        console.log('✅ Search marker set:', { latitude, longitude, title });
+        console.log('✅ Report location updated to search location');
         
         // Animate map to location
         if (mapRef.current) {
-            console.log('🗺️ Animating to:', newRegion);
             try {
                 mapRef.current.animateToRegion(newRegion, 1000);
                 console.log('✅ Map animated successfully');
-                
-                // Remove the search marker after animation completes
-                setTimeout(() => {
-                    setSearchMarker(null);
-                    console.log('🗑️ Search marker removed');
-                }, 2000); // 2 seconds after animation
-                
             } catch (error) {
                 console.error('❌ Animation error:', error);
             }
-        } else {
-            console.warn('⚠️ mapRef is not ready yet');
         }
         
         Keyboard.dismiss();
+        
+        // Automatically start route to the selected destination
+        setRouteMode(true);
+        setRouteDestination(title);
+        fetchRouteToDestination(latitude, longitude);
     };
 
     // Handle long press on map - place a marker for custom report location
@@ -807,7 +807,19 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     const fetchRouteToDestination = async (destLat: number, destLng: number) => {
-        if (!userLocation) return;
+        if (!userLocation) {
+            Alert.alert(
+                language === 'ar' ? 'خطأ' : 'Error',
+                language === 'ar' ? 'يرجى تفعيل تحديد الموقع أولاً' : 'Please enable location first'
+            );
+            setRouteMode(false);
+            return;
+        }
+        if (!GOOGLE_API_KEY) {
+            console.error('Google API key is missing');
+            setRouteMode(false);
+            return;
+        }
         setRouteLoading(true);
         try {
             // 1. Get directions from Google
@@ -815,11 +827,28 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             const dest = `${destLat},${destLng}`;
             const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}&key=${GOOGLE_API_KEY}&mode=driving`;
             
+            console.log('🗺️ Fetching route from Google Directions...');
             const res = await fetch(url);
             const data = await res.json();
             
+            console.log('🗺️ Directions API status:', data.status);
+            
             if (data.status !== 'OK' || !data.routes?.length) {
-                console.warn('No route found');
+                console.warn('No route found, status:', data.status, data.error_message);
+                // Show route line directly from user to destination as fallback
+                const directLine = [
+                    { latitude: userLocation.latitude, longitude: userLocation.longitude },
+                    { latitude: destLat, longitude: destLng },
+                ];
+                setRouteCoords(directLine);
+                
+                // Fit map to show both points
+                if (mapRef.current) {
+                    mapRef.current.fitToCoordinates(directLine, {
+                        edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
+                        animated: true,
+                    });
+                }
                 setRouteLoading(false);
                 return;
             }
@@ -827,16 +856,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             // 2. Decode polyline
             const points = decodePolyline(data.routes[0].overview_polyline.points);
             setRouteCoords(points);
+            console.log(`✅ Route decoded: ${points.length} points`);
             
-            // 3. Sample waypoints for the backend query (every ~500m, max 100 points)
-            const sampled = sampleWaypoints(points, 100);
-            
-            // 4. Fetch hazards along route
-            const routeData = await reportingAPI.getReportsAlongRoute(sampled, 200);
-            setRouteHazards(routeData.reports);
-            setRouteSummary(routeData.summary);
-            
-            // 5. Fit map to show entire route
+            // 3. Fit map to show entire route
             if (mapRef.current && points.length > 1) {
                 mapRef.current.fitToCoordinates(points, {
                     edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
@@ -844,15 +866,41 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 });
             }
             
-            // 6. Speak summary
-            if (routeData.total_hazards > 0 && soundEnabled) {
-                const msg = language === 'ar'
-                    ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
-                    : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
-                Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+            // 4. Sample waypoints for the backend query (every ~500m, max 100 points)
+            const sampled = sampleWaypoints(points, 100);
+            
+            // 5. Fetch hazards along route (non-blocking - route shows even if this fails)
+            try {
+                const routeData = await reportingAPI.getReportsAlongRoute(sampled, 200);
+                setRouteHazards(routeData.reports);
+                setRouteSummary(routeData.summary);
+                
+                // 6. Speak summary
+                if (routeData.total_hazards > 0 && soundEnabled) {
+                    const msg = language === 'ar'
+                        ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
+                        : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
+                    Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+                }
+            } catch (hazardErr) {
+                console.warn('⚠️ Failed to fetch route hazards (route still shown):', hazardErr);
             }
         } catch (err) {
             console.error('Route error:', err);
+            // Fallback: show direct line
+            if (userLocation) {
+                const directLine = [
+                    { latitude: userLocation.latitude, longitude: userLocation.longitude },
+                    { latitude: destLat, longitude: destLng },
+                ];
+                setRouteCoords(directLine);
+                if (mapRef.current) {
+                    mapRef.current.fitToCoordinates(directLine, {
+                        edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
+                        animated: true,
+                    });
+                }
+            }
         } finally {
             setRouteLoading(false);
         }
@@ -864,6 +912,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         setRouteHazards([]);
         setRouteSummary({});
         setRouteDestination('');
+        setSearchMarker(null);
     };
 
     // Decode Google encoded polyline
@@ -1459,7 +1508,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     <Text style={styles.fabPlus}>+</Text>
                 </TouchableOpacity>
             </View>
-            {/* SOUND BUTTON UNTER DEM + BUTTON */}
+            {/* SOUND BUTTON */}
             <TouchableOpacity
                 style={[
                     styles.soundButton,
@@ -1471,25 +1520,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 <Ionicons name="volume-high" style={styles.soundIcon} />
             </TouchableOpacity>
 
-            {/* ROUTE WARNING BUTTON */}
-            <TouchableOpacity
-                style={[
-                    styles.routeButton,
-                    language === 'ar' ? { left: 22 } : { right: 22, left: undefined },
-                    routeMode && styles.routeButtonActive,
-                ]}
-                onPress={() => {
-                    if (routeMode) {
-                        clearRoute();
-                    } else {
-                        setRouteMode(true);
-                    }
-                }}
-            >
-                <Ionicons name={routeMode ? "close" : "navigate"} size={22} color={routeMode ? "#fff" : "#0D2B66"} />
-            </TouchableOpacity>
-
-            {/* HEATMAP TOGGLE BUTTON */}
+            {/* HEATMAP TOGGLE BUTTON - under audio button */}
             <TouchableOpacity
                 style={[
                     styles.heatmapButton,
@@ -1501,78 +1532,35 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 <Ionicons name={heatmapEnabled ? "flame" : "flame-outline"} size={22} color={heatmapEnabled ? "#fff" : "#0D2B66"} />
             </TouchableOpacity>
 
-            {/* ROUTE DESTINATION INPUT */}
-            {routeMode && routeCoords.length === 0 && (
-                <View style={[styles.routeInputContainer, language === 'ar' ? { direction: 'rtl' } : {}]}>
-                    <GooglePlacesAutocomplete
-                        placeholder={language === 'ar' ? 'أدخل الوجهة...' : 'Enter destination...'}
-                        onPress={(data, details = null) => {
-                            if (details?.geometry?.location) {
-                                setRouteDestination(data.description);
-                                fetchRouteToDestination(
-                                    details.geometry.location.lat,
-                                    details.geometry.location.lng
-                                );
-                            }
-                        }}
-                        query={{
-                            key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-                            language: language === 'ar' ? 'ar' : 'en',
-                        }}
-                        fetchDetails={true}
-                        styles={{
-                            container: { flex: 0 },
-                            textInputContainer: {
-                                backgroundColor: '#fff',
-                                borderRadius: 12,
-                                paddingHorizontal: 8,
-                                height: 44,
-                            },
-                            textInput: {
-                                backgroundColor: 'transparent',
-                                color: '#0D2B66',
-                                fontSize: 15,
-                                textAlign: language === 'ar' ? 'right' : 'left',
-                                height: 44,
-                            },
-                            listView: {
-                                backgroundColor: '#fff',
-                                borderRadius: 10,
-                                marginTop: 4,
-                            },
-                            row: { backgroundColor: '#fff', paddingVertical: 12 },
-                            description: { color: '#333', fontSize: 14 },
-                        }}
-                        enablePoweredByContainer={false}
-                        textInputProps={{
-                            placeholderTextColor: '#999',
-                        }}
-                    />
-                    {routeLoading && (
-                        <View style={styles.routeLoadingOverlay}>
-                            <Text style={{ color: '#0D2B66', fontSize: 14 }}>
-                                {language === 'ar' ? 'جاري تحميل المسار...' : 'Loading route...'}
-                            </Text>
-                        </View>
-                    )}
+            {/* ROUTE LOADING INDICATOR */}
+            {routeLoading && (
+                <View style={styles.routeInputContainer}>
+                    <View style={styles.routeLoadingOverlay}>
+                        <Text style={{ color: '#0D2B66', fontSize: 14 }}>
+                            {language === 'ar' ? 'جاري تحميل المسار...' : 'Loading route...'}
+                        </Text>
+                    </View>
                 </View>
             )}
 
             {/* ROUTE HAZARD SUMMARY PANEL */}
-            {routeMode && routeHazards.length > 0 && (
+            {routeMode && routeCoords.length > 0 && (
                 <View style={[styles.routeSummaryPanel, language === 'ar' ? { direction: 'rtl' } : {}]}>
                     <View style={styles.routeSummaryHeader}>
-                        <Ionicons name="warning" size={20} color="#F59E0B" />
+                        <Ionicons name={routeHazards.length > 0 ? "warning" : "checkmark-circle"} size={20} color={routeHazards.length > 0 ? "#F59E0B" : "#22C55E"} />
                         <Text style={styles.routeSummaryTitle}>
-                            {language === 'ar'
-                                ? `${routeHazards.length} تحذير على الطريق`
-                                : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`
+                            {routeHazards.length > 0
+                                ? (language === 'ar'
+                                    ? `${routeHazards.length} تحذير على الطريق`
+                                    : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`)
+                                : (language === 'ar' ? 'لا توجد مخاطر على الطريق ✓' : 'No hazards on route ✓')
                             }
                         </Text>
                         <TouchableOpacity onPress={clearRoute} style={{ marginLeft: 'auto' }}>
                             <Ionicons name="close-circle" size={22} color="#666" />
                         </TouchableOpacity>
                     </View>
+                    {routeHazards.length > 0 && (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                         {Object.entries(routeSummary).map(([catId, count]) => {
                             const catColor = getCategoryColor(Number(catId));
@@ -1591,6 +1579,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             );
                         })}
                     </ScrollView>
+                    )}
                 </View>
             )}
 
@@ -2203,7 +2192,7 @@ const styles = StyleSheet.create({
     },
     soundButton: {
         position: "absolute",
-        bottom: 570,       // über dem unteren Menü
+        bottom: 190,
         // left/right is set dynamically based on language
         width: 54,
         height: 54,
@@ -2221,27 +2210,9 @@ soundIcon: {
     fontSize: 26,
     color: "#0D2B66",               // dunkelblau
 },
-    routeButton: {
-        position: "absolute",
-        bottom: 630,
-        width: 48,
-        height: 48,
-        backgroundColor: "#fff",
-        borderRadius: 24,
-        alignItems: "center",
-        justifyContent: "center",
-        elevation: 6,
-        shadowColor: "#000",
-        shadowOpacity: 0.3,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 4,
-    },
-    routeButtonActive: {
-        backgroundColor: "#EF4444",
-    },
     heatmapButton: {
         position: "absolute",
-        bottom: 575,
+        bottom: 130,
         width: 48,
         height: 48,
         backgroundColor: "#fff",

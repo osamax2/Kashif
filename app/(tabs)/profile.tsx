@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { achievementAPI, Achievement, gamificationAPI, authAPI, Level, lookupAPI, PointTransaction, reportingAPI, challengeAPI, WeeklyChallenge, friendsAPI, FriendInfo } from "@/services/api";
+import { Achievement, achievementAPI, authAPI, challengeAPI, FriendInfo, friendsAPI, gamificationAPI, Level, lookupAPI, PointTransaction, reportingAPI, WeeklyChallenge } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
@@ -469,8 +469,8 @@ export default function ProfileScreen() {
       {achievements.length > 0 ? (
         <View style={styles.achievementsGrid}>
           {achievements.map((badge) => {
-            const name = effectiveRTL ? badge.name_ar : badge.name_en;
-            const desc = effectiveRTL ? badge.description_ar : badge.description_en;
+            const name = effectiveRTL ? badge.name_en : badge.name_ar;
+            const desc = effectiveRTL ? badge.description_en : badge.description_ar;
             return (
               <View
                 key={badge.id}
@@ -514,8 +514,8 @@ export default function ProfileScreen() {
 
       {challenges.length > 0 ? (
         challenges.map((ch) => {
-          const title = effectiveRTL ? ch.title_ar : ch.title_en;
-          const desc = effectiveRTL ? ch.description_ar : ch.description_en;
+          const title = effectiveRTL ? ch.title_en : ch.title_ar;
+          const desc = effectiveRTL ? ch.description_en : ch.description_ar;
           return (
             <View key={ch.id} style={[styles.challengeCard, ch.completed && styles.challengeCardDone]}>
               <View style={[styles.challengeHeader, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>

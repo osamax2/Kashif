@@ -2,15 +2,15 @@
 
 import { useLanguage } from '@/lib/i18n';
 import {
-  Activity,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Database,
-  MessageSquare,
-  RefreshCw,
-  Server,
-  XCircle
+    Activity,
+    AlertTriangle,
+    CheckCircle,
+    Clock,
+    Database,
+    MessageSquare,
+    RefreshCw,
+    Server,
+    XCircle
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

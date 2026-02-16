@@ -1,8 +1,8 @@
 // services/offline-service.ts
 // Comprehensive offline mode management - map data caching, sync queue, hazard cache
+import { reportingAPI } from '@/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
-import { reportingAPI } from '@/services/api';
 
 // Storage keys
 const CACHE_KEYS = {
