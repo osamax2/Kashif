@@ -73,6 +73,7 @@ class Report(Base):
     confirmation_status = Column(String(20), default="pending", nullable=False, index=True)  # pending, confirmed, expired
     confirmed_by_user_id = Column(Integer, nullable=True)  # User who confirmed this report
     confirmed_at = Column(DateTime, nullable=True)  # When the report was confirmed
+    confirmation_count = Column(Integer, default=0, nullable=False)  # Number of users who confirmed
     points_awarded = Column(Boolean, default=False, nullable=False)  # Whether points have been awarded
     created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -98,8 +99,6 @@ class ReportStatusHistory(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     report = relationship("Report", back_populates="status_history")
-    old_status = relationship("ReportStatus", foreign_keys=[old_status_id], back_populates="old_status_histories")
-    new_status = relationship("ReportStatus", foreign_keys=[new_status_id], back_populates="new_status_histories")
     old_status = relationship("ReportStatus", foreign_keys=[old_status_id], back_populates="old_status_histories")
     new_status = relationship("ReportStatus", foreign_keys=[new_status_id], back_populates="new_status_histories")
 

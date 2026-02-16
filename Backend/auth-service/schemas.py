@@ -162,6 +162,12 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 
+class VerifyCodeRequest(BaseModel):
+    """Schema for verifying account with 6-digit OTP code"""
+    email: EmailStr
+    code: str
+
+
 class CompanyMemberCreate(BaseModel):
     """Schema for adding a member to company by company user"""
     email: EmailStr

@@ -99,6 +99,7 @@ class Report(ReportBase):
     confirmation_status: str = "pending"  # pending, confirmed, expired
     confirmed_by_user_id: Optional[int] = None
     confirmed_at: Optional[datetime] = None
+    confirmation_count: int = 0  # Number of users who confirmed this report
     points_awarded: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -139,6 +140,34 @@ class ReportConfirmation(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class NearbyDuplicate(BaseModel):
+    """A nearby report that might be a duplicate"""
+    id: int
+    title: Optional[str] = None
+    description: str
+    category_id: int
+    latitude: Decimal
+    longitude: Decimal
+    address_text: Optional[str] = None
+    confirmation_status: str = "pending"
+    confirmation_count: int = 0
+    status_id: int
+    created_at: datetime
+    distance_meters: float
+    photo_urls: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DuplicateCheckResponse(BaseModel):
+    """Response for duplicate check"""
+    has_duplicates: bool
+    count: int
+    nearby_reports: List[NearbyDuplicate]
+    message: str
 
 
 class ConfirmReportRequest(BaseModel):

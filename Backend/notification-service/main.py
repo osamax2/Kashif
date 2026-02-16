@@ -1,4 +1,5 @@
 import logging
+import os
 import threading
 from typing import Annotated, List, Optional
 
@@ -12,6 +13,9 @@ from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from rabbitmq_consumer import start_consumer
 from sqlalchemy.orm import Session
+
+# Internal API key for service-to-service communication (DSGVO endpoints)
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "kashif-internal-secret-2026")
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -254,4 +258,99 @@ async def broadcast_notification(
         "sent_count": sent_count,
         "failed_count": failed_count,
         "total_users": len(users)
+    }
+
+
+# ============================================================
+# DSGVO / GDPR — Internal Endpoints (service-to-service only)
+# ============================================================
+
+def verify_internal_key(x_internal_key: str = Header(None)):
+    """Verify internal API key for service-to-service calls"""
+    if x_internal_key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid internal API key")
+
+
+@app.delete("/internal/user-data/{user_id}")
+def delete_user_data(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """DSGVO Art. 17 — Delete all notification data for a user"""
+    # Delete device tokens (FCM push tokens)
+    tokens_deleted = db.query(models.DeviceToken).filter(
+        models.DeviceToken.user_id == user_id
+    ).delete()
+
+    # Delete notifications
+    notifications_deleted = db.query(models.Notification).filter(
+        models.Notification.user_id == user_id
+    ).delete()
+
+    # Delete notification preferences
+    prefs_deleted = db.query(models.UserNotificationStatus).filter(
+        models.UserNotificationStatus.user_id == user_id
+    ).delete()
+
+    db.commit()
+
+    logger.info(f"DSGVO: Deleted data for user {user_id}: "
+                f"{tokens_deleted} tokens, {notifications_deleted} notifications, "
+                f"{prefs_deleted} preferences")
+    return {
+        "user_id": user_id,
+        "deleted": {
+            "device_tokens": tokens_deleted,
+            "notifications": notifications_deleted,
+            "notification_preferences": prefs_deleted,
+        }
+    }
+
+
+@app.get("/internal/user-data/{user_id}/export")
+def export_user_data(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """DSGVO Art. 15/20 — Export all notification data for a user"""
+    # Device tokens
+    tokens = db.query(models.DeviceToken).filter(
+        models.DeviceToken.user_id == user_id
+    ).all()
+    tokens_data = [{
+        "device_type": t.device_type,
+        "is_active": t.is_active,
+        "created_at": t.created_at.isoformat() if t.created_at else None,
+    } for t in tokens]
+
+    # Notifications
+    notifications = db.query(models.Notification).filter(
+        models.Notification.user_id == user_id
+    ).order_by(models.Notification.created_at.desc()).all()
+    notifications_data = [{
+        "id": n.id,
+        "title": n.title,
+        "body": n.body,
+        "type": n.type,
+        "is_read": n.is_read,
+        "created_at": n.created_at.isoformat() if n.created_at else None,
+    } for n in notifications]
+
+    # Preferences
+    prefs = db.query(models.UserNotificationStatus).filter(
+        models.UserNotificationStatus.user_id == user_id
+    ).all()
+    prefs_data = [{
+        "notification_type": p.notification_type,
+        "enabled": p.status,
+    } for p in prefs]
+
+    return {
+        "service": "notifications",
+        "user_id": user_id,
+        "device_tokens": tokens_data,
+        "notifications": notifications_data,
+        "notification_preferences": prefs_data,
     }

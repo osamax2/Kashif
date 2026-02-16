@@ -29,6 +29,52 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     return distance_km * 1000  # Convert to meters
 
 
+def find_nearby_duplicates(
+    db: Session,
+    latitude: float,
+    longitude: float,
+    category_id: int,
+    radius_meters: float = 50.0,
+    exclude_user_id: Optional[int] = None
+) -> List[dict]:
+    """
+    Find existing reports (any status) within the specified radius that match the category.
+    Returns reports with distance info for duplicate detection.
+    Default radius: 50 meters (per Features.md spec).
+    """
+    lat_range = radius_meters / 111000.0
+    lon_range = radius_meters / (111000.0 * cos(radians(latitude)))
+
+    query = db.query(models.Report).filter(
+        and_(
+            models.Report.deleted_at == None,
+            models.Report.category_id == category_id,
+            models.Report.latitude.between(latitude - lat_range, latitude + lat_range),
+            models.Report.longitude.between(longitude - lon_range, longitude + lon_range)
+        )
+    )
+
+    if exclude_user_id:
+        query = query.filter(models.Report.user_id != exclude_user_id)
+
+    candidates = query.order_by(models.Report.created_at.desc()).limit(10).all()
+
+    results = []
+    for report in candidates:
+        distance = haversine_distance(
+            latitude, longitude,
+            float(report.latitude), float(report.longitude)
+        )
+        if distance <= radius_meters:
+            results.append({
+                "report": report,
+                "distance_meters": round(distance, 1)
+            })
+
+    results.sort(key=lambda x: x["distance_meters"])
+    return results
+
+
 def find_matching_pending_reports(
     db: Session,
     latitude: float,
@@ -208,9 +254,11 @@ def confirm_report_still_there(
         report.confirmation_status = "confirmed"
         report.confirmed_by_user_id = user_id
         report.confirmed_at = datetime.utcnow()
+        report.confirmation_count = (report.confirmation_count or 0) + 1
         points_to_award = 20  # 10 for original reporter + 10 for confirmer
     else:
         # Report already confirmed, just award points to confirmer
+        report.confirmation_count = (report.confirmation_count or 0) + 1
         points_to_award = 10
     
     db.commit()

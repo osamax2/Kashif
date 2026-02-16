@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 VERIFICATION_TOKEN_EXPIRE_HOURS = 24
 PASSWORD_RESET_TOKEN_EXPIRE_HOURS = 1
@@ -116,5 +116,4 @@ def get_current_user(token: str, db: Session):
     if user is None:
         raise credentials_exception
     
-    return user
     return user

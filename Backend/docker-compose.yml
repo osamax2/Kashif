@@ -41,6 +41,11 @@ services:
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       JWT_ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REPORTING_SERVICE_URL: http://reporting-service:8000
+      GAMIFICATION_SERVICE_URL: http://gamification-service:8000
+      COUPONS_SERVICE_URL: http://coupons-service:8000
+      NOTIFICATION_SERVICE_URL: http://notification-service:8000
+      INTERNAL_API_KEY: kashif-internal-secret-2026
     volumes:
       - uploads_data:/app/uploads
     depends_on:
@@ -71,6 +76,7 @@ services:
       DATABASE_URL: postgresql://kashif_reports:report123@reporting-db:5432/kashif_reports
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
       AUTH_SERVICE_URL: http://auth-service:8000
+      INTERNAL_API_KEY: kashif-internal-secret-2026
     volumes:
       - reporting_uploads:/app/uploads
     depends_on:
@@ -101,6 +107,7 @@ services:
       DATABASE_URL: postgresql://kashif_gamif:gamif123@gamification-db:5432/kashif_gamification
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
       AUTH_SERVICE_URL: http://auth-service:8000
+      INTERNAL_API_KEY: kashif-internal-secret-2026
     depends_on:
       - gamification-db
       - rabbitmq
@@ -129,6 +136,7 @@ services:
       DATABASE_URL: postgresql://kashif_coupons:coupon123@coupons-db:5432/kashif_coupons
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
       AUTH_SERVICE_URL: http://auth-service:8000
+      INTERNAL_API_KEY: kashif-internal-secret-2026
     depends_on:
       - coupons-db
       - rabbitmq
@@ -165,6 +173,7 @@ services:
       SMTP_FROM_NAME: Kashif Road
       SMTP_USE_TLS: "true"
       FRONTEND_URL: https://api.kashifroad.com/api/auth
+      INTERNAL_API_KEY: kashif-internal-secret-2026
     depends_on:
       - notification-db
       - rabbitmq

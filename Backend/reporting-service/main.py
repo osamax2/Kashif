@@ -18,6 +18,9 @@ from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
 from sqlalchemy.orm import Session
 
+# Internal API key for service-to-service communication (DSGVO endpoints)
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "kashif-internal-secret-2026")
+
 models.Base.metadata.create_all(bind=engine)
 
 # Create uploads directory if it doesn't exist
@@ -330,6 +333,65 @@ async def get_reports(
     return enriched_reports
 
 
+@app.get("/check-duplicates", response_model=schemas.DuplicateCheckResponse)
+async def check_duplicates(
+    latitude: float,
+    longitude: float,
+    category_id: int,
+    radius_meters: float = 50.0,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Check for nearby duplicate reports before creating a new one.
+    Returns reports within the specified radius (default 50m) with the same category.
+    """
+    # Cap radius to reasonable max (200m)
+    radius = min(radius_meters, 200.0)
+
+    duplicates = crud.find_nearby_duplicates(
+        db=db,
+        latitude=latitude,
+        longitude=longitude,
+        category_id=category_id,
+        radius_meters=radius,
+        exclude_user_id=user_id
+    )
+
+    nearby_reports = []
+    for dup in duplicates:
+        report = dup["report"]
+        nearby_reports.append(schemas.NearbyDuplicate(
+            id=report.id,
+            title=report.title,
+            description=report.description,
+            category_id=report.category_id,
+            latitude=report.latitude,
+            longitude=report.longitude,
+            address_text=report.address_text,
+            confirmation_status=report.confirmation_status,
+            confirmation_count=report.confirmation_count or 0,
+            status_id=report.status_id,
+            created_at=report.created_at,
+            distance_meters=dup["distance_meters"],
+            photo_urls=report.photo_urls
+        ))
+
+    has_duplicates = len(nearby_reports) > 0
+
+    if has_duplicates:
+        message = f"Found {len(nearby_reports)} similar report(s) within {int(radius)}m. Consider confirming an existing report instead."
+    else:
+        message = "No similar reports found nearby. You can create a new report."
+
+    return schemas.DuplicateCheckResponse(
+        has_duplicates=has_duplicates,
+        count=len(nearby_reports),
+        nearby_reports=nearby_reports,
+        message=message
+    )
+
+
 @app.get("/pending-nearby", response_model=List[schemas.Report])
 async def get_pending_reports_nearby(
     latitude: float,
@@ -478,6 +540,7 @@ async def update_report_status(
     try:
         publish_event("report.status_updated", {
             "report_id": report.id,
+            "user_id": report.user_id,
             "new_status_id": status_update.status_id,
             "updated_by": user_id
         })
@@ -579,3 +642,130 @@ async def get_deleted_reports(
     """Get all soft-deleted reports (trash)"""
     reports = crud.get_deleted_reports(db=db, skip=skip, limit=limit)
     return reports
+
+
+# ============================================================
+# DSGVO / GDPR — Internal Endpoints (service-to-service only)
+# ============================================================
+
+def verify_internal_key(x_internal_key: str = Header(None)):
+    """Verify internal API key for service-to-service calls"""
+    if x_internal_key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid internal API key")
+
+
+@app.delete("/internal/user-data/{user_id}")
+def delete_user_data(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """DSGVO Art. 17 — Delete all data for a user (Right to Erasure)"""
+    deleted = {"reports": 0, "confirmations": 0, "status_history": 0, "uploads_removed": []}
+
+    # 1. Delete report confirmations by this user
+    confirmations = db.query(models.ReportConfirmation).filter(
+        models.ReportConfirmation.user_id == user_id
+    ).all()
+    deleted["confirmations"] = len(confirmations)
+    for c in confirmations:
+        db.delete(c)
+
+    # 2. Anonymize confirmed_by_user_id on reports confirmed by this user
+    db.query(models.Report).filter(
+        models.Report.confirmed_by_user_id == user_id
+    ).update({"confirmed_by_user_id": None})
+
+    # 3. Anonymize status history entries by this user
+    history_count = db.query(models.ReportStatusHistory).filter(
+        models.ReportStatusHistory.changed_by_user_id == user_id
+    ).update({"changed_by_user_id": 0})
+    deleted["status_history"] = history_count
+
+    # 4. Delete user's own reports and their uploaded images
+    reports = db.query(models.Report).filter(
+        models.Report.user_id == user_id
+    ).all()
+    deleted["reports"] = len(reports)
+
+    for report in reports:
+        # Delete associated status history
+        db.query(models.ReportStatusHistory).filter(
+            models.ReportStatusHistory.report_id == report.id
+        ).delete()
+        # Delete associated confirmations
+        db.query(models.ReportConfirmation).filter(
+            models.ReportConfirmation.report_id == report.id
+        ).delete()
+        # Delete uploaded images
+        if report.photo_urls:
+            for url in report.photo_urls.split(","):
+                filename = url.strip().split("/")[-1]
+                filepath = os.path.join(UPLOAD_DIR, filename)
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    deleted["uploads_removed"].append(filename)
+        if report.ai_annotated_url:
+            filename = report.ai_annotated_url.split("/")[-1]
+            filepath = os.path.join(UPLOAD_DIR, filename)
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                deleted["uploads_removed"].append(filename)
+        db.delete(report)
+
+    db.commit()
+    logger.info(f"DSGVO: Deleted all data for user {user_id}: {deleted}")
+    return {"user_id": user_id, "deleted": deleted}
+
+
+@app.get("/internal/user-data/{user_id}/export")
+def export_user_data(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """DSGVO Art. 15/20 — Export all data for a user (Right of Access / Portability)"""
+    # Reports
+    reports = db.query(models.Report).filter(
+        models.Report.user_id == user_id
+    ).all()
+
+    reports_data = []
+    for r in reports:
+        reports_data.append({
+            "id": r.id,
+            "title": r.title,
+            "description": r.description,
+            "latitude": float(r.latitude) if r.latitude else None,
+            "longitude": float(r.longitude) if r.longitude else None,
+            "address_text": r.address_text,
+            "photo_urls": r.photo_urls,
+            "category_id": r.category_id,
+            "status_id": r.status_id,
+            "severity_id": r.severity_id,
+            "confirmation_status": r.confirmation_status,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        })
+
+    # Confirmations
+    confirmations = db.query(models.ReportConfirmation).filter(
+        models.ReportConfirmation.user_id == user_id
+    ).all()
+
+    confirmations_data = []
+    for c in confirmations:
+        confirmations_data.append({
+            "id": c.id,
+            "report_id": c.report_id,
+            "confirmation_type": c.confirmation_type,
+            "latitude": float(c.latitude) if c.latitude else None,
+            "longitude": float(c.longitude) if c.longitude else None,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+        })
+
+    return {
+        "service": "reporting",
+        "user_id": user_id,
+        "reports": reports_data,
+        "confirmations": confirmations_data,
+    }

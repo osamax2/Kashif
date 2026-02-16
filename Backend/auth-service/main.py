@@ -6,6 +6,7 @@ from typing import Annotated
 
 import auth
 import crud
+import httpx
 import models
 import schemas
 from database import engine, get_db
@@ -46,9 +47,38 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Service URLs for DSGVO cascade operations
+REPORTING_SERVICE_URL = os.getenv("REPORTING_SERVICE_URL", "http://reporting-service:8000")
+GAMIFICATION_SERVICE_URL = os.getenv("GAMIFICATION_SERVICE_URL", "http://gamification-service:8000")
+COUPONS_SERVICE_URL = os.getenv("COUPONS_SERVICE_URL", "http://coupons-service:8000")
+NOTIFICATION_SERVICE_URL = os.getenv("NOTIFICATION_SERVICE_URL", "http://notification-service:8000")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "kashif-internal-secret-2026")
+
 # Start RabbitMQ consumer in background thread
 consumer_thread = threading.Thread(target=start_consumer, daemon=True)
 consumer_thread.start()
+
+
+def periodic_token_cleanup():
+    """Periodically clean up expired/revoked refresh tokens every 6 hours"""
+    import time
+    while True:
+        try:
+            time.sleep(6 * 60 * 60)  # Every 6 hours
+            from database import SessionLocal
+            db = SessionLocal()
+            try:
+                deleted = crud.cleanup_expired_tokens(db)
+                if deleted > 0:
+                    logger.info(f"Token cleanup: removed {deleted} expired/revoked tokens")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Token cleanup error: {e}")
+
+
+cleanup_thread = threading.Thread(target=periodic_token_cleanup, daemon=True)
+cleanup_thread.start()
 
 
 @app.get("/health")
@@ -97,7 +127,10 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Generate verification token
     verification_token = auth.create_verification_token(data={"user_id": new_user.id, "email": new_user.email})
     
-    # Publish UserRegistered event with verification token
+    # Generate 6-digit OTP verification code
+    verification_code_obj = crud.create_verification_code(db, new_user.id, new_user.email)
+    
+    # Publish UserRegistered event with verification token (sends email link)
     try:
         publish_event("user.registered", {
             "user_id": new_user.id,
@@ -110,6 +143,19 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         logger.info(f"Published UserRegistered event for user {new_user.id}")
     except Exception as e:
         logger.error(f"Failed to publish UserRegistered event: {e}")
+    
+    # Publish verification code event (sends OTP code email)
+    try:
+        publish_event("user.verification_code", {
+            "user_id": new_user.id,
+            "email": new_user.email,
+            "full_name": new_user.full_name,
+            "verification_code": verification_code_obj.code,
+            "language": new_user.language or "ar"
+        })
+        logger.info(f"Published verification code event for user {new_user.id}")
+    except Exception as e:
+        logger.error(f"Failed to publish verification code event: {e}")
     
     return new_user
 
@@ -161,10 +207,19 @@ def refresh_token(token_data: schemas.RefreshTokenRequest, db: Session = Depends
     
     # Check if refresh token exists in database
     db_token = crud.get_refresh_token(db, token_data.refresh_token)
-    if not db_token or db_token.is_revoked:
+    if not db_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token revoked or invalid"
+            detail="Refresh token not found"
+        )
+
+    # Token family protection: if a revoked token is reused, revoke ALL user tokens
+    if db_token.is_revoked:
+        logger.warning(f"Revoked refresh token reuse detected for user {db_token.user_id} - revoking all tokens")
+        crud.revoke_all_user_tokens(db, db_token.user_id)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token revoked - possible token theft detected. All sessions invalidated."
         )
     
     user = crud.get_user_by_email(db, payload.get("sub"))
@@ -386,6 +441,30 @@ def verify_account(
         )
 
 
+@app.post("/verify-code")
+def verify_code_endpoint(
+    request: schemas.VerifyCodeRequest,
+    db: Session = Depends(get_db)
+):
+    """Verify user account using 6-digit OTP code sent to email"""
+    success, message, user_id = crud.verify_code(db, request.email, request.code)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+    
+    # Activate the account
+    if user_id:
+        user = crud.get_user(db, user_id)
+        if user and not user.is_verified:
+            crud.verify_user_account(db, user_id)
+            logger.info(f"User {user_id} verified via OTP code")
+    
+    return {"message": "Account verified successfully. You can now login."}
+
+
 @app.post("/resend-verification")
 def resend_verification_email(
     request: schemas.ResendVerificationRequest,
@@ -403,7 +482,10 @@ def resend_verification_email(
     # Generate verification token
     verification_token = auth.create_verification_token(data={"user_id": user.id, "email": user.email})
     
-    # Publish event to send verification email
+    # Generate new OTP code
+    verification_code_obj = crud.create_verification_code(db, user.id, user.email)
+    
+    # Publish event to send verification email (link)
     try:
         publish_event("user.verification_resend", {
             "user_id": user.id,
@@ -416,7 +498,20 @@ def resend_verification_email(
     except Exception as e:
         logger.error(f"Failed to publish verification resend event: {e}")
     
-    return {"message": "If the email exists, a verification link has been sent."}
+    # Publish event to send OTP code email
+    try:
+        publish_event("user.verification_code", {
+            "user_id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "verification_code": verification_code_obj.code,
+            "language": user.language or "ar"
+        })
+        logger.info(f"Published verification code resend for user {user.id}")
+    except Exception as e:
+        logger.error(f"Failed to publish verification code event: {e}")
+    
+    return {"message": "If the email exists, a verification code has been sent."}
 
 
 @app.post("/forgot-password")
@@ -610,7 +705,14 @@ def logout(
     token_data: schemas.RefreshTokenRequest,
     db: Session = Depends(get_db)
 ):
-    crud.revoke_refresh_token(db, token_data.refresh_token)
+    # Get the refresh token to find the user
+    db_token = crud.get_refresh_token(db, token_data.refresh_token)
+    if db_token:
+        # Revoke ALL refresh tokens for this user (logout from all devices)
+        crud.revoke_all_user_tokens(db, db_token.user_id)
+    else:
+        # Fallback: revoke just this token string
+        crud.revoke_refresh_token(db, token_data.refresh_token)
     return {"message": "Logged out successfully"}
 
 
@@ -1149,6 +1251,95 @@ def update_language_preference(
     }
 
 
+@app.post("/me/profile-picture")
+async def upload_profile_picture(
+    file: UploadFile = File(...),
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload a profile picture for the current user.
+    Supports: jpg, jpeg, png, gif, webp
+    Max size: 5MB
+    Replaces old profile picture if exists.
+    """
+    current_user = auth.get_current_user(token, db)
+    
+    # Validate file extension
+    allowed_ext = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    file_ext = os.path.splitext(file.filename)[1].lower() if file.filename else ''
+    if file_ext not in allowed_ext:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File type not allowed. Allowed types: {', '.join(allowed_ext)}"
+        )
+    
+    # Read and check size
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large. Maximum size: 5MB"
+        )
+    
+    # Delete old profile picture file if exists
+    if current_user.image_url:
+        old_filename = current_user.image_url.split("/")[-1]
+        old_path = os.path.join(UPLOAD_DIR, old_filename)
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+                logger.info(f"Deleted old profile picture: {old_filename}")
+            except Exception as e:
+                logger.warning(f"Could not delete old profile picture: {e}")
+    
+    # Save new profile picture
+    unique_filename = f"profile_{current_user.id}_{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    # Update user's image_url in DB
+    image_url = f"/api/auth/uploads/{unique_filename}"
+    updated_user = crud.update_user_image(db, current_user.id, image_url)
+    
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update profile picture"
+        )
+    
+    logger.info(f"User {current_user.id} updated profile picture: {unique_filename}")
+    
+    return {
+        "message": "Profile picture updated successfully",
+        "image_url": image_url
+    }
+
+
+@app.delete("/me/profile-picture")
+def delete_profile_picture(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Delete the current user's profile picture"""
+    current_user = auth.get_current_user(token, db)
+    
+    if current_user.image_url:
+        old_filename = current_user.image_url.split("/")[-1]
+        old_path = os.path.join(UPLOAD_DIR, old_filename)
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except Exception as e:
+                logger.warning(f"Could not delete profile picture file: {e}")
+        
+        crud.update_user_image(db, current_user.id, None)
+        logger.info(f"User {current_user.id} deleted profile picture")
+    
+    return {"message": "Profile picture deleted successfully"}
+
+
 # File Upload Endpoints
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
@@ -1223,3 +1414,149 @@ def get_user_internal(
         )
     
     return user
+
+
+# ============================================================
+# DSGVO / GDPR — User Self-Service Endpoints
+# ============================================================
+
+def _call_service_delete(service_url: str, user_id: int) -> dict:
+    """Call a service's internal delete endpoint"""
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.delete(
+                f"{service_url}/internal/user-data/{user_id}",
+                headers={"X-Internal-Key": INTERNAL_API_KEY}
+            )
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Service {service_url} returned {response.status_code} for user deletion")
+                return {"error": f"HTTP {response.status_code}"}
+    except Exception as e:
+        logger.error(f"Failed to call {service_url} for user deletion: {e}")
+        return {"error": str(e)}
+
+
+def _call_service_export(service_url: str, user_id: int) -> dict:
+    """Call a service's internal export endpoint"""
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.get(
+                f"{service_url}/internal/user-data/{user_id}/export",
+                headers={"X-Internal-Key": INTERNAL_API_KEY}
+            )
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Service {service_url} returned {response.status_code} for user export")
+                return {"service": service_url, "error": f"HTTP {response.status_code}"}
+    except Exception as e:
+        logger.error(f"Failed to call {service_url} for user export: {e}")
+        return {"service": service_url, "error": str(e)}
+
+
+@app.get("/me/export")
+def export_my_data(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """
+    DSGVO Art. 15/20 — Datenauskunft & Datenportabilität
+    Exportiert alle personenbezogenen Daten des Benutzers als JSON.
+    """
+    user = auth.get_current_user(token, db)
+
+    # 1. Auth-Service Daten (direkt aus DB)
+    auth_data = {
+        "service": "auth",
+        "user_id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "phone": user.phone,
+        "role": user.role,
+        "language": user.language,
+        "city": user.city,
+        "district": user.district,
+        "job_description": user.job_description,
+        "total_points": user.total_points,
+        "image_url": user.image_url,
+        "status": user.status,
+        "is_verified": user.is_verified,
+        "last_login": user.last_login.isoformat() if user.last_login else None,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+    # 2. Daten von anderen Services sammeln
+    reporting_data = _call_service_export(REPORTING_SERVICE_URL, user.id)
+    gamification_data = _call_service_export(GAMIFICATION_SERVICE_URL, user.id)
+    coupons_data = _call_service_export(COUPONS_SERVICE_URL, user.id)
+    notification_data = _call_service_export(NOTIFICATION_SERVICE_URL, user.id)
+
+    logger.info(f"DSGVO: Data export for user {user.id} ({user.email})")
+
+    return {
+        "export_date": __import__("datetime").datetime.utcnow().isoformat(),
+        "user": auth_data,
+        "reports": reporting_data,
+        "gamification": gamification_data,
+        "coupons": coupons_data,
+        "notifications": notification_data,
+    }
+
+
+@app.delete("/me")
+def delete_my_account(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """
+    DSGVO Art. 17 — Recht auf Löschung (Right to Erasure)
+    Löscht das Benutzerkonto und alle zugehörigen Daten in allen Services.
+    Diese Aktion kann NICHT rückgängig gemacht werden.
+    """
+    user = auth.get_current_user(token, db)
+
+    # Admins dürfen sich nicht selbst löschen (Sicherheit)
+    if user.role == "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin accounts cannot be self-deleted. Contact another admin."
+        )
+
+    user_id = user.id
+    user_email = user.email
+    cascade_results = {}
+
+    # 1. Kaskaden-Löschung in allen Services
+    logger.info(f"DSGVO: Starting cascade deletion for user {user_id} ({user_email})")
+
+    cascade_results["reporting"] = _call_service_delete(REPORTING_SERVICE_URL, user_id)
+    cascade_results["gamification"] = _call_service_delete(GAMIFICATION_SERVICE_URL, user_id)
+    cascade_results["coupons"] = _call_service_delete(COUPONS_SERVICE_URL, user_id)
+    cascade_results["notifications"] = _call_service_delete(NOTIFICATION_SERVICE_URL, user_id)
+
+    # 2. Refresh Tokens löschen
+    db.query(models.RefreshToken).filter(
+        models.RefreshToken.user_id == user_id
+    ).delete()
+
+    # 3. Profilbild löschen
+    if user.image_url:
+        filename = user.image_url.split("/")[-1]
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+    # 4. User permanent aus DB löschen
+    db.delete(user)
+    db.commit()
+
+    logger.info(f"DSGVO: User {user_id} ({user_email}) permanently deleted. "
+                f"Cascade results: {cascade_results}")
+
+    return {
+        "message": "Account and all associated data permanently deleted",
+        "user_id": user_id,
+        "cascade_results": cascade_results,
+    }

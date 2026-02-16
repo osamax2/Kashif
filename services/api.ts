@@ -192,6 +192,44 @@ export const authAPI = {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(response.data));
     return response.data;
   },
+
+  // Upload profile picture
+  uploadProfilePicture: async (imageUri: string): Promise<{ image_url: string }> => {
+    const formData = new FormData();
+    const uriParts = imageUri.split('.');
+    const fileExtension = uriParts[uriParts.length - 1];
+    
+    const file = {
+      uri: imageUri,
+      type: `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`,
+      name: `profile_${Date.now()}.${fileExtension}`,
+    } as any;
+    
+    formData.append('file', file);
+    
+    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    
+    const response = await fetch(`${API_BASE_URL}/api/auth/me/profile-picture`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to upload profile picture');
+    }
+    
+    return await response.json();
+  },
+
+  // Delete profile picture
+  deleteProfilePicture: async (): Promise<void> => {
+    await api.delete('/api/auth/me/profile-picture');
+  },
 };
 
 // User API - alias for authAPI
@@ -337,6 +375,7 @@ export interface Report {
   confirmation_status: 'pending' | 'confirmed' | 'expired';
   confirmed_by_user_id?: number;
   confirmed_at?: string;
+  confirmation_count: number;
   points_awarded: boolean;
   created_at: string;
   updated_at?: string;
@@ -382,7 +421,38 @@ export interface ConfirmReportResponse {
   points_awarded: number;
 }
 
+export interface NearbyDuplicate {
+  id: number;
+  title?: string;
+  description: string;
+  category_id: number;
+  latitude: number;
+  longitude: number;
+  address_text?: string;
+  confirmation_status: string;
+  confirmation_count: number;
+  status_id: number;
+  created_at: string;
+  distance_meters: number;
+  photo_urls?: string;
+}
+
+export interface DuplicateCheckResponse {
+  has_duplicates: boolean;
+  count: number;
+  nearby_reports: NearbyDuplicate[];
+  message: string;
+}
+
 export const reportingAPI = {
+  // Check for nearby duplicates before creating a report
+  checkDuplicates: async (latitude: number, longitude: number, categoryId: number): Promise<DuplicateCheckResponse> => {
+    const response = await api.get<DuplicateCheckResponse>('/api/reports/check-duplicates', {
+      params: { latitude, longitude, category_id: categoryId, radius_meters: 50 },
+    });
+    return response.data;
+  },
+
   // Upload image for report - now includes AI analysis
   uploadImage: async (imageUri: string): Promise<{ 
     url: string; 

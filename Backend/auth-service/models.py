@@ -56,4 +56,18 @@ class RefreshToken(Base):
     expires_at = Column(DateTime, nullable=False)
 
     user = relationship("User", back_populates="refresh_tokens")
-    user = relationship("User", back_populates="refresh_tokens")
+
+
+class VerificationCode(Base):
+    __tablename__ = "verification_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), index=True, nullable=False)
+    code = Column(String(6), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    is_used = Column(Boolean, default=False)
+    attempts = Column(Integer, default=0)  # Track failed attempts
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+
+    user = relationship("User")

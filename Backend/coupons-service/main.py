@@ -1,4 +1,5 @@
 import logging
+import os
 import threading
 from typing import Annotated, List, Optional
 
@@ -13,6 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
 from sqlalchemy.orm import Session
+
+# Internal API key for service-to-service communication (DSGVO endpoints)
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "kashif-internal-secret-2026")
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -682,3 +686,73 @@ async def get_company_stats_summary(
             )
     
     return crud.get_company_stats_summary(db=db, company_id=company_id)
+
+
+# ============================================================
+# DSGVO / GDPR — Internal Endpoints (service-to-service only)
+# ============================================================
+
+def verify_internal_key(x_internal_key: str = Header(None)):
+    """Verify internal API key for service-to-service calls"""
+    if x_internal_key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid internal API key")
+
+
+@app.delete("/internal/user-data/{user_id}")
+def delete_user_data(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """DSGVO Art. 17 — Anonymize/delete coupon redemptions for a user"""
+    # Anonymize redemptions (keep for company statistics, but remove user reference)
+    count = db.query(models.CouponRedemption).filter(
+        models.CouponRedemption.user_id == user_id
+    ).update({"user_id": 0})
+
+    # Anonymize verified_by references
+    verified_count = db.query(models.CouponRedemption).filter(
+        models.CouponRedemption.verified_by == user_id
+    ).update({"verified_by": None})
+
+    db.commit()
+
+    logger.info(f"DSGVO: Anonymized {count} redemptions, {verified_count} verifications for user {user_id}")
+    return {
+        "user_id": user_id,
+        "deleted": {
+            "redemptions_anonymized": count,
+            "verifications_anonymized": verified_count,
+        }
+    }
+
+
+@app.get("/internal/user-data/{user_id}/export")
+def export_user_data(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """DSGVO Art. 15/20 — Export all coupon redemptions for a user"""
+    redemptions = db.query(models.CouponRedemption).filter(
+        models.CouponRedemption.user_id == user_id
+    ).all()
+
+    redemptions_data = []
+    for r in redemptions:
+        coupon = db.query(models.Coupon).filter(models.Coupon.id == r.coupon_id).first()
+        redemptions_data.append({
+            "id": r.id,
+            "coupon_name": coupon.name if coupon else None,
+            "points_spent": r.points_spent,
+            "status": r.status,
+            "verification_code": r.verification_code,
+            "redeemed_at": r.redeemed_at.isoformat() if r.redeemed_at else None,
+            "verified_at": r.verified_at.isoformat() if r.verified_at else None,
+        })
+
+    return {
+        "service": "coupons",
+        "user_id": user_id,
+        "redemptions": redemptions_data,
+    }
