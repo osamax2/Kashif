@@ -71,13 +71,14 @@ def handle_report_created(event_data):
                 related_report_id=report_id
             )
             
-            # Send push notification
+            # Send push notification (respects preferences)
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
                 title="تم استلام بلاغك",
                 body=f"شكراً لك! تم استلام بلاغك #{report_id}",
-                data={"notification_id": str(notification.id), "report_id": str(report_id)}
+                data={"notification_id": str(notification.id), "report_id": str(report_id)},
+                notification_type="REPORT_CREATED"
             )
         
         db.close()
@@ -121,10 +122,12 @@ def handle_report_status_updated(event_data):
             title=title_ar,
             body=body_ar,
             notification_type="REPORT_UPDATE",
-            related_report_id=report_id
+            related_report_id=report_id,
+            title_en=title_en,
+            body_en=body_en
         )
         
-        # Send push notification
+        # Send push notification (respects preferences)
         fcm_service.send_push_notification(
             db=db,
             user_id=user_id,
@@ -137,7 +140,8 @@ def handle_report_status_updated(event_data):
                 "title_en": title_en,
                 "body_en": body_en,
                 "type": "report_status_updated"
-            }
+            },
+            notification_type="REPORT_UPDATE"
         )
         
         logger.info(f"Report {report_id} status update notification sent to user {user_id} (status: {status_info['en']})")
@@ -164,13 +168,14 @@ def handle_points_awarded(event_data):
                 notification_type="POINTS_AWARDED"
             )
             
-            # Send push notification
+            # Send push notification (respects preferences)
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
                 title=f"حصلت على {points} نقطة!",
                 body=description or f"تم إضافة {points} نقطة",
-                data={"notification_id": str(notification.id)}
+                data={"notification_id": str(notification.id)},
+                notification_type="POINTS_AWARDED"
             )
         
         db.close()
@@ -196,13 +201,14 @@ def handle_coupon_redeemed(event_data):
                 related_coupon_id=coupon_id
             )
             
-            # Send push notification
+            # Send push notification (respects preferences)
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
                 title="تم استبدال القسيمة!",
                 body="يمكنك استخدام قسيمتك الآن",
-                data={"notification_id": str(notification.id), "coupon_id": str(coupon_id)}
+                data={"notification_id": str(notification.id), "coupon_id": str(coupon_id)},
+                notification_type="COUPON_REDEEMED"
             )
         
         db.close()

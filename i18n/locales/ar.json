@@ -261,8 +261,14 @@
     "hideName": "إخفاء اسمي عن البلاغات العامة",
     "notifications": "الإشعارات",
     "notifReports": "إشعارات البلاغات",
+    "notifStatusUpdates": "إشعارات تحديث الحالة",
     "notifPoints": "إشعارات النقاط والمكافآت",
+    "notifCoupons": "إشعارات القسائم",
     "notifGeneral": "إشعارات عامة",
+    "quietHours": "ساعات الهدوء",
+    "quietHoursDesc": "لن يتم إرسال إشعارات خلال ساعات الهدوء",
+    "quietHoursStart": "من",
+    "quietHoursEnd": "حتى",
     "saveChanges": "حفظ التغييرات",
     "changesSaved": "تم حفظ التغييرات بنجاح",
     "languageChanged": "تم تغيير اللغة. يرجى إعادة تشغيل التطبيق لتطبيق التغييرات.",
@@ -398,6 +404,14 @@
       "fromRoute": "من الطريق",
       "noHazards": "لا توجد مخاطر على هذا الطريق",
       "routeWarning": "تحذير المسار"
+    },
+    "offline": {
+      "banner": "أنت غير متصل بالإنترنت",
+      "pending": "{{count}} قيد الانتظار",
+      "syncComplete": "تم مزامنة جميع البيانات بنجاح",
+      "cachedData": "عرض بيانات محفوظة",
+      "reportSaved": "تم حفظ البلاغ في وضع عدم الاتصال",
+      "willSyncAuto": "سيتم المزامنة تلقائياً عند الاتصال"
     }
   }
 }

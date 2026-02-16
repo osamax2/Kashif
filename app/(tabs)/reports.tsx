@@ -13,7 +13,8 @@ import {
     Severity,
 } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { checkConnectivity, getCachedUserReports, cacheUserReports } from "@/services/offline-service";
 import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -165,6 +166,7 @@ function CircleStat({ percent, label, color }: CircleStatProps) {
 
 export default function ReportsScreen() {
   const router = useRouter();
+  const { reportId } = useLocalSearchParams<{ reportId?: string }>();
   const { user } = useAuth();
   const { t, language, isRTL } = useLanguage();
   const { refreshKey } = useDataSync();
@@ -196,9 +198,32 @@ export default function ReportsScreen() {
     loadData();
   }, [refreshKey]);
 
+  // Auto-open report detail when navigated via deep-link (e.g. from notification tap)
+  useEffect(() => {
+    if (reportId && reports.length > 0 && !loading) {
+      const targetReport = reports.find((r) => r.id === Number(reportId));
+      if (targetReport) {
+        openDetails(targetReport);
+      }
+    }
+  }, [reportId, reports, loading]);
+
   const loadData = async () => {
     try {
       setLoading(true);
+
+      const online = await checkConnectivity();
+      
+      if (!online) {
+        // Offline fallback: show cached user reports
+        const cached = await getCachedUserReports();
+        if (cached.length > 0) {
+          setReports(cached as any);
+          console.log(`📦 Loaded ${cached.length} cached user reports`);
+        }
+        setLoading(false);
+        return;
+      }
 
       const [reportsData, statusesData, categoriesData, severitiesData] = await Promise.all([
         reportingAPI.getMyReports(0, 10000).catch(() => []),
@@ -213,6 +238,11 @@ export default function ReportsScreen() {
       setSeverities(severitiesData);
 
       calculateStats(reportsData, statusesData);
+      
+      // Cache user reports for offline access
+      if (reportsData.length > 0) {
+        cacheUserReports(reportsData as any);
+      }
     } catch (error) {
       console.error("Error loading reports:", error);
     } finally {

@@ -4,13 +4,20 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class UserNotificationStatusBase(BaseModel):
+class NotificationPreferences(BaseModel):
+    report_notifications: bool = True
+    status_updates: bool = True
+    points_notifications: bool = True
+    coupon_notifications: bool = True
+    general_notifications: bool = True
+    quiet_hours_enabled: bool = False
+    quiet_hours_start: int = 22  # 0-23
+    quiet_hours_end: int = 7  # 0-23
+
+
+class NotificationPreferencesResponse(NotificationPreferences):
     user_id: int
-    notification_type: str
-    status: bool
 
-
-class UserNotificationStatus(UserNotificationStatusBase):
     class Config:
         from_attributes = True
 
@@ -53,6 +60,8 @@ class Notification(BaseModel):
     user_id: int
     title: str
     body: str
+    title_en: Optional[str] = None
+    body_en: Optional[str] = None
     type: str
     related_report_id: Optional[int] = None
     related_coupon_id: Optional[int] = None
@@ -60,5 +69,4 @@ class Notification(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True
         from_attributes = True

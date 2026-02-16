@@ -7,6 +7,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, RouteReport, Severity } from "@/services/api";
 import locationMonitoringService from "@/services/location-monitoring";
 import { getPendingReports, removePendingReport, subscribeToNetworkChanges } from "@/services/offline-reports";
+import { cacheNearbyReports, getCachedNearbyReports, checkConnectivity } from "@/services/offline-service";
+import { useOffline } from "@/contexts/OfflineContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
@@ -100,6 +102,7 @@ export default function HomeScreen() {
     const { user, refreshUser } = useAuth();
     const { t, language } = useLanguage();
     const { reportCreated } = useDataSync();
+    const { isOnline: networkOnline } = useOffline();
     
     /** ONBOARDING TUTORIAL */
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -318,10 +321,26 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         }
     }, [refreshKey, userLocation]);
     
-    // Load backend data
+    // Load backend data (with offline fallback)
     const loadData = async (location?: { latitude: number; longitude: number }) => {
         try {
             setLoading(true);
+            
+            // Check if online
+            const online = await checkConnectivity();
+            
+            if (!online) {
+                // Offline fallback: load cached data
+                console.log('📴 Offline — loading cached reports');
+                const cached = await getCachedNearbyReports();
+                if (cached.length > 0) {
+                    setReports(cached as any);
+                    console.log(`📦 Loaded ${cached.length} cached reports`);
+                }
+                setLoading(false);
+                return;
+            }
+            
             const reportParams: {
                 skip: number;
                 limit?: number;
@@ -368,6 +387,25 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             setCategories(categoriesData);
             setSeverities(severitiesData);
             setStatuses(statusesData);
+            
+            // Cache reports for offline use
+            if (reportsData.length > 0) {
+                cacheNearbyReports(reportsData.map((r: any) => ({
+                    id: r.id,
+                    title: r.title,
+                    description: r.description,
+                    category_id: r.category_id,
+                    status_id: r.status_id,
+                    severity: r.severity,
+                    latitude: r.latitude,
+                    longitude: r.longitude,
+                    address: r.address,
+                    photo_urls: r.photo_urls,
+                    created_at: r.created_at,
+                    confirmation_count: r.confirmation_count,
+                    confirmation_status: r.confirmation_status,
+                })));
+            }
         } catch (error) {
             console.error('❌ Error loading data:', error);
         } finally {

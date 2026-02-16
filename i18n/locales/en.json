@@ -260,8 +260,14 @@
     "hideName": "Hide my name from public reports",
     "notifications": "Notifications",
     "notifReports": "Report Notifications",
+    "notifStatusUpdates": "Status Update Notifications",
     "notifPoints": "Points & Rewards Notifications",
+    "notifCoupons": "Coupon Notifications",
     "notifGeneral": "General Notifications",
+    "quietHours": "Quiet Hours",
+    "quietHoursDesc": "No push notifications during quiet hours",
+    "quietHoursStart": "From",
+    "quietHoursEnd": "Until",
     "saveChanges": "Save Changes",
     "changesSaved": "Changes saved successfully",
     "languageChanged": "Language changed. Please restart the app to apply changes.",
@@ -397,6 +403,14 @@
       "fromRoute": "from route",
       "noHazards": "No hazards on this route",
       "routeWarning": "Route Warning"
+    },
+    "offline": {
+      "banner": "You are offline",
+      "pending": "{{count}} pending",
+      "syncComplete": "All data synced successfully",
+      "cachedData": "Showing cached data",
+      "reportSaved": "Report saved offline",
+      "willSyncAuto": "Will sync automatically when online"
     }
   }
 }

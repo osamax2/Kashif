@@ -58,7 +58,7 @@ export default function ModernNotifications() {
       await markAsRead(notification.id);
     }
     if (notification.related_report_id) {
-      router.push("/(tabs)/reports" as any);
+      router.push(`/(tabs)/reports?reportId=${notification.related_report_id}` as any);
     }
   };
 
@@ -119,9 +119,11 @@ export default function ModernNotifications() {
 
           <View style={{ flex: 1 }}>
             <Text style={[styles.msg, dir.textAlign, !item.is_read && styles.unreadText]}>
-              {item.title}
+              {(!effectiveRTL && item.title_en) ? item.title_en : item.title}
             </Text>
-            {item.body && <Text style={[styles.body, dir.textAlign]}>{item.body}</Text>}
+            {item.body && <Text style={[styles.body, dir.textAlign]}>
+              {(!effectiveRTL && item.body_en) ? item.body_en : item.body}
+            </Text>}
             <Text style={[styles.time, dir.textAlign]}>{formatTime(item.created_at)}</Text>
           </View>
 
