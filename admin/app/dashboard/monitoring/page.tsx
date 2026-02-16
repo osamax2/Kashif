@@ -38,11 +38,11 @@ interface DockerStatus {
 }
 
 const SERVICES = [
-  { key: 'auth', label: 'Auth Service', labelAr: 'خدمة المصادقة' },
-  { key: 'reporting', label: 'Reporting Service', labelAr: 'خدمة البلاغات' },
-  { key: 'gamification', label: 'Gamification Service', labelAr: 'خدمة التلعيب' },
-  { key: 'coupons', label: 'Coupons Service', labelAr: 'خدمة القسائم' },
-  { key: 'notification', label: 'Notification Service', labelAr: 'خدمة الإشعارات' },
+  { key: 'auth', healthPath: 'auth', label: 'Auth Service', labelAr: 'خدمة المصادقة' },
+  { key: 'reporting', healthPath: 'reports', label: 'Reporting Service', labelAr: 'خدمة البلاغات' },
+  { key: 'gamification', healthPath: 'gamification', label: 'Gamification Service', labelAr: 'خدمة التلعيب' },
+  { key: 'coupons', healthPath: 'coupons', label: 'Coupons Service', labelAr: 'خدمة القسائم' },
+  { key: 'notification', healthPath: 'notifications', label: 'Notification Service', labelAr: 'خدمة الإشعارات' },
 ];
 
 export default function MonitoringPage() {
@@ -60,7 +60,7 @@ export default function MonitoringPage() {
 
     for (const svc of SERVICES) {
       try {
-        const response = await fetch(`/api/monitoring/${svc.key}`);
+        const response = await fetch(`/api/${svc.healthPath}/health/detailed`);
         if (response.ok) {
           results[svc.key] = await response.json();
         } else {
