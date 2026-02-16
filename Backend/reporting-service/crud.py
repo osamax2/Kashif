@@ -465,11 +465,26 @@ def update_category(db: Session, category_id: int, category: "schemas.CategoryUp
 
 
 def delete_category(db: Session, category_id: int):
-    """Delete a category"""
+    """Delete a category and its severities. Fails if reports still reference it."""
     db_category = db.query(models.Category).filter(models.Category.id == category_id).first()
     if not db_category:
         return None
-    
+
+    # Check if any reports reference this category
+    report_count = db.query(models.Report).filter(models.Report.category_id == category_id).count()
+    if report_count > 0:
+        raise ValueError(f"Category has {report_count} report(s). Reassign or delete them first.")
+
+    # Check if any reports reference severities of this category
+    severity_ids = [s.id for s in db_category.severities]
+    if severity_ids:
+        sev_report_count = db.query(models.Report).filter(
+            models.Report.severity_id.in_(severity_ids)
+        ).count()
+        if sev_report_count > 0:
+            raise ValueError(f"Severities in this category are used by {sev_report_count} report(s). Reassign or delete them first.")
+
+    # Severities are cascade-deleted via relationship
     db.delete(db_category)
     db.commit()
     return db_category

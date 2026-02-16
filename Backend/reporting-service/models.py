@@ -24,7 +24,7 @@ class Category(Base):
     description = Column(Text, nullable=True)
 
     reports = relationship("Report", back_populates="category")
-    severities = relationship("Severity", back_populates="category")
+    severities = relationship("Severity", back_populates="category", cascade="all, delete-orphan")
 
 
 class ReportStatus(Base):

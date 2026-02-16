@@ -249,10 +249,13 @@ async def delete_category(
     db: Session = Depends(get_db)
 ):
     """Delete a report category (admin only)"""
-    db_category = crud.delete_category(db=db, category_id=category_id)
-    if not db_category:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return {"message": "Category deleted successfully"}
+    try:
+        db_category = crud.delete_category(db=db, category_id=category_id)
+        if not db_category:
+            raise HTTPException(status_code=404, detail="Category not found")
+        return {"message": "Category deleted successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 
 @app.get("/statuses", response_model=List[schemas.ReportStatus])
