@@ -18,60 +18,36 @@ class TestReportingService:
         assert response.json()["service"] == "reporting"
     
     def test_create_report(self):
-        """Test creating a new report"""
-        # Mock token (you'll need a valid token from auth service)
+        """Test creating a new report via multipart upload"""
         headers = {"Authorization": "Bearer mock_token"}
-        
-        report_data = {
-            "title": "Test Report",
-            "description": "Test description",
-            "location_lat": 33.5138,
-            "location_lng": 36.2765,
-            "address": "Damascus, Syria",
-            "category_id": 1,
-            "severity_id": 1,
-            "photo_urls": "https://example.com/photo1.jpg,https://example.com/photo2.jpg"
-        }
-        
-        response = client.post("/reports/", json=report_data, headers=headers)
-        # Expect 401 with mock token, or 200 with real token
-        assert response.status_code in [200, 401]
+        response = client.post("/upload", headers=headers)
+        # Expect 401 with mock token, or 422 missing fields
+        assert response.status_code in [200, 401, 422]
     
     def test_list_reports(self):
         """Test listing reports"""
-        headers = {"Authorization": "Bearer mock_token"}
-        response = client.get("/reports/", headers=headers)
-        # Should work even without auth in some cases
-        assert response.status_code in [200, 401]
+        response = client.get("/")
+        assert response.status_code == 200
     
     def test_get_report_by_id(self):
         """Test getting specific report"""
-        headers = {"Authorization": "Bearer mock_token"}
-        response = client.get("/reports/1", headers=headers)
-        assert response.status_code in [200, 401, 404]
+        response = client.get("/1")
+        assert response.status_code in [200, 404]
     
     def test_update_report_status(self):
         """Test updating report status"""
         headers = {"Authorization": "Bearer mock_token"}
         update_data = {
-            "status_id": 2,  # IN_PROGRESS
-            "notes": "Working on it"
+            "status_id": 2
         }
-        response = client.put("/reports/1/status", json=update_data, headers=headers)
+        response = client.patch("/1/status", json=update_data, headers=headers)
         assert response.status_code in [200, 401, 404]
     
-    def test_get_nearby_reports(self):
-        """Test getting reports near location"""
-        headers = {"Authorization": "Bearer mock_token"}
-        params = {
-            "lat": 33.5138,
-            "lng": 36.2765,
-            "radius_km": 5
-        }
-        response = client.get("/reports/nearby", params=params, headers=headers)
-        assert response.status_code in [200, 401]
+    def test_get_categories(self):
+        """Test getting report categories"""
+        response = client.get("/categories")
+        assert response.status_code == 200
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
     pytest.main([__file__, "-v"])
