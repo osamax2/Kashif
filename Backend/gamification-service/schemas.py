@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -40,4 +40,49 @@ class LeaderboardEntry(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ── Achievement Schemas ──────────────────────────────────────────────
+
+class AchievementBase(BaseModel):
+    key: str
+    name_en: str
+    name_ar: str
+    description_en: Optional[str] = None
+    description_ar: Optional[str] = None
+    icon: str = "🏆"
+    category: str = "general"
+    condition_type: str
+    condition_value: int = 1
+    points_reward: int = 0
+
+
+class AchievementResponse(AchievementBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+
+    class Config:
         from_attributes = True
+
+
+class UserAchievementResponse(BaseModel):
+    id: int
+    user_id: int
+    achievement_id: int
+    unlocked_at: datetime
+    achievement: AchievementResponse
+
+    class Config:
+        from_attributes = True
+
+
+class AchievementWithStatus(AchievementResponse):
+    """Achievement with user-specific unlock status"""
+    unlocked: bool = False
+    unlocked_at: Optional[datetime] = None
+
+
+class AchievementCheckResult(BaseModel):
+    new_achievements: List[AchievementResponse] = []
+    total_unlocked: int = 0

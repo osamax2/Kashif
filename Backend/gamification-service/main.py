@@ -286,6 +286,88 @@ async def confirm_report(
 
 
 # ============================================================
+# Achievement Endpoints
+# ============================================================
+
+@app.get("/achievements", response_model=List[schemas.AchievementResponse])
+async def get_all_achievements(
+    db: Session = Depends(get_db)
+):
+    """Get all available achievements (public)"""
+    return crud.get_all_achievements(db)
+
+
+@app.get("/achievements/my", response_model=List[schemas.AchievementWithStatus])
+async def get_my_achievements(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get all achievements with user's unlock status"""
+    all_achievements = crud.get_all_achievements(db)
+    unlocked_ids = crud.get_user_achievement_ids(db, user_id)
+    
+    # Get unlock timestamps
+    user_achievements = crud.get_user_achievements(db, user_id)
+    unlock_map = {ua.achievement_id: ua.unlocked_at for ua in user_achievements}
+    
+    result = []
+    for a in all_achievements:
+        data = schemas.AchievementWithStatus(
+            id=a.id,
+            key=a.key,
+            name_en=a.name_en,
+            name_ar=a.name_ar,
+            description_en=a.description_en,
+            description_ar=a.description_ar,
+            icon=a.icon,
+            category=a.category,
+            condition_type=a.condition_type,
+            condition_value=a.condition_value,
+            points_reward=a.points_reward,
+            is_active=a.is_active,
+            created_at=a.created_at,
+            unlocked=a.id in unlocked_ids,
+            unlocked_at=unlock_map.get(a.id),
+        )
+        result.append(data)
+    return result
+
+
+@app.post("/achievements/check", response_model=schemas.AchievementCheckResult)
+async def check_achievements(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Check and unlock any new achievements for the current user"""
+    newly_unlocked = crud.check_and_unlock_achievements(db, user_id)
+    
+    total = len(crud.get_user_achievement_ids(db, user_id))
+    
+    # Publish events for each new achievement
+    for achievement in newly_unlocked:
+        try:
+            publish_event("achievement.unlocked", {
+                "user_id": user_id,
+                "achievement_id": achievement.id,
+                "achievement_key": achievement.key,
+                "achievement_name_en": achievement.name_en,
+                "achievement_name_ar": achievement.name_ar,
+                "icon": achievement.icon,
+                "points_reward": achievement.points_reward,
+            })
+        except Exception as e:
+            logger.error(f"Failed to publish achievement event: {e}")
+    
+    if newly_unlocked:
+        logger.info(f"User {user_id} unlocked {len(newly_unlocked)} new achievements")
+    
+    return {
+        "new_achievements": newly_unlocked,
+        "total_unlocked": total,
+    }
+
+
+# ============================================================
 # DSGVO / GDPR — Internal Endpoints (service-to-service only)
 # ============================================================
 

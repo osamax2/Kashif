@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { gamificationAPI, authAPI, Level, lookupAPI, PointTransaction, reportingAPI } from "@/services/api";
+import { achievementAPI, Achievement, gamificationAPI, authAPI, Level, lookupAPI, PointTransaction, reportingAPI } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
@@ -55,6 +55,7 @@ export default function ProfileScreen() {
   const [currentLevel, setCurrentLevel] = useState<Level | null>(null);
   const [nextLevel, setNextLevel] = useState<Level | null>(null);
   const [progressPercentage, setProgressPercentage] = useState(0);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   // Cache-Kontrolle: Daten nur neu laden wenn älter als 30 Sekunden
   const STALE_TIME = 30_000; // 30 Sekunden
@@ -95,15 +96,17 @@ export default function ProfileScreen() {
     if (showLoader) setLoading(true);
 
     try {
-      const [transactionsData, reportsData, levelsData] = await Promise.all([
+      const [transactionsData, reportsData, levelsData, achievementsData] = await Promise.all([
         gamificationAPI.getMyTransactions(0, 5).catch(() => []),
         reportingAPI.getMyReports(0, 1000).catch(() => []),
         lookupAPI.getLevels().catch(() => []),
+        achievementAPI.getMyAchievements().catch(() => []),
       ]);
 
       setTransactions(transactionsData);
       setReportCount(reportsData.length);
       setLevels(levelsData);
+      setAchievements(achievementsData);
 
       if (levelsData.length > 0) {
         const sortedLevels = [...levelsData].sort(
@@ -135,6 +138,18 @@ export default function ProfileScreen() {
       }
 
       lastFetchRef.current = Date.now();
+
+      // Check for new achievements silently
+      try {
+        const checkResult = await achievementAPI.checkAchievements();
+        if (checkResult.new_achievements.length > 0) {
+          // Re-fetch achievements to get updated unlock status
+          const updatedAchievements = await achievementAPI.getMyAchievements().catch(() => []);
+          setAchievements(updatedAchievements);
+        }
+      } catch (e) {
+        // Silent fail - achievements check is not critical
+      }
     } catch (error) {
       console.error("Error loading profile data:", error);
     } finally {
@@ -429,6 +444,52 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* ACHIEVEMENTS / BADGES */}
+      <Text style={[styles.lastPointsTitle, { textAlign: effectiveRTL ? "right" : "left" }]}>
+        {t("profile.achievements")} 🏆
+      </Text>
+
+      {achievements.length > 0 ? (
+        <View style={styles.achievementsGrid}>
+          {achievements.map((badge) => {
+            const name = effectiveRTL ? badge.name_ar : badge.name_en;
+            const desc = effectiveRTL ? badge.description_ar : badge.description_en;
+            return (
+              <View
+                key={badge.id}
+                style={[
+                  styles.achievementCard,
+                  !badge.unlocked && styles.achievementCardLocked,
+                ]}
+              >
+                <Text style={styles.achievementIcon}>{badge.icon}</Text>
+                <Text
+                  style={[
+                    styles.achievementName,
+                    !badge.unlocked && styles.achievementNameLocked,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {name}
+                </Text>
+                {badge.unlocked && (
+                  <Text style={styles.achievementCheck}>✅</Text>
+                )}
+                {!badge.unlocked && (
+                  <Text style={styles.achievementLock}>🔒</Text>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      ) : (
+        <View style={styles.pointsCard}>
+          <Text style={[styles.pointsCardText, { textAlign: effectiveRTL ? "right" : "left" }]}>
+            {t("achievements.empty")}
+          </Text>
+        </View>
+      )}
+
       {/* LAST POINTS */}
       <Text style={[styles.lastPointsTitle, { textAlign: effectiveRTL ? "right" : "left" }]}>
         {t("profile.lastPoints")}
@@ -650,5 +711,57 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 6,
+  },
+
+  // Achievement styles
+  achievementsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    gap: 8,
+  },
+
+  achievementCard: {
+    width: "31%",
+    backgroundColor: "#123A7A",
+    borderRadius: 14,
+    padding: 10,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: YELLOW,
+    minHeight: 90,
+    justifyContent: "center",
+  },
+
+  achievementCardLocked: {
+    borderColor: "rgba(255,255,255,0.1)",
+    opacity: 0.5,
+  },
+
+  achievementIcon: {
+    fontSize: 28,
+    marginBottom: 4,
+  },
+
+  achievementName: {
+    color: "#fff",
+    fontSize: 11,
+    fontFamily: "Tajawal-Medium",
+    textAlign: "center",
+  },
+
+  achievementNameLocked: {
+    color: "rgba(255,255,255,0.5)",
+  },
+
+  achievementCheck: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  achievementLock: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });
