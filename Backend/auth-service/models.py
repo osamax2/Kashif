@@ -87,3 +87,35 @@ class AuditLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
     user = relationship("User")
+
+
+class TermsOfService(Base):
+    """Stores terms of service versions"""
+    __tablename__ = "terms_of_service"
+
+    id = Column(Integer, primary_key=True, index=True)
+    version = Column(String(20), nullable=False, unique=True)  # e.g. "1.0", "1.1"
+    title_ar = Column(String(255), nullable=False)
+    title_en = Column(String(255), nullable=False)
+    content_ar = Column(Text, nullable=False)
+    content_en = Column(Text, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    requires_re_acceptance = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    acceptances = relationship("UserTosAcceptance", back_populates="tos")
+
+
+class UserTosAcceptance(Base):
+    """Tracks which TOS version a user has accepted"""
+    __tablename__ = "user_tos_acceptances"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    tos_id = Column(Integer, ForeignKey("terms_of_service.id"), nullable=False)
+    accepted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    ip_address = Column(String(45), nullable=True)
+
+    user = relationship("User")
+    tos = relationship("TermsOfService", back_populates="acceptances")

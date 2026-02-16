@@ -102,6 +102,45 @@ export interface TokenResponse {
   token_type: string;
 }
 
+export interface TermsOfService {
+  id: number;
+  version: string;
+  title_ar: string;
+  title_en: string;
+  content_ar: string;
+  content_en: string;
+  is_active: boolean;
+  requires_re_acceptance: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface TosStatus {
+  has_accepted_current: boolean;
+  current_version?: string;
+  accepted_version?: string;
+  requires_acceptance: boolean;
+}
+
+export interface FeedbackData {
+  type: 'bug' | 'suggestion' | 'complaint' | 'other';
+  subject: string;
+  message: string;
+  report_id?: number;
+}
+
+export interface Feedback {
+  id: number;
+  user_id: number;
+  type: string;
+  subject: string;
+  message: string;
+  report_id?: number;
+  status: string;
+  admin_response?: string;
+  created_at: string;
+}
+
 export const authAPI = {
   // Register new user
   register: async (data: RegisterData): Promise<User> => {
@@ -229,6 +268,23 @@ export const authAPI = {
   // Delete profile picture
   deleteProfilePicture: async (): Promise<void> => {
     await api.delete('/api/auth/me/profile-picture');
+  },
+
+  // Get current active Terms of Service (public)
+  getCurrentTos: async (): Promise<TermsOfService> => {
+    const response = await axios.get<TermsOfService>(`${API_BASE_URL}/api/auth/tos/current`);
+    return response.data;
+  },
+
+  // Accept Terms of Service
+  acceptTos: async (tosId: number): Promise<void> => {
+    await api.post('/api/auth/tos/accept', { tos_id: tosId });
+  },
+
+  // Check TOS acceptance status
+  getTosStatus: async (): Promise<TosStatus> => {
+    const response = await api.get<TosStatus>('/api/auth/tos/status');
+    return response.data;
   },
 };
 
@@ -610,6 +666,18 @@ export const reportingAPI = {
       waypoints,
       buffer_meters: bufferMeters,
     });
+    return response.data;
+  },
+
+  // ──── In-App Feedback ────
+
+  submitFeedback: async (data: FeedbackData): Promise<Feedback> => {
+    const response = await api.post<Feedback>('/api/reports/feedback', data);
+    return response.data;
+  },
+
+  getMyFeedback: async (): Promise<Feedback[]> => {
+    const response = await api.get<Feedback[]>('/api/reports/feedback/my');
     return response.data;
   },
 };

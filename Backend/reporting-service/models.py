@@ -117,3 +117,32 @@ class ReportConfirmation(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     report = relationship("Report", back_populates="confirmations")
+
+
+class FeedbackCategory(enum.Enum):
+    BUG = "bug"
+    SUGGESTION = "suggestion"
+    COMPLAINT = "complaint"
+    OTHER = "other"
+
+
+class FeedbackStatus(enum.Enum):
+    NEW = "new"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+    DISMISSED = "dismissed"
+
+
+class Feedback(Base):
+    """In-app user feedback / support tickets"""
+    __tablename__ = "feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    subject = Column(String(200), nullable=False)
+    message = Column(Text, nullable=False)
+    category = Column(String(30), default="other", nullable=False)  # bug, suggestion, complaint, other
+    status = Column(String(30), default="new", nullable=False)  # new, in_progress, resolved, dismissed
+    admin_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

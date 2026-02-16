@@ -197,6 +197,159 @@ def get_audit_logs(
     return crud.get_audit_logs(db, skip=skip, limit=limit, action=action, user_id=user_id)
 
 
+# ============================================================
+# Terms of Service Endpoints
+# ============================================================
+
+@app.get("/tos/current", response_model=schemas.TermsOfService)
+def get_current_tos(db: Session = Depends(get_db)):
+    """Get the current active Terms of Service (public endpoint)"""
+    tos = db.query(models.TermsOfService).filter(
+        models.TermsOfService.is_active == True
+    ).order_by(models.TermsOfService.created_at.desc()).first()
+    if not tos:
+        raise HTTPException(status_code=404, detail="No active Terms of Service found")
+    return tos
+
+
+@app.get("/tos", response_model=list[schemas.TermsOfService])
+def get_all_tos(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Get all TOS versions - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    require_admin(current_user)
+    return db.query(models.TermsOfService).order_by(models.TermsOfService.created_at.desc()).all()
+
+
+@app.post("/tos", response_model=schemas.TermsOfService, status_code=status.HTTP_201_CREATED)
+def create_tos(
+    tos_data: schemas.TermsOfServiceCreate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Create a new TOS version - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    require_admin(current_user)
+
+    # Check if version already exists
+    existing = db.query(models.TermsOfService).filter(
+        models.TermsOfService.version == tos_data.version
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="TOS version already exists")
+
+    # If new TOS is active, deactivate all others
+    if tos_data.is_active:
+        db.query(models.TermsOfService).update({models.TermsOfService.is_active: False})
+
+    new_tos = models.TermsOfService(**tos_data.dict())
+    db.add(new_tos)
+    db.commit()
+    db.refresh(new_tos)
+
+    log_audit(db, current_user, "tos.create", "tos", new_tos.id, f"Version {new_tos.version}")
+    return new_tos
+
+
+@app.put("/tos/{tos_id}", response_model=schemas.TermsOfService)
+def update_tos(
+    tos_id: int,
+    tos_data: schemas.TermsOfServiceUpdate,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Update a TOS version - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    require_admin(current_user)
+
+    tos = db.query(models.TermsOfService).filter(models.TermsOfService.id == tos_id).first()
+    if not tos:
+        raise HTTPException(status_code=404, detail="TOS not found")
+
+    update_data = tos_data.dict(exclude_unset=True)
+
+    # If setting as active, deactivate all others
+    if update_data.get("is_active"):
+        db.query(models.TermsOfService).filter(
+            models.TermsOfService.id != tos_id
+        ).update({models.TermsOfService.is_active: False})
+
+    for key, value in update_data.items():
+        setattr(tos, key, value)
+
+    db.commit()
+    db.refresh(tos)
+
+    log_audit(db, current_user, "tos.update", "tos", tos.id, f"Version {tos.version}")
+    return tos
+
+
+@app.post("/tos/accept", response_model=schemas.TosAcceptance)
+def accept_tos(
+    accept_data: schemas.TosAcceptRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Accept a TOS version"""
+    current_user = auth.get_current_user(token, db)
+
+    tos = db.query(models.TermsOfService).filter(
+        models.TermsOfService.id == accept_data.tos_id
+    ).first()
+    if not tos:
+        raise HTTPException(status_code=404, detail="TOS not found")
+
+    # Check if already accepted
+    existing = db.query(models.UserTosAcceptance).filter(
+        models.UserTosAcceptance.user_id == current_user.id,
+        models.UserTosAcceptance.tos_id == accept_data.tos_id
+    ).first()
+    if existing:
+        return existing
+
+    acceptance = models.UserTosAcceptance(
+        user_id=current_user.id,
+        tos_id=accept_data.tos_id
+    )
+    db.add(acceptance)
+    db.commit()
+    db.refresh(acceptance)
+    return acceptance
+
+
+@app.get("/tos/status", response_model=schemas.TosStatus)
+def get_tos_status(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Check if user has accepted the current TOS"""
+    current_user = auth.get_current_user(token, db)
+
+    current_tos = db.query(models.TermsOfService).filter(
+        models.TermsOfService.is_active == True
+    ).order_by(models.TermsOfService.created_at.desc()).first()
+
+    if not current_tos:
+        return schemas.TosStatus(
+            has_accepted_current=True,
+            requires_acceptance=False
+        )
+
+    acceptance = db.query(models.UserTosAcceptance).filter(
+        models.UserTosAcceptance.user_id == current_user.id,
+        models.UserTosAcceptance.tos_id == current_tos.id
+    ).first()
+
+    return schemas.TosStatus(
+        has_accepted_current=acceptance is not None,
+        current_version=current_tos.version,
+        accepted_version=current_tos.version if acceptance else None,
+        requires_acceptance=acceptance is None
+    )
+
+
 @app.get("/reset-password", response_class=HTMLResponse)
 def reset_password_page():
     """Serve the password reset HTML page"""

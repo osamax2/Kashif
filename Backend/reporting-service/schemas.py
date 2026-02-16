@@ -243,3 +243,29 @@ class BulkOperationResult(BaseModel):
     failed_count: int
     failed_ids: List[int]
     message: str
+
+
+# ──── Feedback Schemas ────
+
+class FeedbackCreate(BaseModel):
+    subject: str
+    message: str
+    category: Optional[str] = "other"  # bug, suggestion, complaint, other
+
+class FeedbackUpdate(BaseModel):
+    status: Optional[str] = None  # new, in_progress, resolved, dismissed
+    admin_notes: Optional[str] = None
+
+class FeedbackResponse(BaseModel):
+    id: int
+    user_id: int
+    subject: str
+    message: str
+    category: str
+    status: str
+    admin_notes: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

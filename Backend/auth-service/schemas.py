@@ -192,3 +192,67 @@ class AuditLogEntry(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============ Terms of Service ============
+
+class TermsOfServiceCreate(BaseModel):
+    """Schema for creating a new TOS version"""
+    version: str
+    title_ar: str
+    title_en: str
+    content_ar: str
+    content_en: str
+    is_active: bool = True
+    requires_re_acceptance: bool = False
+
+
+class TermsOfServiceUpdate(BaseModel):
+    """Schema for updating TOS"""
+    title_ar: Optional[str] = None
+    title_en: Optional[str] = None
+    content_ar: Optional[str] = None
+    content_en: Optional[str] = None
+    is_active: Optional[bool] = None
+    requires_re_acceptance: Optional[bool] = None
+
+
+class TermsOfService(BaseModel):
+    """Schema for TOS response"""
+    id: int
+    version: str
+    title_ar: str
+    title_en: str
+    content_ar: str
+    content_en: str
+    is_active: bool
+    requires_re_acceptance: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class TosAcceptRequest(BaseModel):
+    """Schema for accepting TOS"""
+    tos_id: int
+
+
+class TosAcceptance(BaseModel):
+    """Schema for TOS acceptance response"""
+    id: int
+    user_id: int
+    tos_id: int
+    accepted_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TosStatus(BaseModel):
+    """Schema for checking user TOS status"""
+    has_accepted_current: bool
+    current_version: Optional[str] = None
+    accepted_version: Optional[str] = None
+    requires_acceptance: bool
