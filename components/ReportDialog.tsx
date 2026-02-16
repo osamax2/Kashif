@@ -408,7 +408,7 @@ export default function ReportDialog({
                         }
                       }}
                       query={{
-                        key: "REMOVED_API_KEY",
+                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
                         language: isRTL ? "ar" : "en", // ✅ Sprache bleibt echte Sprache
                       }}
                       textInputProps={{

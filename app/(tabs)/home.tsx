@@ -787,7 +787,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     };
 
     // ─── ROUTE WARNING FUNCTIONS ────────────────────────────────────────
-    const GOOGLE_API_KEY = 'REMOVED_API_KEY';
+    const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     const fetchRouteToDestination = async (destLat: number, destLng: number) => {
         if (!userLocation) return;
@@ -902,7 +902,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         console.log('🔍 Searching with Geocoding API:', query);
         
         try {
-            const apiKey = 'REMOVED_API_KEY';
+            const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
             // Add Syria bias to the search
             const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}&components=country:SY`;
             
@@ -1137,7 +1137,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         console.error('❌ Places API Error:', error);
                     }}
                     query={{
-                        key: 'REMOVED_API_KEY',
+                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
                         language: language,
                         components: 'country:sy',
                     }}
@@ -1473,7 +1473,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             }
                         }}
                         query={{
-                            key: 'REMOVED_API_KEY',
+                            key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
                             language: language === 'ar' ? 'ar' : 'en',
                         }}
                         fetchDetails={true}
