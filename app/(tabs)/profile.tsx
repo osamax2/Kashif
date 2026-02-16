@@ -1,13 +1,13 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { gamificationAPI, Level, lookupAPI, PointTransaction, reportingAPI } from "@/services/api";
+import { gamificationAPI, authAPI, Level, lookupAPI, PointTransaction, reportingAPI } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -45,6 +45,7 @@ export default function ProfileScreen() {
   const shareLink = "https://play.google.com/store/apps/details?id=com.kashif.app";
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -55,14 +56,30 @@ export default function ProfileScreen() {
   const [nextLevel, setNextLevel] = useState<Level | null>(null);
   const [progressPercentage, setProgressPercentage] = useState(0);
 
+  // Cache-Kontrolle: Daten nur neu laden wenn älter als 30 Sekunden
+  const STALE_TIME = 30_000; // 30 Sekunden
+  const lastFetchRef = useRef<number>(0);
+  const isFetchingRef = useRef(false);
+  const lastRefreshKeyRef = useRef(refreshKey);
+
   useEffect(() => {
-    loadProfileData(true);
+    // Nur bei echtem refreshKey-Wechsel (neue Meldung etc.) sofort laden
+    if (refreshKey !== lastRefreshKeyRef.current) {
+      lastRefreshKeyRef.current = refreshKey;
+      lastFetchRef.current = 0; // Cache invalidieren
+      loadProfileData(true);
+    } else if (isInitialLoad) {
+      loadProfileData(true);
+    }
   }, [refreshKey]);
 
   useFocusEffect(
     useCallback(() => {
-      refreshUser();
-      if (!isInitialLoad) {
+      const now = Date.now();
+      const isStale = now - lastFetchRef.current > STALE_TIME;
+
+      if (isStale && !isInitialLoad) {
+        refreshUser();
         loadProfileData(false);
       }
     }, [refreshUser, isInitialLoad])
@@ -70,6 +87,10 @@ export default function ProfileScreen() {
 
   const loadProfileData = async (showLoader: boolean = false) => {
     if (!user) return;
+
+    // Verhindere parallele Fetches
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
 
     if (showLoader) setLoading(true);
 
@@ -112,9 +133,12 @@ export default function ProfileScreen() {
           setProgressPercentage(100);
         }
       }
+
+      lastFetchRef.current = Date.now();
     } catch (error) {
       console.error("Error loading profile data:", error);
     } finally {
+      isFetchingRef.current = false;
       if (showLoader) {
         setLoading(false);
         setIsInitialLoad(false);
@@ -122,14 +146,23 @@ export default function ProfileScreen() {
     }
   };
 
-  // Bild laden beim Start
+  // Load profile image: prefer server URL, fall back to local AsyncStorage
   useEffect(() => {
     async function loadImage() {
+      // Check if the user has a server-stored profile image
+      if (user?.image_url) {
+        const serverUrl = user.image_url.startsWith("http")
+          ? user.image_url
+          : `https://api.kashifroad.com${user.image_url}`;
+        setProfileImage(serverUrl);
+        return;
+      }
+      // Fall back to local storage
       const saved = await AsyncStorage.getItem("profileImage");
       if (saved) setProfileImage(saved);
     }
     loadImage();
-  }, []);
+  }, [user?.image_url]);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -262,18 +295,49 @@ export default function ProfileScreen() {
                   paddingHorizontal: 36,
                   borderRadius: 14,
                   elevation: 4,
+                  opacity: uploadingPhoto ? 0.6 : 1,
                 }}
+                disabled={uploadingPhoto}
                 onPress={async () => {
                   if (pendingImage) {
-                    setProfileImage(pendingImage);
-                    await AsyncStorage.setItem("profileImage", pendingImage);
+                    setUploadingPhoto(true);
+                    try {
+                      // Upload to server
+                      const result = await authAPI.uploadProfilePicture(pendingImage);
+                      const serverUrl = result.image_url.startsWith("http")
+                        ? result.image_url
+                        : `https://api.kashifroad.com${result.image_url}`;
+                      setProfileImage(serverUrl);
+                      // Clear old local storage
+                      await AsyncStorage.removeItem("profileImage");
+                      // Refresh user data to get updated image_url
+                      await refreshUser();
+                      setPendingImage(null);
+                    } catch (error: any) {
+                      console.error("Error uploading profile picture:", error);
+                      // Fall back to local storage
+                      setProfileImage(pendingImage);
+                      await AsyncStorage.setItem("profileImage", pendingImage);
+                      setPendingImage(null);
+                      Alert.alert(
+                        language === "ar" ? "تنبيه" : "Notice",
+                        language === "ar" 
+                          ? "تم حفظ الصورة محلياً. سيتم رفعها لاحقاً." 
+                          : "Photo saved locally. It will be uploaded later."
+                      );
+                    } finally {
+                      setUploadingPhoto(false);
+                    }
                   }
-                  setPendingImage(null);
                 }}
               >
-                <Text style={{ color: "#fff", fontSize: 18, fontFamily: "Tajawal-Bold" }}>
-                  {t("common.save")}
-                </Text>
+                {uploadingPhoto ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={{ color: "#fff", fontSize: 18, fontFamily: "Tajawal-Bold" }}>
+                    {t("common.save")}
+                  </Text>
+                )}
               </TouchableOpacity>
               <TouchableOpacity
                 style={{

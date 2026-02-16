@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import random
 
 import models
 import schemas
@@ -121,6 +122,32 @@ def revoke_refresh_token(db: Session, token: str):
     return db_token
 
 
+def revoke_all_user_tokens(db: Session, user_id: int):
+    """Revoke ALL refresh tokens for a user (used on logout and token family breach)"""
+    tokens = db.query(models.RefreshToken).filter(
+        models.RefreshToken.user_id == user_id,
+        models.RefreshToken.is_revoked == False
+    ).all()
+    count = 0
+    for token in tokens:
+        token.is_revoked = True
+        count += 1
+    if count > 0:
+        db.commit()
+    return count
+
+
+def cleanup_expired_tokens(db: Session):
+    """Delete expired or revoked refresh tokens older than 7 days"""
+    cutoff = datetime.utcnow() - timedelta(days=7)
+    deleted = db.query(models.RefreshToken).filter(
+        (models.RefreshToken.expires_at < datetime.utcnow()) |
+        ((models.RefreshToken.is_revoked == True) & (models.RefreshToken.created_at < cutoff))
+    ).delete(synchronize_session=False)
+    db.commit()
+    return deleted
+
+
 def update_user_access_token(db: Session, user_id: int, access_token: str):
     """Update user's access token and last login timestamp"""
     user = get_user(db, user_id)
@@ -154,6 +181,18 @@ def update_user_language(db: Session, user_id: int, language: str):
     user = get_user(db, user_id)
     if user:
         user.language = language
+        db.commit()
+        db.refresh(user)
+        return user
+    return None
+
+
+def update_user_image(db: Session, user_id: int, image_url: str):
+    """Update user's profile image URL"""
+    user = get_user(db, user_id)
+    if user:
+        user.image_url = image_url
+        user.updated_at = datetime.utcnow()
         db.commit()
         db.refresh(user)
         return user
@@ -258,4 +297,67 @@ def get_company_users(db: Session, company_id: int):
         models.User.company_id == company_id,
         models.User.status != "DELETED"
     ).all()
+
+
+# ==================== Verification Code (OTP) ====================
+
+def generate_verification_code() -> str:
+    """Generate a random 6-digit verification code"""
+    return str(random.randint(100000, 999999))
+
+
+def create_verification_code(db: Session, user_id: int, email: str) -> models.VerificationCode:
+    """Create a new 6-digit verification code (invalidates old ones)"""
+    # Invalidate any existing unused codes for this email
+    db.query(models.VerificationCode).filter(
+        models.VerificationCode.email == email,
+        models.VerificationCode.is_used == False
+    ).update({"is_used": True})
+    
+    code = generate_verification_code()
+    db_code = models.VerificationCode(
+        email=email,
+        code=code,
+        user_id=user_id,
+        expires_at=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.add(db_code)
+    db.commit()
+    db.refresh(db_code)
+    return db_code
+
+
+def verify_code(db: Session, email: str, code: str):
+    """Verify a 6-digit code. Returns (success, message, user_id)"""
+    db_code = db.query(models.VerificationCode).filter(
+        models.VerificationCode.email == email,
+        models.VerificationCode.is_used == False
+    ).order_by(models.VerificationCode.created_at.desc()).first()
+    
+    if not db_code:
+        return False, "No verification code found. Please request a new one.", None
+    
+    # Check expiry
+    if db_code.expires_at < datetime.utcnow():
+        db_code.is_used = True
+        db.commit()
+        return False, "Verification code expired. Please request a new one.", None
+    
+    # Check max attempts (5 attempts allowed)
+    if db_code.attempts >= 5:
+        db_code.is_used = True
+        db.commit()
+        return False, "Too many failed attempts. Please request a new code.", None
+    
+    # Verify code
+    if db_code.code != code:
+        db_code.attempts += 1
+        db.commit()
+        remaining = 5 - db_code.attempts
+        return False, f"Invalid code. {remaining} attempts remaining.", None
+    
+    # Success - mark as used
+    db_code.is_used = True
+    db.commit()
+    return True, "Code verified successfully.", db_code.user_id
 

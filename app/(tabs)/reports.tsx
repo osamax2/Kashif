@@ -9,6 +9,7 @@ import {
     Report,
     reportingAPI,
     ReportStatus,
+    ReportStatusHistory,
     Severity,
 } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -23,6 +24,7 @@ import {
     Modal,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -178,6 +180,9 @@ export default function ReportsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [statusHistory, setStatusHistory] = useState<ReportStatusHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   const [stats, setStats] = useState({ open: 0, inProgress: 0, resolved: 0 });
 
@@ -300,11 +305,28 @@ export default function ReportsScreen() {
   const openDetails = (report: Report) => {
     setSelected(report);
     setDetailVisible(true);
+    setHistoryExpanded(false);
+    loadStatusHistory(report.id);
+  };
+
+  const loadStatusHistory = async (reportId: number) => {
+    try {
+      setHistoryLoading(true);
+      const history = await reportingAPI.getReportHistory(reportId);
+      setStatusHistory(history);
+    } catch (error) {
+      console.error("Error loading status history:", error);
+      setStatusHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   const closeDetails = () => {
     setDetailVisible(false);
     setSelected(null);
+    setStatusHistory([]);
+    setHistoryExpanded(false);
   };
 
   const getStatusName = (statusId: number): string => statuses.find((s) => s.id === statusId)?.name || "غير معروف";
@@ -449,6 +471,7 @@ export default function ReportsScreen() {
       <Modal visible={detailVisible} transparent animationType="slide">
         <View style={styles.modalBackdrop}>
           <View style={styles.modalGlass}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: '90%' }}>
             {selected && (
               <>
                 {getDisplayImageUrl(selected) ? (
@@ -556,11 +579,86 @@ export default function ReportsScreen() {
                         {language === "ar" ? "في انتظار تأكيد من مستخدم آخر" : "Waiting for confirmation from another user"}
                       </Text>
                     )}
+                    {(selected.confirmation_count || 0) > 0 && (
+                      <Text style={styles.confirmationCountText}>
+                        {language === "ar" 
+                          ? `تم التأكيد بواسطة ${selected.confirmation_count} مستخدم${selected.confirmation_count > 1 ? 'ين' : ''}` 
+                          : `Confirmed by ${selected.confirmation_count} user${selected.confirmation_count > 1 ? 's' : ''}`}
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                {/* STATUS HISTORY TIMELINE */}
+                <TouchableOpacity
+                  style={styles.historyToggle}
+                  onPress={() => setHistoryExpanded(!historyExpanded)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name={historyExpanded ? "chevron-up" : "chevron-down"} 
+                    size={18} 
+                    color="#FFD166" 
+                  />
+                  <Text style={styles.historyToggleText}>
+                    {language === "ar" ? "سجل الحالة" : "Status History"}
+                  </Text>
+                </TouchableOpacity>
+
+                {historyExpanded && (
+                  <View style={styles.historyContainer}>
+                    {historyLoading ? (
+                      <ActivityIndicator size="small" color="#FFD166" style={{ marginVertical: 10 }} />
+                    ) : statusHistory.length > 0 ? (
+                      statusHistory.map((entry, idx) => {
+                        const newStatusName = getStatusName(entry.new_status_id);
+                        const oldStatusName = entry.old_status_id ? getStatusName(entry.old_status_id) : null;
+                        const meta = getStatusMeta(newStatusName, language);
+                        const isLast = idx === statusHistory.length - 1;
+                        const entryDate = new Date(entry.created_at);
+                        const formattedTime = entryDate.toLocaleString(
+                          language === "ar" ? "ar-SY" : "en-US",
+                          { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }
+                        );
+                        
+                        return (
+                          <View key={entry.id} style={[styles.historyEntry, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
+                            {/* Timeline line + dot */}
+                            <View style={styles.timelineDotContainer}>
+                              <View style={[styles.timelineDot, { backgroundColor: meta.color }]} />
+                              {!isLast && <View style={styles.timelineLine} />}
+                            </View>
+
+                            {/* Content */}
+                            <View style={[styles.historyContent, { alignItems: effectiveRTL ? "flex-end" : "flex-start" }]}>
+                              <Text style={[styles.historyStatusText, { color: meta.color }]}>
+                                {meta.icon} {newStatusName}
+                              </Text>
+                              {oldStatusName && (
+                                <Text style={styles.historyFromText}>
+                                  {language === "ar" ? `من: ${oldStatusName}` : `From: ${oldStatusName}`}
+                                </Text>
+                              )}
+                              {entry.comment && (
+                                <Text style={[styles.historyComment, { textAlign: effectiveRTL ? "right" : "left" }]}>
+                                  {entry.comment}
+                                </Text>
+                              )}
+                              <Text style={styles.historyDate}>{formattedTime}</Text>
+                            </View>
+                          </View>
+                        );
+                      })
+                    ) : (
+                      <Text style={styles.noHistoryText}>
+                        {language === "ar" ? "لا يوجد سجل للحالة" : "No status history available"}
+                      </Text>
+                    )}
                   </View>
                 )}
 
                 <View style={[styles.modalButtonsRow, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
-                  {selected.confirmation_status === "pending" && selected.user_id !== user?.id && (
+                  {(selected.confirmation_status === "pending" || selected.confirmation_status === "confirmed") && selected.user_id !== user?.id && (
                     <Pressable
                       style={[styles.stillThereButton, confirming && styles.buttonDisabled]}
                       onPress={() => handleConfirmReport(selected.id)}
@@ -580,6 +678,7 @@ export default function ReportsScreen() {
                 </View>
               </>
             )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -905,6 +1004,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  confirmationCountText: {
+    color: "#4CD964",
+    fontSize: 13,
+    fontFamily: "Tajawal-Medium",
+    marginTop: 4,
+  },
+
   modalButtonsRow: { gap: 10 },
 
   stillThereButton: {
@@ -934,5 +1040,90 @@ const styles = StyleSheet.create({
     color: BLUE,
     fontSize: 18,
     fontFamily: "Tajawal-Bold",
+  },
+
+  // Status History Timeline styles
+  historyToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    marginBottom: 4,
+    gap: 6,
+  },
+
+  historyToggleText: {
+    color: "#FFD166",
+    fontSize: 15,
+    fontFamily: "Tajawal-Bold",
+  },
+
+  historyContainer: {
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+
+  historyEntry: {
+    gap: 10,
+    marginBottom: 0,
+  },
+
+  timelineDotContainer: {
+    alignItems: "center",
+    width: 20,
+  },
+
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    minHeight: 30,
+  },
+
+  historyContent: {
+    flex: 1,
+    paddingBottom: 12,
+  },
+
+  historyStatusText: {
+    fontSize: 15,
+    fontFamily: "Tajawal-Bold",
+  },
+
+  historyFromText: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    fontFamily: "Tajawal-Regular",
+    marginTop: 2,
+  },
+
+  historyComment: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 13,
+    fontFamily: "Tajawal-Regular",
+    marginTop: 3,
+    fontStyle: "italic",
+  },
+
+  historyDate: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 11,
+    fontFamily: "Tajawal-Regular",
+    marginTop: 3,
+  },
+
+  noHistoryText: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 13,
+    fontFamily: "Tajawal-Regular",
+    textAlign: "center",
+    paddingVertical: 10,
   },
 });

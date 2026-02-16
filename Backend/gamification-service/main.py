@@ -1,4 +1,5 @@
 import logging
+import os
 import threading
 from typing import Annotated, List
 
@@ -12,6 +13,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
 from sqlalchemy.orm import Session
+
+# Internal API key for service-to-service communication (DSGVO endpoints)
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "kashif-internal-secret-2026")
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -236,4 +240,62 @@ async def confirm_report(
         "message": "Report confirmed successfully. You earned 20 points!",
         "transaction_id": transaction.id,
         "total_points": crud.get_user_total_points(db, user_id)
+    }
+
+
+# ============================================================
+# DSGVO / GDPR — Internal Endpoints (service-to-service only)
+# ============================================================
+
+def verify_internal_key(x_internal_key: str = Header(None)):
+    """Verify internal API key for service-to-service calls"""
+    if x_internal_key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid internal API key")
+
+
+@app.delete("/internal/user-data/{user_id}")
+def delete_user_data(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """DSGVO Art. 17 — Delete all point transactions for a user"""
+    count = db.query(models.PointTransaction).filter(
+        models.PointTransaction.user_id == user_id
+    ).delete()
+    db.commit()
+
+    logger.info(f"DSGVO: Deleted {count} point transactions for user {user_id}")
+    return {"user_id": user_id, "deleted": {"point_transactions": count}}
+
+
+@app.get("/internal/user-data/{user_id}/export")
+def export_user_data(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """DSGVO Art. 15/20 — Export all point transactions for a user"""
+    transactions = db.query(models.PointTransaction).filter(
+        models.PointTransaction.user_id == user_id
+    ).order_by(models.PointTransaction.created_at.desc()).all()
+
+    transactions_data = []
+    for t in transactions:
+        transactions_data.append({
+            "id": t.id,
+            "type": t.type,
+            "points": t.points,
+            "report_id": t.report_id,
+            "description": t.description,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        })
+
+    total_points = sum(t.points for t in transactions)
+
+    return {
+        "service": "gamification",
+        "user_id": user_id,
+        "total_points": total_points,
+        "transactions": transactions_data,
     }

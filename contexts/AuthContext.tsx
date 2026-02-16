@@ -1,5 +1,5 @@
 import { useRouter, useSegments } from 'expo-router';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { logout as apiLogout, authAPI, getStoredUser, isLoggedIn, User } from '../services/api';
 import notificationService from '../services/notifications';
 
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       // Fetch fresh user data from server to get updated points
       const freshUser = await authAPI.getProfile();
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to get stored user:', e);
       }
     }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

@@ -1224,6 +1224,75 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         
                         console.log(`📤 Creating report at ${locationSource}:`, { categoryId, severityId, location: locationToUse });
                         
+                        // === DUPLICATE DETECTION ===
+                        // Check for nearby similar reports before creating
+                        try {
+                            const dupCheck = await reportingAPI.checkDuplicates(
+                                locationToUse.latitude,
+                                locationToUse.longitude,
+                                categoryId
+                            );
+                            
+                            if (dupCheck.has_duplicates && dupCheck.nearby_reports.length > 0) {
+                                const nearest = dupCheck.nearby_reports[0];
+                                const distText = nearest.distance_meters < 1 
+                                    ? (language === 'ar' ? 'أقل من 1 متر' : 'less than 1m')
+                                    : `${Math.round(nearest.distance_meters)}m`;
+                                
+                                // Show confirmation dialog and wait for user decision
+                                const userChoice = await new Promise<'confirm' | 'create' | 'cancel'>((resolve) => {
+                                    Alert.alert(
+                                        language === 'ar' ? '⚠️ بلاغ مشابه قريب' : '⚠️ Similar Report Nearby',
+                                        language === 'ar' 
+                                            ? `يوجد بلاغ مشابه على بعد ${distText}.\n\nهل تريد تأكيد البلاغ الموجود بدلاً من إنشاء بلاغ جديد؟`
+                                            : `A similar report exists ${distText} away.\n\nWould you like to confirm the existing report instead of creating a new one?`,
+                                        [
+                                            { text: language === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel', onPress: () => resolve('cancel') },
+                                            { text: language === 'ar' ? 'إنشاء جديد' : 'Create New', onPress: () => resolve('create') },
+                                            { text: language === 'ar' ? '✓ تأكيد الموجود' : '✓ Confirm Existing', onPress: () => resolve('confirm') },
+                                        ]
+                                    );
+                                });
+                                
+                                if (userChoice === 'cancel') {
+                                    return; // User cancelled
+                                }
+                                
+                                if (userChoice === 'confirm') {
+                                    // Confirm existing report instead
+                                    try {
+                                        const confirmResult = await reportingAPI.confirmReport(
+                                            nearest.id,
+                                            { latitude: locationToUse.latitude, longitude: locationToUse.longitude }
+                                        );
+                                        
+                                        Alert.alert(
+                                            language === 'ar' ? '✅ تم التأكيد' : '✅ Confirmed',
+                                            language === 'ar' 
+                                                ? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
+                                                : `Report #${nearest.id} confirmed! You earned ${confirmResult.points_awarded} points!`
+                                        );
+                                        
+                                        await loadData(locationToUse);
+                                        reportCreated();
+                                        await refreshUser();
+                                    } catch (confirmError: any) {
+                                        const detail = confirmError?.response?.data?.detail || '';
+                                        Alert.alert(
+                                            language === 'ar' ? 'خطأ' : 'Error',
+                                            detail || (language === 'ar' ? 'فشل تأكيد البلاغ' : 'Failed to confirm report')
+                                        );
+                                    }
+                                    return;
+                                }
+                                // userChoice === 'create' — continue with creation
+                                console.log('👤 User chose to create new report despite duplicate');
+                            }
+                        } catch (dupError) {
+                            console.warn('⚠️ Duplicate check failed, proceeding with creation:', dupError);
+                            // Continue with report creation even if duplicate check fails
+                        }
+                        
                         // Upload photo if provided - AI will analyze it
                         let photoUrl: string | undefined = undefined;
                         let aiDescription: string | undefined = undefined;

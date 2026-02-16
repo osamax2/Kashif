@@ -90,11 +90,57 @@ def handle_report_status_updated(event_data):
     try:
         db = SessionLocal()
         report_id = event_data.get("report_id")
-        new_status = event_data.get("new_status")
-        # Need to get user_id from report (would call reporting service)
+        user_id = event_data.get("user_id")
+        new_status_id = event_data.get("new_status_id")
         
-        logger.info(f"Report {report_id} status updated to {new_status}")
-        # TODO: Implement actual notification
+        if not user_id or not report_id:
+            logger.warning(f"Missing user_id or report_id in report.status_updated event")
+            db.close()
+            return
+
+        # Map status IDs to human readable names (ar/en)
+        status_names = {
+            1: {"ar": "مفتوح", "en": "Open"},
+            2: {"ar": "قيد المراجعة", "en": "Under Review"},
+            3: {"ar": "قيد المعالجة", "en": "In Progress"},
+            4: {"ar": "تم الإصلاح", "en": "Resolved"},
+            5: {"ar": "مرفوض", "en": "Rejected"},
+        }
+        
+        status_info = status_names.get(new_status_id, {"ar": f"حالة {new_status_id}", "en": f"Status {new_status_id}"})
+        
+        # Create notification with bilingual content
+        title_ar = f"تحديث بلاغك #{report_id}"
+        body_ar = f"تم تغيير حالة بلاغك إلى: {status_info['ar']}"
+        title_en = f"Report #{report_id} Updated"
+        body_en = f"Your report status changed to: {status_info['en']}"
+        
+        notification = crud.create_notification(
+            db=db,
+            user_id=user_id,
+            title=title_ar,
+            body=body_ar,
+            notification_type="REPORT_UPDATE",
+            related_report_id=report_id
+        )
+        
+        # Send push notification
+        fcm_service.send_push_notification(
+            db=db,
+            user_id=user_id,
+            title=title_ar,
+            body=body_ar,
+            data={
+                "notification_id": str(notification.id),
+                "report_id": str(report_id),
+                "new_status_id": str(new_status_id),
+                "title_en": title_en,
+                "body_en": body_en,
+                "type": "report_status_updated"
+            }
+        )
+        
+        logger.info(f"Report {report_id} status update notification sent to user {user_id} (status: {status_info['en']})")
         
         db.close()
     except Exception as e:
