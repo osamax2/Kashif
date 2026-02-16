@@ -3,14 +3,14 @@ import IOSActionSheet from "@/components/IOSActionSheet";
 import { resetOnboarding } from "@/components/OnboardingTutorial";
 import SuccessModal from "@/components/SuccessModal";
 import TermsModal from "@/components/TermsModal";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { FontAwesome } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import NotificationService, { DEFAULT_NOTIFICATION_PREFERENCES } from "@/services/notifications";
+import NotificationService from "@/services/notifications";
 import {
     ActivityIndicator,
     Alert,

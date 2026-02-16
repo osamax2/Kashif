@@ -15,8 +15,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import RtlTextInput from "../components/ui/rtl-textinput";
 import TermsModal from "../components/TermsModal";
+import RtlTextInput from "../components/ui/rtl-textinput";
 import { useLanguage } from "../contexts/LanguageContext";
 import { authAPI } from "../services/api";
 

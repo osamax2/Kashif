@@ -1,17 +1,17 @@
 // contexts/OfflineContext.tsx
 // Global offline state management with sync queue and network banner
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
-  checkConnectivity,
-  getSyncQueueCount,
-  onConnectivityChange,
-  processSyncQueue,
-} from '@/services/offline-service';
-import {
-  getPendingReportsCount,
+    getPendingReportsCount,
 } from '@/services/offline-reports';
+import {
+    checkConnectivity,
+    getSyncQueueCount,
+    onConnectivityChange,
+    processSyncQueue,
+} from '@/services/offline-service';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 
 const YELLOW = '#F4B400';
 
