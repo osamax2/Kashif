@@ -151,7 +151,15 @@
     "whatsappNotInstalled": "❌ WhatsApp is not installed on this device",
     "loadingData": "Loading data...",
     "userId": "User ID:",
-    "progressTo": "to"
+    "progressTo": "to",
+    "weeklyChallenges": "Weekly Challenges",
+    "noChallenges": "No active challenges this week",
+    "completed": "Completed",
+    "friends": "Friends",
+    "friendIdPlaceholder": "Enter Friend ID",
+    "friendRequestSent": "Friend request sent!",
+    "noFriends": "No friends yet. Add someone!",
+    "friendLeaderboard": "Friend Leaderboard"
   },
   "reports": {
     "title": "Reports",

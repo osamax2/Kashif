@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { achievementAPI, Achievement, gamificationAPI, authAPI, Level, lookupAPI, PointTransaction, reportingAPI } from "@/services/api";
+import { achievementAPI, Achievement, gamificationAPI, authAPI, Level, lookupAPI, PointTransaction, reportingAPI, challengeAPI, WeeklyChallenge, friendsAPI, FriendInfo } from "@/services/api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
@@ -18,6 +18,7 @@ import {
     Share,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -56,6 +57,9 @@ export default function ProfileScreen() {
   const [nextLevel, setNextLevel] = useState<Level | null>(null);
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [challenges, setChallenges] = useState<WeeklyChallenge[]>([]);
+  const [friends, setFriends] = useState<FriendInfo[]>([]);
+  const [friendIdInput, setFriendIdInput] = useState("");
 
   // Cache-Kontrolle: Daten nur neu laden wenn älter als 30 Sekunden
   const STALE_TIME = 30_000; // 30 Sekunden
@@ -96,17 +100,21 @@ export default function ProfileScreen() {
     if (showLoader) setLoading(true);
 
     try {
-      const [transactionsData, reportsData, levelsData, achievementsData] = await Promise.all([
+      const [transactionsData, reportsData, levelsData, achievementsData, challengesData, friendsData] = await Promise.all([
         gamificationAPI.getMyTransactions(0, 5).catch(() => []),
         reportingAPI.getMyReports(0, 1000).catch(() => []),
         lookupAPI.getLevels().catch(() => []),
         achievementAPI.getMyAchievements().catch(() => []),
+        challengeAPI.getActive().catch(() => []),
+        friendsAPI.getFriends().catch(() => []),
       ]);
 
       setTransactions(transactionsData);
       setReportCount(reportsData.length);
       setLevels(levelsData);
       setAchievements(achievementsData);
+      setChallenges(challengesData);
+      setFriends(friendsData);
 
       if (levelsData.length > 0) {
         const sortedLevels = [...levelsData].sort(
@@ -149,6 +157,15 @@ export default function ProfileScreen() {
         }
       } catch (e) {
         // Silent fail - achievements check is not critical
+      }
+
+      // Check challenges silently
+      try {
+        await challengeAPI.check();
+        const updatedChallenges = await challengeAPI.getActive().catch(() => []);
+        setChallenges(updatedChallenges);
+      } catch (e) {
+        // Silent fail
       }
     } catch (error) {
       console.error("Error loading profile data:", error);
@@ -490,8 +507,119 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      {/* LAST POINTS */}
+      {/* WEEKLY CHALLENGES */}
       <Text style={[styles.lastPointsTitle, { textAlign: effectiveRTL ? "right" : "left" }]}>
+        {t("profile.weeklyChallenges")} ⚡
+      </Text>
+
+      {challenges.length > 0 ? (
+        challenges.map((ch) => {
+          const title = effectiveRTL ? ch.title_ar : ch.title_en;
+          const desc = effectiveRTL ? ch.description_ar : ch.description_en;
+          return (
+            <View key={ch.id} style={[styles.challengeCard, ch.completed && styles.challengeCardDone]}>
+              <View style={[styles.challengeHeader, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
+                <Text style={styles.challengeIcon}>{ch.icon}</Text>
+                <View style={{ flex: 1, marginHorizontal: 10 }}>
+                  <Text style={[styles.challengeTitle, { textAlign: effectiveRTL ? "right" : "left" }]}>{title}</Text>
+                  <Text style={[styles.challengeDesc, { textAlign: effectiveRTL ? "right" : "left" }]}>{desc}</Text>
+                </View>
+                <View style={styles.challengePointsBadge}>
+                  <Text style={styles.challengePointsText}>+{ch.bonus_points}</Text>
+                </View>
+              </View>
+              <View style={styles.challengeProgressBar}>
+                <View style={[styles.challengeProgressFill, { width: `${ch.progress_percent}%` }]} />
+              </View>
+              <View style={[styles.challengeFooter, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
+                <Text style={styles.challengeProgressText}>
+                  {ch.current_value}/{ch.target_value}
+                </Text>
+                {ch.completed ? (
+                  <Text style={styles.challengeDone}>✅ {t("profile.completed")}</Text>
+                ) : (
+                  <Text style={styles.challengePercent}>{ch.progress_percent}%</Text>
+                )}
+              </View>
+            </View>
+          );
+        })
+      ) : (
+        <View style={styles.pointsCard}>
+          <Text style={[styles.pointsCardText, { textAlign: effectiveRTL ? "right" : "left" }]}>
+            {t("profile.noChallenges")}
+          </Text>
+        </View>
+      )}
+
+      {/* FRIENDS / SOCIAL */}
+      <Text style={[styles.lastPointsTitle, { textAlign: effectiveRTL ? "right" : "left", marginTop: 10 }]}>
+        {t("profile.friends")} 👥
+      </Text>
+
+      <View style={styles.friendsRow}>
+        <View style={[styles.friendInputRow, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
+          <TextInput
+            style={[styles.friendInput, { textAlign: effectiveRTL ? "right" : "left" }]}
+            placeholder={t("profile.friendIdPlaceholder")}
+            placeholderTextColor="rgba(255,255,255,0.4)"
+            value={friendIdInput}
+            onChangeText={setFriendIdInput}
+            keyboardType="number-pad"
+          />
+          <TouchableOpacity
+            style={styles.friendAddBtn}
+            onPress={async () => {
+              const fid = parseInt(friendIdInput);
+              if (!fid || isNaN(fid)) return;
+              try {
+                await friendsAPI.sendRequest(fid);
+                Alert.alert("✅", t("profile.friendRequestSent"));
+                setFriendIdInput("");
+                const updated = await friendsAPI.getFriends().catch(() => []);
+                setFriends(updated);
+              } catch (e: any) {
+                Alert.alert("❌", e?.response?.data?.detail || "Error");
+              }
+            }}
+          >
+            <Ionicons name="person-add" size={20} color="#0D2B66" />
+          </TouchableOpacity>
+        </View>
+
+        {friends.length > 0 ? (
+          <View style={styles.friendsList}>
+            {friends.map((f) => (
+              <View key={f.friendship_id} style={[styles.friendItem, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
+                <View style={styles.friendAvatar}>
+                  <Ionicons name="person-circle" size={36} color={YELLOW} />
+                </View>
+                <Text style={[styles.friendName, { textAlign: effectiveRTL ? "right" : "left" }]}>
+                  ID: {f.friend_user_id}
+                </Text>
+                <View style={styles.friendStatusBadge}>
+                  <Text style={styles.friendStatusText}>
+                    {f.status === "accepted" ? "✅" : "⏳"}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.noFriendsText}>{t("profile.noFriends")}</Text>
+        )}
+
+        <TouchableOpacity
+          style={styles.friendLeaderboardBtn}
+          onPress={() => router.push("/(tabs)/leaderboard")}
+        >
+          <Ionicons name="trophy" size={18} color="#0D2B66" />
+          <Text style={styles.friendLeaderboardText}>{t("profile.friendLeaderboard")}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* LAST POINTS */}
+      <Text style={[styles.lastPointsTitle, { textAlign: effectiveRTL ? "right" : "left", marginTop: 10 }]}>
         {t("profile.lastPoints")}
       </Text>
 
@@ -763,5 +891,155 @@ const styles = StyleSheet.create({
   achievementLock: {
     fontSize: 12,
     marginTop: 2,
+  },
+
+  // Challenge styles
+  challengeCard: {
+    backgroundColor: "#123A7A",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  challengeCardDone: {
+    borderColor: YELLOW,
+    backgroundColor: "#1a4a8a",
+  },
+  challengeHeader: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  challengeIcon: {
+    fontSize: 28,
+  },
+  challengeTitle: {
+    color: "#fff",
+    fontSize: 15,
+    fontFamily: "Tajawal-Bold",
+  },
+  challengeDesc: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 12,
+    fontFamily: "Tajawal-Regular",
+  },
+  challengePointsBadge: {
+    backgroundColor: YELLOW,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  challengePointsText: {
+    color: "#0D2B66",
+    fontFamily: "Tajawal-Bold",
+    fontSize: 13,
+  },
+  challengeProgressBar: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    overflow: "hidden" as const,
+    marginBottom: 6,
+  },
+  challengeProgressFill: {
+    height: "100%" as const,
+    backgroundColor: YELLOW,
+    borderRadius: 4,
+  },
+  challengeFooter: {
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+  },
+  challengeProgressText: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 12,
+    fontFamily: "Tajawal-Regular",
+  },
+  challengePercent: {
+    color: YELLOW,
+    fontSize: 13,
+    fontFamily: "Tajawal-Bold",
+  },
+  challengeDone: {
+    color: "#4CAF50",
+    fontSize: 13,
+    fontFamily: "Tajawal-Bold",
+  },
+
+  // Friends styles
+  friendsRow: {
+    marginBottom: 16,
+  },
+  friendInputRow: {
+    alignItems: "center" as const,
+    gap: 8,
+    marginBottom: 10,
+  },
+  friendInput: {
+    flex: 1,
+    backgroundColor: "#123A7A",
+    borderRadius: 12,
+    color: "#fff",
+    padding: 12,
+    fontSize: 15,
+    fontFamily: "Tajawal-Regular",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  friendAddBtn: {
+    backgroundColor: YELLOW,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  friendsList: {
+    gap: 6,
+    marginBottom: 10,
+  },
+  friendItem: {
+    backgroundColor: "#123A7A",
+    borderRadius: 12,
+    padding: 10,
+    alignItems: "center" as const,
+    gap: 10,
+  },
+  friendAvatar: {
+    width: 36,
+    alignItems: "center" as const,
+  },
+  friendName: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "Tajawal-Medium",
+    flex: 1,
+  },
+  friendStatusBadge: {
+    width: 28,
+    alignItems: "center" as const,
+  },
+  friendStatusText: {
+    fontSize: 16,
+  },
+  noFriendsText: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 14,
+    fontFamily: "Tajawal-Regular",
+    textAlign: "center" as const,
+    marginVertical: 10,
+  },
+  friendLeaderboardBtn: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    backgroundColor: YELLOW,
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  friendLeaderboardText: {
+    color: "#0D2B66",
+    fontSize: 15,
+    fontFamily: "Tajawal-Bold",
   },
 });

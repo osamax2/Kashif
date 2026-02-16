@@ -368,6 +368,174 @@ async def check_achievements(
 
 
 # ============================================================
+# Weekly Challenges
+# ============================================================
+
+@app.get("/challenges/active", response_model=List[schemas.ChallengeWithProgress])
+async def get_active_challenges(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get all active weekly challenges with user progress"""
+    challenges = crud.get_active_challenges(db)
+    result = []
+    for ch in challenges:
+        progress = crud.get_or_create_progress(db, user_id, ch.id)
+        pct = min(100.0, (progress.current_value / ch.target_value * 100)) if ch.target_value > 0 else 0
+        result.append(schemas.ChallengeWithProgress(
+            id=ch.id,
+            title_en=ch.title_en,
+            title_ar=ch.title_ar,
+            description_en=ch.description_en,
+            description_ar=ch.description_ar,
+            icon=ch.icon,
+            condition_type=ch.condition_type,
+            target_value=ch.target_value,
+            bonus_points=ch.bonus_points,
+            week_start=ch.week_start,
+            week_end=ch.week_end,
+            is_active=ch.is_active,
+            created_at=ch.created_at,
+            current_value=progress.current_value,
+            completed=progress.completed,
+            completed_at=progress.completed_at,
+            progress_percent=round(pct, 1),
+        ))
+    return result
+
+
+@app.post("/challenges/check", response_model=schemas.ChallengeCheckResult)
+async def check_challenges(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Check and complete any weekly challenges"""
+    newly_completed = crud.check_and_complete_challenges(db, user_id)
+
+    # Publish events
+    for challenge in newly_completed:
+        try:
+            publish_event("challenge.completed", {
+                "user_id": user_id,
+                "challenge_id": challenge.id,
+                "challenge_title_en": challenge.title_en,
+                "bonus_points": challenge.bonus_points,
+            })
+        except Exception as e:
+            logger.error(f"Failed to publish challenge event: {e}")
+
+    if newly_completed:
+        logger.info(f"User {user_id} completed {len(newly_completed)} challenges")
+
+    # Get totals
+    active = crud.get_active_challenges(db)
+    completed_count = 0
+    for ch in active:
+        prog = crud.get_user_challenge_progress(db, user_id, ch.id)
+        if prog and prog.completed:
+            completed_count += 1
+
+    return {
+        "completed_challenges": newly_completed,
+        "total_active": len(active),
+        "total_completed": completed_count,
+    }
+
+
+# ============================================================
+# Friends / Social
+# ============================================================
+
+@app.post("/friends/request")
+async def send_friend_request(
+    request: schemas.FriendRequest,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Send a friend request"""
+    if request.friend_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot add yourself as friend")
+    friendship = crud.send_friend_request(db, user_id, request.friend_id)
+    return {"status": "ok", "friendship_id": friendship.id, "current_status": friendship.status}
+
+
+@app.get("/friends/requests", response_model=List[schemas.FriendshipResponse])
+async def get_pending_requests(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get pending incoming friend requests"""
+    requests = crud.get_pending_requests(db, user_id)
+    result = []
+    for r in requests:
+        result.append(schemas.FriendshipResponse(
+            id=r.id,
+            user_id=r.user_id,
+            friend_id=r.friend_id,
+            status=r.status,
+            created_at=r.created_at,
+            friend_name="",
+            friend_points=0,
+        ))
+    return result
+
+
+@app.post("/friends/{friendship_id}/accept")
+async def accept_request(
+    friendship_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Accept a friend request"""
+    f = crud.accept_friend_request(db, friendship_id, user_id)
+    if not f:
+        raise HTTPException(status_code=404, detail="Request not found or already handled")
+    return {"status": "accepted", "friendship_id": f.id}
+
+
+@app.post("/friends/{friendship_id}/reject")
+async def reject_request(
+    friendship_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Reject or remove a friendship"""
+    f = crud.reject_friend_request(db, friendship_id, user_id)
+    if not f:
+        raise HTTPException(status_code=404, detail="Friendship not found")
+    return {"status": "removed"}
+
+
+@app.get("/friends")
+async def get_friends(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get all friends"""
+    friendships = crud.get_friends(db, user_id)
+    result = []
+    for f in friendships:
+        fid = f.friend_id if f.user_id == user_id else f.user_id
+        result.append({
+            "friendship_id": f.id,
+            "friend_user_id": fid,
+            "status": f.status,
+            "created_at": f.created_at.isoformat() if f.created_at else None,
+        })
+    return result
+
+
+@app.get("/friends/leaderboard", response_model=List[schemas.FriendLeaderboardEntry])
+async def friend_leaderboard(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get leaderboard among friends only"""
+    entries = crud.get_friend_leaderboard(db, user_id)
+    return [schemas.FriendLeaderboardEntry(**e) for e in entries]
+
+
+# ============================================================
 # DSGVO / GDPR — Internal Endpoints (service-to-service only)
 # ============================================================
 
@@ -387,10 +555,19 @@ def delete_user_data(
     count = db.query(models.PointTransaction).filter(
         models.PointTransaction.user_id == user_id
     ).delete()
+    count_cp = db.query(models.UserChallengeProgress).filter(
+        models.UserChallengeProgress.user_id == user_id
+    ).delete()
+    count_fr = db.query(models.Friendship).filter(
+        (models.Friendship.user_id == user_id) | (models.Friendship.friend_id == user_id)
+    ).delete(synchronize_session='fetch')
+    count_ua = db.query(models.UserAchievement).filter(
+        models.UserAchievement.user_id == user_id
+    ).delete()
     db.commit()
 
-    logger.info(f"DSGVO: Deleted {count} point transactions for user {user_id}")
-    return {"user_id": user_id, "deleted": {"point_transactions": count}}
+    logger.info(f"DSGVO: Deleted {count} transactions, {count_cp} challenge progress, {count_fr} friendships, {count_ua} achievements for user {user_id}")
+    return {"user_id": user_id, "deleted": {"point_transactions": count, "challenge_progress": count_cp, "friendships": count_fr, "achievements": count_ua}}
 
 
 @app.get("/internal/user-data/{user_id}/export")

@@ -151,7 +151,15 @@
     "whatsappNotInstalled": "❌ WhatsApp غير مثبت على هذا الجهاز",
     "loadingData": "جاري تحميل البيانات...",
     "userId": "رقم المستخدم:",
-    "progressTo": "إلى"
+    "progressTo": "إلى",
+    "weeklyChallenges": "التحديات الأسبوعية",
+    "noChallenges": "لا توجد تحديات نشطة هذا الأسبوع",
+    "completed": "مكتمل",
+    "friends": "الأصدقاء",
+    "friendIdPlaceholder": "أدخل رقم الصديق",
+    "friendRequestSent": "تم إرسال طلب الصداقة!",
+    "noFriends": "لا يوجد أصدقاء بعد. أضف شخصاً!",
+    "friendLeaderboard": "ترتيب الأصدقاء"
   },
   "reports": {
     "title": "البلاغات",
