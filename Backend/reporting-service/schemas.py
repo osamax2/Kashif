@@ -221,3 +221,25 @@ class RouteReportsResponse(BaseModel):
     total_hazards: int
     reports: List[RouteReport]
     summary: dict  # category_id -> count
+
+
+# ============ Bulk Operations ============
+
+class BulkStatusUpdate(BaseModel):
+    """Bulk update status of multiple reports"""
+    report_ids: List[int]
+    status_id: int
+    comment: Optional[str] = None
+
+
+class BulkDeleteRequest(BaseModel):
+    """Bulk soft-delete multiple reports"""
+    report_ids: List[int]
+
+
+class BulkOperationResult(BaseModel):
+    """Result of a bulk operation"""
+    success_count: int
+    failed_count: int
+    failed_ids: List[int]
+    message: str

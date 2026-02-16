@@ -693,6 +693,125 @@ async def get_deleted_reports(
 
 
 # ============================================================
+# Bulk Operations — Admin endpoints
+# ============================================================
+
+@app.post("/bulk-status", response_model=schemas.BulkOperationResult)
+async def bulk_update_status(
+    bulk: schemas.BulkStatusUpdate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Bulk update status of multiple reports"""
+    success_count = 0
+    failed_ids = []
+    
+    for report_id in bulk.report_ids:
+        try:
+            report = crud.update_report_status(
+                db=db,
+                report_id=report_id,
+                new_status=bulk.status_id,
+                comment=bulk.comment or f"Bulk status update",
+                updated_by=user_id
+            )
+            if report:
+                success_count += 1
+                # Publish event
+                try:
+                    publish_event("report.status_updated", {
+                        "report_id": report.id,
+                        "user_id": report.user_id,
+                        "new_status_id": bulk.status_id,
+                        "updated_by": user_id
+                    })
+                except Exception:
+                    pass
+            else:
+                failed_ids.append(report_id)
+        except Exception:
+            failed_ids.append(report_id)
+    
+    return schemas.BulkOperationResult(
+        success_count=success_count,
+        failed_count=len(failed_ids),
+        failed_ids=failed_ids,
+        message=f"Updated {success_count} of {len(bulk.report_ids)} reports"
+    )
+
+
+@app.post("/bulk-delete", response_model=schemas.BulkOperationResult)
+async def bulk_delete_reports(
+    bulk: schemas.BulkDeleteRequest,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Bulk soft-delete multiple reports"""
+    success_count = 0
+    failed_ids = []
+    
+    for report_id in bulk.report_ids:
+        try:
+            report = crud.soft_delete_report(db=db, report_id=report_id)
+            if report:
+                success_count += 1
+                logger.info(f"Report {report_id} bulk-deleted by user {user_id}")
+            else:
+                failed_ids.append(report_id)
+        except Exception:
+            failed_ids.append(report_id)
+    
+    return schemas.BulkOperationResult(
+        success_count=success_count,
+        failed_count=len(failed_ids),
+        failed_ids=failed_ids,
+        message=f"Deleted {success_count} of {len(bulk.report_ids)} reports"
+    )
+
+
+@app.get("/export/csv")
+async def export_reports_csv(
+    status_filter: Optional[str] = None,
+    category: Optional[str] = None,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Export reports as CSV"""
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+    
+    reports = crud.get_reports(
+        db=db, skip=0, limit=10000,
+        status=status_filter, category=category,
+        include_pending=True
+    )
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "ID", "Title", "Description", "Category ID", "Status ID",
+        "Latitude", "Longitude", "Address", "Severity ID",
+        "Confirmation Status", "Created At", "Updated At"
+    ])
+    
+    for r in reports:
+        writer.writerow([
+            r.id, r.title, r.description, r.category_id, r.status_id,
+            float(r.latitude) if r.latitude else "", float(r.longitude) if r.longitude else "",
+            r.address_text or "", r.severity_id,
+            r.confirmation_status, r.created_at, r.updated_at
+        ])
+    
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=reports_export.csv"}
+    )
+
+
+# ============================================================
 # DSGVO / GDPR — Internal Endpoints (service-to-service only)
 # ============================================================
 

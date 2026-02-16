@@ -91,3 +91,21 @@ export interface LeaderboardEntry {
   rank: number;
   full_name?: string; // Loaded separately from users API
 }
+
+export interface AuditLog {
+  id: number;
+  action: string;
+  user_id: number;
+  user_email?: string;
+  target_type: string;
+  target_id?: number;
+  details?: string;
+  created_at: string;
+}
+
+export interface BulkOperationResult {
+  success_count: number;
+  failed_count: number;
+  failed_ids: number[];
+  message: string;
+}
