@@ -26,7 +26,7 @@ interface Props {
 export default function TermsModal({ visible, onClose, onAccept, showAcceptButton = false }: Props) {
   const { t, isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const effectiveRTL = !isRTL;
+  const effectiveRTL = isRTL;
   const [tos, setTos] = useState<TermsOfService | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

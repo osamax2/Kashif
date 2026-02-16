@@ -970,7 +970,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         try {
             const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
             // Add Syria bias to the search
-            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}&components=country:SY`;
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}`;
             
             const response = await fetch(url);
             const data = await response.json();
@@ -1205,7 +1205,6 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     query={{
                         key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
                         language: language,
-                        components: 'country:sy',
                     }}
                     enablePoweredByContainer={false}
                     keepResultsAfterBlur={false}
@@ -2192,7 +2191,7 @@ const styles = StyleSheet.create({
     },
     soundButton: {
         position: "absolute",
-        bottom: 190,
+        bottom: 220,
         // left/right is set dynamically based on language
         width: 54,
         height: 54,
@@ -2212,7 +2211,7 @@ soundIcon: {
 },
     heatmapButton: {
         position: "absolute",
-        bottom: 130,
+        bottom: 155,
         width: 48,
         height: 48,
         backgroundColor: "#fff",
