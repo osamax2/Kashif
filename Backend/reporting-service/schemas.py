@@ -182,3 +182,42 @@ class ConfirmReportResponse(BaseModel):
     message: str
     report_confirmed: bool
     points_awarded: int
+
+
+class RouteWaypoint(BaseModel):
+    """A single point along a route"""
+    latitude: float
+    longitude: float
+
+
+class RouteReportsRequest(BaseModel):
+    """Request to find reports along a route"""
+    waypoints: List[RouteWaypoint]
+    buffer_meters: float = 200.0  # How far from route to search (default 200m)
+
+
+class RouteReport(BaseModel):
+    """A report found along a route with distance info"""
+    id: int
+    title: Optional[str] = None
+    description: str
+    category_id: int
+    latitude: Decimal
+    longitude: Decimal
+    address_text: Optional[str] = None
+    status_id: int
+    created_at: datetime
+    distance_from_route_meters: float
+    nearest_waypoint_index: int
+    photo_urls: Optional[str] = None
+    confirmation_status: str = "pending"
+
+    class Config:
+        from_attributes = True
+
+
+class RouteReportsResponse(BaseModel):
+    """Response for route reports query"""
+    total_hazards: int
+    reports: List[RouteReport]
+    summary: dict  # category_id -> count

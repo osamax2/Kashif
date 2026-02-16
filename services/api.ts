@@ -444,6 +444,34 @@ export interface DuplicateCheckResponse {
   message: string;
 }
 
+// ─── ROUTE WARNING TYPES ────────────────────────────────────────────
+export interface RouteWaypoint {
+  latitude: number;
+  longitude: number;
+}
+
+export interface RouteReport {
+  id: number;
+  title?: string;
+  description: string;
+  category_id: number;
+  latitude: number;
+  longitude: number;
+  address_text?: string;
+  status_id: number;
+  created_at: string;
+  distance_from_route_meters: number;
+  nearest_waypoint_index: number;
+  photo_urls?: string;
+  confirmation_status: string;
+}
+
+export interface RouteReportsResponse {
+  total_hazards: number;
+  reports: RouteReport[];
+  summary: Record<number, number>;
+}
+
 export const reportingAPI = {
   // Check for nearby duplicates before creating a report
   checkDuplicates: async (latitude: number, longitude: number, categoryId: number): Promise<DuplicateCheckResponse> => {
@@ -570,6 +598,18 @@ export const reportingAPI = {
   // Get report status history
   getReportHistory: async (reportId: number): Promise<ReportStatusHistory[]> => {
     const response = await api.get<ReportStatusHistory[]>(`/api/reports/${reportId}/history`);
+    return response.data;
+  },
+
+  // Get reports along a route (Route Warning feature)
+  getReportsAlongRoute: async (
+    waypoints: RouteWaypoint[],
+    bufferMeters: number = 200
+  ): Promise<RouteReportsResponse> => {
+    const response = await api.post<RouteReportsResponse>('/api/reports/along-route', {
+      waypoints,
+      buffer_meters: bufferMeters,
+    });
     return response.data;
   },
 };

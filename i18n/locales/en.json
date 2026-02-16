@@ -388,6 +388,15 @@
       "totalAvailableTitle": "Total availability",
       "totalAvailable": "{{count}} coupons available.",
       "addressTitle": "Location"
+    },
+    "route": {
+      "enterDestination": "Enter destination...",
+      "loadingRoute": "Loading route...",
+      "warningsOnRoute": "{{count}} warning(s) on route",
+      "hazard": "Hazard",
+      "fromRoute": "from route",
+      "noHazards": "No hazards on this route",
+      "routeWarning": "Route Warning"
     }
   }
 }

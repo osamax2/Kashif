@@ -27,6 +27,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -186,6 +187,11 @@ export default function ReportsScreen() {
 
   const [stats, setStats] = useState({ open: 0, inProgress: 0, resolved: 0 });
 
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeStatusFilter, setActiveStatusFilter] = useState<number | null>(null);
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<number | null>(null);
+
   useEffect(() => {
     loadData();
   }, [refreshKey]);
@@ -333,6 +339,24 @@ export default function ReportsScreen() {
   const getCategoryName = (categoryId: number): string => categories.find((c) => c.id === categoryId)?.name || "غير معروف";
   const getSeverityName = (severityId: number): string => severities.find((s) => s.id === severityId)?.name || "غير معروف";
 
+  // Filtered reports based on search + filters
+  const filteredReports = reports.filter((r) => {
+    // Status filter
+    if (activeStatusFilter !== null && r.status_id !== activeStatusFilter) return false;
+    // Category filter
+    if (activeCategoryFilter !== null && r.category_id !== activeCategoryFilter) return false;
+    // Text search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const title = (r.title || '').toLowerCase();
+      const desc = (r.description || '').toLowerCase();
+      const addr = (r.address_text || '').toLowerCase();
+      const catName = getCategoryName(r.category_id).toLowerCase();
+      if (!title.includes(q) && !desc.includes(q) && !addr.includes(q) && !catName.includes(q) && !r.id.toString().includes(q)) return false;
+    }
+    return true;
+  });
+
   // ✅ Datum nach echter Sprache (nicht effectiveRTL)
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -432,22 +456,105 @@ export default function ReportsScreen() {
         <CircleStat percent={stats.resolved} label={t("reports.resolvedReports")} color="#4CD964" />
       </View>
 
+      {/* SEARCH BAR */}
+      <View style={styles.searchContainer}>
+        <View style={[styles.searchBar, { flexDirection: effectiveRTL ? 'row-reverse' : 'row' }]}> 
+          <Ionicons name="search" size={18} color="#8E8E93" style={{ marginHorizontal: 6 }} />
+          <TextInput
+            style={[styles.searchInput, { textAlign: effectiveRTL ? 'right' : 'left' }]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={language === 'ar' ? 'ابحث في البلاغات...' : 'Search reports...'}
+            placeholderTextColor="rgba(255,255,255,0.4)"
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color="#8E8E93" style={{ marginHorizontal: 4 }} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* CATEGORY FILTER */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+        style={{ maxHeight: 38, marginBottom: 4 }}
+      >
+        <TouchableOpacity
+          style={[styles.filterChip, activeCategoryFilter === null && styles.filterChipActive]}
+          onPress={() => setActiveCategoryFilter(null)}
+        >
+          <Text style={[styles.filterChipText, activeCategoryFilter === null && styles.filterChipTextActive]}>
+            {language === 'ar' ? 'الكل' : 'All'}
+          </Text>
+        </TouchableOpacity>
+        {categories.map((cat) => (
+          <TouchableOpacity
+            key={cat.id}
+            style={[styles.filterChip, activeCategoryFilter === cat.id && styles.filterChipActive]}
+            onPress={() => setActiveCategoryFilter(activeCategoryFilter === cat.id ? null : cat.id)}
+          >
+            <Text style={[styles.filterChipText, activeCategoryFilter === cat.id && styles.filterChipTextActive]}>
+              {language === 'ar' ? (cat.name_ar || cat.name) : (cat.name_en || cat.name)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* STATUS FILTER */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+        style={{ maxHeight: 38, marginBottom: 6 }}
+      >
+        <TouchableOpacity
+          style={[styles.filterChip, activeStatusFilter === null && styles.filterChipActive]}
+          onPress={() => setActiveStatusFilter(null)}
+        >
+          <Text style={[styles.filterChipText, activeStatusFilter === null && styles.filterChipTextActive]}>
+            {language === 'ar' ? 'كل الحالات' : 'All Statuses'}
+          </Text>
+        </TouchableOpacity>
+        {statuses.map((st) => {
+          const meta = getStatusMeta(st.name, language);
+          return (
+            <TouchableOpacity
+              key={st.id}
+              style={[styles.filterChip, activeStatusFilter === st.id && styles.filterChipActive]}
+              onPress={() => setActiveStatusFilter(activeStatusFilter === st.id ? null : st.id)}
+            >
+              <Text style={{ fontSize: 12, marginRight: 3 }}>{meta.icon}</Text>
+              <Text style={[styles.filterChipText, activeStatusFilter === st.id && styles.filterChipTextActive]}>
+                {st.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
       {/* LIST HEADER */}
       <View
         style={[
           styles.listHeaderRow,
-          { alignItems: effectiveRTL ? "flex-end" : "flex-start" },
+          { alignItems: effectiveRTL ? "flex-end" : "flex-start", flexDirection: effectiveRTL ? 'row-reverse' : 'row', justifyContent: 'space-between' },
         ]}
       >
         <Text style={[styles.listHeaderText, { textAlign: effectiveRTL ? "right" : "left" }]}>
           {t("reports.myReportsList")}
         </Text>
+        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: 'Tajawal-Regular', paddingHorizontal: 10 }}>
+          {filteredReports.length}/{reports.length}
+        </Text>
       </View>
 
       {/* LIST */}
-      {reports.length > 0 ? (
+      {filteredReports.length > 0 ? (
         <FlatList
-          data={reports}
+          data={filteredReports}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderReport}
           contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
@@ -797,6 +904,64 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BLUE,
     paddingTop: Platform.OS === "ios" ? 48 : 45,
+  },
+
+  searchContainer: {
+    paddingHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 6,
+  },
+
+  searchBar: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    height: 38,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+
+  searchInput: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'Tajawal-Regular',
+    flex: 1,
+    height: 36,
+    padding: 0,
+  },
+
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    gap: 6,
+  },
+
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+
+  filterChipActive: {
+    backgroundColor: 'rgba(255,209,102,0.18)',
+    borderColor: '#FFD166',
+  },
+
+  filterChipText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'Tajawal-Bold',
+  },
+
+  filterChipTextActive: {
+    color: '#FFD166',
   },
 
   header: {

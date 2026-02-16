@@ -517,3 +517,55 @@ def get_deleted_reports(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Report).filter(
         models.Report.deleted_at != None
     ).order_by(models.Report.deleted_at.desc()).offset(skip).limit(limit).all()
+
+
+def get_reports_along_route(
+    db: Session,
+    waypoints: list,
+    buffer_meters: float = 200.0
+) -> list:
+    """
+    Find confirmed reports near a route defined by waypoints.
+    Returns list of (report, distance_meters, nearest_waypoint_index) tuples.
+    """
+    if not waypoints:
+        return []
+
+    # Calculate bounding box of entire route + buffer
+    lats = [w["latitude"] for w in waypoints]
+    lons = [w["longitude"] for w in waypoints]
+    buffer_deg = buffer_meters / 111000.0  # rough buffer in degrees
+
+    query = db.query(models.Report).filter(
+        models.Report.deleted_at == None,
+        models.Report.confirmation_status == "confirmed",
+        models.Report.latitude.between(min(lats) - buffer_deg, max(lats) + buffer_deg),
+        models.Report.longitude.between(min(lons) - buffer_deg, max(lons) + buffer_deg),
+    )
+
+    candidates = query.all()
+    results = []
+
+    for report in candidates:
+        r_lat = float(report.latitude)
+        r_lon = float(report.longitude)
+
+        # Find minimum distance to any route segment
+        min_dist = float("inf")
+        nearest_idx = 0
+
+        for i in range(len(waypoints)):
+            d = haversine_distance(
+                r_lat, r_lon,
+                waypoints[i]["latitude"], waypoints[i]["longitude"]
+            )
+            if d < min_dist:
+                min_dist = d
+                nearest_idx = i
+
+        if min_dist <= buffer_meters:
+            results.append((report, min_dist, nearest_idx))
+
+    # Sort by waypoint index so hazards are ordered along the route
+    results.sort(key=lambda x: (x[2], x[1]))
+    return results
