@@ -342,8 +342,6 @@
     "passwordMinLength": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
     "passwordRequirements": "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل مع رقم وحرف كبير ورمز خاص",
     "invalidPhoneFormat": "رقم الهاتف غير صحيح",
-    "passwordRequirements": "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل مع رقم وحرف كبير ورمز خاص",
-    "invalidPhoneFormat": "رقم الهاتف غير صحيح",
     "mustAgreeToTerms": "يجب الموافقة على شروط الاستخدام وسياسة الخصوصية",
     "loginError": "حدث خطأ أثناء تسجيل الدخول",
     "registerError": "حدث خطأ أثناء التسجيل",
@@ -480,5 +478,32 @@
       "confirming": "التأكيد",
       "general": "عام"
     }
+  },
+  "feedback": {
+    "title": "إرسال ملاحظات",
+    "subject": "الموضوع",
+    "message": "رسالتك",
+    "category": "الفئة",
+    "categoryBug": "إبلاغ عن خلل",
+    "categorySuggestion": "اقتراح",
+    "categoryComplaint": "شكوى",
+    "categoryOther": "أخرى",
+    "submit": "إرسال الملاحظات",
+    "success": "شكراً لك! تم إرسال ملاحظاتك.",
+    "error": "تعذر إرسال الملاحظات. يرجى المحاولة مرة أخرى.",
+    "placeholder": "صف ملاحظاتك بالتفصيل...",
+    "subjectPlaceholder": "ملخص موجز لملاحظاتك",
+    "menuTitle": "إرسال ملاحظات"
+  },
+  "terms": {
+    "title": "شروط الاستخدام",
+    "viewTerms": "عرض الشروط",
+    "accept": "قبول والمتابعة",
+    "version": "الإصدار",
+    "loadError": "تعذر تحميل شروط الاستخدام",
+    "retry": "إعادة المحاولة",
+    "close": "إغلاق",
+    "updatedTerms": "تم تحديث شروط الاستخدام. يرجى المراجعة والموافقة.",
+    "acceptRequired": "يجب قبول الشروط للمتابعة."
   }
 }

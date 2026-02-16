@@ -341,8 +341,6 @@
     "passwordMinLength": "Password must be at least 6 characters",
     "passwordRequirements": "Password must be at least 8 characters with a number, uppercase letter, and special character",
     "invalidPhoneFormat": "Invalid phone number format",
-    "passwordRequirements": "Password must be at least 8 characters with a number, uppercase letter, and special character",
-    "invalidPhoneFormat": "Invalid phone number format",
     "mustAgreeToTerms": "You must agree to the Terms of Use and Privacy Policy",
     "loginError": "An error occurred during login",
     "registerError": "An error occurred during registration",
@@ -479,5 +477,32 @@
       "confirming": "Confirming",
       "general": "General"
     }
+  },
+  "feedback": {
+    "title": "Send Feedback",
+    "subject": "Subject",
+    "message": "Your Message",
+    "category": "Category",
+    "categoryBug": "Bug Report",
+    "categorySuggestion": "Suggestion",
+    "categoryComplaint": "Complaint",
+    "categoryOther": "Other",
+    "submit": "Send Feedback",
+    "success": "Thank you! Your feedback has been sent.",
+    "error": "Could not send feedback. Please try again.",
+    "placeholder": "Describe your feedback in detail...",
+    "subjectPlaceholder": "Brief summary of your feedback",
+    "menuTitle": "Send Feedback"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "viewTerms": "View Terms",
+    "accept": "Accept & Continue",
+    "version": "Version",
+    "loadError": "Could not load Terms of Service",
+    "retry": "Retry",
+    "close": "Close",
+    "updatedTerms": "Our terms have been updated. Please review and accept.",
+    "acceptRequired": "You must accept the terms to continue."
   }
 }
