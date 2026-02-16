@@ -41,7 +41,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "noreply@kashifroad.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "SecurePass123!")
 SMTP_FROM = os.getenv("SMTP_FROM", "noreply@kashifroad.com")
-ALERT_RECIPIENTS = os.getenv("ALERT_RECIPIENTS", "admin@kashif.com").split(",")
+ALERT_RECIPIENTS = os.getenv("ALERT_RECIPIENTS", "osobaji@gmail.com").split(",")
 
 # State file to track previous status (avoid alert spam)
 STATE_FILE = "/tmp/kashif_monitor_state.json"
