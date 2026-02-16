@@ -173,6 +173,22 @@ export const usersAPI = {
     const response = await api.post('/api/auth/users/admin', data);
     return response.data;
   },
+
+  bulkUpdateUserStatus: async (userIds: number[], newStatus: string) => {
+    const response = await api.post('/api/auth/users/bulk-status', {
+      user_ids: userIds,
+      status: newStatus,
+    });
+    return response.data;
+  },
+};
+
+// Audit Logs
+export const auditAPI = {
+  getLogs: async (params: { skip?: number; limit?: number; action?: string; user_id?: number } = {}) => {
+    const response = await api.get('/api/auth/audit-logs', { params });
+    return response.data;
+  },
 };
 
 // Reports
@@ -242,6 +258,30 @@ export const reportsAPI = {
   
   getStatuses: async () => {
     const response = await api.get('/api/reports/statuses');
+    return response.data;
+  },
+
+  bulkUpdateStatus: async (reportIds: number[], statusId: number, comment?: string) => {
+    const response = await api.post('/api/reports/bulk-status', {
+      report_ids: reportIds,
+      status_id: statusId,
+      comment: comment || '',
+    });
+    return response.data;
+  },
+
+  bulkDeleteReports: async (reportIds: number[]) => {
+    const response = await api.post('/api/reports/bulk-delete', {
+      report_ids: reportIds,
+    });
+    return response.data;
+  },
+
+  exportCSV: async (params: any = {}) => {
+    const response = await api.get('/api/reports/export/csv', {
+      params,
+      responseType: 'blob',
+    });
     return response.data;
   },
 };

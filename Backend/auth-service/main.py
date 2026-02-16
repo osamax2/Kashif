@@ -86,6 +86,75 @@ def health_check():
     return {"status": "healthy", "service": "auth"}
 
 
+# ============================================================
+# Role-Based Permissions
+# ============================================================
+
+# Role hierarchy: ADMIN > MODERATOR > VIEWER > (COMPANY, GOVERNMENT, USER)
+ADMIN_ROLES = ["ADMIN"]
+MODERATOR_ROLES = ["ADMIN", "MODERATOR"]  # Moderator can edit but not delete
+VIEWER_ROLES = ["ADMIN", "MODERATOR", "VIEWER"]  # Viewer can only read
+
+
+def require_admin(current_user):
+    """Only ADMIN can perform this action"""
+    if current_user.role not in ADMIN_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Admin role required."
+        )
+
+
+def require_moderator(current_user):
+    """ADMIN and MODERATOR can perform this action"""
+    if current_user.role not in MODERATOR_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Moderator or Admin role required."
+        )
+
+
+def require_viewer(current_user):
+    """ADMIN, MODERATOR and VIEWER can perform this action (read-only)"""
+    if current_user.role not in VIEWER_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Viewer, Moderator or Admin role required."
+        )
+
+
+def log_action(db: Session, action: str, user, target_type: str = None,
+               target_id: int = None, details: str = None):
+    """Helper to create audit log entry"""
+    try:
+        crud.create_audit_log(
+            db=db, action=action, user_id=user.id,
+            user_email=user.email, target_type=target_type,
+            target_id=target_id, details=details
+        )
+    except Exception as e:
+        logger.error(f"Failed to create audit log: {e}")
+
+
+# ============================================================
+# Audit Log Endpoints
+# ============================================================
+
+@app.get("/audit-logs", response_model=list[schemas.AuditLogEntry])
+def get_audit_logs(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    skip: int = 0,
+    limit: int = 100,
+    action: str = None,
+    user_id: int = None,
+    db: Session = Depends(get_db)
+):
+    """Get audit logs - Admin only"""
+    current_user = auth.get_current_user(token, db)
+    require_admin(current_user)
+    return crud.get_audit_logs(db, skip=skip, limit=limit, action=action, user_id=user_id)
+
+
 @app.get("/reset-password", response_class=HTMLResponse)
 def reset_password_page():
     """Serve the password reset HTML page"""
@@ -634,13 +703,7 @@ def admin_reset_password(
 ):
     """Admin endpoint to reset any user's password"""
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can reset passwords
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     # Get the target user
     target_user = crud.get_user(db, user_id)
@@ -653,6 +716,7 @@ def admin_reset_password(
     # Update password (optionally require change on next login)
     crud.update_user_password(db, user_id, request.new_password, clear_must_change=False)
     
+    log_action(db, "user.reset_password", current_user, "user", user_id)
     return {"message": f"Password reset successfully for user {target_user.email}"}
 
 
@@ -664,13 +728,7 @@ def create_admin_user(
 ):
     """Admin endpoint to create a new admin user"""
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can create admin users
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     # Check if email already exists
     existing_user = crud.get_user_by_email(db, user_data.email)
@@ -697,6 +755,7 @@ def create_admin_user(
     db.commit()
     db.refresh(new_user)
     
+    log_action(db, "user.create_admin", current_user, "user", new_user.id, f"email={new_user.email}")
     return new_user
 
 
@@ -724,15 +783,9 @@ def get_all_users(
     include_deleted: bool = False,
     db: Session = Depends(get_db)
 ):
-    """Get all users - Admin only. Set include_deleted=true to see all users including deleted."""
+    """Get all users - Admin, Moderator, Viewer"""
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can list all users
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_viewer(current_user)
     
     users = crud.get_users(db, skip=skip, limit=limit, include_deleted=include_deleted)
     return users
@@ -747,13 +800,7 @@ def get_deleted_users(
 ):
     """Get all deleted users (trash) - Admin only"""
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can view trash
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     users = crud.get_deleted_users(db, skip=skip, limit=limit)
     return users
@@ -767,13 +814,7 @@ def delete_user(
 ):
     """Soft delete a user (move to trash) - Admin only"""
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can delete users
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     # Can't delete yourself
     if current_user.id == user_id:
@@ -789,6 +830,7 @@ def delete_user(
             detail="User not found"
         )
     
+    log_action(db, "user.delete", current_user, "user", user_id)
     logger.info(f"User {user_id} soft deleted by admin {current_user.id}")
     return {"message": "User moved to trash", "user_id": user_id}
 
@@ -801,13 +843,7 @@ def restore_user(
 ):
     """Restore a deleted user from trash - Admin only"""
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can restore users
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     user = crud.restore_user(db, user_id)
     if not user:
@@ -816,6 +852,7 @@ def restore_user(
             detail="User not found"
         )
     
+    log_action(db, "user.restore", current_user, "user", user_id)
     logger.info(f"User {user_id} restored by admin {current_user.id}")
     return {"message": "User restored successfully", "user_id": user_id}
 
@@ -828,13 +865,7 @@ def permanent_delete_user(
 ):
     """Permanently delete a user - Admin only. This action cannot be undone!"""
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can permanently delete users
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     # Can't delete yourself
     if current_user.id == user_id:
@@ -850,6 +881,7 @@ def permanent_delete_user(
             detail="User not found"
         )
     
+    log_action(db, "user.permanent_delete", current_user, "user", user_id)
     logger.info(f"User {user_id} permanently deleted by admin {current_user.id}")
     return {"message": "User permanently deleted", "user_id": user_id}
 
@@ -863,8 +895,8 @@ def get_user(
     # Verify token
     current_user = auth.get_current_user(token, db)
     
-    # Only allow users to get their own info, or admins to get any user
-    if current_user.id != user_id and current_user.role != "admin":
+    # Allow users to get their own info, or admin/moderator/viewer to get any user
+    if current_user.id != user_id and current_user.role not in VIEWER_ROLES:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this user"
@@ -887,15 +919,9 @@ def update_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Session = Depends(get_db)
 ):
-    """Update user - Admin only"""
+    """Update user - Admin and Moderator"""
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can update users
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_moderator(current_user)
     
     updated_user = crud.update_user(db, user_id, user_update)
     if not updated_user:
@@ -904,7 +930,60 @@ def update_user(
             detail="User not found"
         )
     
+    log_action(db, "user.update", current_user, "user", user_id,
+               str(user_update.model_dump(exclude_none=True)))
+    
     return updated_user
+
+
+@app.post("/users/bulk-status")
+def bulk_update_user_status(
+    bulk_data: dict,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Bulk activate/deactivate/ban users - Admin only
+    
+    Expected body: { "user_ids": [1,2,3], "status": "ACTIVE" | "BANNED" }
+    """
+    current_user = auth.get_current_user(token, db)
+    require_admin(current_user)
+    
+    user_ids = bulk_data.get("user_ids", [])
+    new_status = bulk_data.get("status", "ACTIVE")
+    
+    if new_status not in ["ACTIVE", "BANNED"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Status must be ACTIVE or BANNED"
+        )
+    
+    success_count = 0
+    failed_ids = []
+    
+    for uid in user_ids:
+        try:
+            user = crud.get_user(db, uid)
+            if user and user.id != current_user.id:  # Can't change own status
+                user.status = new_status
+                user.updated_at = __import__('datetime').datetime.utcnow()
+                success_count += 1
+            else:
+                failed_ids.append(uid)
+        except Exception:
+            failed_ids.append(uid)
+    
+    db.commit()
+    
+    log_action(db, "user.bulk_status", current_user, "user", 0, f"status={new_status}, count={success_count}")
+    logger.info(f"Bulk user status update by admin {current_user.id}: {success_count} users set to {new_status}")
+    
+    return {
+        "success_count": success_count,
+        "failed_count": len(failed_ids),
+        "failed_ids": failed_ids,
+        "message": f"Updated {success_count} of {len(user_ids)} users to {new_status}"
+    }
 
 
 @app.post("/users/company", response_model=schemas.User)
@@ -919,13 +998,7 @@ def create_company_user(
     for their assigned company.
     """
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can create company users
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     # Check if user already exists
     db_user = crud.get_user_by_email(db, email=user_data.email)
@@ -948,6 +1021,7 @@ def create_company_user(
     
     new_user = crud.create_user(db=db, user=user_create)
     
+    log_action(db, "user.create_company", current_user, "user", new_user.id, f"email={new_user.email}")
     logger.info(f"Created company user {new_user.id} for company {user_data.company_id}")
     
     return new_user
@@ -965,13 +1039,7 @@ def create_government_user(
     and access the map.
     """
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can create government users
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     # Check if user already exists
     db_user = crud.get_user_by_email(db, email=user_data.email)
@@ -1004,6 +1072,7 @@ def create_government_user(
     db.commit()
     db.refresh(new_user)
     
+    log_action(db, "user.create_government", current_user, "user", new_user.id, f"email={new_user.email}")
     logger.info(f"Created government user {new_user.id}")
     
     return new_user
@@ -1021,13 +1090,7 @@ def create_normal_user(
     Phone number is required for normal users.
     """
     current_user = auth.get_current_user(token, db)
-    
-    # Only admins can create users via this endpoint
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized. Admin role required."
-        )
+    require_admin(current_user)
     
     # Check if user already exists
     db_user = crud.get_user_by_email(db, email=user_data.email)
@@ -1054,6 +1117,7 @@ def create_normal_user(
     db.commit()
     db.refresh(new_user)
     
+    log_action(db, "user.create_normal", current_user, "user", new_user.id, f"email={new_user.email}")
     logger.info(f"Created normal user {new_user.id} by admin {current_user.id}")
     
     return new_user

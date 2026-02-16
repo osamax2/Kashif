@@ -3,7 +3,7 @@
 import { reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
-import { Calendar, Download, History, MapPin, RotateCcw, Search, Settings, Share2, Trash2 } from 'lucide-react';
+import { Calendar, CheckSquare, Download, History, MapPin, RotateCcw, Search, Settings, Share2, Square, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -128,6 +128,72 @@ export default function ReportsPage() {
     description: '',
     status_id: 1,
   });
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showBulkStatusModal, setShowBulkStatusModal] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkComment, setBulkComment] = useState('');
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredReports.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredReports.map(r => r.id)));
+    }
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    const statusObj = statuses.find((s: any) => s.name === bulkStatus);
+    if (!statusObj) return;
+    setBulkLoading(true);
+    try {
+      const result = await reportsAPI.bulkUpdateStatus(
+        Array.from(selectedIds), statusObj.id, bulkComment
+      );
+      alert(result.message);
+      setShowBulkStatusModal(false);
+      setBulkComment('');
+      setSelectedIds(new Set());
+      loadData();
+    } catch (error) {
+      console.error('Bulk status update failed:', error);
+      alert(isRTL ? 'فشل في التحديث الجماعي' : 'Bulk update failed');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const confirmMsg = isRTL
+      ? `هل تريد حذف ${selectedIds.size} تقرير؟`
+      : `Delete ${selectedIds.size} reports?`;
+    if (!confirm(confirmMsg)) return;
+    setBulkLoading(true);
+    try {
+      const result = await reportsAPI.bulkDeleteReports(Array.from(selectedIds));
+      alert(result.message);
+      setSelectedIds(new Set());
+      loadData();
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      alert(isRTL ? 'فشل في الحذف الجماعي' : 'Bulk delete failed');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -623,6 +689,50 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* Bulk Actions Toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium text-blue-800">
+            {isRTL ? `${selectedIds.size} تقرير محدد` : `${selectedIds.size} selected`}
+          </span>
+          <button
+            onClick={() => {
+              setBulkStatus('');
+              setShowBulkStatusModal(true);
+            }}
+            disabled={bulkLoading}
+            className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-blue-800 transition disabled:opacity-50"
+          >
+            {isRTL ? 'تحديث الحالة' : 'Update Status'}
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkLoading}
+            className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+          >
+            {isRTL ? 'حذف المحدد' : 'Delete Selected'}
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition"
+          >
+            {isRTL ? 'إلغاء التحديد' : 'Clear Selection'}
+          </button>
+        </div>
+      )}
+
+      {/* Select All Toggle */}
+      <div className="mb-3 flex items-center gap-2">
+        <button onClick={toggleSelectAll} className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800">
+          {selectedIds.size === filteredReports.length && filteredReports.length > 0 ? (
+            <CheckSquare className="w-4 h-4 text-primary" />
+          ) : (
+            <Square className="w-4 h-4" />
+          )}
+          {isRTL ? 'تحديد الكل' : 'Select All'}
+        </button>
+      </div>
+
       {/* Reports Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredReports.map((report) => {
@@ -630,8 +740,19 @@ export default function ReportsPage() {
           return (
           <div
             key={report.id}
-            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition"
+            className={`bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition ${selectedIds.has(report.id) ? 'ring-2 ring-primary' : ''}`}
           >
+            {/* Selection Checkbox */}
+            <div className={`flex items-center mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button onClick={() => toggleSelect(report.id)} className="mr-2">
+                {selectedIds.has(report.id) ? (
+                  <CheckSquare className="w-5 h-5 text-primary" />
+                ) : (
+                  <Square className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
+              <span className="text-xs text-gray-400">#{report.id}</span>
+            </div>
             <div className={`flex items-start justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <h3 className={`font-semibold text-gray-900 text-lg ${isRTL ? 'text-right' : ''}`}>{report.title}</h3>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(getStatusName(report.status_id))}`}>
@@ -1132,6 +1253,60 @@ export default function ReportsPage() {
                 className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >
                 {t.common.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Status Update Modal */}
+      {showBulkStatusModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? `تحديث حالة ${selectedIds.size} تقرير` : `Update Status of ${selectedIds.size} Reports`}
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'الحالة الجديدة' : 'New Status'}
+                </label>
+                <select
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value)}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                >
+                  <option value="">{isRTL ? 'اختر الحالة' : 'Select Status'}</option>
+                  {statuses.map((s: any) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'تعليق (اختياري)' : 'Comment (optional)'}
+                </label>
+                <textarea
+                  value={bulkComment}
+                  onChange={(e) => setBulkComment(e.target.value)}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => { setShowBulkStatusModal(false); setBulkComment(''); }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleBulkStatusUpdate}
+                disabled={!bulkStatus || bulkLoading}
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 disabled:opacity-50"
+              >
+                {bulkLoading ? (isRTL ? 'جاري التحديث...' : 'Updating...') : (isRTL ? 'تحديث' : 'Update')}
               </button>
             </div>
           </div>

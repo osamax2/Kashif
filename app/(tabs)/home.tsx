@@ -519,6 +519,16 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     /** MULTI-FILTER */
     const [activeFilters, setActiveFilters] = useState<number[]>([]);
     
+    // ─── REGION STATE + DEBOUNCED HANDLER ──────────────────────────────
+    const [currentRegion, setCurrentRegion] = useState<Region>(mapRegion);
+    const regionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    
+    const handleRegionChange = useCallback((region: Region) => {
+        if (regionTimerRef.current) clearTimeout(regionTimerRef.current);
+        regionTimerRef.current = setTimeout(() => {
+            setCurrentRegion(region);
+        }, 150); // 150ms debounce — keeps map smooth
+    }, []);
 
     const toggleFilter = (categoryId: number) => {
         setActiveFilters((prev) =>
@@ -528,20 +538,37 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         );
     };
 
-    const visibleMarkers =
-        activeFilters.length === 0
+    // ─── VIEWPORT FILTERING + CATEGORY FILTER ──────────────────────
+    const visibleMarkers = useMemo(() => {
+        // Step 1: Category filter
+        let filtered = activeFilters.length === 0
             ? reports
             : reports.filter((r) => activeFilters.includes(r.category_id));
+        
+        // Step 2: Viewport filter — only process markers actually in/near the visible region
+        // Add 20% padding so markers don't pop in at the edge
+        const padLat = currentRegion.latitudeDelta * 0.2;
+        const padLng = currentRegion.longitudeDelta * 0.2;
+        const minLat = currentRegion.latitude - currentRegion.latitudeDelta / 2 - padLat;
+        const maxLat = currentRegion.latitude + currentRegion.latitudeDelta / 2 + padLat;
+        const minLng = currentRegion.longitude - currentRegion.longitudeDelta / 2 - padLng;
+        const maxLng = currentRegion.longitude + currentRegion.longitudeDelta / 2 + padLng;
+        
+        filtered = filtered.filter((r) => {
+            const lat = Number.parseFloat(r.latitude.toString());
+            const lng = Number.parseFloat(r.longitude.toString());
+            return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+        });
+        
+        return filtered;
+    }, [reports, activeFilters, currentRegion]);
     
-    // Debug logging
+    // Debug logging (throttled)
     useEffect(() => {
-        console.log(`📍 Total reports: ${reports.length}`);
-        console.log(`📍 Visible markers: ${visibleMarkers.length}`);
-        console.log(`🔍 Active filters: ${activeFilters.length}`);
+        console.log(`📍 Total: ${reports.length} | Viewport: ${visibleMarkers.length} | Filters: ${activeFilters.length}`);
     }, [reports.length, visibleMarkers.length, activeFilters.length]);
     
     // ─── MARKER CLUSTERING ─────────────────────────────────────────────
-    const [currentRegion, setCurrentRegion] = useState<Region>(mapRegion);
     
     type ClusterItem = {
         type: 'cluster';
@@ -1254,7 +1281,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     onPress={dismissSearchAndKeyboard}
                     onPanDrag={dismissSearchAndKeyboard}
                     onLongPress={handleMapLongPress}
-                    onRegionChangeComplete={(region: Region) => setCurrentRegion(region)}
+                    onRegionChangeComplete={handleRegionChange}
                 >
                     {/* Long Press Marker - Custom location for report */}
                     {longPressMarker && (

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from database import Base
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 
@@ -69,5 +69,21 @@ class VerificationCode(Base):
     attempts = Column(Integer, default=0)  # Track failed attempts
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
+
+    user = relationship("User")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    action = Column(String(100), nullable=False, index=True)  # e.g. "user.update", "report.delete", "user.bulk_status"
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_email = Column(String(255), nullable=True)  # Denormalized for quick display
+    target_type = Column(String(50), nullable=True)  # "user", "report", "coupon", etc.
+    target_id = Column(Integer, nullable=True)
+    details = Column(Text, nullable=True)  # JSON string with details
+    ip_address = Column(String(45), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
     user = relationship("User")

@@ -315,11 +315,9 @@
 | ✅ HOCH | Notification-Einstellungen | Mittel |
 | ✅ HOCH | Status-Update-Notifications | Niedrig |
 | ✅ HOCH | Vollständiger Offline-Modus | Hoch |
-
-
-| 🟠 HOCH | Performance-Optimierung | Mittel |
-| 🟠 HOCH | Bulk-Operationen (Admin) | Mittel |
-| 🟠 HOCH | Admin-Rollen & Berechtigungen | Hoch |
+| ✅ HOCH | Performance-Optimierung | Mittel |
+| ✅ HOCH | Bulk-Operationen (Admin) | Mittel |
+| ✅ HOCH | Admin-Rollen & Berechtigungen | Hoch |
 
 | 🟠 HOCH | CI/CD-Pipeline | Hoch |
 | 🟠 HOCH | Monitoring & Alerting | Mittel |

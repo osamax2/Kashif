@@ -591,6 +591,15 @@ export default function ReportsScreen() {
           showsVerticalScrollIndicator={false}
           refreshing={refreshing}
           onRefresh={onRefresh}
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
+          getItemLayout={(_, index) => ({
+            length: 88, // approximate card height
+            offset: 88 * index,
+            index,
+          })}
         />
       ) : (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 40 }}>
@@ -823,7 +832,7 @@ export default function ReportsScreen() {
   );
 }
 
-function ReportCard({
+const ReportCard = React.memo(function ReportCard({
   report,
   index,
   statusName,
@@ -927,7 +936,7 @@ function ReportCard({
       </TouchableOpacity>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   root: {

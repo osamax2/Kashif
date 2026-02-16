@@ -1,13 +1,14 @@
 'use client';
 
-import { couponsAPI, usersAPI } from '@/lib/api';
+import { authAPI, couponsAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { User } from '@/lib/types';
-import { Award, Building2, KeyRound, Landmark, RotateCcw, Search, Shield, Trash2, UserPlus } from 'lucide-react';
+import { Award, Building2, CheckSquare, KeyRound, Landmark, RotateCcw, Search, Shield, Square, Trash2, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function UsersPage() {
   const { t, isRTL } = useLanguage();
+  const [currentUserRole, setCurrentUserRole] = useState('ADMIN');
   const [users, setUsers] = useState<User[]>([]);
   const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -75,10 +76,55 @@ export default function UsersPage() {
   const [normalFormErrors, setNormalFormErrors] = useState<Record<string, string>>({});
   const [adminFormErrors, setAdminFormErrors] = useState<Record<string, string>>({});
 
+  // Bulk selection state
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  const [bulkUserLoading, setBulkUserLoading] = useState(false);
+
+  const toggleUserSelect = (id: number) => {
+    setSelectedUserIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllUsers = () => {
+    if (selectedUserIds.size === filteredUsers.length) {
+      setSelectedUserIds(new Set());
+    } else {
+      setSelectedUserIds(new Set(filteredUsers.map(u => u.id)));
+    }
+  };
+
+  const handleBulkUserStatus = async (newStatus: string) => {
+    if (selectedUserIds.size === 0) return;
+    const confirmMsg = isRTL
+      ? `هل تريد تغيير حالة ${selectedUserIds.size} مستخدم إلى ${newStatus}?`
+      : `Change ${selectedUserIds.size} users to ${newStatus}?`;
+    if (!confirm(confirmMsg)) return;
+    setBulkUserLoading(true);
+    try {
+      const result = await usersAPI.bulkUpdateUserStatus(Array.from(selectedUserIds), newStatus);
+      alert(result.message);
+      setSelectedUserIds(new Set());
+      loadUsers();
+    } catch (error) {
+      console.error('Bulk user status update failed:', error);
+      alert(isRTL ? 'فشل في التحديث الجماعي' : 'Bulk update failed');
+    } finally {
+      setBulkUserLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadUsers();
     loadDeletedUsers();
     loadCompanies();
+    // Get current user role
+    authAPI.getProfile().then((profile: any) => {
+      setCurrentUserRole(profile.role?.toUpperCase() || 'ADMIN');
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -458,40 +504,42 @@ export default function UsersPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.users.title}</h1>
           <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.users.subtitle}</p>
         </div>
-        <div className={`flex flex-wrap gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <button
-            onClick={() => setShowCreateNormalUserModal(true)}
-            className={`flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
-          >
-            <UserPlus className="w-5 h-5" />
-            <span className="hidden sm:inline">{isRTL ? 'إضافة مستخدم' : 'Add User'}</span>
-            <span className="sm:hidden">{isRTL ? 'مستخدم' : 'User'}</span>
-          </button>
-          <button
-            onClick={() => setShowCreateGovernmentUserModal(true)}
-            className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
-          >
-            <Landmark className="w-5 h-5" />
-            <span className="hidden sm:inline">{isRTL ? 'إضافة موظف حكومي' : 'Add Government Employee'}</span>
-            <span className="sm:hidden">{isRTL ? 'موظف' : 'Gov'}</span>
-          </button>
-          <button
-            onClick={() => setShowCreateCompanyUserModal(true)}
-            className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
-          >
-            <Building2 className="w-5 h-5" />
-            <span className="hidden sm:inline">{t.users.createCompanyUser}</span>
-            <span className="sm:hidden">{isRTL ? 'شركة' : 'Company'}</span>
-          </button>
-          <button
-            onClick={() => setShowCreateAdminUserModal(true)}
-            className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
-          >
-            <Shield className="w-5 h-5" />
-            <span className="hidden sm:inline">{isRTL ? 'إضافة مسؤول' : 'Add Admin'}</span>
-            <span className="sm:hidden">{isRTL ? 'مسؤول' : 'Admin'}</span>
-          </button>
-        </div>
+        {currentUserRole === 'ADMIN' && (
+          <div className={`flex flex-wrap gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <button
+              onClick={() => setShowCreateNormalUserModal(true)}
+              className={`flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              <UserPlus className="w-5 h-5" />
+              <span className="hidden sm:inline">{isRTL ? 'إضافة مستخدم' : 'Add User'}</span>
+              <span className="sm:hidden">{isRTL ? 'مستخدم' : 'User'}</span>
+            </button>
+            <button
+              onClick={() => setShowCreateGovernmentUserModal(true)}
+              className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              <Landmark className="w-5 h-5" />
+              <span className="hidden sm:inline">{isRTL ? 'إضافة موظف حكومي' : 'Add Government Employee'}</span>
+              <span className="sm:hidden">{isRTL ? 'موظف' : 'Gov'}</span>
+            </button>
+            <button
+              onClick={() => setShowCreateCompanyUserModal(true)}
+              className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              <Building2 className="w-5 h-5" />
+              <span className="hidden sm:inline">{t.users.createCompanyUser}</span>
+              <span className="sm:hidden">{isRTL ? 'شركة' : 'Company'}</span>
+            </button>
+            <button
+              onClick={() => setShowCreateAdminUserModal(true)}
+              className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              <Shield className="w-5 h-5" />
+              <span className="hidden sm:inline">{isRTL ? 'إضافة مسؤول' : 'Add Admin'}</span>
+              <span className="sm:hidden">{isRTL ? 'مسؤول' : 'Admin'}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabs: Active Users / Trash */}
@@ -509,19 +557,21 @@ export default function UsersPage() {
             {isRTL ? 'المستخدمين' : 'Users'} ({users.length})
           </span>
         </button>
-        <button
-          onClick={() => setActiveTab('trash')}
-          className={`pb-3 px-1 font-medium text-sm transition-colors ${
-            activeTab === 'trash'
-              ? 'text-red-600 border-b-2 border-red-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <span className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <Trash2 className="w-4 h-4" />
-            {isRTL ? 'سلة المحذوفات' : 'Trash'} ({deletedUsers.length})
-          </span>
-        </button>
+        {currentUserRole === 'ADMIN' && (
+          <button
+            onClick={() => setActiveTab('trash')}
+            className={`pb-3 px-1 font-medium text-sm transition-colors ${
+              activeTab === 'trash'
+                ? 'text-red-600 border-b-2 border-red-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Trash2 className="w-4 h-4" />
+              {isRTL ? 'سلة المحذوفات' : 'Trash'} ({deletedUsers.length})
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -581,11 +631,49 @@ export default function UsersPage() {
 
       {/* Active Users Table */}
       {activeTab === 'active' && (
+      <div>
+        {/* Bulk Actions Toolbar */}
+        {currentUserRole === 'ADMIN' && selectedUserIds.size > 0 && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-blue-800">
+              {isRTL ? `${selectedUserIds.size} مستخدم محدد` : `${selectedUserIds.size} selected`}
+            </span>
+            <button
+              onClick={() => handleBulkUserStatus('ACTIVE')}
+              disabled={bulkUserLoading}
+              className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+            >
+              {isRTL ? 'تفعيل' : 'Activate'}
+            </button>
+            <button
+              onClick={() => handleBulkUserStatus('BANNED')}
+              disabled={bulkUserLoading}
+              className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+            >
+              {isRTL ? 'حظر' : 'Ban'}
+            </button>
+            <button
+              onClick={() => setSelectedUserIds(new Set())}
+              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition"
+            >
+              {isRTL ? 'إلغاء التحديد' : 'Clear'}
+            </button>
+          </div>
+        )}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="px-3 py-4 w-12">
+                  <button onClick={toggleSelectAllUsers}>
+                    {selectedUserIds.size === filteredUsers.length && filteredUsers.length > 0 ? (
+                      <CheckSquare className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Square className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                </th>
                 <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                   {t.users.user}
                 </th>
@@ -610,10 +698,18 @@ export default function UsersPage() {
               {filteredUsers.map((user) => (
                 <tr 
                   key={user.id} 
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => handleEdit(user)}
+                  className={`hover:bg-gray-50 cursor-pointer ${selectedUserIds.has(user.id) ? 'bg-blue-50' : ''}`}
                 >
-                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                  <td className="px-3 py-4" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => toggleUserSelect(user.id)}>
+                      {selectedUserIds.has(user.id) ? (
+                        <CheckSquare className="w-4 h-4 text-primary" />
+                      ) : (
+                        <Square className="w-4 h-4 text-gray-400" />
+                      )}
+                    </button>
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`} onClick={() => handleEdit(user)}>
                     <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold flex-shrink-0">
                         {user.full_name[0]?.toUpperCase()}
@@ -658,49 +754,55 @@ export default function UsersPage() {
                     </span>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedUser(user);
-                        setShowAwardModal(true);
-                      }}
-                      className={`text-primary hover:text-blue-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
-                      title={t.users.award}
-                    >
-                      <Award className="w-4 h-4 inline" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedUser(user);
-                        setResetPasswordForm({ newPassword: '', confirmPassword: '' });
-                        setResetPasswordError('');
-                        setShowResetPasswordModal(true);
-                      }}
-                      className={`text-orange-600 hover:text-orange-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
-                      title={isRTL ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
-                    >
-                      <KeyRound className="w-4 h-4 inline" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(user);
-                      }}
-                      className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
-                    >
-                      {t.common.edit}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedUser(user);
-                        setShowDeleteModal(true);
-                      }}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      {t.common.delete}
-                    </button>
+                    {currentUserRole !== 'VIEWER' && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedUser(user);
+                            setShowAwardModal(true);
+                          }}
+                          className={`text-primary hover:text-blue-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
+                          title={t.users.award}
+                        >
+                          <Award className="w-4 h-4 inline" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedUser(user);
+                            setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+                            setResetPasswordError('');
+                            setShowResetPasswordModal(true);
+                          }}
+                          className={`text-orange-600 hover:text-orange-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
+                          title={isRTL ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+                        >
+                          <KeyRound className="w-4 h-4 inline" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(user);
+                          }}
+                          className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
+                        >
+                          {t.common.edit}
+                        </button>
+                      </>
+                    )}
+                    {currentUserRole === 'ADMIN' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUser(user);
+                          setShowDeleteModal(true);
+                        }}
+                        className="text-red-600 hover:text-red-800 font-medium"
+                      >
+                        {t.common.delete}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -713,6 +815,7 @@ export default function UsersPage() {
             <p className="text-gray-500">{t.users.noUsersFound}</p>
           </div>
         )}
+      </div>
       </div>
       )}
 

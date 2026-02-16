@@ -176,3 +176,19 @@ class CompanyMemberCreate(BaseModel):
     phone: Optional[str] = None
     language: str = "ar"
     max_users: Optional[int] = 5  # Pass current limit for validation
+
+
+class AuditLogEntry(BaseModel):
+    """Schema for audit log entry response"""
+    id: int
+    action: str
+    user_id: int
+    user_email: Optional[str] = None
+    target_type: Optional[str] = None
+    target_id: Optional[int] = None
+    details: Optional[str] = None
+    ip_address: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

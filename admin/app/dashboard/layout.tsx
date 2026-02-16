@@ -14,6 +14,7 @@ import {
     Map,
     Menu,
     QrCode,
+    Shield,
     Users,
     UsersRound,
     X
@@ -64,6 +65,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: isRTL ? 'الشركات' : 'Companies', href: '/dashboard/companies', icon: Building2 },
     { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
     { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+    { name: isRTL ? 'سجل التدقيق' : 'Audit Log', href: '/dashboard/audit-log', icon: Shield },
   ];
 
   // Limited navigation for COMPANY role
@@ -82,17 +84,42 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
   ];
 
+  // Navigation for MODERATOR role - Dashboard, Users (no delete), Reports
+  const moderatorNavigation = [
+    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+    { name: t.nav.users, href: '/dashboard/users', icon: Users },
+    { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+    { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
+    { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+  ];
+
+  // Navigation for VIEWER role - Dashboard, Users (read-only), Reports (read-only), Analytics
+  const viewerNavigation = [
+    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+    { name: t.nav.users, href: '/dashboard/users', icon: Users },
+    { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+    { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+  ];
+
   // Allowed paths for COMPANY users
   const companyAllowedPaths = ['/dashboard', '/dashboard/coupons', '/dashboard/scan', '/dashboard/team', '/dashboard/analytics'];
 
   // Allowed paths for GOVERNMENT users
   const governmentAllowedPaths = ['/dashboard', '/dashboard/reports', '/dashboard/map'];
 
+  // Allowed paths for MODERATOR users
+  const moderatorAllowedPaths = ['/dashboard', '/dashboard/users', '/dashboard/reports', '/dashboard/map', '/dashboard/analytics'];
+
+  // Allowed paths for VIEWER users
+  const viewerAllowedPaths = ['/dashboard', '/dashboard/users', '/dashboard/reports', '/dashboard/analytics'];
+
   // Select navigation based on user role
   const getNavigation = () => {
     const role = user?.role?.toUpperCase();
     if (role === 'COMPANY') return companyNavigation;
     if (role === 'GOVERNMENT') return governmentNavigation;
+    if (role === 'MODERATOR') return moderatorNavigation;
+    if (role === 'VIEWER') return viewerNavigation;
     return adminNavigation;
   };
   const navigation = getNavigation();
@@ -104,6 +131,10 @@ export default function DashboardLayout({ children }: LayoutProps) {
       router.push('/dashboard/coupons');
     } else if (role === 'GOVERNMENT' && !governmentAllowedPaths.includes(pathname)) {
       router.push('/dashboard/reports');
+    } else if (role === 'MODERATOR' && !moderatorAllowedPaths.includes(pathname)) {
+      router.push('/dashboard');
+    } else if (role === 'VIEWER' && !viewerAllowedPaths.includes(pathname)) {
+      router.push('/dashboard');
     }
   }, [user, pathname, router]);
 
@@ -174,10 +205,14 @@ export default function DashboardLayout({ children }: LayoutProps) {
                 <p className="text-blue-200 text-sm truncate">{user.email}</p>
                 <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${
                   user.role === 'ADMIN' ? 'bg-purple-500 text-white' : 
+                  user.role === 'MODERATOR' ? 'bg-amber-500 text-white' :
+                  user.role === 'VIEWER' ? 'bg-gray-400 text-white' :
                   user.role === 'GOVERNMENT' ? 'bg-blue-600 text-white' :
                   user.role === 'COMPANY' ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'
                 }`}>
                   {user.role === 'ADMIN' ? t.users.roles.admin : 
+                   user.role === 'MODERATOR' ? (isRTL ? 'مشرف' : 'Moderator') :
+                   user.role === 'VIEWER' ? (isRTL ? 'مشاهد' : 'Viewer') :
                    user.role === 'GOVERNMENT' ? t.users.roles.government :
                    user.role === 'COMPANY' ? t.users.roles.company : t.users.roles.user}
                 </span>

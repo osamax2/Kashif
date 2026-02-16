@@ -361,3 +361,35 @@ def verify_code(db: Session, email: str, code: str):
     db.commit()
     return True, "Code verified successfully.", db_code.user_id
 
+
+# ==================== Audit Log ====================
+
+def create_audit_log(db: Session, action: str, user_id: int, user_email: str = None,
+                     target_type: str = None, target_id: int = None,
+                     details: str = None, ip_address: str = None):
+    """Create an audit log entry"""
+    log = models.AuditLog(
+        action=action,
+        user_id=user_id,
+        user_email=user_email,
+        target_type=target_type,
+        target_id=target_id,
+        details=details,
+        ip_address=ip_address
+    )
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+
+def get_audit_logs(db: Session, skip: int = 0, limit: int = 100,
+                   action: str = None, user_id: int = None):
+    """Get audit logs with optional filters"""
+    query = db.query(models.AuditLog)
+    if action:
+        query = query.filter(models.AuditLog.action.ilike(f"%{action}%"))
+    if user_id:
+        query = query.filter(models.AuditLog.user_id == user_id)
+    return query.order_by(models.AuditLog.created_at.desc()).offset(skip).limit(limit).all()
+
