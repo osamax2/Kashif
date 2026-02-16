@@ -61,5 +61,5 @@ Backend/*/uploads/
 !.env.example
 
 # Firebase / Google Services (contains API keys)
-google-services.json
+# google-services.json  # needed for EAS Build
 GoogleService-Info.plist
