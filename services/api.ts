@@ -412,6 +412,50 @@ export const gamificationAPI = {
   },
 };
 
+// Achievement types
+export interface Achievement {
+  id: number;
+  key: string;
+  name_en: string;
+  name_ar: string;
+  description_en?: string;
+  description_ar?: string;
+  icon: string;
+  category: string;
+  condition_type: string;
+  condition_value: number;
+  points_reward: number;
+  is_active: boolean;
+  created_at: string;
+  unlocked?: boolean;
+  unlocked_at?: string;
+}
+
+export interface AchievementCheckResult {
+  new_achievements: Achievement[];
+  total_unlocked: number;
+}
+
+export const achievementAPI = {
+  // Get all achievements with user's unlock status
+  getMyAchievements: async (): Promise<Achievement[]> => {
+    const response = await api.get<Achievement[]>('/api/gamification/achievements/my');
+    return response.data;
+  },
+
+  // Get all achievements (public)
+  getAllAchievements: async (): Promise<Achievement[]> => {
+    const response = await api.get<Achievement[]>('/api/gamification/achievements');
+    return response.data;
+  },
+
+  // Check and unlock new achievements
+  checkAchievements: async (): Promise<AchievementCheckResult> => {
+    const response = await api.post<AchievementCheckResult>('/api/gamification/achievements/check');
+    return response.data;
+  },
+};
+
 // Reporting API
 export interface Report {
   id: number;

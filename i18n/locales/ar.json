@@ -447,5 +447,30 @@
       "checking": "جارٍ فحص جودة الصورة...",
       "validationFailed": "مشكلة في جودة الصورة"
     }
+  },
+  "onboarding": {
+    "menuTitle": "إعادة عرض الدليل التعليمي",
+    "resetTitle": "تم إعادة التعيين",
+    "resetMessage": "سيظهر الدليل التعليمي عند فتح التطبيق في المرة القادمة."
+  },
+  "heatmap": {
+    "title": "خريطة حرارية",
+    "enabled": "تم تفعيل الخريطة الحرارية",
+    "disabled": "تم إلغاء تفعيل الخريطة الحرارية",
+    "description": "عرض كثافة البلاغات على الخريطة"
+  },
+  "achievements": {
+    "title": "الإنجازات",
+    "empty": "لا توجد إنجازات بعد",
+    "unlocked": "مفتوح",
+    "locked": "مقفل",
+    "newUnlock": "إنجاز جديد!",
+    "newUnlockMessage": "لقد فتحت {{count}} إنجاز(ات) جديدة!",
+    "pointsReward": "+{{points}} نقطة",
+    "categories": {
+      "reporting": "الإبلاغ",
+      "confirming": "التأكيد",
+      "general": "عام"
+    }
   }
 }

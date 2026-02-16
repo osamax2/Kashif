@@ -31,7 +31,7 @@ import {
     View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import MapView, { Marker, Polyline, Region } from "react-native-maps";
+import MapView, { Heatmap, Marker, Polyline, Region } from "react-native-maps";
 
 
 
@@ -165,6 +165,9 @@ export default function HomeScreen() {
     const [routeDestination, setRouteDestination] = useState<string>('');
     // ────────────────────────────────────────────────────────────────────
 
+    // ─── HEATMAP STATE ─────────────────────────────────────────────────
+    const [heatmapEnabled, setHeatmapEnabled] = useState(false);
+    // ────────────────────────────────────────────────────────────────────
 
 const [audioVisible, setAudioVisible] = useState(false);
 const audioSheetY = useRef(new Animated.Value(0)).current;
@@ -676,6 +679,20 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         }, 500);
     }, []);
     // ─── END MARKER CLUSTERING ─────────────────────────────────────────
+
+    // ─── HEATMAP DATA POINTS ───────────────────────────────────────────
+    const heatmapPoints = useMemo(() => {
+        if (!heatmapEnabled || !reports.length) return [];
+        return reports
+            .map((r) => {
+                const lat = parseFloat(r.latitude.toString());
+                const lng = parseFloat(r.longitude.toString());
+                if (isNaN(lat) || isNaN(lng)) return null;
+                return { latitude: lat, longitude: lng, weight: 1 };
+            })
+            .filter(Boolean) as { latitude: number; longitude: number; weight: number }[];
+    }, [heatmapEnabled, reports]);
+    // ─── END HEATMAP DATA ──────────────────────────────────────────────
     
     // Helper functions
     const getCategoryByName = (name: string): Category | undefined => {
@@ -1413,6 +1430,20 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             </View>
                         </Marker>
                     ))}
+
+                    {/* Heatmap Overlay */}
+                    {heatmapEnabled && heatmapPoints.length > 0 && (
+                        <Heatmap
+                            points={heatmapPoints}
+                            radius={40}
+                            opacity={0.7}
+                            gradient={{
+                                colors: ["#00FF00", "#FFFF00", "#FF8C00", "#FF0000"],
+                                startPoints: [0.1, 0.3, 0.6, 1.0],
+                                colorMapSize: 256,
+                            }}
+                        />
+                    )}
                 </MapView>
 
                 {/* FAB */}
@@ -1456,6 +1487,18 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 }}
             >
                 <Ionicons name={routeMode ? "close" : "navigate"} size={22} color={routeMode ? "#fff" : "#0D2B66"} />
+            </TouchableOpacity>
+
+            {/* HEATMAP TOGGLE BUTTON */}
+            <TouchableOpacity
+                style={[
+                    styles.heatmapButton,
+                    language === 'ar' ? { left: 22 } : { right: 22, left: undefined },
+                    heatmapEnabled && styles.heatmapButtonActive,
+                ]}
+                onPress={() => setHeatmapEnabled(!heatmapEnabled)}
+            >
+                <Ionicons name={heatmapEnabled ? "flame" : "flame-outline"} size={22} color={heatmapEnabled ? "#fff" : "#0D2B66"} />
             </TouchableOpacity>
 
             {/* ROUTE DESTINATION INPUT */}
@@ -2195,6 +2238,24 @@ soundIcon: {
     },
     routeButtonActive: {
         backgroundColor: "#EF4444",
+    },
+    heatmapButton: {
+        position: "absolute",
+        bottom: 575,
+        width: 48,
+        height: 48,
+        backgroundColor: "#fff",
+        borderRadius: 24,
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 6,
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+    },
+    heatmapButtonActive: {
+        backgroundColor: "#FF6B35",
     },
     routeInputContainer: {
         position: "absolute",

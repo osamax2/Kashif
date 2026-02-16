@@ -446,5 +446,30 @@
       "checking": "Checking image quality...",
       "validationFailed": "Image Quality Issue"
     }
+  },
+  "onboarding": {
+    "menuTitle": "Show Tutorial",
+    "resetTitle": "Tutorial Reset",
+    "resetMessage": "The tutorial will be shown again next time you open the map."
+  },
+  "heatmap": {
+    "title": "Heatmap",
+    "enabled": "Heatmap enabled",
+    "disabled": "Heatmap disabled",
+    "description": "Shows danger zones based on report density"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "empty": "No achievements available yet",
+    "unlocked": "Unlocked!",
+    "locked": "Locked",
+    "newUnlock": "New Achievement!",
+    "newUnlockMessage": "You unlocked: {{name}}",
+    "pointsReward": "+{{points}} bonus points",
+    "categories": {
+      "reporting": "Reporting",
+      "confirming": "Confirming",
+      "general": "General"
+    }
   }
 }

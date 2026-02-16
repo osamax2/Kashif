@@ -1,5 +1,6 @@
 import ChangeModal from "@/components/ChangeModal";
 import IOSActionSheet from "@/components/IOSActionSheet";
+import { resetOnboarding } from "@/components/OnboardingTutorial";
 import SuccessModal from "@/components/SuccessModal";
 import TermsModal from "@/components/TermsModal";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -465,6 +466,29 @@ export default function SettingsScreen() {
           style={effectiveRTL ? { marginLeft: 8 } : { marginRight: 8 }}
         />
         <Text style={styles.feedbackButtonText}>{t("terms.title")}</Text>
+      </TouchableOpacity>
+
+      {/* Replay Onboarding Tutorial */}
+      <TouchableOpacity
+        style={[
+          styles.feedbackButton,
+          { flexDirection: effectiveRTL ? "row-reverse" : "row" },
+        ]}
+        onPress={async () => {
+          await resetOnboarding();
+          Alert.alert(
+            t("onboarding.resetTitle"),
+            t("onboarding.resetMessage")
+          );
+        }}
+      >
+        <FontAwesome
+          name="graduation-cap"
+          size={18}
+          color="#F4B400"
+          style={effectiveRTL ? { marginLeft: 8 } : { marginRight: 8 }}
+        />
+        <Text style={styles.feedbackButtonText}>{t("onboarding.menuTitle")}</Text>
       </TouchableOpacity>
 
       {/* Logout Button */}
