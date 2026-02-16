@@ -15,8 +15,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
+from json_logger import setup_logging
+from logging_middleware import RequestLoggingMiddleware
 from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 # Create database tables
@@ -42,10 +45,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Structured JSON logging with request-ID tracing
+app.add_middleware(RequestLoggingMiddleware)
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging("auth")
 
 # Service URLs for DSGVO cascade operations
 REPORTING_SERVICE_URL = os.getenv("REPORTING_SERVICE_URL", "http://reporting-service:8000")
@@ -84,6 +89,43 @@ cleanup_thread.start()
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "auth"}
+
+
+@app.get("/health/detailed")
+def health_check_detailed():
+    """Detailed health check - verifies DB and RabbitMQ connectivity."""
+    import time
+    checks = {}
+    overall = "healthy"
+
+    # Check database
+    start = time.time()
+    try:
+        db = next(get_db())
+        db.execute(text("SELECT 1"))
+        checks["database"] = {"status": "healthy", "response_ms": round((time.time() - start) * 1000, 2)}
+    except Exception as e:
+        checks["database"] = {"status": "unhealthy", "error": str(e)}
+        overall = "unhealthy"
+
+    # Check RabbitMQ
+    start = time.time()
+    try:
+        import pika
+        rabbitmq_url = os.getenv("RABBITMQ_URL", "amqp://kashif:kashif123@rabbitmq:5672/")
+        connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+        connection.close()
+        checks["rabbitmq"] = {"status": "healthy", "response_ms": round((time.time() - start) * 1000, 2)}
+    except Exception as e:
+        checks["rabbitmq"] = {"status": "unhealthy", "error": str(e)}
+        overall = "degraded"
+
+    status_code = 200 if overall == "healthy" else 503
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=status_code,
+        content={"status": overall, "service": "auth", "checks": checks}
+    )
 
 
 # ============================================================

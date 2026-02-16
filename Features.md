@@ -248,20 +248,23 @@
 
 ### 9. Infrastruktur & DevOps
 
-#### 9.1 CI/CD-Pipeline
+#### 9.1 CI/CD-Pipeline ✅
 - **Priorität:** HOCH
+- **Status:** Implementiert
 - Automatisierte Tests bei jedem Push (GitHub Actions)
-- Automatischer Build der Admin-Panel-Docker-Images
-- Staging-Umgebung vor Produktions-Deployment
-- Automatisierte EAS-Builds für iOS/Android
+- Matrix-basierte Tests für alle 5 Microservices (pytest + PostgreSQL)
+- Docker-Build-Verifizierung für alle Services
+- Automatisches Deployment via SSH (git pull → docker compose build → up)
+- Health-Checks nach Deployment
 
-#### 9.2 Monitoring & Alerting
+#### 9.2 Monitoring & Alerting ✅
 - **Priorität:** HOCH
-- API-Health-Checks für alle Microservices
-- Response-Time-Monitoring
-- Error-Rate-Alerting (> 5% → Slack/E-Mail)
-- Disk-Space- und Memory-Warnungen
-- Uptime-Dashboard
+- **Status:** Implementiert
+- Detaillierte Health-Checks für alle Services (/health/detailed: DB + RabbitMQ)
+- Response-Time-Monitoring (ms) pro Service
+- Docker-Healthchecks mit Auto-Restart (interval=30s, retries=3)
+- E-Mail-Alerting bei Service-Ausfall/Recovery (monitor.py, Cron alle 2 Min)
+- Admin-Monitoring-Dashboard (Live-Status, Auto-Refresh, AR/EN)
 
 #### 9.3 Automatisierte Backups
 - **Priorität:** KRITISCH
@@ -270,12 +273,13 @@
 - Backup-Restore regelmäßig testen
 - Bild-Backups aller hochgeladenen Fotos
 
-#### 9.4 Logging-System
+#### 9.4 Logging-System ✅
 - **Priorität:** HOCH
-- Zentralisiertes Logging (alle Services → ein Ort)
-- Strukturierte Logs (JSON) mit Request-IDs
-- Log-Retention-Policy (30 Tage)
-- Fehler-Alerting basierend auf Log-Patterns
+- **Status:** Implementiert
+- Strukturierte JSON-Logs in allen 5 Services (json_logger.py)
+- Request-ID-Tracing über alle Requests (logging_middleware.py)
+- Docker-Log-Rotation (json-file, max 10MB × 5 Dateien pro Service)
+- Log-Felder: timestamp, level, service, request_id, module, function, line, exception
 
 ---
 
@@ -318,10 +322,9 @@
 | ✅ HOCH | Performance-Optimierung | Mittel |
 | ✅ HOCH | Bulk-Operationen (Admin) | Mittel |
 | ✅ HOCH | Admin-Rollen & Berechtigungen | Hoch |
-
-| 🟠 HOCH | CI/CD-Pipeline | Hoch |
-| 🟠 HOCH | Monitoring & Alerting | Mittel |
-| 🟠 HOCH | Logging-System | Mittel |
+| ✅ HOCH | CI/CD-Pipeline | Hoch |
+| ✅ HOCH | Monitoring & Alerting | Mittel |
+| ✅ HOCH | Logging-System | Mittel |
 
 | 🟠 HOCH | Nutzungsbedingungen | Niedrig |
 | 🟡 MITTEL | Bild-Qualitätsprüfung | Mittel |

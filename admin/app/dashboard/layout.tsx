@@ -4,6 +4,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { authAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import {
+    Activity,
     BarChart3,
     Bell,
     Building2,
@@ -66,6 +67,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
     { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
     { name: isRTL ? 'سجل التدقيق' : 'Audit Log', href: '/dashboard/audit-log', icon: Shield },
+    { name: isRTL ? 'مراقبة النظام' : 'Monitoring', href: '/dashboard/monitoring', icon: Activity },
   ];
 
   // Limited navigation for COMPANY role

@@ -9,6 +9,11 @@ services:
       RABBITMQ_DEFAULT_PASS: kashif123
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - kashif-network
 
@@ -26,6 +31,17 @@ services:
       - gamification-service
       - coupons-service
       - notification-service
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - kashif-network
 
@@ -51,6 +67,17 @@ services:
     depends_on:
       - auth-db
       - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - kashif-network
 
@@ -82,6 +109,17 @@ services:
     depends_on:
       - reporting-db
       - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - kashif-network
 
@@ -111,6 +149,17 @@ services:
     depends_on:
       - gamification-db
       - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - kashif-network
 
@@ -140,6 +189,17 @@ services:
     depends_on:
       - coupons-db
       - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - kashif-network
 
@@ -177,6 +237,17 @@ services:
     depends_on:
       - notification-db
       - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - kashif-network
 
