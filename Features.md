@@ -195,18 +195,26 @@
 - Profil: 3-Spalten Badge-Grid (gesperrt/freigeschaltet, Emoji-Icons)
 - Bilinguale Namen/Beschreibungen (AR/EN)
 
-#### 6.2 Wöchentliche Challenges
+#### 6.2 Wöchentliche Challenges ✅
 - **Priorität:** MITTEL
-- "Melde diese Woche 5 Gefahren" → Bonus-Punkte
-- "Bestätige 3 Meldungen anderer Nutzer"
-- Rotation von Challenges jede Woche
-- Hält Nutzer langfristig aktiv
+- **Status:** Implementiert (9fb98d1)
+- Backend: WeeklyChallenge + UserChallengeProgress Models
+- Endpoints: GET /challenges/active, POST /challenges/check
+- 4 aktive Challenges pro Woche (report_count, confirm_count, points_earned)
+- Fortschrittsbalken + Bonus-Punkte bei Abschluss
+- Automatischer Check bei Profil-Besuch
+- Profil: Challenge-Karten mit Fortschritt, Prozent, Punkte-Badge
+- Seed-SQL für aktuelle + nächste Woche
 
-#### 6.3 Freunde & Soziale Features
+#### 6.3 Freunde & Soziale Features ✅
 - **Priorität:** NIEDRIG
-- Freundesliste
-- Leaderboard unter Freunden
-- Meldungen an Freunde teilen
+- **Status:** Implementiert (9fb98d1)
+- Backend: Friendship Model (pending/accepted/rejected)
+- Endpoints: POST /friends/request, POST /friends/{id}/accept|reject, GET /friends, GET /friends/leaderboard
+- Freundschaftsanfragen per User-ID senden
+- Freundes-Leaderboard (eigene + Freunde)
+- Profil: Freunde-Sektion mit Input + Liste + Leaderboard-Button
+- DSGVO-konform: alle Daten löschbar
 
 ---
 
@@ -239,12 +247,14 @@
 - Mehrere Nutzer gleichzeitig aktivieren/deaktivieren
 - CSV/Excel-Export von Meldungen und Statistiken
 
-#### 8.2 Erweitertes Dashboard
+#### 8.2 Erweitertes Dashboard ✅
 - **Priorität:** MITTEL
-- Tagesvergleich / Wochenvergleich der Meldungen
-- Durchschnittliche Lösungszeit pro Kategorie
-- Geographische Verteilung (Karte mit Heatmap)
-- Top-Melder des Monats
+- **Status:** Implementiert (9fb98d1)
+- Tagesvergleich (Heute vs. Gestern mit Trend-Pfeilen)
+- Wochenvergleich (diese Woche vs. letzte Woche mit %-Änderung)
+- Durchschnittliche Lösungszeit pro Kategorie (farbcodierte Balken)
+- Top-Melder des Monats (Highlight-Karte mit Gold-Gradient)
+- Geographische Verteilung (Karte mit Leaflet bereits vorhanden)
 
 #### 8.3 Rollen & Berechtigungen
 - **Priorität:** HOCH
@@ -343,6 +353,6 @@
 | ✅ MITTEL | Heatmap-Ansicht | Mittel |
 | ✅ MITTEL | Achievements / Badges | Mittel |
 
-| 🟡 MITTEL | Wöchentliche Challenges | Hoch |
-| 🟡 MITTEL | Erweitertes Dashboard | Mittel |
-| 🟢 NIEDRIG | Freunde & Soziale Features | Hoch |
+| ✅ MITTEL | Wöchentliche Challenges | Hoch |
+| ✅ MITTEL | Erweitertes Dashboard | Mittel |
+| ✅ NIEDRIG | Freunde & Soziale Features | Hoch |
