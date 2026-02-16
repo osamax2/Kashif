@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { DataSyncProvider } from '@/contexts/DataSyncContext';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { OfflineProvider } from '@/contexts/OfflineContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { checkAndPromptForUpdate, clearUpdateCache } from '@/services/updateChecker';
 
@@ -104,7 +105,9 @@ export default function RootLayout() {
                 <AuthProvider>
                     <DataSyncProvider>
                         <NotificationProvider>
-                            <RootLayoutNav />
+                            <OfflineProvider>
+                                <RootLayoutNav />
+                            </OfflineProvider>
                         </NotificationProvider>
                     </DataSyncProvider>
                 </AuthProvider>

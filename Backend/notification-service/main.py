@@ -145,6 +145,33 @@ async def get_unread_count(
     return {"unread_count": count}
 
 
+# ============================================================
+# Notification Preferences Endpoints
+# ============================================================
+
+@app.get("/preferences", response_model=schemas.NotificationPreferencesResponse)
+async def get_preferences(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Get user's notification preferences"""
+    return crud.get_notification_preferences(db=db, user_id=user_id)
+
+
+@app.put("/preferences", response_model=schemas.NotificationPreferencesResponse)
+async def update_preferences(
+    prefs: schemas.NotificationPreferences,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Update user's notification preferences"""
+    return crud.update_notification_preferences(
+        db=db,
+        user_id=user_id,
+        updates=prefs.model_dump()
+    )
+
+
 @app.post("/send", response_model=schemas.Notification)
 async def send_notification(
     notification: schemas.NotificationCreate,
@@ -289,8 +316,8 @@ def delete_user_data(
     ).delete()
 
     # Delete notification preferences
-    prefs_deleted = db.query(models.UserNotificationStatus).filter(
-        models.UserNotificationStatus.user_id == user_id
+    prefs_deleted = db.query(models.UserNotificationPreferences).filter(
+        models.UserNotificationPreferences.user_id == user_id
     ).delete()
 
     db.commit()
@@ -339,13 +366,19 @@ def export_user_data(
     } for n in notifications]
 
     # Preferences
-    prefs = db.query(models.UserNotificationStatus).filter(
-        models.UserNotificationStatus.user_id == user_id
-    ).all()
-    prefs_data = [{
-        "notification_type": p.notification_type,
-        "enabled": p.status,
-    } for p in prefs]
+    prefs = db.query(models.UserNotificationPreferences).filter(
+        models.UserNotificationPreferences.user_id == user_id
+    ).first()
+    prefs_data = {
+        "report_notifications": prefs.report_notifications if prefs else True,
+        "status_updates": prefs.status_updates if prefs else True,
+        "points_notifications": prefs.points_notifications if prefs else True,
+        "coupon_notifications": prefs.coupon_notifications if prefs else True,
+        "general_notifications": prefs.general_notifications if prefs else True,
+        "quiet_hours_enabled": prefs.quiet_hours_enabled if prefs else False,
+        "quiet_hours_start": prefs.quiet_hours_start if prefs else 22,
+        "quiet_hours_end": prefs.quiet_hours_end if prefs else 7,
+    }
 
     return {
         "service": "notifications",

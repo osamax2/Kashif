@@ -31,10 +31,22 @@ def send_push_notification(
     user_id: int,
     title: str,
     body: str,
-    data: dict = None
+    data: dict = None,
+    notification_type: str = None
 ):
-    """Send push notification to user's devices"""
+    """Send push notification to user's devices (respects preferences)"""
     try:
+        # Check notification preferences
+        if notification_type:
+            if not crud.is_notification_enabled(db, user_id, notification_type):
+                logger.info(f"Notification type '{notification_type}' disabled for user {user_id}, skipping push")
+                return {"success_count": 0, "failure_count": 0, "skipped": "disabled"}
+        
+        # Check quiet hours
+        if crud.is_in_quiet_hours(db, user_id):
+            logger.info(f"User {user_id} is in quiet hours, skipping push")
+            return {"success_count": 0, "failure_count": 0, "skipped": "quiet_hours"}
+
         # Get user's device tokens
         device_tokens = crud.get_user_device_tokens(db, user_id)
         

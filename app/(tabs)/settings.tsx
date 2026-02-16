@@ -3,11 +3,13 @@ import IOSActionSheet from "@/components/IOSActionSheet";
 import SuccessModal from "@/components/SuccessModal";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import NotificationService, { DEFAULT_NOTIFICATION_PREFERENCES } from "@/services/notifications";
 import {
+    ActivityIndicator,
     Alert,
     ScrollView,
     StyleSheet,
@@ -30,8 +32,15 @@ export default function SettingsScreen() {
 
   const [hideName, setHideName] = useState(false);
   const [notifReports, setNotifReports] = useState(true);
-  const [notifPoints, setNotifPoints] = useState(false);
+  const [notifStatusUpdates, setNotifStatusUpdates] = useState(true);
+  const [notifPoints, setNotifPoints] = useState(true);
+  const [notifCoupons, setNotifCoupons] = useState(true);
   const [notifGeneral, setNotifGeneral] = useState(true);
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
+  const [quietHoursStart, setQuietHoursStart] = useState(22);
+  const [quietHoursEnd, setQuietHoursEnd] = useState(7);
+  const [prefsLoading, setPrefsLoading] = useState(true);
+  const [prefsSaving, setPrefsSaving] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [nameModal, setNameModal] = useState(false);
@@ -54,6 +63,28 @@ export default function SettingsScreen() {
 
   const router = useRouter();
 
+  // Load notification preferences from backend
+  useEffect(() => {
+    const loadPrefs = async () => {
+      try {
+        const prefs = await NotificationService.getPreferences();
+        setNotifReports(prefs.report_notifications);
+        setNotifStatusUpdates(prefs.status_updates);
+        setNotifPoints(prefs.points_notifications);
+        setNotifCoupons(prefs.coupon_notifications);
+        setNotifGeneral(prefs.general_notifications);
+        setQuietHoursEnabled(prefs.quiet_hours_enabled);
+        setQuietHoursStart(prefs.quiet_hours_start);
+        setQuietHoursEnd(prefs.quiet_hours_end);
+      } catch (e) {
+        console.error("Failed to load notification prefs:", e);
+      } finally {
+        setPrefsLoading(false);
+      }
+    };
+    loadPrefs();
+  }, []);
+
   const showToast = (message: string) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 2500);
@@ -72,18 +103,26 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const saveChanges = () => {
-    const payload = {
-      hideName,
-      notifReports,
-      notifPoints,
-      notifGeneral,
-      email,
-      phone,
-    };
-
-    console.log("Gespeicherte Daten:", payload);
-    setSuccessVisible(true);
+  const saveChanges = async () => {
+    setPrefsSaving(true);
+    try {
+      await NotificationService.updatePreferences({
+        report_notifications: notifReports,
+        status_updates: notifStatusUpdates,
+        points_notifications: notifPoints,
+        coupon_notifications: notifCoupons,
+        general_notifications: notifGeneral,
+        quiet_hours_enabled: quietHoursEnabled,
+        quiet_hours_start: quietHoursStart,
+        quiet_hours_end: quietHoursEnd,
+      });
+      setSuccessVisible(true);
+    } catch (e) {
+      console.error("Failed to save notification prefs:", e);
+      showToast(effectiveRTL ? "Save failed" : "فشل الحفظ");
+    } finally {
+      setPrefsSaving(false);
+    }
   };
 
   return (
@@ -285,29 +324,110 @@ export default function SettingsScreen() {
         {t("settings.notifications")}
       </Text>
 
-      <View style={styles.card}>
-        <SwitchRow
-          isRTL={effectiveRTL}
-          label={t("settings.notifReports")}
-          value={notifReports}
-          onChange={setNotifReports}
-        />
-        <SwitchRow
-          isRTL={effectiveRTL}
-          label={t("settings.notifPoints")}
-          value={notifPoints}
-          onChange={setNotifPoints}
-        />
-        <SwitchRow
-          isRTL={effectiveRTL}
-          label={t("settings.notifGeneral")}
-          value={notifGeneral}
-          onChange={setNotifGeneral}
-        />
-      </View>
+      {prefsLoading ? (
+        <View style={[styles.card, { alignItems: "center", padding: 20 }]}>
+          <ActivityIndicator size="small" color={YELLOW} />
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <SwitchRow
+            isRTL={effectiveRTL}
+            label={t("settings.notifReports")}
+            value={notifReports}
+            onChange={setNotifReports}
+          />
+          <SwitchRow
+            isRTL={effectiveRTL}
+            label={t("settings.notifStatusUpdates")}
+            value={notifStatusUpdates}
+            onChange={setNotifStatusUpdates}
+          />
+          <SwitchRow
+            isRTL={effectiveRTL}
+            label={t("settings.notifPoints")}
+            value={notifPoints}
+            onChange={setNotifPoints}
+          />
+          <SwitchRow
+            isRTL={effectiveRTL}
+            label={t("settings.notifCoupons")}
+            value={notifCoupons}
+            onChange={setNotifCoupons}
+          />
+          <SwitchRow
+            isRTL={effectiveRTL}
+            label={t("settings.notifGeneral")}
+            value={notifGeneral}
+            onChange={setNotifGeneral}
+          />
 
-      <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
-        <Text style={styles.saveButtonText}>{t("settings.saveChanges")}</Text>
+          {/* Quiet Hours */}
+          <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: "#333", paddingTop: 12 }}>
+            <SwitchRow
+              isRTL={effectiveRTL}
+              label={t("settings.quietHours")}
+              value={quietHoursEnabled}
+              onChange={setQuietHoursEnabled}
+            />
+            {quietHoursEnabled && (
+              <View style={{ paddingHorizontal: 8, marginTop: 8 }}>
+                <Text style={{ color: "#aaa", fontSize: 12, marginBottom: 8, textAlign: effectiveRTL ? "right" : "left" }}>
+                  {t("settings.quietHoursDesc")}
+                </Text>
+                <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", justifyContent: "space-between" }}>
+                  <View style={{ alignItems: "center" }}>
+                    <Text style={{ color: "#ccc", fontSize: 12, marginBottom: 4 }}>{t("settings.quietHoursStart")}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <TouchableOpacity
+                        onPress={() => setQuietHoursStart((prev) => (prev === 0 ? 23 : prev - 1))}
+                        style={{ padding: 8 }}
+                      >
+                        <Text style={{ color: YELLOW, fontSize: 20, fontWeight: "bold" }}>−</Text>
+                      </TouchableOpacity>
+                      <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", minWidth: 50, textAlign: "center" }}>
+                        {String(quietHoursStart).padStart(2, "0")}:00
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => setQuietHoursStart((prev) => (prev === 23 ? 0 : prev + 1))}
+                        style={{ padding: 8 }}
+                      >
+                        <Text style={{ color: YELLOW, fontSize: 20, fontWeight: "bold" }}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={{ alignItems: "center" }}>
+                    <Text style={{ color: "#ccc", fontSize: 12, marginBottom: 4 }}>{t("settings.quietHoursEnd")}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <TouchableOpacity
+                        onPress={() => setQuietHoursEnd((prev) => (prev === 0 ? 23 : prev - 1))}
+                        style={{ padding: 8 }}
+                      >
+                        <Text style={{ color: YELLOW, fontSize: 20, fontWeight: "bold" }}>−</Text>
+                      </TouchableOpacity>
+                      <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", minWidth: 50, textAlign: "center" }}>
+                        {String(quietHoursEnd).padStart(2, "0")}:00
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => setQuietHoursEnd((prev) => (prev === 23 ? 0 : prev + 1))}
+                        style={{ padding: 8 }}
+                      >
+                        <Text style={{ color: YELLOW, fontSize: 20, fontWeight: "bold" }}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
+      <TouchableOpacity style={styles.saveButton} onPress={saveChanges} disabled={prefsSaving}>
+        {prefsSaving ? (
+          <ActivityIndicator size="small" color="#000" />
+        ) : (
+          <Text style={styles.saveButtonText}>{t("settings.saveChanges")}</Text>
+        )}
       </TouchableOpacity>
 
       {/* Logout Button */}

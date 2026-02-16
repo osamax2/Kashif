@@ -238,6 +238,57 @@ class NotificationService {
   getPushToken(): string | null {
     return this.expoPushToken;
   }
+
+  /**
+   * Get notification preferences from backend
+   */
+  async getPreferences(): Promise<NotificationPreferences> {
+    try {
+      const response = await api.get<NotificationPreferences>('/api/notifications/preferences');
+      return response.data;
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return DEFAULT_NOTIFICATION_PREFERENCES;
+      }
+      console.error('Failed to get notification preferences:', error);
+      return DEFAULT_NOTIFICATION_PREFERENCES;
+    }
+  }
+
+  /**
+   * Update notification preferences on backend
+   */
+  async updatePreferences(prefs: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
+    try {
+      const response = await api.put<NotificationPreferences>('/api/notifications/preferences', prefs);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update notification preferences:', error);
+      throw error;
+    }
+  }
 }
+
+export interface NotificationPreferences {
+  report_notifications: boolean;
+  status_updates: boolean;
+  points_notifications: boolean;
+  coupon_notifications: boolean;
+  general_notifications: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: number;
+  quiet_hours_end: number;
+}
+
+export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  report_notifications: true,
+  status_updates: true,
+  points_notifications: true,
+  coupon_notifications: true,
+  general_notifications: true,
+  quiet_hours_enabled: false,
+  quiet_hours_start: 22,
+  quiet_hours_end: 7,
+};
 
 export default new NotificationService();
