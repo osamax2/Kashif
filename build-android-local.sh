@@ -126,6 +126,37 @@ npx expo prebuild --platform android --clean
 echo -e "${GREEN}✓ Generated${NC}"
 echo ""
 
+# Step 5b: Patch signing config for release keystore
+KEYSTORE_FILE="$WORK_DIR/kashif-release.keystore"
+if [ -f "$KEYSTORE_FILE" ]; then
+    echo -e "${BLUE}Step 5b: Configuring release signing...${NC}"
+    # Copy keystore to android/app
+    cp "$KEYSTORE_FILE" android/app/kashif-release.keystore
+
+    # Patch build.gradle to add release signing config
+    sed -i '' '/signingConfigs {/,/^    }/{
+        /debug {/,/}/!b
+        /}/a\
+        release {\
+            storeFile file("kashif-release.keystore")\
+            storePassword "Kashif2026Release"\
+            keyAlias "kashif-key"\
+            keyPassword "Kashif2026Release"\
+        }
+    }' android/app/build.gradle
+
+    # Update release buildType to use release signingConfig
+    sed -i '' 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' android/app/build.gradle
+
+    # Verify
+    if grep -q "kashif-release.keystore" android/app/build.gradle; then
+        echo -e "${GREEN}✓ Release signing configured${NC}"
+    else
+        echo -e "${YELLOW}⚠ Signing patch failed, using debug keystore${NC}"
+    fi
+    echo ""
+fi
+
 # Step 6: Choose build type
 echo -e "${BLUE}Step 6: Choosing APK type...${NC}"
 
@@ -161,7 +192,7 @@ fi
 cd android
 chmod +x gradlew
 echo "Building with Java 21..."
-./gradlew clean --no-daemon
+./gradlew clean --no-daemon 2>/dev/null || echo -e "${YELLOW}⚠ Gradle clean had warnings (continuing)${NC}"
 ./gradlew $GRADLE_TASK --no-daemon
 cd ..
 
