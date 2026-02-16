@@ -122,11 +122,14 @@
 - Settings: "Feedback senden" + "Nutzungsbedingungen" Links
 - Kontaktformular zum Support-Team
 
-#### 3.4 Onboarding-Tutorial
+#### 3.4 Onboarding-Tutorial ✅
 - **Priorität:** MITTEL
-- Erste-Schritte-Anleitung bei der erstmaligen Nutzung
+- **Status:** Implementiert
+- 10-Schritte-Tutorial bei erstmaliger Nutzung (AR/EN)
 - Erklärt Meldungen erstellen, Punkte sammeln, Coupons einlösen
 - Überspringbar für erfahrene Nutzer
+- In Einstellungen: "Tutorial erneut anzeigen" Button (resetOnboarding)
+- AsyncStorage-basiert (@kashif_onboarding_completed)
 
 ---
 
@@ -139,10 +142,12 @@
 - Beim Reinzoomen aufklappen
 - Verbessert Performance und Übersichtlichkeit massiv
 
-#### 4.2 Heatmap-Ansicht
+#### 4.2 Heatmap-Ansicht ✅
 - **Priorität:** MITTEL
-- Gefahrenzonen farblich hervorheben (Rot = viele Meldungen)
-- Toggle zwischen normaler und Heatmap-Ansicht
+- **Status:** Implementiert
+- Gefahrenzonen farblich hervorheben (Grün → Gelb → Orange → Rot)
+- Toggle-Button auf der Karte (Flammen-Icon)
+- react-native-maps Heatmap-Overlay (radius=40, opacity=0.7)
 - Hilft Behörden, Schwerpunkte zu erkennen
 
 #### 4.3 Routenwarnung
@@ -180,13 +185,15 @@
 
 ### 6. Gamification-Erweiterungen
 
-#### 6.1 Achievements / Badges
+#### 6.1 Achievements / Badges ✅
 - **Priorität:** MITTEL
-- "Erste Meldung", "10 Meldungen", "100 Meldungen"
-- "Nachtmelder" (Meldung zwischen 22–06 Uhr)
-- "Bestätiger" (10 Meldungen bestätigt)
-- "Schlagloch-Jäger" (50 Schlaglöcher gemeldet)
-- Anzeige im Profil als Badge-Sammlung
+- **Status:** Implementiert
+- 16 Achievements: first_report, report_5/10/25/50/100, confirm_1/10/50, night_reporter, night_owl, pothole_hunter/master, points_100/500/1000
+- Backend: Achievement + UserAchievement Models (gamification-service)
+- Endpoints: GET /achievements, GET /achievements/my, POST /achievements/check
+- Automatischer Check bei Profil-Besuch (unlocked + Bonus-Punkte)
+- Profil: 3-Spalten Badge-Grid (gesperrt/freigeschaltet, Emoji-Icons)
+- Bilinguale Namen/Beschreibungen (AR/EN)
 
 #### 6.2 Wöchentliche Challenges
 - **Priorität:** MITTEL
@@ -329,14 +336,12 @@
 | ✅ HOCH | CI/CD-Pipeline | Hoch |
 | ✅ HOCH | Monitoring & Alerting | Mittel |
 | ✅ HOCH | Logging-System | Mittel |
-
 | ✅ HOCH | Nutzungsbedingungen | Niedrig |
 | ✅ MITTEL | Bild-Qualitätsprüfung | Mittel |
 | ✅ MITTEL | In-App-Feedback | Niedrig |
-
-| 🟡 MITTEL | Onboarding-Tutorial | Mittel |
-| 🟡 MITTEL | Heatmap-Ansicht | Mittel |
-| 🟡 MITTEL | Achievements / Badges | Mittel |
+| ✅ MITTEL | Onboarding-Tutorial | Mittel |
+| ✅ MITTEL | Heatmap-Ansicht | Mittel |
+| ✅ MITTEL | Achievements / Badges | Mittel |
 
 | 🟡 MITTEL | Wöchentliche Challenges | Hoch |
 | 🟡 MITTEL | Erweitertes Dashboard | Mittel |
