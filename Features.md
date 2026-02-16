@@ -85,10 +85,11 @@
 - Verhindert doppelte Meldungen für denselben Schaden
 - Option: "Bestehende Meldung bestätigen" statt neue erstellen
 
-#### 2.3 Bild-Qualitätsprüfung
+#### 2.3 Bild-Qualitätsprüfung ✅
 - **Priorität:** MITTEL
-- Minimale Auflösung prüfen
-- Unscharfe/dunkle Bilder ablehnen
+- Minimale Auflösung prüfen (640x480)
+- Dateigrößenprüfung (min. 50KB)
+- Loading-Overlay während Qualitätsprüfung
 - EXIF-Daten für GPS-Verifizierung nutzen (Bild-GPS ≈ Meldungs-GPS?)
 
 #### 2.4 Meldungs-Verlauf & Statusverfolgung
@@ -114,10 +115,11 @@
 - Nach Datum/Zeitraum filtern
 - Textsuche in Meldungsbeschreibungen
 
-#### 3.3 In-App-Feedback-System
+#### 3.3 In-App-Feedback-System ✅
 - **Priorität:** MITTEL
-- Nutzer können Feedback oder Probleme direkt aus der App melden
-- "Diesen Bericht melden" für unangemessene Inhalte
+- Feedback-Screen (Bug, Vorschlag, Beschwerde, Sonstiges)
+- Backend: Feedback-Model + CRUD-Endpoints (reporting-service)
+- Settings: "Feedback senden" + "Nutzungsbedingungen" Links
 - Kontaktformular zum Support-Team
 
 #### 3.4 Onboarding-Tutorial
@@ -292,11 +294,13 @@
 - Nutzer kann Account und alle Daten löschen ("Recht auf Vergessenwerden")
 - Einwilligungs-Management für Standortdaten und Benachrichtigungen
 
-#### 10.2 Nutzungsbedingungen
+#### 10.2 Nutzungsbedingungen ✅
 - **Priorität:** HOCH
-- AGB bei Registrierung anzeigen und akzeptieren lassen
+- AGB bei Registrierung anzeigen und akzeptieren lassen (TermsModal)
+- TOS-Backend: Versionierte AGB mit CRUD-Endpoints (auth-service)
 - Richtlinien für Meldungsinhalte (keine beleidigenden Inhalte)
 - Versionierung der AGB mit Neuakzeptierung bei Änderungen
+- Settings: Nutzungsbedingungen jederzeit einsehbar
 
 ---
 
@@ -326,9 +330,9 @@
 | ✅ HOCH | Monitoring & Alerting | Mittel |
 | ✅ HOCH | Logging-System | Mittel |
 
-| 🟠 HOCH | Nutzungsbedingungen | Niedrig |
-| 🟡 MITTEL | Bild-Qualitätsprüfung | Mittel |
-| 🟡 MITTEL | In-App-Feedback | Niedrig |
+| ✅ HOCH | Nutzungsbedingungen | Niedrig |
+| ✅ MITTEL | Bild-Qualitätsprüfung | Mittel |
+| ✅ MITTEL | In-App-Feedback | Niedrig |
 
 | 🟡 MITTEL | Onboarding-Tutorial | Mittel |
 | 🟡 MITTEL | Heatmap-Ansicht | Mittel |
