@@ -142,9 +142,14 @@ export default function ReportCategoriesPage() {
       setShowDeleteModal(false);
       setSelectedCategory(null);
       loadCategories();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete category:', error);
-      alert(isRTL ? 'فشل في حذف الفئة' : 'Failed to delete category');
+      const detail = error?.response?.data?.detail;
+      if (detail && detail.includes('report')) {
+        alert(isRTL ? 'لا يمكن حذف الفئة لأنها تحتوي على بلاغات. أعد تعيينها أولاً.' : `Cannot delete: ${detail}`);
+      } else {
+        alert(isRTL ? 'فشل في حذف الفئة' : 'Failed to delete category');
+      }
     } finally {
       setSaving(false);
     }
