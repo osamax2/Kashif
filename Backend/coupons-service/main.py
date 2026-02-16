@@ -11,8 +11,11 @@ import schemas
 from database import engine, get_db
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from json_logger import setup_logging
+from logging_middleware import RequestLoggingMiddleware
 from rabbitmq_consumer import start_consumer
 from rabbitmq_publisher import publish_event
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 # Internal API key for service-to-service communication (DSGVO endpoints)
@@ -31,8 +34,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Structured JSON logging with request-ID tracing
+app.add_middleware(RequestLoggingMiddleware)
+
+logger = setup_logging("coupons")
 
 # Start RabbitMQ consumer
 consumer_thread = threading.Thread(target=start_consumer, daemon=True)
@@ -42,6 +47,43 @@ consumer_thread.start()
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "coupons"}
+
+
+@app.get("/health/detailed")
+def health_check_detailed():
+    """Detailed health check - verifies DB and RabbitMQ connectivity."""
+    import time
+    checks = {}
+    overall = "healthy"
+
+    # Check database
+    start = time.time()
+    try:
+        db = next(get_db())
+        db.execute(text("SELECT 1"))
+        checks["database"] = {"status": "healthy", "response_ms": round((time.time() - start) * 1000, 2)}
+    except Exception as e:
+        checks["database"] = {"status": "unhealthy", "error": str(e)}
+        overall = "unhealthy"
+
+    # Check RabbitMQ
+    start = time.time()
+    try:
+        import pika
+        rabbitmq_url = os.getenv("RABBITMQ_URL", "amqp://kashif:kashif123@rabbitmq:5672/")
+        connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+        connection.close()
+        checks["rabbitmq"] = {"status": "healthy", "response_ms": round((time.time() - start) * 1000, 2)}
+    except Exception as e:
+        checks["rabbitmq"] = {"status": "unhealthy", "error": str(e)}
+        overall = "degraded"
+
+    status_code = 200 if overall == "healthy" else 503
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=status_code,
+        content={"status": overall, "service": "coupons", "checks": checks}
+    )
 
 
 async def get_current_user_id(authorization: Annotated[str, Header()]):
