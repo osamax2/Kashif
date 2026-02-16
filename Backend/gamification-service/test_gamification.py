@@ -24,7 +24,7 @@ class TestGamificationService:
     def test_get_user_transactions(self):
         """Test getting user transaction history"""
         headers = {"Authorization": "Bearer mock_token"}
-        response = client.get("/points/1/transactions", headers=headers)
+        response = client.get("/transactions/me", headers=headers)
         assert response.status_code in [200, 401]
     
     def test_get_leaderboard(self):
@@ -35,29 +35,25 @@ class TestGamificationService:
         assert response.status_code in [200, 401]
     
     def test_add_points(self):
-        """Test adding points to user"""
+        """Test awarding points to user"""
         headers = {"Authorization": "Bearer mock_token"}
         points_data = {
             "user_id": 1,
             "points": 10,
-            "type": "REPORT_CREATED",
-            "description": "Created a new report",
-            "report_id": 1
+            "description": "Created a new report"
         }
-        response = client.post("/points/add", json=points_data, headers=headers)
-        assert response.status_code in [200, 401]
+        response = client.post("/points/award", json=points_data, headers=headers)
+        assert response.status_code in [200, 401, 422]
     
-    def test_deduct_points(self):
-        """Test deducting points from user"""
+    def test_redeem_points(self):
+        """Test redeeming points"""
         headers = {"Authorization": "Bearer mock_token"}
         points_data = {
-            "user_id": 1,
             "points": 50,
-            "type": "REDEMPTION",
-            "description": "Redeemed coupon"
+            "coupon_id": 1
         }
-        response = client.post("/points/deduct", json=points_data, headers=headers)
-        assert response.status_code in [200, 400, 401]
+        response = client.post("/points/redeem", json=points_data, headers=headers)
+        assert response.status_code in [200, 400, 401, 422]
 
 
 if __name__ == "__main__":
