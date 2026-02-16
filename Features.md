@@ -304,18 +304,18 @@
 
 | Priorität | Feature | Aufwand |
 |-----------|---------|---------|
-| 🔴 KRITISCH | Rate-Limiting & API-Schutz | Mittel |
-| 🔴 KRITISCH | Automatisierte Backups | Mittel |
-| 🔴 KRITISCH | Datenschutz (DSGVO) | Hoch |
-| 🟠 HOCH | Refresh-Token-System | Mittel |
-| 🟠 HOCH | Account-Verifizierung | Mittel |
-| 🟠 HOCH | Meldungs-Bestätigung | Mittel |
-| 🟠 HOCH | Duplikat-Erkennung | Mittel |
-| 🟠 HOCH | Meldungs-Statusverfolgung | Niedrig |
-| 🟠 HOCH | Profilbild-Server-Upload | Niedrig |
-| 🟠 HOCH | Suchfunktion & Filter | Mittel |
-| 🟠 HOCH | Marker-Clustering | Mittel |
-| 🟠 HOCH | Routenwarnung | Hoch |
+| ✅ KRITISCH | Rate-Limiting & API-Schutz | Mittel |
+| ✅ KRITISCH | Automatisierte Backups | Mittel |
+| ✅ KRITISCH | Datenschutz (DSGVO) | Hoch |
+| ✅ HOCH | Refresh-Token-System | Mittel |
+| ✅ HOCH | Account-Verifizierung | Mittel |
+| ✅ HOCH | Meldungs-Bestätigung | Mittel |
+| ✅ HOCH | Duplikat-Erkennung | Mittel |
+| ✅ HOCH | Meldungs-Statusverfolgung | Niedrig |
+| ✅ HOCH | Profilbild-Server-Upload | Niedrig |
+| ✅ HOCH | Suchfunktion & Filter | Mittel |
+| ✅ HOCH | Marker-Clustering | Mittel |
+| ✅ HOCH | Routenwarnung | Hoch |
 | ✅ HOCH | Notification-Einstellungen | Mittel |
 | ✅ HOCH | Status-Update-Notifications | Niedrig |
 | ✅ HOCH | Vollständiger Offline-Modus | Hoch |

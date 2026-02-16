@@ -302,7 +302,7 @@ export default function MonitoringPage() {
             <p>{isRTL 
               ? 'يتم إرسال تنبيهات تلقائية عند تعطل أي خدمة أو استعادتها' 
               : 'Automatic email alerts are sent when services go down or recover'}</p>
-            <p className="text-xs text-gray-400 mt-1">→ admin@kashif.com</p>
+            <p className="text-xs text-gray-400 mt-1">→ osobaji@gmail.com</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-medium text-gray-900 mb-2">
