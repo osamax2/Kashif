@@ -153,21 +153,26 @@
 
 ### 5. Benachrichtigungen & Kommunikation
 
-#### 5.1 Granulare Notification-Einstellungen
+#### 5.1 Granulare Notification-Einstellungen ✅
 - **Priorität:** HOCH
+- **Status:** Implementiert (ea2def1)
 - Nutzer wählt, welche Benachrichtigungen er erhalten möchte:
   - ☑ Neue Meldungen in meiner Nähe
   - ☑ Status-Updates meiner Meldungen
   - ☑ Neue Coupons verfügbar
-  - ☑ Level-Aufstieg
-  - ☐ Wöchentliche Zusammenfassung
-- Ruhezeiten konfigurierbar (z. B. 22:00–07:00 keine Notifications)
+  - ☑ Level-Aufstieg / Punkte
+  - ☑ Allgemeine Benachrichtigungen
+- Ruhezeiten konfigurierbar (22:00–07:00 keine Notifications)
+- Backend: GET/PUT /api/notifications/preferences, FCM-Filter, Quiet-Hours-Check
+- Mobile: 5 Toggles + Ruhezeiten-Picker in Einstellungen
 
-#### 5.2 Status-Update-Notifications
+#### 5.2 Status-Update-Notifications ✅
 - **Priorität:** HOCH
+- **Status:** Implementiert (ea2def1)
 - Automatische Push-Notification bei Statusänderung eigener Meldungen
-- "Deine Meldung wurde bestätigt" / "Dein Schlagloch wurde repariert!"
-- Deep-Link direkt zur betroffenen Meldung
+- Bilinguale Notifications (Deutsch + Englisch, title_en/body_en)
+- Deep-Link direkt zur betroffenen Meldung (reportId Query-Parameter)
+- Notification-Tap öffnet automatisch das Report-Detail
 
 ---
 
@@ -198,12 +203,15 @@
 
 ### 7. Offline & Performance
 
-#### 7.1 Vollständiger Offline-Modus
+#### 7.1 Vollständiger Offline-Modus ✅
 - **Priorität:** HOCH
-- Karten-Caching für häufig besuchte Gebiete
-- Offline-Meldungen mit Foto-Queue
-- Automatischer Sync bei Internetverbindung
-- Offline-Warnung basierend auf gecachten Gefahrenstellen
+- **Status:** Implementiert (ea2def1)
+- Daten-Caching (Nearby Reports, User Reports, Map Region)
+- Sync-Queue mit exponentiellem Backoff (max 5 Retries)
+- Automatischer Sync bei Internetverbindung + alle 2 Minuten
+- Offline-Näherungswarnung basierend auf gecachten Gefahrenstellen (Haversine)
+- Animiertes Offline-Banner mit Pending-Count
+- OfflineContext als globaler Provider
 
 #### 7.2 App-Performance-Optimierung
 - **Priorität:** HOCH
@@ -304,21 +312,27 @@
 | 🟠 HOCH | Suchfunktion & Filter | Mittel |
 | 🟠 HOCH | Marker-Clustering | Mittel |
 | 🟠 HOCH | Routenwarnung | Hoch |
-| 🟠 HOCH | Notification-Einstellungen | Mittel |
-| 🟠 HOCH | Status-Update-Notifications | Niedrig |
-| 🟠 HOCH | Vollständiger Offline-Modus | Hoch |
+| ✅ HOCH | Notification-Einstellungen | Mittel |
+| ✅ HOCH | Status-Update-Notifications | Niedrig |
+| ✅ HOCH | Vollständiger Offline-Modus | Hoch |
+
+
 | 🟠 HOCH | Performance-Optimierung | Mittel |
 | 🟠 HOCH | Bulk-Operationen (Admin) | Mittel |
 | 🟠 HOCH | Admin-Rollen & Berechtigungen | Hoch |
+
 | 🟠 HOCH | CI/CD-Pipeline | Hoch |
 | 🟠 HOCH | Monitoring & Alerting | Mittel |
 | 🟠 HOCH | Logging-System | Mittel |
+
 | 🟠 HOCH | Nutzungsbedingungen | Niedrig |
 | 🟡 MITTEL | Bild-Qualitätsprüfung | Mittel |
 | 🟡 MITTEL | In-App-Feedback | Niedrig |
+
 | 🟡 MITTEL | Onboarding-Tutorial | Mittel |
 | 🟡 MITTEL | Heatmap-Ansicht | Mittel |
 | 🟡 MITTEL | Achievements / Badges | Mittel |
+
 | 🟡 MITTEL | Wöchentliche Challenges | Hoch |
 | 🟡 MITTEL | Erweitertes Dashboard | Mittel |
 | 🟢 NIEDRIG | Freunde & Soziale Features | Hoch |
