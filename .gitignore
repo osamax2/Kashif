@@ -54,3 +54,12 @@ Backend/drive-download-*/
 
 # Uploaded images (server-side)
 Backend/*/uploads/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Firebase / Google Services (contains API keys)
+google-services.json
+GoogleService-Info.plist
