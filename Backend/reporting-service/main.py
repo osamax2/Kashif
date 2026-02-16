@@ -75,6 +75,23 @@ async def get_current_user_id(authorization: Annotated[str, Header()]):
     return user["id"]
 
 
+async def get_current_user(authorization: Annotated[str, Header()]):
+    """Verify token with auth service and get full user dict (id, role, etc.)"""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header"
+        )
+    token = authorization.replace("Bearer ", "")
+    user = await auth_client.verify_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    return user
+
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "reporting"}
@@ -991,18 +1008,15 @@ def export_user_data(
 @app.post("/feedback", response_model=schemas.FeedbackResponse, status_code=201)
 async def create_feedback(
     data: schemas.FeedbackCreate,
-    x_user_id: Annotated[str | None, Header()] = None,
+    user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """Submit user feedback (authenticated users)."""
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
     valid_categories = ["bug", "suggestion", "complaint", "other"]
     category = data.category if data.category in valid_categories else "other"
 
     fb = models.Feedback(
-        user_id=int(x_user_id),
+        user_id=user_id,
         subject=data.subject,
         message=data.message,
         category=category,
@@ -1010,22 +1024,19 @@ async def create_feedback(
     db.add(fb)
     db.commit()
     db.refresh(fb)
-    logger.info(f"Feedback #{fb.id} created by user {x_user_id}")
+    logger.info(f"Feedback #{fb.id} created by user {user_id}")
     return fb
 
 
 @app.get("/feedback/my", response_model=List[schemas.FeedbackResponse])
 async def get_my_feedback(
-    x_user_id: Annotated[str | None, Header()] = None,
+    user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """Get all feedback submitted by current user."""
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
     items = (
         db.query(models.Feedback)
-        .filter(models.Feedback.user_id == int(x_user_id))
+        .filter(models.Feedback.user_id == user_id)
         .order_by(models.Feedback.created_at.desc())
         .all()
     )
@@ -1034,8 +1045,7 @@ async def get_my_feedback(
 
 @app.get("/feedback", response_model=List[schemas.FeedbackResponse])
 async def get_all_feedback(
-    x_user_id: Annotated[str | None, Header()] = None,
-    x_user_role: Annotated[str | None, Header()] = None,
+    current_user: dict = Depends(get_current_user),
     status_filter: Optional[str] = None,
     category: Optional[str] = None,
     skip: int = 0,
@@ -1043,7 +1053,7 @@ async def get_all_feedback(
     db: Session = Depends(get_db),
 ):
     """Get all feedback (admin only)."""
-    if not x_user_role or x_user_role != "ADMIN":
+    if current_user.get("role") != "ADMIN":
         raise HTTPException(status_code=403, detail="Admin access required")
 
     query = db.query(models.Feedback)
@@ -1060,12 +1070,11 @@ async def get_all_feedback(
 async def update_feedback(
     feedback_id: int,
     data: schemas.FeedbackUpdate,
-    x_user_id: Annotated[str | None, Header()] = None,
-    x_user_role: Annotated[str | None, Header()] = None,
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Update feedback status/notes (admin only)."""
-    if not x_user_role or x_user_role != "ADMIN":
+    if current_user.get("role") != "ADMIN":
         raise HTTPException(status_code=403, detail="Admin access required")
 
     fb = db.query(models.Feedback).filter(models.Feedback.id == feedback_id).first()
@@ -1082,5 +1091,5 @@ async def update_feedback(
 
     db.commit()
     db.refresh(fb)
-    logger.info(f"Feedback #{feedback_id} updated by admin {x_user_id}")
+    logger.info(f"Feedback #{feedback_id} updated by admin {current_user.get('id')}")
     return fb
