@@ -287,7 +287,7 @@ export default function ReportsScreen() {
                                         });
                                     }}
                                 >
-                                    <Text style={styles.whatsappButtonText}>📤 مشاركة عبر واتساب</Text>
+                                    <Text style={styles.whatsappButtonText}>مشاركة عبر واتساب</Text>
                                 </Pressable>
 
                                 {/* Donate Button */}

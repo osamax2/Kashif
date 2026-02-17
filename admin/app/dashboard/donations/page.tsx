@@ -3,7 +3,7 @@
 import { donationsAPI, reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Donation, Report } from '@/lib/types';
-import { DollarSign, Heart, Search, RefreshCw } from 'lucide-react';
+import { DollarSign, Heart, RefreshCw, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function DonationsPage() {

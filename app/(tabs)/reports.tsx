@@ -1,41 +1,41 @@
 // app/(tabs)/reports.tsx ✅ wie index.tsx: Arabisch = LTR | Englisch = RTL (effectiveRTL = !isRTL)
 
+import DonationModal from "@/components/DonationModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
-    Category,
-    lookupAPI,
-    Report,
-    reportingAPI,
-    ReportStatus,
-    ReportStatusHistory,
-    Severity,
+  Category,
+  lookupAPI,
+  Report,
+  reportingAPI,
+  ReportStatus,
+  ReportStatusHistory,
+  Severity,
 } from "@/services/api";
 import { cacheUserReports, checkConnectivity, getCachedUserReports } from "@/services/offline-service";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    FlatList,
-    Image,
-    Linking,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  FlatList,
+  Image,
+  Linking,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import MapView, { Marker } from "react-native-maps";
-import DonationModal from "@/components/DonationModal";
 
 const BLUE = "#0D2B66";
 const CARD_BG = "rgba(255,255,255,0.06)";
