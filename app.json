@@ -16,7 +16,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kashif.app",
+      "bundleIdentifier": "com.kashifroad.app",
       "buildNumber": "13",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك للكشف عن الحفر في الطريق أثناء القيادة",
@@ -38,7 +38,7 @@
       }
     },
     "android": {
-      "package": "com.kashif.app",
+      "package": "com.kashifroad.app",
       "versionCode": 13,
       "usesCleartextTraffic": true,
       "googleServicesFile": "./google-services.json",
