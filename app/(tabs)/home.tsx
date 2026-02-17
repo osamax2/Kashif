@@ -387,7 +387,14 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             }
             console.log(`✅ Loaded ${categoriesData.length} categories`);
             
-            setReports(reportsData);
+            // Normalize lat/lng to numbers (backend may return strings)
+            const normalizedReports = reportsData.map((r: any) => ({
+                ...r,
+                latitude: typeof r.latitude === 'string' ? parseFloat(r.latitude) : r.latitude,
+                longitude: typeof r.longitude === 'string' ? parseFloat(r.longitude) : r.longitude,
+            })).filter((r: any) => !isNaN(r.latitude) && !isNaN(r.longitude));
+            
+            setReports(normalizedReports);
             setCategories(categoriesData);
             setSeverities(severitiesData);
             setStatuses(statusesData);
@@ -1074,7 +1081,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     const toggleMenu = () => {
         if (!menuOpen) {
             setMenuOpen(true);
-            Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+            Animated.spring(scaleAnim, { toValue: 1, friction: 5, tension: 90, useNativeDriver: true }).start();
         } else {
             Animated.spring(scaleAnim, { toValue: 0, useNativeDriver: true }).start(
                 () => setMenuOpen(false)
@@ -1105,36 +1112,11 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         updateMonitoring();
     }, [warnPothole, warnAccident, warnSpeed]);
 
-    // Position des FAB (für Icons) – absolute Bildschirmkoordinaten
-    const fabRef = useRef<any>(null);
-    const [fabPos, setFabPos] = useState({ x: 0, y: 0, w: 0, h: 0 });
-    const onFabLayout = () => {
-        if (fabRef.current) {
-            fabRef.current.measureInWindow((x: number, y: number, w: number, h: number) => {
-                if (x != null && y != null) setFabPos({ x, y, w, h });
-            });
-        }
-    };
-
-    // Menu items for the radial menu
-    // For Arabic (left FAB), menu opens to the right
-    // For English (right FAB), menu opens to the left
+    // Menu items for the radial menu with angle-based positioning
     const menuItems = [
-        {
-            id: "pothole",
-            icon: require("../../assets/icons/pothole.png"),
-            offset: { dy: -70, dx: -75 },
-        },
-        {
-            id: "accident",
-            icon: require("../../assets/icons/accident.png"),
-            offset: { dy: -5, dx: -75 },
-        },
-        {
-            id: "speed",
-            icon: require("../../assets/icons/speed.png"),
-            offset: { dy: -70, dx: -150 },
-        },
+        { id: "pothole", icon: require("../../assets/icons/pothole.png"), angle: -30 },
+        { id: "accident", icon: require("../../assets/icons/accident.png"), angle: -75 },
+        { id: "speed", icon: require("../../assets/icons/speed.png"), angle: -120 },
     ] as const;
 
     async function speakWarning(type: string) {
@@ -1497,10 +1479,14 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     )}
                     
                     {/* Route Hazard Markers */}
-                    {routeHazards.map((hazard) => (
+                    {routeHazards.map((hazard) => {
+                        const hLat = typeof hazard.latitude === 'string' ? parseFloat(hazard.latitude) : hazard.latitude;
+                        const hLng = typeof hazard.longitude === 'string' ? parseFloat(hazard.longitude) : hazard.longitude;
+                        if (isNaN(hLat) || isNaN(hLng)) return null;
+                        return (
                         <Marker
                             key={`hazard-${hazard.id}`}
-                            coordinate={{ latitude: hazard.latitude, longitude: hazard.longitude }}
+                            coordinate={{ latitude: hLat, longitude: hLng }}
                             title={hazard.title || (language === 'ar' ? 'خطر' : 'Hazard')}
                             description={`${Math.round(hazard.distance_from_route_meters)}m ${language === 'ar' ? 'من الطريق' : 'from route'}`}
                             tracksViewChanges={false}
@@ -1509,7 +1495,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                 <Text style={{ fontSize: 18 }}>{getCategoryIcon(hazard.category_id)}</Text>
                             </View>
                         </Marker>
-                    ))}
+                        );
+                    })}
 
                     {/* Heatmap Overlay */}
                     {heatmapEnabled && heatmapPoints.length > 0 && (
@@ -1535,15 +1522,55 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     language === 'ar' ? { left: 18 } : { right: 18 },
                 ]}
             >
-                {/* ADD FAB */}
-                <TouchableOpacity
-                    ref={fabRef}
-                    style={styles.fab}
-                    onPress={toggleMenu}
-                    onLayout={onFabLayout}
-                >
-                    <Text style={styles.fabPlus}>+</Text>
-                </TouchableOpacity>
+                {/* FAB ANCHOR – relative container for FAB + radial items */}
+                <View style={styles.fabAnchor}>
+                    {/* ADD FAB */}
+                    <TouchableOpacity
+                        style={styles.fab}
+                        onPress={toggleMenu}
+                    >
+                        <Text style={styles.fabPlus}>+</Text>
+                    </TouchableOpacity>
+
+                    {/* RADIAL-MENÜ UM DEN FAB */}
+                    {menuOpen &&
+                        menuItems.map((item) => {
+                            const radius = 95;
+                            const rad = (item.angle * Math.PI) / 180;
+
+                            const dx = Math.cos(rad) * radius;
+                            const dy = Math.sin(rad) * radius;
+
+                            const CENTER = 30; // half of FAB (60 / 2)
+
+                            return (
+                                <Animated.View
+                                    key={item.id}
+                                    style={[
+                                        styles.circleItem,
+                                        {
+                                            transform: [{ scale: scaleAnim }],
+                                            top: CENTER + dy - 27.5,
+                                            left:
+                                                language === "ar"
+                                                    ? CENTER + Math.abs(dx) - 27.5
+                                                    : CENTER - Math.abs(dx) - 27.5,
+                                        },
+                                    ]}
+                                >
+                                    <Pressable
+                                        onPress={() => {
+                                            setReportType(item.id);
+                                            setMenuOpen(false);
+                                        }}
+                                        style={styles.circlePress}
+                                    >
+                                        <Image source={item.icon} style={{ width: 42, height: 42 }} />
+                                    </Pressable>
+                                </Animated.View>
+                            );
+                        })}
+                </View>
 
                 {/* SOUND BUTTON */}
                 <TouchableOpacity
@@ -1616,32 +1643,6 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 </View>
             )}
 
-
-            {/* RADIAL-MENÜ UM DEN FAB */}
-            {menuOpen &&
-                menuItems.map((item) => (
-                    <Animated.View
-                        key={item.id}
-                        style={[
-                            styles.circleItem,
-                            {
-                                transform: [{ scale: scaleAnim }],
-                                top: fabPos.y + item.offset.dy,
-                                left: fabPos.x + item.offset.dx,
-                            },
-                        ]}
-                    >
-                        <Pressable
-                            onPress={() => {
-                                setReportType(item.id); // Dialog öffnen
-                                setMenuOpen(false);
-                            }}
-                            style={styles.circlePress}
-                        >
-                            <Image source={item.icon} style={{ width: 42, height: 42 }} />
-                        </Pressable>
-                    </Animated.View>
-                ))}
 
             {/* INFO-BAR UNTEN */}
             <View style={styles.infoBar}>
@@ -1836,11 +1837,16 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                         console.log('📦 AI detections stored:', uploadResult.ai_analysis.detections.length);
                                     }
                                     
-                                    // Update severity based on AI if it detects higher severity
+                                    // AI determines severity from photo analysis
                                     if (uploadResult.ai_analysis.max_severity === 'HIGH') {
                                         severityId = 3;
-                                    } else if (uploadResult.ai_analysis.max_severity === 'MEDIUM' && severityId < 2) {
+                                        console.log('🤖 AI set severity to HIGH from photo');
+                                    } else if (uploadResult.ai_analysis.max_severity === 'MEDIUM') {
                                         severityId = 2;
+                                        console.log('🤖 AI set severity to MEDIUM from photo');
+                                    } else if (uploadResult.ai_analysis.max_severity === 'LOW') {
+                                        severityId = 1;
+                                        console.log('🤖 AI set severity to LOW from photo');
                                     }
                                 }
                             } catch (uploadError) {
@@ -2138,6 +2144,16 @@ const styles = StyleSheet.create({
         zIndex: 50,
         alignItems: "center",
         gap: 14,
+        overflow: "visible",
+    },
+    fabAnchor: {
+        position: "relative",
+        width: 60,
+        height: 60,
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "visible",
+        zIndex: 50,
     },
     fab: {
         width: 60,
@@ -2216,6 +2232,8 @@ const styles = StyleSheet.create({
         zIndex: 10,
         width: 55,
         height: 55,
+        alignItems: "center",
+        justifyContent: "center",
     },
 
     circlePress: {

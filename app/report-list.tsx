@@ -1,14 +1,17 @@
 // app/(tabs)/reports.tsx
 import Header from "@/components/Header";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     Animated,
     FlatList,
     Image,
+    Linking,
     Modal,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -132,6 +135,7 @@ function CircleStat({ percent, label, color }: { percent: number; label: string;
 
 export default function ReportsScreen() {
     const router = useRouter();
+    const { isRTL } = useLanguage();
     const [reports, setReports] = useState(INITIAL_DATA);
     const [selected, setSelected] = useState<any | null>(null);
     const [detailVisible, setDetailVisible] = useState(false);
@@ -170,7 +174,9 @@ export default function ReportsScreen() {
             {/* HEADER */}
             <Header
                 title="البلاغات المفتوحة"
-                rightIcon="chevron-forward"
+                leftIcon={!isRTL ? "chevron-back" : undefined}
+                rightIcon={isRTL ? "chevron-forward" : undefined}
+                onLeftPress={() => router.back()}
                 onRightPress={() => router.back()}
             />
 
@@ -195,6 +201,12 @@ export default function ReportsScreen() {
             {/* DETAILS-POPUP */}
             <Modal visible={detailVisible} transparent animationType="slide">
                 <View style={styles.modalBackdrop}>
+                    <ScrollView
+                        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }}
+                        showsVerticalScrollIndicator={false}
+                        nestedScrollEnabled={true}
+                        keyboardShouldPersistTaps="handled"
+                    >
                     <View style={styles.modalGlass}>
                         {selected && (
                             <>
@@ -240,9 +252,13 @@ export default function ReportsScreen() {
                                 </Text>
 
                                 {/* Mini-Map */}
-                                <View style={styles.miniMapContainer}>
+                                <View style={styles.miniMapContainer} pointerEvents="none">
                                     <MapView
                                         style={styles.miniMap}
+                                        scrollEnabled={false}
+                                        zoomEnabled={false}
+                                        rotateEnabled={false}
+                                        pitchEnabled={false}
                                         initialRegion={{
                                             latitude: 33.5138,
                                             longitude: 36.2765,
@@ -258,6 +274,20 @@ export default function ReportsScreen() {
                                     </MapView>
                                 </View>
 
+                                {/* WhatsApp Share Button */}
+                                <Pressable
+                                    style={styles.whatsappButton}
+                                    onPress={() => {
+                                        const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;
+                                        const url = `whatsapp://send?text=${encodeURIComponent(msg)}`;
+                                        Linking.openURL(url).catch(() => {
+                                            alert('WhatsApp غير مثبت على هذا الجهاز');
+                                        });
+                                    }}
+                                >
+                                    <Text style={styles.whatsappButtonText}>📤 مشاركة عبر واتساب</Text>
+                                </Pressable>
+
                                 {/* Close Button */}
                                 <Pressable style={styles.modalButton} onPress={closeDetails}>
                                     <Text style={styles.modalButtonText}>إغلاق</Text>
@@ -265,6 +295,7 @@ export default function ReportsScreen() {
                             </>
                         )}
                     </View>
+                    </ScrollView>
                 </View>
             </Modal>
         </View>
@@ -479,9 +510,6 @@ const styles = StyleSheet.create({
     modalBackdrop: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.65)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
     },
 
     modalGlass: {
@@ -499,7 +527,7 @@ const styles = StyleSheet.create({
 
     modalImage: {
         width: "100%",
-        height: 200,
+        height: 160,
         borderRadius: 18,
         marginBottom: 12,
     },
@@ -550,14 +578,31 @@ const styles = StyleSheet.create({
     },
 
     miniMapContainer: {
-        height: 160,
+        height: 120,
         borderRadius: 16,
         overflow: "hidden",
-        marginBottom: 16,
+        marginBottom: 12,
     },
 
     miniMap: {
         flex: 1,
+    },
+
+    whatsappButton: {
+        backgroundColor: "#25D366",
+        paddingVertical: 10,
+        borderRadius: 16,
+        alignItems: "center",
+        marginBottom: 10,
+        flexDirection: "row-reverse",
+        justifyContent: "center",
+        gap: 8,
+    },
+
+    whatsappButtonText: {
+        color: "#fff",
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
     },
 
     modalButton: {

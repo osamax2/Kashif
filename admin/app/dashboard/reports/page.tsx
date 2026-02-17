@@ -104,6 +104,7 @@ export default function ReportsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [severityFilter, setSeverityFilter] = useState('ALL');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [timeFrom, setTimeFrom] = useState('');
@@ -212,6 +213,10 @@ export default function ReportsPage() {
     if (categoryFilter !== 'ALL') {
       filtered = filtered.filter((r) => r.category_id === parseInt(categoryFilter));
     }
+
+    if (severityFilter !== 'ALL') {
+      filtered = filtered.filter((r) => r.severity_id === parseInt(severityFilter));
+    }
     
     // Date filter
     if (dateFrom) {
@@ -262,7 +267,7 @@ export default function ReportsPage() {
     }
     
     setFilteredReports(filtered);
-  }, [search, statusFilter, categoryFilter, dateFrom, dateTo, timeFrom, timeTo, reports, statuses]);
+  }, [search, statusFilter, categoryFilter, severityFilter, dateFrom, dateTo, timeFrom, timeTo, reports, statuses]);
 
   const loadData = async () => {
     try {
@@ -388,6 +393,33 @@ export default function ReportsPage() {
     }
   };
 
+  const getSeverityLabel = (severityId: number) => {
+    switch (severityId) {
+      case 1: return isRTL ? 'منخفض' : 'Low';
+      case 2: return isRTL ? 'متوسط' : 'Medium';
+      case 3: return isRTL ? 'عالي' : 'High';
+      default: return isRTL ? 'غير محدد' : 'Unknown';
+    }
+  };
+
+  const getSeverityColor = (severityId: number) => {
+    switch (severityId) {
+      case 1: return 'bg-green-100 text-green-700';
+      case 2: return 'bg-yellow-100 text-yellow-700';
+      case 3: return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getSeverityIcon = (severityId: number) => {
+    switch (severityId) {
+      case 1: return '🟢';
+      case 2: return '🟡';
+      case 3: return '🔴';
+      default: return '⚪';
+    }
+  };
+
   const getStatusColor = (statusName: string) => {
     switch (statusName) {
       case 'NEW':
@@ -442,6 +474,7 @@ export default function ReportsPage() {
         isRTL ? 'العنوان' : 'Title',
         isRTL ? 'الوصف' : 'Description',
         isRTL ? 'الفئة' : 'Category',
+        isRTL ? 'الخطورة' : 'Severity',
         isRTL ? 'الحالة' : 'Status',
         isRTL ? 'العنوان' : 'Address',
         isRTL ? 'خط العرض' : 'Latitude',
@@ -473,6 +506,7 @@ export default function ReportsPage() {
         `"${report.title.replace(/"/g, '""')}"`,
         `"${report.description.replace(/"/g, '""')}"`,
         getCategoryName(report.category_id),
+        getSeverityLabel(report.severity_id),
         getStatusName(report.status_id),
         `"${(report.address_text || '').replace(/"/g, '""')}"`,
         report.latitude,
@@ -598,6 +632,20 @@ export default function ReportsPage() {
                   {status.name}
                 </option>
               ))}
+            </select>
+          </div>
+          
+          {/* Severity Filter */}
+          <div className="flex-1 sm:max-w-[200px]">
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
+            >
+              <option value="ALL">{isRTL ? 'جميع مستويات الخطورة' : 'All Severities'}</option>
+              <option value="1">🟢 {isRTL ? 'منخفض' : 'Low'}</option>
+              <option value="2">🟡 {isRTL ? 'متوسط' : 'Medium'}</option>
+              <option value="3">🔴 {isRTL ? 'عالي' : 'High'}</option>
             </select>
           </div>
           
@@ -762,9 +810,12 @@ export default function ReportsPage() {
             
             {/* Category Badge */}
             {category && (
-              <div className={`mb-3 ${isRTL ? 'text-right' : ''}`}>
+              <div className={`mb-3 flex items-center gap-2 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
                   {isRTL ? category.name_ar || category.name : category.name}
+                </span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(report.severity_id)}`}>
+                  {getSeverityIcon(report.severity_id)} {getSeverityLabel(report.severity_id)}
                 </span>
               </div>
             )}
@@ -884,6 +935,7 @@ export default function ReportsPage() {
                     `📌 *العنوان:* ${report.title}\n` +
                     `📝 *الوصف:* ${report.description}\n` +
                     `🏷️ *الفئة:* ${categoryName}\n` +
+                    `⚠️ *الخطورة:* ${getSeverityIcon(report.severity_id)} ${getSeverityLabel(report.severity_id)}\n` +
                     `📊 *الحالة:* ${statusName}\n` +
                     `📍 *الموقع:* ${report.address_text || 'غير محدد'}\n` +
                     `📅 *التاريخ:* ${new Date(report.created_at).toLocaleDateString('ar')}\n\n` +
@@ -892,6 +944,7 @@ export default function ReportsPage() {
                     `📌 *Title:* ${report.title}\n` +
                     `📝 *Description:* ${report.description}\n` +
                     `🏷️ *Category:* ${categoryName}\n` +
+                    `⚠️ *Severity:* ${getSeverityIcon(report.severity_id)} ${getSeverityLabel(report.severity_id)}\n` +
                     `📊 *Status:* ${statusName}\n` +
                     `📍 *Location:* ${report.address_text || 'Not specified'}\n` +
                     `📅 *Date:* ${new Date(report.created_at).toLocaleDateString()}\n\n` +

@@ -43,7 +43,7 @@ export default function MapPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([24.7136, 46.6753]); // Riyadh default
+  const [mapCenter, setMapCenter] = useState<[number, number]>([35.9306, 36.6339]); // Idleb default
   const [mapZoom, setMapZoom] = useState(10);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
@@ -56,6 +56,10 @@ export default function MapPage() {
   const [timeFrom, setTimeFrom] = useState('');
   const [timeTo, setTimeTo] = useState('');
   const [isClient, setIsClient] = useState(false);
+  
+  // Area search filter
+  const [areaFilter, setAreaFilter] = useState<{ lat: number; lng: number; radius: number; name: string } | null>(null);
+  const [areaRadius, setAreaRadius] = useState(2); // km
   
   // Report Card Modal states
   const [showReportCard, setShowReportCard] = useState(false);
@@ -108,6 +112,17 @@ export default function MapPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Haversine distance in km
+  const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
   const getCategoryName = (categoryId: number) => {
@@ -225,8 +240,11 @@ export default function MapPage() {
         setSelectedReport(result.report);
       }
     } else if (result.type === 'location' && result.location) {
-      setMapCenter([parseFloat(result.location.lat), parseFloat(result.location.lon)]);
+      const lat = parseFloat(result.location.lat);
+      const lon = parseFloat(result.location.lon);
+      setMapCenter([lat, lon]);
       setMapZoom(15);
+      setAreaFilter({ lat, lng: lon, radius: areaRadius, name: result.displayName });
     } else if (result.type === 'category' && result.category) {
       setCategoryFilter([result.category.id.toString()]);
       // Find center of all reports in this category
@@ -354,7 +372,8 @@ export default function MapPage() {
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `map_reports_${new Date().toISOString().split('T')[0]}.csv`);
+      const areaSlug = areaFilter ? `_${areaFilter.name.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_').substring(0, 40)}` : '';
+      link.setAttribute('download', `map_reports${areaSlug}_${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -501,6 +520,15 @@ export default function MapPage() {
       if (reportMinutes > filterMinutes) return false;
     }
     
+    // Area filter (radius-based)
+    if (areaFilter) {
+      const rLat = parseFloat(report.latitude);
+      const rLng = parseFloat(report.longitude);
+      if (isNaN(rLat) || isNaN(rLng)) return false;
+      const dist = haversineDistance(areaFilter.lat, areaFilter.lng, rLat, rLng);
+      if (dist > areaFilter.radius) return false;
+    }
+    
     return true;
   });
 
@@ -543,6 +571,7 @@ export default function MapPage() {
                     setSearchQuery('');
                     setSearchResults([]);
                     setTextFilter('');
+                    setAreaFilter(null);
                   }}
                   className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 ${isRTL ? 'left-3' : 'right-3'}`}
                 >
@@ -628,6 +657,52 @@ export default function MapPage() {
             </div>
           )}
         </div>
+        
+        {/* Area Filter Badge */}
+        {areaFilter && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <MapPin className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-blue-800 font-medium max-w-[300px] truncate">
+                {areaFilter.name}
+              </span>
+              <span className="text-xs text-blue-600 bg-blue-100 rounded-full px-2 py-0.5">
+                {filteredReports.length} {isRTL ? 'تقرير' : 'reports'}
+              </span>
+              <span className="text-xs text-blue-500">
+                ({areaFilter.radius} km)
+              </span>
+              <button
+                onClick={() => setAreaFilter(null)}
+                className="text-blue-400 hover:text-blue-600 ml-1"
+                title={isRTL ? 'إزالة فلتر المنطقة' : 'Remove area filter'}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex items-center gap-1">
+              <label className="text-xs text-gray-500">{isRTL ? 'نطاق:' : 'Radius:'}</label>
+              <select
+                value={areaRadius}
+                onChange={(e) => {
+                  const newRadius = Number(e.target.value);
+                  setAreaRadius(newRadius);
+                  setAreaFilter(prev => prev ? { ...prev, radius: newRadius } : null);
+                }}
+                className="text-xs border border-gray-300 rounded px-1.5 py-1"
+              >
+                <option value={0.5}>0.5 km</option>
+                <option value={1}>1 km</option>
+                <option value={2}>2 km</option>
+                <option value={3}>3 km</option>
+                <option value={5}>5 km</option>
+                <option value={10}>10 km</option>
+                <option value={20}>20 km</option>
+                <option value={50}>50 km</option>
+              </select>
+            </div>
+          </div>
+        )}
         
         {/* Filters */}
         <div className="flex flex-wrap gap-3">
