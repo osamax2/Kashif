@@ -144,7 +144,7 @@ export default function SettingsScreen() {
     style={styles.iconBtn}
   >
     <Ionicons
-      name={isRTL ? "chevron-back" : "log-out-outline"}
+      name={isRTL ? "chevron-forward" : "log-out-outline"}
       size={isRTL ? 30 : 28}
       color={YELLOW}
     />

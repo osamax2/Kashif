@@ -35,6 +35,8 @@ class LocationMonitoringService {
   private nearbyReports: Report[] = [];
   private alertedReportIds: Set<number> = new Set();
   private audioInitialized = false;
+  private isCheckingProximity = false;
+  private isAlertShowing = false;
   private alertSettings: AlertSettings = {
     soundEnabled: true,
     warnPothole: true,
@@ -142,11 +144,15 @@ class LocationMonitoringService {
 
       // Filter by distance manually since backend may not support radius param
       return response.data.filter((report) => {
+        const rLat = typeof report.latitude === 'string' ? parseFloat(report.latitude) : report.latitude;
+        const rLng = typeof report.longitude === 'string' ? parseFloat(report.longitude) : report.longitude;
+        if (isNaN(rLat) || isNaN(rLng)) return false;
+        
         const distance = this.calculateDistance(
           latitude,
           longitude,
-          parseFloat(report.latitude.toString()),
-          parseFloat(report.longitude.toString())
+          rLat,
+          rLng
         );
         
         // Only include reports within 1km
@@ -165,6 +171,11 @@ class LocationMonitoringService {
    * Check if user is approaching any reports
    */
   async checkProximityToReports(location: Location.LocationObject) {
+    // Prevent concurrent checks
+    if (this.isCheckingProximity || this.isAlertShowing) return;
+    this.isCheckingProximity = true;
+    
+    try {
     const { latitude, longitude } = location.coords;
 
     // Fetch nearby reports
@@ -172,11 +183,15 @@ class LocationMonitoringService {
 
     // Check distance to each report
     for (const report of this.nearbyReports) {
+      const rLat = typeof report.latitude === 'string' ? parseFloat(report.latitude) : report.latitude;
+      const rLng = typeof report.longitude === 'string' ? parseFloat(report.longitude) : report.longitude;
+      if (isNaN(rLat) || isNaN(rLng)) continue;
+      
       const distance = this.calculateDistance(
         latitude,
         longitude,
-        parseFloat(report.latitude.toString()),
-        parseFloat(report.longitude.toString())
+        rLat,
+        rLng
       );
 
       // If within alert threshold and not already alerted
@@ -194,6 +209,11 @@ class LocationMonitoringService {
       if (distance > ALERT_DISTANCE_THRESHOLD + 100) {
         this.alertedReportIds.delete(report.id);
       }
+    }
+    } catch (error) {
+      console.error('Error checking proximity:', error);
+    } finally {
+      this.isCheckingProximity = false;
     }
   }
 
@@ -408,6 +428,10 @@ class LocationMonitoringService {
    * Show alert screen
    */
   private async showAlert(report: Report, distance: number) {
+    if (this.isAlertShowing) return;
+    this.isAlertShowing = true;
+    
+    try {
     const alertData = this.getAlertMessage(report.category_id, distance);
     
     console.log(`🚨 Alert: ${alertData.title} - ${distance}m ahead`);
@@ -415,15 +439,25 @@ class LocationMonitoringService {
     // Play voice warning
     await this.playVoiceWarning(report.category_id, distance);
     
-    // Navigate to alert screen with parameters
-    router.push({
-      pathname: '/alert-screen',
-      params: {
-        reportId: report.id.toString(),
-        distance: distance.toString(),
-        categoryId: report.category_id.toString(),
-      },
-    });
+    // Navigate to alert screen with parameters (only if app is in foreground)
+    try {
+      router.push({
+        pathname: '/alert-screen',
+        params: {
+          reportId: report.id.toString(),
+          distance: distance.toString(),
+          categoryId: report.category_id.toString(),
+        },
+      });
+    } catch (navError) {
+      console.warn('Could not navigate to alert screen:', navError);
+    }
+    } finally {
+      // Allow next alert after 5 seconds
+      setTimeout(() => {
+        this.isAlertShowing = false;
+      }, 5000);
+    }
   }
 
   /**
@@ -454,7 +488,9 @@ class LocationMonitoringService {
         },
         (location) => {
           this.currentLocation = location;
-          this.checkProximityToReports(location);
+          this.checkProximityToReports(location).catch(err => 
+            console.error('Proximity check failed:', err)
+          );
         }
       );
 
