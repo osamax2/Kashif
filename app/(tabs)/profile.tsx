@@ -9,18 +9,18 @@ import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Modal,
-    Platform,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const BLUE = "#0D2B66";
@@ -391,9 +391,11 @@ export default function ProfileScreen() {
         </View>
       </Modal>
       {/* HEADER */}
-      <View style={[styles.header, { marginTop: 40, flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
+      <View style={[styles.header, { marginTop: 40, flexDirection: isRTL ? "row-reverse" : "row" }]}>
+
+
         <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-          <Ionicons name={effectiveRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
+          <Ionicons name={isRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
         </TouchableOpacity>
 
         <Text numberOfLines={1} style={styles.headerTitle}>
