@@ -7,15 +7,14 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Image,
+    Alert,
     Modal,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
-    View,
-    ScrollView,
-    Alert,
+    View
 } from "react-native";
 
 const BLUE = "#0D2B66";
