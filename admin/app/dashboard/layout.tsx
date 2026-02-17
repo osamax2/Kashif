@@ -58,53 +58,108 @@ export default function DashboardLayout({ children }: LayoutProps) {
     router.push('/login');
   };
 
-  // Full navigation for ADMIN - using translations
+  // Grouped navigation for ADMIN
   const adminNavigation = [
-    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
-    { name: t.nav.users, href: '/dashboard/users', icon: Users },
-    { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
-    { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
-    { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
-    { name: isRTL ? 'الشركات' : 'Companies', href: '/dashboard/companies', icon: Building2 },
-    { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
-    { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
-    { name: isRTL ? 'التبرعات' : 'Donations', href: '/dashboard/donations', icon: Heart },
-    { name: isRTL ? 'الملاحظات' : 'Feedback', href: '/dashboard/feedback', icon: MessageSquareText },
-    { name: isRTL ? 'سجل التدقيق' : 'Audit Log', href: '/dashboard/audit-log', icon: Shield },
-    { name: isRTL ? 'مراقبة النظام' : 'Monitoring', href: '/dashboard/monitoring', icon: Activity },
+    {
+      category: null,
+      items: [
+        { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+      ],
+    },
+    {
+      category: isRTL ? 'البلاغات والخريطة' : 'Reports & Map',
+      items: [
+        { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+        { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
+        { name: isRTL ? 'التبرعات' : 'Donations', href: '/dashboard/donations', icon: Heart },
+      ],
+    },
+    {
+      category: isRTL ? 'الأعمال' : 'Business',
+      items: [
+        { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
+        { name: isRTL ? 'الشركات' : 'Companies', href: '/dashboard/companies', icon: Building2 },
+      ],
+    },
+    {
+      category: isRTL ? 'المجتمع' : 'Community',
+      items: [
+        { name: t.nav.users, href: '/dashboard/users', icon: Users },
+        { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
+        { name: isRTL ? 'الملاحظات' : 'Feedback', href: '/dashboard/feedback', icon: MessageSquareText },
+      ],
+    },
+    {
+      category: isRTL ? 'النظام' : 'System',
+      items: [
+        { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+        { name: isRTL ? 'مراقبة النظام' : 'Monitoring', href: '/dashboard/monitoring', icon: Activity },
+        { name: isRTL ? 'سجل التدقيق' : 'Audit Log', href: '/dashboard/audit-log', icon: Shield },
+      ],
+    },
   ];
 
   // Limited navigation for COMPANY role
   const companyNavigation = [
-    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
-    { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
-    { name: isRTL ? 'مسح كوبون' : 'Scan Coupon', href: '/dashboard/scan', icon: QrCode },
-    { name: isRTL ? 'فريق العمل' : 'Team', href: '/dashboard/team', icon: UsersRound },
-    { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+    {
+      category: null,
+      items: [
+        { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+        { name: t.nav.coupons, href: '/dashboard/coupons', icon: Gift },
+        { name: isRTL ? 'مسح كوبون' : 'Scan Coupon', href: '/dashboard/scan', icon: QrCode },
+        { name: isRTL ? 'فريق العمل' : 'Team', href: '/dashboard/team', icon: UsersRound },
+        { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+      ],
+    },
   ];
 
   // Navigation for GOVERNMENT role - Reports and Map only
   const governmentNavigation = [
-    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
-    { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
-    { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
+    {
+      category: null,
+      items: [
+        { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+        { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+        { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
+      ],
+    },
   ];
 
-  // Navigation for MODERATOR role - Dashboard, Users (no delete), Reports
+  // Navigation for MODERATOR role
   const moderatorNavigation = [
-    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
-    { name: t.nav.users, href: '/dashboard/users', icon: Users },
-    { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
-    { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
-    { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+    {
+      category: null,
+      items: [
+        { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+      ],
+    },
+    {
+      category: isRTL ? 'البلاغات' : 'Reports',
+      items: [
+        { name: t.nav.users, href: '/dashboard/users', icon: Users },
+        { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+        { name: isRTL ? 'الخريطة' : 'Map', href: '/dashboard/map', icon: Map },
+      ],
+    },
+    {
+      category: isRTL ? 'النظام' : 'System',
+      items: [
+        { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+      ],
+    },
   ];
 
-  // Navigation for VIEWER role - Dashboard, Users (read-only), Reports (read-only), Analytics
+  // Navigation for VIEWER role
   const viewerNavigation = [
-    { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
-    { name: t.nav.users, href: '/dashboard/users', icon: Users },
-    { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
-    { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+    {
+      category: null,
+      items: [
+        { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+        { name: t.nav.users, href: '/dashboard/users', icon: Users },
+        { name: t.nav.reports, href: '/dashboard/reports', icon: FileText },
+        { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+      ],
+    },
   ];
 
   // Allowed paths for COMPANY users
@@ -180,24 +235,36 @@ export default function DashboardLayout({ children }: LayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    isActive
-                      ? 'bg-yellow text-primary font-semibold'
-                      : 'text-white hover:bg-blue-800'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {navigation.map((group, groupIdx) => (
+              <div key={group.category || 'main'}>
+                {group.category && (
+                  <div className={`${groupIdx > 0 ? 'mt-4' : 'mt-2'} mb-1 px-3`}>
+                    <p className="text-[11px] font-semibold text-blue-300 uppercase tracking-wider">
+                      {group.category}
+                    </p>
+                  </div>
+                )}
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition ${
+                        isActive
+                          ? 'bg-yellow text-primary font-semibold'
+                          : 'text-white hover:bg-blue-800'
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
 
           {/* User Info */}
