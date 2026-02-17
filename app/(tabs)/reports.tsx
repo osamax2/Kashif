@@ -513,9 +513,9 @@ export default function ReportsScreen() {
   return (
     <View style={styles.root}>
       {/* HEADER */}
-      <View style={[styles.header, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
+      <View style={[styles.header, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-          <Ionicons name={effectiveRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
+          <Ionicons name={isRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
         </TouchableOpacity>
 
         <Text numberOfLines={1} style={styles.headerTitle}>
