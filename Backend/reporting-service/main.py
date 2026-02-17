@@ -720,6 +720,100 @@ async def update_repair_cost(
     return {"message": "Repair cost updated", "report_id": report_id, "repair_cost": str(report.repair_cost)}
 
 
+# ════════════════════════════════════════════════════════
+#  IN-APP FEEDBACK  (must be BEFORE /{report_id} catch-all)
+# ════════════════════════════════════════════════════════
+
+@app.post("/feedback", response_model=schemas.FeedbackResponse, status_code=201)
+async def create_feedback(
+    data: schemas.FeedbackCreate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Submit user feedback (authenticated users)."""
+    valid_categories = ["bug", "suggestion", "complaint", "other"]
+    category = data.category if data.category in valid_categories else "other"
+
+    fb = models.Feedback(
+        user_id=user_id,
+        subject=data.subject,
+        message=data.message,
+        category=category,
+    )
+    db.add(fb)
+    db.commit()
+    db.refresh(fb)
+    logger.info(f"Feedback #{fb.id} created by user {user_id}")
+    return fb
+
+
+@app.get("/feedback/my", response_model=List[schemas.FeedbackResponse])
+async def get_my_feedback(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Get all feedback submitted by current user."""
+    items = (
+        db.query(models.Feedback)
+        .filter(models.Feedback.user_id == user_id)
+        .order_by(models.Feedback.created_at.desc())
+        .all()
+    )
+    return items
+
+
+@app.get("/feedback", response_model=List[schemas.FeedbackResponse])
+async def get_all_feedback(
+    current_user: dict = Depends(get_current_user),
+    status_filter: Optional[str] = None,
+    category: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    """Get all feedback (admin only)."""
+    if current_user.get("role") != "ADMIN":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    query = db.query(models.Feedback)
+    if status_filter:
+        query = query.filter(models.Feedback.status == status_filter)
+    if category:
+        query = query.filter(models.Feedback.category == category)
+
+    items = query.order_by(models.Feedback.created_at.desc()).offset(skip).limit(limit).all()
+    return items
+
+
+@app.put("/feedback/{feedback_id}", response_model=schemas.FeedbackResponse)
+async def update_feedback(
+    feedback_id: int,
+    data: schemas.FeedbackUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update feedback status/notes (admin only)."""
+    if current_user.get("role") != "ADMIN":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    fb = db.query(models.Feedback).filter(models.Feedback.id == feedback_id).first()
+    if not fb:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+
+    if data.status:
+        valid_statuses = ["new", "in_progress", "resolved", "dismissed"]
+        if data.status not in valid_statuses:
+            raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+        fb.status = data.status
+    if data.admin_notes is not None:
+        fb.admin_notes = data.admin_notes
+
+    db.commit()
+    db.refresh(fb)
+    logger.info(f"Feedback #{feedback_id} updated by admin {current_user.get('id')}")
+    return fb
+
+
 @app.get("/{report_id}", response_model=schemas.Report)
 async def get_report(
     report_id: int,
@@ -1134,97 +1228,3 @@ def export_user_data(
         "reports": reports_data,
         "confirmations": confirmations_data,
     }
-
-
-# ════════════════════════════════════════════════════════
-#  IN-APP FEEDBACK
-# ════════════════════════════════════════════════════════
-
-@app.post("/feedback", response_model=schemas.FeedbackResponse, status_code=201)
-async def create_feedback(
-    data: schemas.FeedbackCreate,
-    user_id: int = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
-):
-    """Submit user feedback (authenticated users)."""
-    valid_categories = ["bug", "suggestion", "complaint", "other"]
-    category = data.category if data.category in valid_categories else "other"
-
-    fb = models.Feedback(
-        user_id=user_id,
-        subject=data.subject,
-        message=data.message,
-        category=category,
-    )
-    db.add(fb)
-    db.commit()
-    db.refresh(fb)
-    logger.info(f"Feedback #{fb.id} created by user {user_id}")
-    return fb
-
-
-@app.get("/feedback/my", response_model=List[schemas.FeedbackResponse])
-async def get_my_feedback(
-    user_id: int = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
-):
-    """Get all feedback submitted by current user."""
-    items = (
-        db.query(models.Feedback)
-        .filter(models.Feedback.user_id == user_id)
-        .order_by(models.Feedback.created_at.desc())
-        .all()
-    )
-    return items
-
-
-@app.get("/feedback", response_model=List[schemas.FeedbackResponse])
-async def get_all_feedback(
-    current_user: dict = Depends(get_current_user),
-    status_filter: Optional[str] = None,
-    category: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 50,
-    db: Session = Depends(get_db),
-):
-    """Get all feedback (admin only)."""
-    if current_user.get("role") != "ADMIN":
-        raise HTTPException(status_code=403, detail="Admin access required")
-
-    query = db.query(models.Feedback)
-    if status_filter:
-        query = query.filter(models.Feedback.status == status_filter)
-    if category:
-        query = query.filter(models.Feedback.category == category)
-
-    items = query.order_by(models.Feedback.created_at.desc()).offset(skip).limit(limit).all()
-    return items
-
-
-@app.put("/feedback/{feedback_id}", response_model=schemas.FeedbackResponse)
-async def update_feedback(
-    feedback_id: int,
-    data: schemas.FeedbackUpdate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Update feedback status/notes (admin only)."""
-    if current_user.get("role") != "ADMIN":
-        raise HTTPException(status_code=403, detail="Admin access required")
-
-    fb = db.query(models.Feedback).filter(models.Feedback.id == feedback_id).first()
-    if not fb:
-        raise HTTPException(status_code=404, detail="Feedback not found")
-
-    if data.status:
-        valid_statuses = ["new", "in_progress", "resolved", "dismissed"]
-        if data.status not in valid_statuses:
-            raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
-        fb.status = data.status
-    if data.admin_notes is not None:
-        fb.admin_notes = data.admin_notes
-
-    db.commit()
-    db.refresh(fb)
-    logger.info(f"Feedback #{feedback_id} updated by admin {current_user.get('id')}")
-    return fb
