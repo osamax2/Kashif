@@ -39,7 +39,7 @@
     },
     "android": {
       "package": "com.kashifroad.app",
-      "versionCode": 13,
+      "versionCode": 14,
       "usesCleartextTraffic": true,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
