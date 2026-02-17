@@ -1,9 +1,9 @@
 'use client';
 
-import { reportsAPI } from '@/lib/api';
+import { reportsAPI, donationsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
-import { Calendar, CheckSquare, Download, History, MapPin, RotateCcw, Search, Settings, Share2, Square, Trash2 } from 'lucide-react';
+import { Calendar, CheckSquare, DollarSign, Download, History, MapPin, RotateCcw, Search, Settings, Share2, Square, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -137,6 +137,15 @@ export default function ReportsPage() {
   const [bulkComment, setBulkComment] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  // Repair cost state
+  const [showRepairCostModal, setShowRepairCostModal] = useState(false);
+  const [repairCostReport, setRepairCostReport] = useState<Report | null>(null);
+  const [repairCostValue, setRepairCostValue] = useState('');
+  const [repairCostSaving, setRepairCostSaving] = useState(false);
+  const [showBulkRepairCostModal, setShowBulkRepairCostModal] = useState(false);
+  const [bulkRepairCostValue, setBulkRepairCostValue] = useState('');
+  const [bulkRepairCostLoading, setBulkRepairCostLoading] = useState(false);
+
   const toggleSelect = (id: number) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -193,6 +202,44 @@ export default function ReportsPage() {
       alert(isRTL ? 'فشل في الحذف الجماعي' : 'Bulk delete failed');
     } finally {
       setBulkLoading(false);
+    }
+  };
+
+  const handleRepairCostSave = async () => {
+    if (!repairCostReport) return;
+    setRepairCostSaving(true);
+    try {
+      await donationsAPI.updateRepairCost(repairCostReport.id, parseFloat(repairCostValue) || 0);
+      setShowRepairCostModal(false);
+      setRepairCostReport(null);
+      loadData();
+    } catch (error) {
+      console.error('Failed to update repair cost:', error);
+      alert(isRTL ? 'فشل في تحديث تكلفة الإصلاح' : 'Failed to update repair cost');
+    } finally {
+      setRepairCostSaving(false);
+    }
+  };
+
+  const handleBulkRepairCostUpdate = async () => {
+    if (selectedIds.size === 0 || !bulkRepairCostValue) return;
+    setBulkRepairCostLoading(true);
+    try {
+      const cost = parseFloat(bulkRepairCostValue) || 0;
+      const promises = Array.from(selectedIds).map(id =>
+        donationsAPI.updateRepairCost(id, cost)
+      );
+      await Promise.all(promises);
+      alert(isRTL ? `تم تحديث تكلفة الإصلاح لـ ${selectedIds.size} تقرير` : `Repair cost updated for ${selectedIds.size} reports`);
+      setShowBulkRepairCostModal(false);
+      setBulkRepairCostValue('');
+      setSelectedIds(new Set());
+      loadData();
+    } catch (error) {
+      console.error('Bulk repair cost update failed:', error);
+      alert(isRTL ? 'فشل في التحديث الجماعي لتكلفة الإصلاح' : 'Bulk repair cost update failed');
+    } finally {
+      setBulkRepairCostLoading(false);
     }
   };
 
@@ -761,6 +808,17 @@ export default function ReportsPage() {
             {isRTL ? 'حذف المحدد' : 'Delete Selected'}
           </button>
           <button
+            onClick={() => {
+              setBulkRepairCostValue('');
+              setShowBulkRepairCostModal(true);
+            }}
+            disabled={bulkLoading}
+            className="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition disabled:opacity-50 flex items-center gap-1"
+          >
+            <DollarSign className="w-3.5 h-3.5" />
+            {isRTL ? 'تكلفة الإصلاح' : 'Repair Cost'}
+          </button>
+          <button
             onClick={() => setSelectedIds(new Set())}
             className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition"
           >
@@ -923,6 +981,57 @@ export default function ReportsPage() {
               </button>
             </div>
             
+            {/* WhatsApp Share Button */}
+            {/* Repair Cost Section */}
+            <div className={`mt-3 p-2.5 bg-orange-50 border border-orange-200 rounded-lg ${isRTL ? 'text-right' : ''}`}>
+              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <DollarSign className="w-4 h-4 text-orange-600" />
+                  <span className="text-xs font-medium text-orange-800">
+                    {isRTL ? 'تكلفة الإصلاح' : 'Repair Cost'}
+                  </span>
+                </div>
+                <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span className="text-sm font-bold text-orange-700">
+                    ${Number(report.repair_cost || 0).toFixed(2)}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setRepairCostReport(report);
+                      setRepairCostValue(String(Number(report.repair_cost || 0)));
+                      setShowRepairCostModal(true);
+                    }}
+                    className="px-2 py-0.5 bg-orange-200 text-orange-800 rounded text-xs hover:bg-orange-300 transition"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              </div>
+              {Number(report.total_donated || 0) > 0 && (
+                <div className="mt-1.5">
+                  <div className={`flex items-center justify-between text-xs ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <span className="text-green-700">{isRTL ? 'تبرعات' : 'Donated'}: ${Number(report.total_donated || 0).toFixed(2)}</span>
+                    {Number(report.repair_cost || 0) > 0 && (
+                      <span className="text-gray-500">
+                        {Math.min(100, Math.round((Number(report.total_donated || 0) / Number(report.repair_cost || 1)) * 100))}%
+                      </span>
+                    )}
+                  </div>
+                  {Number(report.repair_cost || 0) > 0 && (
+                    <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, (Number(report.total_donated || 0) / Number(report.repair_cost || 1)) * 100)}%`,
+                          backgroundColor: Number(report.total_donated || 0) >= Number(report.repair_cost || 0) ? '#16a34a' : '#f97316',
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* WhatsApp Share Button */}
             <button
               onClick={() => {
@@ -1306,6 +1415,105 @@ export default function ReportsPage() {
                 className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >
                 {t.common.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Repair Cost Edit Modal */}
+      {showRepairCostModal && repairCostReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-lg font-bold text-gray-900 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'تعديل تكلفة الإصلاح' : 'Edit Repair Cost'}
+            </h2>
+            <p className={`text-sm text-gray-500 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              #{repairCostReport.id} - {repairCostReport.title}
+            </p>
+            <div className="mb-4">
+              <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                {isRTL ? 'التكلفة (بالدولار)' : 'Cost (USD)'}
+              </label>
+              <div className="relative">
+                <DollarSign className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 ${isRTL ? 'right-3' : 'left-3'}`} />
+                <input
+                  type="number"
+                  value={repairCostValue}
+                  onChange={(e) => setRepairCostValue(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  className={`w-full py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
+                  placeholder="0.00"
+                  autoFocus
+                />
+              </div>
+              {Number(repairCostReport.total_donated || 0) > 0 && (
+                <p className={`text-xs text-green-600 mt-2 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'إجمالي التبرعات الحالية' : 'Current total donated'}: ${Number(repairCostReport.total_donated || 0).toFixed(2)}
+                </p>
+              )}
+            </div>
+            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => { setShowRepairCostModal(false); setRepairCostReport(null); }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleRepairCostSave}
+                disabled={repairCostSaving}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              >
+                {repairCostSaving ? '...' : (isRTL ? 'حفظ' : 'Save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Repair Cost Modal */}
+      {showBulkRepairCostModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className={`text-lg font-bold text-gray-900 mb-1 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? 'تكلفة إصلاح جماعية' : 'Bulk Repair Cost'}
+            </h2>
+            <p className={`text-sm text-gray-500 mb-4 ${isRTL ? 'text-right' : ''}`}>
+              {isRTL ? `تحديث تكلفة الإصلاح لـ ${selectedIds.size} تقرير` : `Update repair cost for ${selectedIds.size} reports`}
+            </p>
+            <div className="mb-4">
+              <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                {isRTL ? 'التكلفة (بالدولار)' : 'Cost (USD)'}
+              </label>
+              <div className="relative">
+                <DollarSign className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 ${isRTL ? 'right-3' : 'left-3'}`} />
+                <input
+                  type="number"
+                  value={bulkRepairCostValue}
+                  onChange={(e) => setBulkRepairCostValue(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  className={`w-full py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
+                  placeholder="0.00"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => { setShowBulkRepairCostModal(false); setBulkRepairCostValue(''); }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleBulkRepairCostUpdate}
+                disabled={!bulkRepairCostValue || bulkRepairCostLoading}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              >
+                {bulkRepairCostLoading ? '...' : (isRTL ? 'تحديث الكل' : 'Update All')}
               </button>
             </div>
           </div>

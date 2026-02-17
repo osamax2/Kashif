@@ -22,6 +22,7 @@ import {
     Animated,
     FlatList,
     Image,
+    Linking,
     Modal,
     Platform,
     Pressable,
@@ -34,6 +35,7 @@ import {
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import MapView, { Marker } from "react-native-maps";
+import DonationModal from "@/components/DonationModal";
 
 const BLUE = "#0D2B66";
 const CARD_BG = "rgba(255,255,255,0.06)";
@@ -246,6 +248,7 @@ export default function ReportsScreen() {
   const [statusHistory, setStatusHistory] = useState<ReportStatusHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [donationModalVisible, setDonationModalVisible] = useState(false);
 
   const [stats, setStats] = useState({ open: 0, inProgress: 0, resolved: 0 });
 
@@ -876,6 +879,40 @@ export default function ReportsScreen() {
                   </View>
                 )}
 
+                {/* WhatsApp Share Button */}
+                <Pressable
+                  style={styles.whatsappButton}
+                  onPress={() => {
+                    const title = selected.title || getCategoryName(selected.category_id);
+                    const desc = selected.description || '';
+                    const statusText = getStatusName(selected.status_id);
+                    const lat = selected.latitude;
+                    const lng = selected.longitude;
+                    const msg = `🚨 *${language === 'ar' ? 'بلاغ كاشف' : 'Kashif Report'}*\n\n📋 *${language === 'ar' ? 'العنوان' : 'Title'}:* ${title}\n📝 *${language === 'ar' ? 'الوصف' : 'Description'}:* ${desc}\n🔢 *${language === 'ar' ? 'رقم البلاغ' : 'Report #'}:* ${selected.id}\n📌 *${language === 'ar' ? 'الحالة' : 'Status'}:* ${statusText}\n\n📍 *${language === 'ar' ? 'الموقع' : 'Location'}:*\nhttps://www.google.com/maps?q=${lat},${lng}`;
+                    const url = `whatsapp://send?text=${encodeURIComponent(msg)}`;
+                    Linking.openURL(url).catch(() => {
+                      Alert.alert(language === 'ar' ? 'واتساب غير مثبت على هذا الجهاز' : 'WhatsApp is not installed on this device');
+                    });
+                  }}
+                >
+                  <Text style={styles.whatsappButtonText}>
+                    {language === 'ar' ? '📱 مشاركة عبر واتساب' : '📱 Share via WhatsApp'}
+                  </Text>
+                </Pressable>
+
+                {/* Donate Button */}
+                <Pressable
+                  style={styles.donateButton}
+                  onPress={() => {
+                    setDetailVisible(false);
+                    setDonationModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.donateButtonText}>
+                    {language === 'ar' ? '❤️ تبرع' : '❤️ Donate'}
+                  </Text>
+                </Pressable>
+
                 <View style={[styles.modalButtonsRow, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
                   {(selected.confirmation_status === "pending" || selected.confirmation_status === "confirmed") && selected.user_id !== user?.id && (
                     <Pressable
@@ -901,6 +938,18 @@ export default function ReportsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* DONATION MODAL */}
+      <DonationModal
+        visible={donationModalVisible}
+        onClose={() => setDonationModalVisible(false)}
+        report={selected ? {
+          id: selected.id,
+          title: selected.title || getCategoryName(selected.category_id),
+          repair_cost: Number(selected.repair_cost || 0),
+          total_donated: Number(selected.total_donated || 0),
+        } : null}
+      />
     </View>
   );
 }
@@ -1286,6 +1335,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Tajawal-Medium",
     marginTop: 4,
+  },
+
+  whatsappButton: {
+    backgroundColor: "#25D366",
+    paddingVertical: 10,
+    borderRadius: 16,
+    alignItems: "center",
+    marginBottom: 10,
+    flexDirection: "row-reverse",
+    justifyContent: "center",
+    gap: 8,
+  },
+
+  whatsappButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "Tajawal-Bold",
+  },
+
+  donateButton: {
+    backgroundColor: "#E91E63",
+    paddingVertical: 10,
+    borderRadius: 16,
+    alignItems: "center",
+    marginBottom: 10,
+    flexDirection: "row-reverse",
+    justifyContent: "center",
+    gap: 8,
+  },
+
+  donateButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "Tajawal-Bold",
   },
 
   modalButtonsRow: { gap: 10 },

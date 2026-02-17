@@ -573,6 +573,8 @@ export interface Report {
   confirmed_at?: string;
   confirmation_count: number;
   points_awarded: boolean;
+  repair_cost?: number;
+  total_donated?: number;
   created_at: string;
   updated_at?: string;
 }

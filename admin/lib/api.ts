@@ -437,3 +437,16 @@ export const analyticsAPI = {
     return response.data;
   },
 };
+
+// Donations
+export const donationsAPI = {
+  getDonations: async (params?: { report_id?: number; skip?: number; limit?: number }) => {
+    const response = await api.get('/api/reports/donations', { params });
+    return response.data;
+  },
+
+  updateRepairCost: async (reportId: number, repairCost: number) => {
+    const response = await api.patch(`/api/reports/${reportId}/repair-cost`, { repair_cost: repairCost });
+    return response.data;
+  },
+};

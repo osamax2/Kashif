@@ -68,6 +68,8 @@ class ReportBase(BaseModel):
     photo_urls: Optional[str] = None  # JSON string or comma-separated
     ai_annotated_url: Optional[str] = None  # URL to annotated image with bounding boxes
     ai_detections: Optional[str] = None  # JSON string of detection bounding boxes
+    repair_cost: Optional[Decimal] = Decimal('0')
+    total_donated: Optional[Decimal] = Decimal('0')
 
 
 class ReportCreate(ReportBase):
@@ -86,6 +88,7 @@ class ReportUpdate(BaseModel):
     photo_urls: Optional[str] = None
     ai_annotated_url: Optional[str] = None
     ai_detections: Optional[str] = None
+    repair_cost: Optional[Decimal] = None
 
 
 class Report(ReportBase):
@@ -269,3 +272,37 @@ class FeedbackResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ──── Donation Schemas ────
+
+class DonationCreate(BaseModel):
+    report_id: int
+    amount: Decimal
+    currency: Optional[str] = "USD"
+    payment_method: str  # paypal, visa, mastercard, shamcash
+    donor_name: Optional[str] = None
+    donor_message: Optional[str] = None
+
+class DonationResponse(BaseModel):
+    id: int
+    report_id: int
+    user_id: int
+    amount: Decimal
+    currency: str
+    payment_method: str
+    payment_status: str
+    transaction_id: Optional[str] = None
+    donor_name: Optional[str] = None
+    donor_message: Optional[str] = None
+    created_at: datetime
+    # Joined fields
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
+    report_title: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class RepairCostUpdate(BaseModel):
+    repair_cost: Decimal

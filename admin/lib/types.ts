@@ -34,6 +34,8 @@ export interface Report {
   status_id: number;
   user_hide: boolean;
   admin_comment?: string;
+  repair_cost?: number;
+  total_donated?: number;
   created_at: string;
   updated_at?: string;
 }
@@ -108,4 +110,21 @@ export interface BulkOperationResult {
   failed_count: number;
   failed_ids: number[];
   message: string;
+}
+
+export interface Donation {
+  id: number;
+  report_id: number;
+  user_id: number;
+  amount: number;
+  currency: string;
+  payment_method: string;
+  payment_status: string;
+  transaction_id?: string;
+  donor_name?: string;
+  donor_message?: string;
+  user_name?: string;
+  user_email?: string;
+  report_title?: string;
+  created_at: string;
 }
