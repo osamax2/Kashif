@@ -128,3 +128,15 @@ export interface Donation {
   report_title?: string;
   created_at: string;
 }
+
+export interface Feedback {
+  id: number;
+  user_id: number;
+  subject: string;
+  message: string;
+  category: 'bug' | 'suggestion' | 'complaint' | 'other';
+  status: 'new' | 'in_progress' | 'resolved' | 'dismissed';
+  admin_notes?: string;
+  created_at: string;
+  updated_at?: string;
+}

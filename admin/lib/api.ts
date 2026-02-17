@@ -438,6 +438,19 @@ export const analyticsAPI = {
   },
 };
 
+// Feedback
+export const feedbackAPI = {
+  getAll: async (params?: { status_filter?: string; category?: string; skip?: number; limit?: number }) => {
+    const response = await api.get('/api/reports/feedback', { params });
+    return response.data;
+  },
+
+  update: async (feedbackId: number, data: { status?: string; admin_notes?: string }) => {
+    const response = await api.put(`/api/reports/feedback/${feedbackId}`, data);
+    return response.data;
+  },
+};
+
 // Donations
 export const donationsAPI = {
   getDonations: async (params?: { report_id?: number; skip?: number; limit?: number }) => {
