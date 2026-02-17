@@ -1524,65 +1524,43 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
 
             </View>
 
-            {/* FLOATING BUTTON STACK */}
+            {/* FLOATING ACTION BAR */}
             <View
                 style={[
-                    styles.fabStack,
-                    language === 'ar' ? { left: 18 } : { right: 18 },
+                    styles.fabBar,
+                    language === 'ar' ? { left: 14 } : { right: 14 },
                 ]}
             >
-                {/* FAB ANCHOR – relative container for FAB + radial items */}
-                <View style={styles.fabAnchor}>
-                    {/* ADD FAB */}
-                    <TouchableOpacity
-                        style={styles.fab}
-                        onPress={toggleMenu}
-                    >
-                        <Text style={styles.fabPlus}>+</Text>
-                    </TouchableOpacity>
+                {/* REPORT TYPE BUTTONS (appear on menu open) */}
+                {menuOpen && (
+                    <Animated.View style={[styles.fabActions, { transform: [{ scale: scaleAnim }] }]}>
+                        <TouchableOpacity
+                            style={styles.fabActionBtn}
+                            onPress={() => { setReportType("pothole"); setMenuOpen(false); }}
+                        >
+                            <Image source={require("../../assets/icons/pothole.png")} style={styles.fabActionIcon} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.fabActionBtn}
+                            onPress={() => { setReportType("accident"); setMenuOpen(false); }}
+                        >
+                            <Image source={require("../../assets/icons/accident.png")} style={styles.fabActionIcon} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.fabActionBtn}
+                            onPress={() => { setReportType("speed"); setMenuOpen(false); }}
+                        >
+                            <Image source={require("../../assets/icons/speed.png")} style={styles.fabActionIcon} />
+                        </TouchableOpacity>
+                    </Animated.View>
+                )}
 
-                    {/* RADIAL-MENÜ UM DEN FAB */}
-                    {menuOpen &&
-                        menuItems.map((item) => {
-                            const radius = 95;
-                            const rad = (item.angle * Math.PI) / 180;
+                {/* MAIN PLUS FAB */}
+                <TouchableOpacity style={styles.fab} onPress={toggleMenu}>
+                    <Text style={styles.fabPlus}>{menuOpen ? "×" : "+"}</Text>
+                </TouchableOpacity>
 
-                            const dx = Math.cos(rad) * radius;
-                            const dy = Math.sin(rad) * radius;
-
-                            const CENTER = 30; // half of FAB (60 / 2)
-                            const ITEM_HALF = 27.5; // half of circleItem (55 / 2)
-
-                            return (
-                                <Animated.View
-                                    key={item.id}
-                                    style={[
-                                        styles.circleItem,
-                                        {
-                                            transform: [{ scale: scaleAnim }],
-                                            top: CENTER + dy - ITEM_HALF,
-                                            left:
-                                                language === "ar"
-                                                    ? CENTER - dx - ITEM_HALF
-                                                    : CENTER + dx - ITEM_HALF,
-                                        },
-                                    ]}
-                                >
-                                    <Pressable
-                                        onPress={() => {
-                                            setReportType(item.id);
-                                            setMenuOpen(false);
-                                        }}
-                                        style={styles.circlePress}
-                                    >
-                                        <Image source={item.icon} style={{ width: 42, height: 42 }} />
-                                    </Pressable>
-                                </Animated.View>
-                            );
-                        })}
-                </View>
-
-                {/* SOUND BUTTON */}
+                {/* AUDIO BUTTON */}
                 <TouchableOpacity
                     style={styles.soundButton}
                     onPress={() => setAudioVisible(true)}
@@ -2204,22 +2182,36 @@ const styles = StyleSheet.create({
         textShadowRadius: 2,
     },
 
-    fabStack: {
+    fabBar: {
         position: "absolute",
         bottom: 110,
-        zIndex: 50,
+        flexDirection: "row-reverse",
         alignItems: "center",
-        gap: 14,
-        overflow: "visible",
+        zIndex: 1000,
+        gap: 10,
     },
-    fabAnchor: {
-        position: "relative",
-        width: 60,
-        height: 60,
+    fabActions: {
+        flexDirection: "row-reverse",
+        alignItems: "center",
+        gap: 10,
+    },
+    fabActionBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: "#FFFFFF",
         alignItems: "center",
         justifyContent: "center",
-        overflow: "visible",
-        zIndex: 50,
+        elevation: 5,
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+    },
+    fabActionIcon: {
+        width: 26,
+        height: 26,
+        resizeMode: "contain" as const,
     },
     fab: {
         width: 60,
