@@ -611,7 +611,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           style={styles.friendLeaderboardBtn}
-          onPress={() => router.push("/(tabs)/leaderboard")}
+          onPress={() => router.push("/leaderboard")}
         >
           <Ionicons name="trophy" size={18} color="#0D2B66" />
           <Text style={styles.friendLeaderboardText}>{t("profile.friendLeaderboard")}</Text>

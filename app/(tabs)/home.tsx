@@ -822,27 +822,54 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         }
         setRouteLoading(true);
         try {
-            // 1. Get directions from Google
-            const origin = `${userLocation.latitude},${userLocation.longitude}`;
-            const dest = `${destLat},${destLng}`;
-            const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}&key=${GOOGLE_API_KEY}&mode=driving`;
-            
-            console.log('🗺️ Fetching route from Google Directions...');
-            const res = await fetch(url);
+            // 1. Get route from Google Routes API (new)
+            const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+            const requestBody = {
+                origin: {
+                    location: {
+                        latLng: {
+                            latitude: userLocation.latitude,
+                            longitude: userLocation.longitude,
+                        },
+                    },
+                },
+                destination: {
+                    location: {
+                        latLng: {
+                            latitude: destLat,
+                            longitude: destLng,
+                        },
+                    },
+                },
+                travelMode: 'DRIVE',
+                routingPreference: 'TRAFFIC_AWARE',
+                computeAlternativeRoutes: false,
+                languageCode: language === 'ar' ? 'ar' : language === 'ku' ? 'ku' : 'en',
+            };
+
+            console.log('Fetching route from Google Routes API...');
+            const res = await fetch(routesUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Goog-Api-Key': GOOGLE_API_KEY,
+                    'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+                },
+                body: JSON.stringify(requestBody),
+            });
             const data = await res.json();
-            
-            console.log('🗺️ Directions API status:', data.status);
-            
-            if (data.status !== 'OK' || !data.routes?.length) {
-                console.warn('No route found, status:', data.status, data.error_message);
-                // Show route line directly from user to destination as fallback
+
+            console.log('Routes API response status:', res.status);
+
+            if (!res.ok || !data.routes?.length) {
+                console.warn('No route found:', data.error?.message || 'unknown error');
+                // Fallback: direct line from user to destination
                 const directLine = [
                     { latitude: userLocation.latitude, longitude: userLocation.longitude },
                     { latitude: destLat, longitude: destLng },
                 ];
                 setRouteCoords(directLine);
-                
-                // Fit map to show both points
+
                 if (mapRef.current) {
                     mapRef.current.fitToCoordinates(directLine, {
                         edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
@@ -852,12 +879,13 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 setRouteLoading(false);
                 return;
             }
-            
-            // 2. Decode polyline
-            const points = decodePolyline(data.routes[0].overview_polyline.points);
+
+            // 2. Decode polyline from Google Routes API response
+            const encodedPolyline = data.routes[0].polyline.encodedPolyline;
+            const points = decodePolyline(encodedPolyline);
             setRouteCoords(points);
-            console.log(`✅ Route decoded: ${points.length} points`);
-            
+            console.log(`Route decoded: ${points.length} points, distance: ${data.routes[0].distanceMeters}m, duration: ${data.routes[0].duration}`);
+
             // 3. Fit map to show entire route
             if (mapRef.current && points.length > 1) {
                 mapRef.current.fitToCoordinates(points, {
@@ -865,16 +893,16 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     animated: true,
                 });
             }
-            
+
             // 4. Sample waypoints for the backend query (every ~500m, max 100 points)
             const sampled = sampleWaypoints(points, 100);
-            
+
             // 5. Fetch hazards along route (non-blocking - route shows even if this fails)
             try {
                 const routeData = await reportingAPI.getReportsAlongRoute(sampled, 200);
                 setRouteHazards(routeData.reports);
                 setRouteSummary(routeData.summary);
-                
+
                 // 6. Speak summary
                 if (routeData.total_hazards > 0 && soundEnabled) {
                     const msg = language === 'ar'
@@ -883,7 +911,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
                 }
             } catch (hazardErr) {
-                console.warn('⚠️ Failed to fetch route hazards (route still shown):', hazardErr);
+                console.warn('Failed to fetch route hazards (route still shown):', hazardErr);
             }
         } catch (err) {
             console.error('Route error:', err);
@@ -1077,11 +1105,15 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         updateMonitoring();
     }, [warnPothole, warnAccident, warnSpeed]);
 
-    // Position des FAB (für Icons)
-    const [fabPos, setFabPos] = useState({ x: 0, y: 0 });
-    const onFabLayout = (e: any) => {
-        const { x, y } = e.nativeEvent.layout;
-        setFabPos({ x, y });
+    // Position des FAB (für Icons) – absolute Bildschirmkoordinaten
+    const fabRef = useRef<any>(null);
+    const [fabPos, setFabPos] = useState({ x: 0, y: 0, w: 0, h: 0 });
+    const onFabLayout = () => {
+        if (fabRef.current) {
+            fabRef.current.measureInWindow((x: number, y: number, w: number, h: number) => {
+                if (x != null && y != null) setFabPos({ x, y, w, h });
+            });
+        }
     };
 
     // Menu items for the radial menu
@@ -1091,17 +1123,17 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         {
             id: "pothole",
             icon: require("../../assets/icons/pothole.png"),
-            offset: { top: 180, left: -190, right: 120 },
+            offset: { dy: -70, dx: -75 },
         },
         {
             id: "accident",
             icon: require("../../assets/icons/accident.png"),
-            offset: { top: 120, left: -220, right: 150 },
+            offset: { dy: -5, dx: -75 },
         },
         {
             id: "speed",
             icon: require("../../assets/icons/speed.png"),
-            offset: { top: 240, left: -220, right: 150 },
+            offset: { dy: -70, dx: -150 },
         },
     ] as const;
 
@@ -1494,42 +1526,44 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     )}
                 </MapView>
 
-                {/* FAB */}
+            </View>
+
+            {/* FLOATING BUTTON STACK */}
+            <View
+                style={[
+                    styles.fabStack,
+                    language === 'ar' ? { left: 18 } : { right: 18 },
+                ]}
+            >
+                {/* ADD FAB */}
                 <TouchableOpacity
-                    style={[
-                        styles.fab,
-                        // For Arabic (RTL), button on left. For English (LTR), button on right
-                        language === 'ar' ? { left: 15 } : { right: 15, left: undefined }
-                    ]}
+                    ref={fabRef}
+                    style={styles.fab}
                     onPress={toggleMenu}
                     onLayout={onFabLayout}
                 >
                     <Text style={styles.fabPlus}>+</Text>
                 </TouchableOpacity>
-            </View>
-            {/* SOUND BUTTON */}
-            <TouchableOpacity
-                style={[
-                    styles.soundButton,
-                    // For Arabic (RTL), button on left. For English (LTR), button on right
-                    language === 'ar' ? { left: 22 } : { right: 22, left: undefined }
-                ]}
-                onPress={() => setAudioVisible(true)}
-            >
-                <Ionicons name="volume-high" style={styles.soundIcon} />
-            </TouchableOpacity>
 
-            {/* HEATMAP TOGGLE BUTTON - under audio button */}
-            <TouchableOpacity
-                style={[
-                    styles.heatmapButton,
-                    language === 'ar' ? { left: 22 } : { right: 22, left: undefined },
-                    heatmapEnabled && styles.heatmapButtonActive,
-                ]}
-                onPress={() => setHeatmapEnabled(!heatmapEnabled)}
-            >
-                <Ionicons name={heatmapEnabled ? "flame" : "flame-outline"} size={22} color={heatmapEnabled ? "#fff" : "#0D2B66"} />
-            </TouchableOpacity>
+                {/* SOUND BUTTON */}
+                <TouchableOpacity
+                    style={styles.soundButton}
+                    onPress={() => setAudioVisible(true)}
+                >
+                    <Ionicons name="volume-high" style={styles.soundIcon} />
+                </TouchableOpacity>
+
+                {/* HEATMAP TOGGLE BUTTON */}
+                <TouchableOpacity
+                    style={[
+                        styles.heatmapButton,
+                        heatmapEnabled && styles.heatmapButtonActive,
+                    ]}
+                    onPress={() => setHeatmapEnabled(!heatmapEnabled)}
+                >
+                    <Ionicons name={heatmapEnabled ? "flame" : "flame-outline"} size={22} color={heatmapEnabled ? "#fff" : "#0D2B66"} />
+                </TouchableOpacity>
+            </View>
 
             {/* ROUTE LOADING INDICATOR */}
             {routeLoading && (
@@ -1592,12 +1626,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             styles.circleItem,
                             {
                                 transform: [{ scale: scaleAnim }],
-                                top: fabPos.y + item.offset.top,
-                                // For Arabic, use left positioning. For English, use right positioning
-                                ...(language === 'ar' 
-                                    ? { left: fabPos.x + item.offset.left }
-                                    : { right: item.offset.right }
-                                ),
+                                top: fabPos.y + item.offset.dy,
+                                left: fabPos.x + item.offset.dx,
                             },
                         ]}
                     >
@@ -2102,17 +2132,25 @@ const styles = StyleSheet.create({
         textShadowRadius: 2,
     },
 
-    fab: {
+    fabStack: {
         position: "absolute",
-        bottom: 90,
-        // left/right is set dynamically based on language
-        width: 56,
-        height: 56,
+        bottom: 110,
+        zIndex: 50,
+        alignItems: "center",
+        gap: 14,
+    },
+    fab: {
+        width: 60,
+        height: 60,
         borderRadius: 30,
         backgroundColor: "#F4B400",
         alignItems: "center",
         justifyContent: "center",
-        elevation: 6,
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
     },
     fabPlus: { color: BLUE, fontSize: 36, marginTop: -2 },
 
@@ -2190,13 +2228,10 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     soundButton: {
-        position: "absolute",
-        bottom: 220,
-        // left/right is set dynamically based on language
-        width: 54,
-        height: 54,
+        width: 50,
+        height: 50,
         backgroundColor: "#F4B400",
-        borderRadius: 27,
+        borderRadius: 25,
         alignItems: "center",
         justifyContent: "center",
         elevation: 6,
@@ -2210,12 +2245,10 @@ soundIcon: {
     color: "#0D2B66",               // dunkelblau
 },
     heatmapButton: {
-        position: "absolute",
-        bottom: 155,
-        width: 48,
-        height: 48,
+        width: 46,
+        height: 46,
         backgroundColor: "#fff",
-        borderRadius: 24,
+        borderRadius: 23,
         alignItems: "center",
         justifyContent: "center",
         elevation: 6,
