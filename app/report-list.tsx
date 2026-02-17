@@ -1,4 +1,5 @@
 // app/(tabs)/reports.tsx
+import DonationModal from "@/components/DonationModal";
 import Header from "@/components/Header";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "expo-router";
@@ -139,6 +140,7 @@ export default function ReportsScreen() {
     const [reports, setReports] = useState(INITIAL_DATA);
     const [selected, setSelected] = useState<any | null>(null);
     const [detailVisible, setDetailVisible] = useState(false);
+    const [donationModalVisible, setDonationModalVisible] = useState(false);
 
     const openDetails = (report: any) => {
         setSelected(report);
@@ -288,6 +290,17 @@ export default function ReportsScreen() {
                                     <Text style={styles.whatsappButtonText}>📤 مشاركة عبر واتساب</Text>
                                 </Pressable>
 
+                                {/* Donate Button */}
+                                <Pressable
+                                    style={styles.donateButton}
+                                    onPress={() => {
+                                        setDetailVisible(false);
+                                        setDonationModalVisible(true);
+                                    }}
+                                >
+                                    <Text style={styles.donateButtonText}>❤️ تبرع</Text>
+                                </Pressable>
+
                                 {/* Close Button */}
                                 <Pressable style={styles.modalButton} onPress={closeDetails}>
                                     <Text style={styles.modalButtonText}>إغلاق</Text>
@@ -298,6 +311,18 @@ export default function ReportsScreen() {
                     </ScrollView>
                 </View>
             </Modal>
+
+            {/* DONATION MODAL */}
+            <DonationModal
+                visible={donationModalVisible}
+                onClose={() => setDonationModalVisible(false)}
+                report={selected ? {
+                    id: selected.id,
+                    title: selected.title,
+                    repair_cost: selected.repair_cost,
+                    total_donated: selected.total_donated,
+                } : null}
+            />
         </View>
     );
 }
@@ -600,6 +625,23 @@ const styles = StyleSheet.create({
     },
 
     whatsappButtonText: {
+        color: "#fff",
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+    },
+
+    donateButton: {
+        backgroundColor: "#E91E63",
+        paddingVertical: 10,
+        borderRadius: 16,
+        alignItems: "center",
+        marginBottom: 10,
+        flexDirection: "row-reverse",
+        justifyContent: "center",
+        gap: 8,
+    },
+
+    donateButtonText: {
         color: "#fff",
         fontSize: 18,
         fontFamily: "Tajawal-Bold",

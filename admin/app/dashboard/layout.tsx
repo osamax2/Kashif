@@ -10,6 +10,7 @@ import {
     Building2,
     FileText,
     Gift,
+    Heart,
     LayoutDashboard,
     LogOut,
     Map,
@@ -66,6 +67,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: isRTL ? 'الشركات' : 'Companies', href: '/dashboard/companies', icon: Building2 },
     { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
     { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
+    { name: isRTL ? 'التبرعات' : 'Donations', href: '/dashboard/donations', icon: Heart },
     { name: isRTL ? 'سجل التدقيق' : 'Audit Log', href: '/dashboard/audit-log', icon: Shield },
     { name: isRTL ? 'مراقبة النظام' : 'Monitoring', href: '/dashboard/monitoring', icon: Activity },
   ];

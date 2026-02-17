@@ -1,4 +1,5 @@
 // app/(tabs)/home.tsx
+import DonationModal from "@/components/DonationModal";
 import OnboardingTutorial, { shouldShowOnboarding } from "@/components/OnboardingTutorial";
 import ReportDialog from "@/components/ReportDialog";
 import { useAuth } from "@/contexts/AuthContext";
@@ -168,6 +169,12 @@ export default function HomeScreen() {
 
     // ─── HEATMAP STATE ─────────────────────────────────────────────────
     const [heatmapEnabled, setHeatmapEnabled] = useState(false);
+    // ────────────────────────────────────────────────────────────────────
+
+    // ─── DONATION STATE ────────────────────────────────────────────────
+    const [selectedReportForDonation, setSelectedReportForDonation] = useState<Report | null>(null);
+    const [donationModalVisible, setDonationModalVisible] = useState(false);
+    const [markerDetailVisible, setMarkerDetailVisible] = useState(false);
     // ────────────────────────────────────────────────────────────────────
 
 const [audioVisible, setAudioVisible] = useState(false);
@@ -1453,8 +1460,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                         latitude: lat,
                                         longitude: lng,
                                     }}
-                                    title={report.title || categories.find(c => c.id === report.category_id)?.name || (language === 'ar' ? 'بلاغ' : 'Report')}
-                                    description={report.description}
+                                    onPress={() => {
+                                        setSelectedReportForDonation(report);
+                                        setMarkerDetailVisible(true);
+                                    }}
                                     tracksViewChanges={false}
                                 >
                                     <View style={[styles.marker, { backgroundColor: categoryColor }]}>
@@ -1542,6 +1551,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             const dy = Math.sin(rad) * radius;
 
                             const CENTER = 30; // half of FAB (60 / 2)
+                            const ITEM_HALF = 27.5; // half of circleItem (55 / 2)
 
                             return (
                                 <Animated.View
@@ -1550,11 +1560,11 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                         styles.circleItem,
                                         {
                                             transform: [{ scale: scaleAnim }],
-                                            top: CENTER + dy - 27.5,
+                                            top: CENTER + dy - ITEM_HALF,
                                             left:
                                                 language === "ar"
-                                                    ? CENTER + Math.abs(dx) - 27.5
-                                                    : CENTER - Math.abs(dx) - 27.5,
+                                                    ? CENTER - dx - ITEM_HALF
+                                                    : CENTER + dx - ITEM_HALF,
                                         },
                                     ]}
                                 >
@@ -2007,6 +2017,62 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     </Animated.View>
   </View>
 )}
+
+            {/* MARKER DETAIL BOTTOM SHEET */}
+            {markerDetailVisible && selectedReportForDonation && (
+                <View style={styles.markerDetailOverlay}>
+                    <TouchableOpacity 
+                        style={styles.markerDetailBackdrop} 
+                        activeOpacity={1} 
+                        onPress={() => setMarkerDetailVisible(false)} 
+                    />
+                    <View style={styles.markerDetailSheet}>
+                        <View style={styles.markerDetailHandle} />
+                        <Text style={styles.markerDetailTitle}>
+                            {selectedReportForDonation.title || categories.find(c => c.id === selectedReportForDonation.category_id)?.name || (language === 'ar' ? 'بلاغ' : 'Report')}
+                        </Text>
+                        {selectedReportForDonation.description ? (
+                            <Text style={styles.markerDetailDesc} numberOfLines={3}>
+                                {selectedReportForDonation.description}
+                            </Text>
+                        ) : null}
+                        <View style={styles.markerDetailActions}>
+                            <TouchableOpacity
+                                style={styles.markerDetailDonateBtn}
+                                onPress={() => {
+                                    setMarkerDetailVisible(false);
+                                    setDonationModalVisible(true);
+                                }}
+                            >
+                                <Ionicons name="heart" size={18} color="#fff" />
+                                <Text style={styles.markerDetailDonateTxt}>
+                                    {language === 'ar' ? 'تبرع' : 'Donate'}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.markerDetailCloseBtn}
+                                onPress={() => setMarkerDetailVisible(false)}
+                            >
+                                <Text style={styles.markerDetailCloseTxt}>
+                                    {language === 'ar' ? 'إغلاق' : 'Close'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            )}
+
+            {/* DONATION MODAL */}
+            <DonationModal
+                visible={donationModalVisible}
+                onClose={() => setDonationModalVisible(false)}
+                report={selectedReportForDonation ? {
+                    id: selectedReportForDonation.id,
+                    title: selectedReportForDonation.title,
+                    repair_cost: (selectedReportForDonation as any).repair_cost,
+                    total_donated: (selectedReportForDonation as any).total_donated,
+                } : null}
+            />
 
     </View>
 )}
@@ -2565,6 +2631,80 @@ modeIconCircle: {
     justifyContent: "center",
     alignItems: "center",
     marginBottom: -13,
+},
+
+// ─── MARKER DETAIL BOTTOM SHEET ──────────────────────────────────
+markerDetailOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 9999,
+    justifyContent: 'flex-end',
+},
+markerDetailBackdrop: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+},
+markerDetailSheet: {
+    backgroundColor: '#1a1a2e',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 30,
+},
+markerDetailHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    alignSelf: 'center',
+    marginBottom: 16,
+},
+markerDetailTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontFamily: 'Tajawal-Bold',
+    textAlign: 'center',
+    marginBottom: 8,
+},
+markerDetailDesc: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    fontFamily: 'Tajawal-Regular',
+    textAlign: 'center',
+    marginBottom: 16,
+},
+markerDetailActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 8,
+},
+markerDetailDonateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E91E63',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+},
+markerDetailDonateTxt: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Tajawal-Bold',
+},
+markerDetailCloseBtn: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+},
+markerDetailCloseTxt: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Tajawal-Medium',
 },
 
 });

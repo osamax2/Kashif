@@ -77,6 +77,9 @@ class Report(Base):
     points_awarded = Column(Boolean, default=False, nullable=False)  # Whether points have been awarded
     created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Repair cost & donations
+    repair_cost = Column(Numeric(10, 2), default=0, nullable=False)  # Cost to repair in USD
+    total_donated = Column(Numeric(10, 2), default=0, nullable=False)  # Total donated so far
     # Soft delete
     deleted_at = Column(DateTime, nullable=True, index=True)  # When the report was soft-deleted
 
@@ -85,6 +88,7 @@ class Report(Base):
     severity = relationship("Severity", back_populates="reports")
     status_history = relationship("ReportStatusHistory", back_populates="report")
     confirmations = relationship("ReportConfirmation", back_populates="report")
+    donations = relationship("Donation", back_populates="report")
 
 
 class ReportStatusHistory(Base):
@@ -117,6 +121,25 @@ class ReportConfirmation(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     report = relationship("Report", back_populates="confirmations")
+
+
+class Donation(Base):
+    """Tracks community donations for report repairs"""
+    __tablename__ = "donations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    amount = Column(Numeric(10, 2), nullable=False)
+    currency = Column(String(10), default="USD", nullable=False)
+    payment_method = Column(String(30), nullable=False)  # paypal, visa, mastercard, shamcash
+    payment_status = Column(String(20), default="pending", nullable=False)  # pending, completed, failed, refunded
+    transaction_id = Column(String(255), nullable=True)
+    donor_name = Column(String(255), nullable=True)  # optional display name
+    donor_message = Column(Text, nullable=True)  # optional message
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    report = relationship("Report", back_populates="donations")
 
 
 class FeedbackCategory(enum.Enum):

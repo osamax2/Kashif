@@ -420,6 +420,8 @@ async def get_reports(
             "updated_at": report.updated_at,
             "ai_annotated_url": report.ai_annotated_url,
             "ai_detections": report.ai_detections,
+            "repair_cost": report.repair_cost,
+            "total_donated": report.total_donated,
             "user_name": None,
             "user_phone": None,
             "user_email": None,
@@ -586,6 +588,136 @@ async def get_my_reports(
     """Get current user's reports"""
     reports = crud.get_user_reports(db=db, user_id=user_id, skip=skip, limit=limit)
     return reports
+
+
+# ──── DONATION ENDPOINTS ────
+
+@app.post("/donations", response_model=schemas.DonationResponse)
+async def create_donation(
+    data: schemas.DonationCreate,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Create a donation for a report (payment is disabled, records intent)."""
+    report = db.query(models.Report).filter(
+        models.Report.id == data.report_id,
+        models.Report.deleted_at == None
+    ).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    valid_methods = ["paypal", "visa", "mastercard", "shamcash"]
+    if data.payment_method not in valid_methods:
+        raise HTTPException(status_code=400, detail=f"Invalid payment method. Must be one of: {valid_methods}")
+
+    donation = models.Donation(
+        report_id=data.report_id,
+        user_id=user_id,
+        amount=data.amount,
+        currency=data.currency or "USD",
+        payment_method=data.payment_method,
+        payment_status="pending",  # Always pending since payments are disabled
+        donor_name=data.donor_name,
+        donor_message=data.donor_message,
+    )
+    db.add(donation)
+
+    # Update total_donated on the report
+    report.total_donated = float(report.total_donated or 0) + float(data.amount)
+    db.commit()
+    db.refresh(donation)
+
+    # Enrich with user info
+    user_info = auth_client.get_user_by_id(user_id)
+    result = schemas.DonationResponse(
+        id=donation.id,
+        report_id=donation.report_id,
+        user_id=donation.user_id,
+        amount=donation.amount,
+        currency=donation.currency,
+        payment_method=donation.payment_method,
+        payment_status=donation.payment_status,
+        transaction_id=donation.transaction_id,
+        donor_name=donation.donor_name,
+        donor_message=donation.donor_message,
+        created_at=donation.created_at,
+        user_name=user_info.get("full_name") if user_info else None,
+        user_email=user_info.get("email") if user_info else None,
+        report_title=report.title,
+    )
+
+    logger.info(f"Donation #{donation.id} created: ${data.amount} for report #{data.report_id} by user #{user_id}")
+    return result
+
+
+@app.get("/donations", response_model=List[schemas.DonationResponse])
+async def get_donations(
+    report_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get all donations (admin) or donations for a specific report."""
+    query = db.query(models.Donation)
+    if report_id:
+        query = query.filter(models.Donation.report_id == report_id)
+
+    donations = query.order_by(models.Donation.created_at.desc()).offset(skip).limit(limit).all()
+
+    results = []
+    # Cache user lookups
+    user_cache = {}
+    for d in donations:
+        if d.user_id not in user_cache:
+            user_info = auth_client.get_user_by_id(d.user_id)
+            user_cache[d.user_id] = user_info or {}
+        user_info = user_cache[d.user_id]
+
+        report = db.query(models.Report).filter(models.Report.id == d.report_id).first()
+        results.append(schemas.DonationResponse(
+            id=d.id,
+            report_id=d.report_id,
+            user_id=d.user_id,
+            amount=d.amount,
+            currency=d.currency,
+            payment_method=d.payment_method,
+            payment_status=d.payment_status,
+            transaction_id=d.transaction_id,
+            donor_name=d.donor_name,
+            donor_message=d.donor_message,
+            created_at=d.created_at,
+            user_name=user_info.get("full_name"),
+            user_email=user_info.get("email"),
+            report_title=report.title if report else None,
+        ))
+
+    return results
+
+
+@app.patch("/{report_id}/repair-cost")
+async def update_repair_cost(
+    report_id: int,
+    data: schemas.RepairCostUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update repair cost for a report (admin only)."""
+    if current_user.get("role") != "ADMIN":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    report = db.query(models.Report).filter(
+        models.Report.id == report_id,
+        models.Report.deleted_at == None
+    ).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    report.repair_cost = data.repair_cost
+    db.commit()
+    db.refresh(report)
+    logger.info(f"Report #{report_id} repair cost updated to ${data.repair_cost} by admin #{current_user.get('id')}")
+    return {"message": "Repair cost updated", "report_id": report_id, "repair_cost": str(report.repair_cost)}
 
 
 @app.get("/{report_id}", response_model=schemas.Report)
