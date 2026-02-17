@@ -513,23 +513,35 @@ export default function ReportsScreen() {
   return (
     <View style={styles.root}>
       {/* HEADER */}
-      <View style={[styles.header, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-          <Ionicons name={isRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
+      <View style={[styles.header, { flexDirection: "row" }]}>
+        {/* LEFT */}
+        <TouchableOpacity
+          onPress={isRTL ? () => router.back() : () => router.push("/notifications")}
+          style={isRTL ? styles.iconBtn : styles.bellBtn}
+          activeOpacity={0.85}
+        >
+          <Ionicons
+            name={isRTL ? "chevron-forward" : "notifications"}
+            size={isRTL ? 30 : 22}
+            color={isRTL ? YELLOW : BLUE}
+          />
         </TouchableOpacity>
 
         <Text numberOfLines={1} style={styles.headerTitle}>
           {t("reports.title")}
         </Text>
 
+        {/* RIGHT */}
         <TouchableOpacity
-          style={styles.bellBtn}
+          onPress={isRTL ? () => router.push("/notifications") : () => router.back()}
+          style={isRTL ? styles.bellBtn : styles.iconBtn}
           activeOpacity={0.85}
-          onPress={() => router.push("/notifications")}
-          accessibilityLabel="فتح الإشعارات"
-          accessibilityRole="button"
         >
-          <Ionicons name="notifications" size={22} color={BLUE} />
+          <Ionicons
+            name={isRTL ? "notifications" : "chevron-forward"}
+            size={isRTL ? 22 : 30}
+            color={isRTL ? BLUE : YELLOW}
+          />
         </TouchableOpacity>
       </View>
 
