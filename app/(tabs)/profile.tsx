@@ -391,19 +391,33 @@ export default function ProfileScreen() {
         </View>
       </Modal>
       {/* HEADER */}
-      <View style={[styles.header, { marginTop: 40, flexDirection: isRTL ? "row-reverse" : "row" }]}>
-
-
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-          <Ionicons name={isRTL ? "chevron-forward" : "chevron-back"} size={30} color={YELLOW} />
+      <View style={[styles.header, { marginTop: 40, flexDirection: "row" }]}>
+        {/* LEFT */}
+        <TouchableOpacity
+          onPress={isRTL ? () => router.back() : () => router.push("/settings")}
+          style={styles.iconBtn}
+        >
+          <Ionicons
+            name={isRTL ? "chevron-forward" : "settings-sharp"}
+            size={isRTL ? 30 : 28}
+            color={YELLOW}
+          />
         </TouchableOpacity>
 
         <Text numberOfLines={1} style={styles.headerTitle}>
           {t("profile.title")}
         </Text>
 
-        <TouchableOpacity onPress={() => router.push("/settings")} style={styles.iconBtn}>
-          <Ionicons name="settings-sharp" size={28} color={YELLOW} />
+        {/* RIGHT */}
+        <TouchableOpacity
+          onPress={isRTL ? () => router.push("/settings") : () => router.back()}
+          style={styles.iconBtn}
+        >
+          <Ionicons
+            name={isRTL ? "settings-sharp" : "chevron-forward"}
+            size={isRTL ? 28 : 30}
+            color={YELLOW}
+          />
         </TouchableOpacity>
       </View>
 

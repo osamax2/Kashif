@@ -1203,197 +1203,15 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             {showOnboarding && (
                 <OnboardingTutorial onComplete={handleOnboardingComplete} />
             )}
-            
-            {/* HEADER */}
-            <TouchableWithoutFeedback onPress={dismissSearchAndKeyboard}>
-                <View style={styles.appbar}>
-                    <Text style={styles.title}>{t('home.title')}</Text>
-                </View>
-            </TouchableWithoutFeedback>
 
-            {/* SUCHE */}
-            <View style={styles.searchContainer}>
-                <GooglePlacesAutocomplete
-                    ref={googlePlacesRef}
-                    placeholder={language === 'ar' ? 'ابحث عن موقع أو شارع' : 'Search for location or street'}
-                    minLength={2}
-                    debounce={400}
-                    fetchDetails={true}
-                    onPress={(data, details = null) => {
-                        console.log('🔍 ===== SEARCH PRESS EVENT =====');
-                        console.log('🔍 Description:', data.description);
-                        console.log('🔍 Place ID:', data.place_id);
-
-                        const description = data.description ?? '';
-
-                        setSearchText(description);
-                        setForceHideSuggestions(true);
-
-                        if (googlePlacesRef.current?.setAddressText) {
-                            googlePlacesRef.current.setAddressText(description);
-                        }
-
-                        googlePlacesRef.current?.blur?.();
-                        Keyboard.dismiss();
-
-                        if (details?.geometry?.location) {
-                            const { lat, lng } = details.geometry.location;
-                            lastSelectedCoords.current = {
-                                latitude: lat,
-                                longitude: lng,
-                                title: description,
-                            };
-                            console.log('🧭 Coordinates received:', { lat, lng });
-                            navigateToPlace(lat, lng, description);
-                        } else {
-                            lastSelectedCoords.current = null;
-                            console.warn('⚠️ No geometry details returned for selected place');
-                        }
-                    }}
-                    onFail={(error) => {
-                        console.error('❌ Places API Error:', error);
-                    }}
-                    query={{
-                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-                        language: language,
-                    }}
-                    enablePoweredByContainer={false}
-                    keepResultsAfterBlur={false}
-                    listViewDisplayed={forceHideSuggestions ? false : undefined}
-                    styles={PLACES_AUTOCOMPLETE_STYLES}
-                    textInputProps={{
-                        placeholderTextColor: '#D3DDF1',
-                        returnKeyType: 'search',
-                        value: searchText,
-                        onChangeText: (text: string) => {
-                            setSearchText(text);
-                            setForceHideSuggestions(false);
-                        },
-                        onFocus: () => {
-                            setForceHideSuggestions(false);
-                        },
-                        onSubmitEditing: () => {
-                            console.log('⏎ ENTER/SEARCH pressed');
-                            setForceHideSuggestions(true);
-                            Keyboard.dismiss();
-                            
-                            const coords = lastSelectedCoords.current;
-                            if (coords) {
-                                console.log('🗺️ Navigating to saved coordinates:', coords);
-                                navigateToPlace(
-                                    coords.latitude,
-                                    coords.longitude,
-                                    coords.title
-                                );
-                            } else if (searchText && searchText.trim().length >= 2) {
-                                // No coordinates from autocomplete - use Geocoding API fallback
-                                console.log('🔄 No autocomplete selection, using Geocoding API for:', searchText);
-                                searchWithGeocoding(searchText);
-                            } else {
-                                console.log('⚠️ No coordinates and search text too short');
-                            }
-                        },
-                    }}
-                    renderRightButton={() => (
-                        <TouchableOpacity 
-                            style={styles.searchIconContainer}
-                            onPress={() => {
-                                // Trigger search when icon is pressed
-                                setForceHideSuggestions(true);
-                                Keyboard.dismiss();
-                                
-                                const coords = lastSelectedCoords.current;
-                                if (coords) {
-                                    navigateToPlace(coords.latitude, coords.longitude, coords.title);
-                                } else if (searchText && searchText.trim().length >= 2) {
-                                    searchWithGeocoding(searchText);
-                                }
-                            }}
-                        >
-                            <Text style={styles.searchIcon}>🔍</Text>
-                        </TouchableOpacity>
-                    )}
-                />
-            </View>
-
-            {/* FILTER-LEISTE (ALLE KATEGORIEN, HORIZONTAL SCROLLBAR, MULTI-SELECT) */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoriesRow}
-                style={styles.categoriesScroll}
-            >
-                {/* "All" button to reset filters */}
-                <TouchableOpacity
-                    style={[
-                        styles.categoryItem,
-                        activeFilters.length === 0 && styles.categoryItemActive,
-                    ]}
-                    onPress={() => {
-                        dismissSearchAndKeyboard();
-                        setActiveFilters([]);
-                    }}
-                >
-                    <Text
-                        style={[
-                            styles.categoryText,
-                            activeFilters.length === 0 && styles.categoryTextActive,
-                        ]}
-                    >
-                        {language === 'ar' ? 'الكل' : 'All'}
-                    </Text>
-                </TouchableOpacity>
-
-                {categories.map((category) => {
-                    const isActive = activeFilters.includes(category.id);
-                    const color = getCategoryColor(category.id);
-                    
-                    // Display name based on current language
-                    const displayName = language === 'ar'
-                        ? (category.name_ar || category.name)
-                        : (category.name_en || category.name);
-                    
-                    return (
-                        <TouchableOpacity
-                            key={category.id}
-                            style={[
-                                styles.categoryItem,
-                                isActive && styles.categoryItemActive,
-                            ]}
-                            onPress={() => {
-                                dismissSearchAndKeyboard();
-                                toggleFilter(category.id);
-                            }}
-                        >
-                            <View
-                                style={[
-                                    styles.dot,
-                                    { backgroundColor: color },
-                                    isActive && styles.dotActive,
-                                ]}
-                            />
-                            <Text
-                                style={[
-                                    styles.categoryText,
-                                    isActive && styles.categoryTextActive,
-                                ]}
-                                numberOfLines={1}
-                            >
-                                {displayName}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </ScrollView>
-
-            {/* KARTE */}
+            {/* MAP – fullscreen background */}
             <View style={styles.mapContainer}>
                 <MapView
                     ref={mapRef}
                     style={StyleSheet.absoluteFill}
                     initialRegion={mapRegion}
                     showsUserLocation={true}
-                    showsMyLocationButton={true}
+                    showsMyLocationButton={false}
                     onPress={dismissSearchAndKeyboard}
                     onPanDrag={dismissSearchAndKeyboard}
                     onLongPress={handleMapLongPress}
@@ -1554,14 +1372,194 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
 
             </View>
 
-            {/* FLOATING ACTION BAR */}
+            {/* HEADER OVERLAY */}
+            <TouchableWithoutFeedback onPress={dismissSearchAndKeyboard}>
+                <View style={styles.appbar}>
+                    <Text style={styles.title}>{t('home.title')}</Text>
+                </View>
+            </TouchableWithoutFeedback>
+
+            {/* SEARCH OVERLAY */}
+            <View style={styles.searchContainer}>
+                <GooglePlacesAutocomplete
+                    ref={googlePlacesRef}
+                    placeholder={language === 'ar' ? 'ابحث عن موقع أو شارع' : 'Search for location or street'}
+                    minLength={2}
+                    debounce={400}
+                    fetchDetails={true}
+                    onPress={(data, details = null) => {
+                        const description = data.description ?? '';
+                        setSearchText(description);
+                        setForceHideSuggestions(true);
+                        if (googlePlacesRef.current?.setAddressText) {
+                            googlePlacesRef.current.setAddressText(description);
+                        }
+                        googlePlacesRef.current?.blur?.();
+                        Keyboard.dismiss();
+                        if (details?.geometry?.location) {
+                            const { lat, lng } = details.geometry.location;
+                            lastSelectedCoords.current = {
+                                latitude: lat,
+                                longitude: lng,
+                                title: description,
+                            };
+                            navigateToPlace(lat, lng, description);
+                        } else {
+                            lastSelectedCoords.current = null;
+                        }
+                    }}
+                    onFail={(error) => {
+                        console.error('❌ Places API Error:', error);
+                    }}
+                    query={{
+                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+                        language: language,
+                    }}
+                    enablePoweredByContainer={false}
+                    keepResultsAfterBlur={false}
+                    listViewDisplayed={forceHideSuggestions ? false : undefined}
+                    styles={PLACES_AUTOCOMPLETE_STYLES}
+                    textInputProps={{
+                        placeholderTextColor: '#D3DDF1',
+                        returnKeyType: 'search',
+                        value: searchText,
+                        onChangeText: (text: string) => {
+                            setSearchText(text);
+                            setForceHideSuggestions(false);
+                        },
+                        onFocus: () => {
+                            setForceHideSuggestions(false);
+                        },
+                        onSubmitEditing: () => {
+                            setForceHideSuggestions(true);
+                            Keyboard.dismiss();
+                            const coords = lastSelectedCoords.current;
+                            if (coords) {
+                                navigateToPlace(coords.latitude, coords.longitude, coords.title);
+                            } else if (searchText && searchText.trim().length >= 2) {
+                                searchWithGeocoding(searchText);
+                            }
+                        },
+                    }}
+                    renderRightButton={() => (
+                        <TouchableOpacity 
+                            style={styles.searchIconContainer}
+                            onPress={() => {
+                                setForceHideSuggestions(true);
+                                Keyboard.dismiss();
+                                const coords = lastSelectedCoords.current;
+                                if (coords) {
+                                    navigateToPlace(coords.latitude, coords.longitude, coords.title);
+                                } else if (searchText && searchText.trim().length >= 2) {
+                                    searchWithGeocoding(searchText);
+                                }
+                            }}
+                        >
+                            <Text style={styles.searchIcon}>🔍</Text>
+                        </TouchableOpacity>
+                    )}
+                />
+            </View>
+
+            {/* FILTER OVERLAY */}
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoriesRow}
+                style={styles.categoriesScroll}
+            >
+                <TouchableOpacity
+                    style={[
+                        styles.categoryItem,
+                        activeFilters.length === 0 && styles.categoryItemActive,
+                    ]}
+                    onPress={() => {
+                        dismissSearchAndKeyboard();
+                        setActiveFilters([]);
+                    }}
+                >
+                    <Text
+                        style={[
+                            styles.categoryText,
+                            activeFilters.length === 0 && styles.categoryTextActive,
+                        ]}
+                    >
+                        {language === 'ar' ? 'الكل' : 'All'}
+                    </Text>
+                </TouchableOpacity>
+
+                {categories.map((category) => {
+                    const isActive = activeFilters.includes(category.id);
+                    const color = getCategoryColor(category.id);
+                    const displayName = language === 'ar'
+                        ? (category.name_ar || category.name)
+                        : (category.name_en || category.name);
+                    
+                    return (
+                        <TouchableOpacity
+                            key={category.id}
+                            style={[
+                                styles.categoryItem,
+                                isActive && styles.categoryItemActive,
+                            ]}
+                            onPress={() => {
+                                dismissSearchAndKeyboard();
+                                toggleFilter(category.id);
+                            }}
+                        >
+                            <View
+                                style={[
+                                    styles.dot,
+                                    { backgroundColor: color },
+                                    isActive && styles.dotActive,
+                                ]}
+                            />
+                            <Text
+                                style={[
+                                    styles.categoryText,
+                                    isActive && styles.categoryTextActive,
+                                ]}
+                                numberOfLines={1}
+                            >
+                                {displayName}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </ScrollView>
+
+            {/* FLOATING ACTION BAR – right side, bottom to top: Heatmap → Audio → Plus */}
             <View
                 style={[
                     styles.fabBar,
-                    language === 'ar' ? { left: 14 } : { right: 14 },
+                    { right: 14 },
                 ]}
             >
-                {/* REPORT TYPE BUTTONS (appear on menu open) */}
+                {/* HEATMAP TOGGLE BUTTON (bottom) */}
+                <TouchableOpacity
+                    style={[
+                        styles.heatmapButton,
+                        heatmapEnabled && styles.heatmapButtonActive,
+                    ]}
+                    onPress={() => setHeatmapEnabled(!heatmapEnabled)}
+                >
+                    <Ionicons name={heatmapEnabled ? "flame" : "flame-outline"} size={22} color={heatmapEnabled ? "#fff" : "#0D2B66"} />
+                </TouchableOpacity>
+
+                {/* AUDIO BUTTON (middle) */}
+                <TouchableOpacity
+                    style={styles.soundButton}
+                    onPress={() => setAudioVisible(true)}
+                >
+                    <Ionicons name="volume-high" style={styles.soundIcon} />
+                </TouchableOpacity>
+
+                {/* MAIN PLUS FAB (top of fixed stack) */}
+                <TouchableOpacity style={styles.fab} onPress={toggleMenu}>
+                    <Text style={styles.fabPlus}>{menuOpen ? "×" : "+"}</Text>
+                </TouchableOpacity>
+
+                {/* REPORT TYPE BUTTONS (expand upward on menu open) */}
                 {menuOpen && (
                     <Animated.View style={[styles.fabActions, { transform: [{ scale: scaleAnim }] }]}>
                         <TouchableOpacity
@@ -1584,30 +1582,6 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         </TouchableOpacity>
                     </Animated.View>
                 )}
-
-                {/* MAIN PLUS FAB */}
-                <TouchableOpacity style={styles.fab} onPress={toggleMenu}>
-                    <Text style={styles.fabPlus}>{menuOpen ? "×" : "+"}</Text>
-                </TouchableOpacity>
-
-                {/* AUDIO BUTTON */}
-                <TouchableOpacity
-                    style={styles.soundButton}
-                    onPress={() => setAudioVisible(true)}
-                >
-                    <Ionicons name="volume-high" style={styles.soundIcon} />
-                </TouchableOpacity>
-
-                {/* HEATMAP TOGGLE BUTTON */}
-                <TouchableOpacity
-                    style={[
-                        styles.heatmapButton,
-                        heatmapEnabled && styles.heatmapButtonActive,
-                    ]}
-                    onPress={() => setHeatmapEnabled(!heatmapEnabled)}
-                >
-                    <Ionicons name={heatmapEnabled ? "flame" : "flame-outline"} size={22} color={heatmapEnabled ? "#fff" : "#0D2B66"} />
-                </TouchableOpacity>
             </View>
 
             {/* ROUTE LOADING INDICATOR */}
@@ -2091,20 +2065,27 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: BLUE, direction: "rtl" ,paddingTop: 12,},
+    root: { flex: 1, backgroundColor: BLUE, direction: "rtl" },
 
     appbar: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
         height: Platform.OS === "ios" ? 80 : 80,
         paddingTop: Platform.OS === "ios" ? 30 : 30,
-        backgroundColor: BLUE,
+        backgroundColor: "rgba(13, 43, 102, 0.85)",
         alignItems: "center",
         justifyContent: "center",
+        zIndex: 100,
     },
     title: { color: "#fff", fontSize: 24, fontFamily: "Tajawal-Bold" },
 
     searchContainer: {
-        marginHorizontal: 15,
-        marginTop: 10,
+        position: "absolute",
+        top: Platform.OS === "ios" ? 85 : 85,
+        left: 15,
+        right: 15,
         zIndex: 1000,
         elevation: 1000,
     },
@@ -2175,11 +2156,7 @@ const styles = StyleSheet.create({
     },
 
     mapContainer: {
-        flex: 1,
-        marginTop: 8,
-        marginHorizontal: 8,
-        borderRadius: 14,
-        overflow: "hidden",
+        ...StyleSheet.absoluteFillObject,
         backgroundColor: "#123a7a",
     },
     marker: { 
@@ -2216,14 +2193,14 @@ const styles = StyleSheet.create({
 
     fabBar: {
         position: "absolute",
-        bottom: 110,
-        flexDirection: "row-reverse",
+        bottom: 100,
+        flexDirection: "column-reverse",
         alignItems: "center",
         zIndex: 1000,
         gap: 10,
     },
     fabActions: {
-        flexDirection: "row-reverse",
+        flexDirection: "column-reverse",
         alignItems: "center",
         gap: 10,
     },
@@ -2270,9 +2247,12 @@ const styles = StyleSheet.create({
 
     /* FILTER-LEISTE */
     categoriesScroll: {
-        width: "100%",
-        marginTop: 9,
+        position: "absolute",
+        top: Platform.OS === "ios" ? 130 : 130,
+        left: 0,
+        right: 0,
         maxHeight: 44,
+        zIndex: 99,
     },
     categoriesRow: {
         flexDirection: "row",
@@ -2289,7 +2269,8 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: 18,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.15)",
+        borderColor: "rgba(0,0,0,0.12)",
+        backgroundColor: "rgba(255,255,255,0.85)",
     },
 
     categoryItemActive: {
@@ -2298,12 +2279,12 @@ const styles = StyleSheet.create({
     },
 
     categoryText: {
-        color: "#FFFFFF",
+        color: "#000000",
         fontSize: 13,
         fontFamily: "Tajawal-Bold",
     },
     categoryTextActive: {
-        color: "#FFD166",
+        color: "#0D2B66",
     },
 
     dot: {
@@ -2380,8 +2361,8 @@ soundIcon: {
         shadowOpacity: 0.15,
         shadowOffset: { width: 0, height: -2 },
         shadowRadius: 8,
-        elevation: 8,
-        zIndex: 800,
+        elevation: 10000,
+        zIndex: 10000,
     },
     routeSummaryHeader: {
         flexDirection: "row",
@@ -2504,7 +2485,8 @@ audioOverlay: {
     left: 0,
     right: 0,
     justifyContent: "flex-end",
-    zIndex: 999,
+    zIndex: 9999,
+    elevation: 9999,
 },
 
 audioOverlayBg: {
