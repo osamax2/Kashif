@@ -9,6 +9,25 @@
       "client_info": {
         "mobilesdk_app_id": "1:805925523650:android:c57b7f874bcf96e3b62b5b",
         "android_client_info": {
+          "package_name": "com.kashif.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqfGjjlMYmac58EVp4JF_dsPv3GvZJHu0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:805925523650:android:eded4a0df884d792b62b5b",
+        "android_client_info": {
           "package_name": "com.kashifroad.app"
         }
       },
