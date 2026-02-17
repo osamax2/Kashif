@@ -1119,12 +1119,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         updateMonitoring();
     }, [warnPothole, warnAccident, warnSpeed]);
 
-    // Menu items for the radial menu with angle-based positioning
-    const menuItems = [
-        { id: "pothole", icon: require("../../assets/icons/pothole.png"), angle: -30 },
-        { id: "accident", icon: require("../../assets/icons/accident.png"), angle: -75 },
-        { id: "speed", icon: require("../../assets/icons/speed.png"), angle: -120 },
-    ] as const;
+
 
     async function speakWarning(type: string) {
     if (!soundEnabled) return;
@@ -2284,25 +2279,7 @@ const styles = StyleSheet.create({
         borderColor: "#FFFFFF",
     },
 
-    /* RADIAL-MENÜ ICONS */
-    circleItem: {
-        position: "absolute",
-        zIndex: 10,
-        width: 55,
-        height: 55,
-        alignItems: "center",
-        justifyContent: "center",
-    },
 
-    circlePress: {
-        width: "100%",
-        height: "100%",
-        borderRadius: 30,
-        backgroundColor: "white",
-        justifyContent: "center",
-        alignItems: "center",
-        elevation: 8,
-    },
     soundButton: {
         width: 50,
         height: 50,
