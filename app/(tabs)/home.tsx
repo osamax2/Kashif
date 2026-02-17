@@ -175,6 +175,41 @@ export default function HomeScreen() {
     const [selectedReportForDonation, setSelectedReportForDonation] = useState<Report | null>(null);
     const [donationModalVisible, setDonationModalVisible] = useState(false);
     const [markerDetailVisible, setMarkerDetailVisible] = useState(false);
+    const markerDetailSheetY = useRef(new Animated.Value(0)).current;
+
+    // PanResponder for swipe-to-dismiss marker detail sheet
+    const markerDetailPanResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: (_, gestureState) => {
+                return Math.abs(gestureState.dy) > 5;
+            },
+            onPanResponderMove: (_, gestureState) => {
+                if (gestureState.dy > 0) {
+                    markerDetailSheetY.setValue(gestureState.dy);
+                }
+            },
+            onPanResponderRelease: (_, gestureState) => {
+                if (gestureState.dy > 80) {
+                    // Swipe down threshold reached - close sheet
+                    Animated.timing(markerDetailSheetY, {
+                        toValue: 400,
+                        duration: 200,
+                        useNativeDriver: true,
+                    }).start(() => {
+                        setMarkerDetailVisible(false);
+                        markerDetailSheetY.setValue(0);
+                    });
+                } else {
+                    // Snap back
+                    Animated.spring(markerDetailSheetY, {
+                        toValue: 0,
+                        useNativeDriver: true,
+                    }).start();
+                }
+            },
+        })
+    ).current;
     // ────────────────────────────────────────────────────────────────────
 
 const [audioVisible, setAudioVisible] = useState(false);
@@ -342,11 +377,11 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             
             if (!online) {
                 // Offline fallback: load cached data
-                console.log('📴 Offline — loading cached reports');
+                console.log('Offline — loading cached reports');
                 const cached = await getCachedNearbyReports();
                 if (cached.length > 0) {
                     setReports(cached as any);
-                    console.log(`📦 Loaded ${cached.length} cached reports`);
+                    console.log(`Loaded ${cached.length} cached reports`);
                 }
                 setLoading(false);
                 return;
@@ -1999,8 +2034,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         activeOpacity={1} 
                         onPress={() => setMarkerDetailVisible(false)} 
                     />
-                    <View style={styles.markerDetailSheet}>
-                        <View style={styles.markerDetailHandle} />
+                    <Animated.View style={[styles.markerDetailSheet, { transform: [{ translateY: markerDetailSheetY }] }]}>
+                        <View {...markerDetailPanResponder.panHandlers} style={styles.markerDetailHandleArea}>
+                            <View style={styles.markerDetailHandle} />
+                        </View>
                         <Text style={styles.markerDetailTitle}>
                             {selectedReportForDonation.title || categories.find(c => c.id === selectedReportForDonation.category_id)?.name || (language === 'ar' ? 'بلاغ' : 'Report')}
                         </Text>
@@ -2031,7 +2068,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                 </Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </Animated.View>
                 </View>
             )}
 
@@ -2621,13 +2658,19 @@ markerDetailSheet: {
     padding: 20,
     paddingBottom: 30,
 },
+markerDetailHandleArea: {
+    paddingVertical: 10,
+    marginHorizontal: -20,
+    marginTop: -20,
+    marginBottom: 6,
+    alignItems: 'center',
+},
 markerDetailHandle: {
     width: 40,
     height: 4,
     borderRadius: 2,
     backgroundColor: 'rgba(255,255,255,0.3)',
     alignSelf: 'center',
-    marginBottom: 16,
 },
 markerDetailTitle: {
     color: '#fff',

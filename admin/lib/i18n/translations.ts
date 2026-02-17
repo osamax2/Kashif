@@ -60,6 +60,7 @@ export const translations = {
       analytics: 'Analytics',
       categories: 'Categories',
       companies: 'Companies',
+      feedback: 'Feedback',
       settings: 'Settings',
     },
 
@@ -360,6 +361,7 @@ export const translations = {
       analytics: 'التحليلات',
       categories: 'الفئات',
       companies: 'الشركات',
+      feedback: 'الملاحظات',
       settings: 'الإعدادات',
     },
 

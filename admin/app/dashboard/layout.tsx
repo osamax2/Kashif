@@ -15,6 +15,7 @@ import {
     LogOut,
     Map,
     Menu,
+    MessageSquareText,
     QrCode,
     Shield,
     Users,
@@ -68,6 +69,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
     { name: t.nav.notifications, href: '/dashboard/notifications', icon: Bell },
     { name: t.nav.analytics, href: '/dashboard/analytics', icon: BarChart3 },
     { name: isRTL ? 'التبرعات' : 'Donations', href: '/dashboard/donations', icon: Heart },
+    { name: isRTL ? 'الملاحظات' : 'Feedback', href: '/dashboard/feedback', icon: MessageSquareText },
     { name: isRTL ? 'سجل التدقيق' : 'Audit Log', href: '/dashboard/audit-log', icon: Shield },
     { name: isRTL ? 'مراقبة النظام' : 'Monitoring', href: '/dashboard/monitoring', icon: Activity },
   ];

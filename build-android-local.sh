@@ -19,12 +19,12 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # ========================================
-# Configure ALL paths to use WorkSSD
+# Configure paths - use INTERNAL disk for Gradle/tmp (SSD I/O stability)
 # ========================================
 WORK_DIR="/Volumes/WorkSSD/Kashif"
-CACHE_DIR="/Volumes/WorkSSD/.build-cache"
+CACHE_DIR="$HOME/.kashif-build-cache"
 
-# Create all cache directories on WorkSSD
+# Create all cache directories on INTERNAL disk
 mkdir -p "$CACHE_DIR/gradle"
 mkdir -p "$CACHE_DIR/gradle-home"
 mkdir -p "$CACHE_DIR/npm"
@@ -34,7 +34,7 @@ mkdir -p "$CACHE_DIR/expo"
 mkdir -p "$CACHE_DIR/yarn"
 mkdir -p "$CACHE_DIR/kotlin"
 
-# Set ALL environment variables to use WorkSSD
+# Set ALL environment variables to use INTERNAL disk
 export GRADLE_USER_HOME="$CACHE_DIR/gradle-home"
 export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4096m -Djava.io.tmpdir=$CACHE_DIR/tmp"
 export npm_config_cache="$CACHE_DIR/npm"
@@ -49,7 +49,7 @@ export KOTLIN_DAEMON_HOME="$CACHE_DIR/kotlin"
 # Also set Java temp directory
 export _JAVA_OPTIONS="-Djava.io.tmpdir=$CACHE_DIR/tmp"
 
-echo -e "${GREEN}✓ All caches configured on /Volumes/WorkSSD${NC}"
+echo -e "${GREEN}✓ All caches configured on INTERNAL disk ($CACHE_DIR)${NC}"
 echo "  GRADLE_USER_HOME: $GRADLE_USER_HOME"
 echo "  npm_config_cache: $npm_config_cache"
 echo "  TMPDIR: $TMPDIR"
