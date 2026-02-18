@@ -263,7 +263,8 @@
     "language": "Language",
     "languages": {
       "ar": "العربية",
-      "en": "English"
+      "en": "English",
+      "ku": "kurdî"
     },
     "hideName": "Hide my name from public reports",
     "notifications": "Notifications",

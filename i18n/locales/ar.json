@@ -264,7 +264,8 @@
     "language": "اللغة",
     "languages": {
       "ar": "العربية",
-      "en": "English"
+      "en": "English",
+      "ku": "kurdî"
     },
     "hideName": "إخفاء اسمي عن البلاغات العامة",
     "notifications": "الإشعارات",
