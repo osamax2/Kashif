@@ -240,6 +240,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     
     // Location monitoring state
     const [isMonitoringActive, setIsMonitoringActive] = useState(false);
+    const [locationDisclosureShown, setLocationDisclosureShown] = useState(false);
+    const pendingMonitoringRef = useRef(false);
     
     // PanResponder for swipe-to-dismiss audio sheet
     const panResponder = useRef(
@@ -1137,7 +1139,46 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             const anyAlertEnabled = warnPothole || warnAccident || warnSpeed;
             
             if (anyAlertEnabled && !isMonitoringActive) {
-                // Start monitoring
+                // Show prominent disclosure before requesting background location
+                if (!locationDisclosureShown) {
+                    pendingMonitoringRef.current = true;
+                    Alert.alert(
+                        t('locationMonitoring.disclosureTitle'),
+                        t('locationMonitoring.disclosureMessage'),
+                        [
+                            {
+                                text: t('locationMonitoring.disclosureCancel'),
+                                style: 'cancel',
+                                onPress: () => {
+                                    pendingMonitoringRef.current = false;
+                                    // Reset all toggles
+                                    setWarnPothole(false);
+                                    setWarnAccident(false);
+                                    setWarnSpeed(false);
+                                },
+                            },
+                            {
+                                text: t('locationMonitoring.disclosureAllow'),
+                                onPress: async () => {
+                                    setLocationDisclosureShown(true);
+                                    const success = await locationMonitoringService.startMonitoring();
+                                    if (success) {
+                                        setIsMonitoringActive(true);
+                                        console.log('✅ Location monitoring started');
+                                    } else {
+                                        setWarnPothole(false);
+                                        setWarnAccident(false);
+                                        setWarnSpeed(false);
+                                    }
+                                    pendingMonitoringRef.current = false;
+                                },
+                            },
+                        ],
+                        { cancelable: false }
+                    );
+                    return;
+                }
+                // Disclosure already shown, start directly
                 const success = await locationMonitoringService.startMonitoring();
                 if (success) {
                     setIsMonitoringActive(true);

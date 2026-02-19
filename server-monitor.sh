@@ -251,7 +251,7 @@ check_suspicious_files() {
     [[ -n "$hidden_dirs" ]] && suspicious_files="${suspicious_files}Suspicious hidden dirs in /root:\n${hidden_dirs}\n\n"
 
     local cron_jobs
-    cron_jobs=$(crontab -l 2>/dev/null | grep -v "^#" | grep -v "^$")
+    cron_jobs=$(crontab -l 2>/dev/null | grep -v "^#" | grep -v "^$" | grep -v "monitor\.py" | grep -v "kashif-monitor")
     [[ -n "$cron_jobs" ]] && suspicious_files="${suspicious_files}Cron jobs found:\n${cron_jobs}\n\n"
 
     if [[ -n "$suspicious_files" ]]; then
