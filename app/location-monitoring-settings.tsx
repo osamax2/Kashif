@@ -42,23 +42,38 @@ export default function LocationMonitoringSettings() {
       setIsMonitoring(false);
       setNearbyReports([]);
     } else {
-      // Start monitoring
-      const success = await locationMonitoringService.startMonitoring();
-      
-      if (success) {
-        setIsMonitoring(true);
-        Alert.alert(
-          t('locationMonitoring.activatedTitle'),
-          t('locationMonitoring.activatedMessage'),
-          [{ text: t('locationMonitoring.ok') }]
-        );
-      } else {
-        Alert.alert(
-          t('locationMonitoring.errorTitle'),
-          t('locationMonitoring.errorMessage'),
-          [{ text: t('locationMonitoring.ok') }]
-        );
-      }
+      // Show prominent disclosure before requesting background location
+      Alert.alert(
+        t('locationMonitoring.disclosureTitle'),
+        t('locationMonitoring.disclosureMessage'),
+        [
+          {
+            text: t('locationMonitoring.disclosureCancel'),
+            style: 'cancel',
+          },
+          {
+            text: t('locationMonitoring.disclosureAllow'),
+            onPress: async () => {
+              const success = await locationMonitoringService.startMonitoring();
+              if (success) {
+                setIsMonitoring(true);
+                Alert.alert(
+                  t('locationMonitoring.activatedTitle'),
+                  t('locationMonitoring.activatedMessage'),
+                  [{ text: t('locationMonitoring.ok') }]
+                );
+              } else {
+                Alert.alert(
+                  t('locationMonitoring.errorTitle'),
+                  t('locationMonitoring.errorMessage'),
+                  [{ text: t('locationMonitoring.ok') }]
+                );
+              }
+            },
+          },
+        ],
+        { cancelable: false }
+      );
     }
   };
 
