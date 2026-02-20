@@ -5,6 +5,7 @@ import React, { useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    I18nManager,
     Keyboard,
     StyleSheet,
     Text,

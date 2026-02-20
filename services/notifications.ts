@@ -1,5 +1,4 @@
 import Constants from 'expo-constants';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import api from './api';
 
@@ -7,16 +6,25 @@ import api from './api';
 const isExpoGo = Constants.appOwnership === 'expo';
 const notificationsAvailable = !isExpoGo;
 
-// Configure notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Lazy-load expo-notifications to avoid crash in Expo Go SDK 53+
+let Notifications: any = null;
+try {
+  Notifications = require('expo-notifications');
+  // Configure notification handler only if available
+  if (Notifications && notificationsAvailable) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  }
+} catch (e) {
+  console.warn('⚠️ expo-notifications not available (Expo Go SDK 53+):', e);
+}
 
 export interface PushNotification {
   id: number;
@@ -37,7 +45,7 @@ class NotificationService {
    * Request permission and register device for push notifications
    */
   async registerForPushNotifications(): Promise<string | null> {
-    if (!notificationsAvailable) {
+    if (!notificationsAvailable || !Notifications) {
       console.log('⚠️ Push notifications not available in Expo Go - use a development build for testing');
       return null;
     }
@@ -208,7 +216,7 @@ class NotificationService {
     onNotificationReceived?: (notification: any) => void,
     onNotificationTapped?: (response: any) => void
   ) {
-    if (!notificationsAvailable) {
+    if (!notificationsAvailable || !Notifications) {
       console.log('Notification listeners not available');
       return () => {};
     }
