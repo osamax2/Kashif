@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -9,6 +10,7 @@ class CategoryBase(BaseModel):
     name: str
     name_ar: Optional[str] = None
     name_en: Optional[str] = None
+    name_ku: Optional[str] = None
     color: Optional[str] = None
     description: Optional[str] = None
 
@@ -21,6 +23,7 @@ class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     name_ar: Optional[str] = None
     name_en: Optional[str] = None
+    name_ku: Optional[str] = None
     color: Optional[str] = None
     description: Optional[str] = None
 
@@ -93,6 +96,7 @@ class ReportUpdate(BaseModel):
 
 class Report(ReportBase):
     id: int
+    uuid: Optional[UUID] = None
     user_id: int
     user_name: Optional[str] = None
     user_phone: Optional[str] = None

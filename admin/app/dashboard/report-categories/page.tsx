@@ -10,6 +10,7 @@ interface ReportCategory {
   id: number;
   name: string;
   name_ar?: string;
+  name_ku?: string;
   color?: string;
   description?: string;
   created_at: string;
@@ -53,6 +54,7 @@ export default function ReportCategoriesPage() {
   const [formData, setFormData] = useState({
     name: '',
     name_ar: '',
+    name_ku: '',
     color: '#3B82F6',
     description: '',
   });
@@ -75,7 +77,7 @@ export default function ReportCategoriesPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', name_ar: '', color: '#3B82F6', description: '' });
+    setFormData({ name: '', name_ar: '', name_ku: '', color: '#3B82F6', description: '' });
     setSelectedCategory(null);
     setShowColorPicker(false);
   };
@@ -105,6 +107,7 @@ export default function ReportCategoriesPage() {
     setFormData({
       name: category.name,
       name_ar: category.name_ar || '',
+      name_ku: category.name_ku || '',
       color: category.color || '#3B82F6',
       description: category.description || '',
     });
@@ -211,6 +214,9 @@ export default function ReportCategoriesPage() {
                   {isRTL ? 'الاسم (عربي)' : 'Name (Arabic)'}
                 </th>
                 <th className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {isRTL ? 'الاسم (كردي)' : 'Name (Kurdish)'}
+                </th>
+                <th className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                   {isRTL ? 'اللون' : 'Color'}
                 </th>
                 <th className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -224,7 +230,7 @@ export default function ReportCategoriesPage() {
             <tbody className="divide-y divide-gray-200">
               {categories.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                     {isRTL ? 'لا توجد فئات' : 'No categories found'}
                   </td>
                 </tr>
@@ -239,6 +245,9 @@ export default function ReportCategoriesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {category.name_ar || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {category.name_ku || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {category.color ? (
@@ -312,6 +321,19 @@ export default function ReportCategoriesPage() {
                   onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
                   className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${isRTL ? 'text-right' : ''}`}
                   placeholder={isRTL ? 'مثال: حفرة' : 'e.g., حفرة'}
+                  dir="rtl"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'الاسم (كردي)' : 'Name (Kurdish)'}
+                </label>
+                <input
+                  type="text"
+                  value={formData.name_ku}
+                  onChange={(e) => setFormData({ ...formData, name_ku: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+                  placeholder={isRTL ? 'مثال: چاڵ' : 'e.g., چاڵ'}
                   dir="rtl"
                 />
               </div>
@@ -434,6 +456,18 @@ export default function ReportCategoriesPage() {
                   type="text"
                   value={formData.name_ar}
                   onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isRTL ? 'text-right' : ''}`}
+                  dir="rtl"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
+                  {isRTL ? 'الاسم (كردي)' : 'Name (Kurdish)'}
+                </label>
+                <input
+                  type="text"
+                  value={formData.name_ku}
+                  onChange={(e) => setFormData({ ...formData, name_ku: e.target.value })}
                   className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isRTL ? 'text-right' : ''}`}
                   dir="rtl"
                 />

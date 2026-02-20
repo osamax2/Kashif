@@ -241,12 +241,12 @@ export const reportsAPI = {
     return response.data;
   },
 
-  createCategory: async (data: { name: string; name_ar?: string; description?: string }) => {
+  createCategory: async (data: { name: string; name_ar?: string; name_en?: string; name_ku?: string; description?: string }) => {
     const response = await api.post('/api/reports/categories', data);
     return response.data;
   },
 
-  updateCategory: async (categoryId: number, data: { name?: string; name_ar?: string; description?: string }) => {
+  updateCategory: async (categoryId: number, data: { name?: string; name_ar?: string; name_en?: string; name_ku?: string; description?: string }) => {
     const response = await api.patch(`/api/reports/categories/${categoryId}`, data);
     return response.data;
   },
