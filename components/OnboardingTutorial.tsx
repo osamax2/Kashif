@@ -50,8 +50,8 @@ const tutorialSteps: TutorialStep[] = [
         icon: "➕",
         titleAr: "إضافة بلاغ",
         titleEn: "Add Report",
-        descriptionAr: "اضغط على زر + لإضافة بلاغ جديد. اختر نوع المخاطرة: حفرة 🕳️، حادث 🚗، أو كاشف سرعة 📷",
-        descriptionEn: "Tap the + button to add a new report. Choose hazard type: Pothole 🕳️, Accident 🚗, or Speed Camera 📷",
+        descriptionAr: "اضغط على زر + لإضافة بلاغ جديد. اختر نوع المخاطرة: حفرة 🕳️، حادث 🚗، أو خطر بيئي 🌿",
+        descriptionEn: "Tap the + button to add a new report. Choose hazard type: Pothole 🕳️, Accident 🚗, or Environment 🌿",
         color: "#F4B400",
     },
     {
@@ -86,8 +86,8 @@ const tutorialSteps: TutorialStep[] = [
         icon: "🔍",
         titleAr: "تصفية البلاغات",
         titleEn: "Filter Reports",
-        descriptionAr: "استخدم شريط الفئات في الأعلى لتصفية البلاغات حسب النوع: الكل، حفر، حوادث، أو كاشفات سرعة",
-        descriptionEn: "Use the category bar at the top to filter reports by type: All, Potholes, Accidents, or Speed Cameras",
+        descriptionAr: "استخدم شريط الفئات في الأعلى لتصفية البلاغات حسب النوع: الكل، حفر، حوادث، أو بيئي",
+        descriptionEn: "Use the category bar at the top to filter reports by type: All, Potholes, Accidents, or Environment",
         color: "#FF2D55",
     },
     {

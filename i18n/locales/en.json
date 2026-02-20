@@ -100,16 +100,16 @@
     "alertTypes": "Alert Types",
     "pothole": "Pothole",
     "accident": "Accident",
-    "speedCamera": "Speed Camera",
+    "environment": "Environment",
     "testSoundText": "This is a test",
     "warnPothole": "Warning! Pothole ahead",
     "warnAccident": "Warning! Accident on the road",
-    "warnSpeed": "Caution! Speed camera ahead"
+    "warnEnvironment": "Caution! Environmental hazard ahead"
   },
   "reportDialog": {
     "titlePothole": "Pothole Report",
     "titleAccident": "Accident Report",
-    "titleSpeed": "Speed Camera Report",
+    "titleEnvironment": "Environment Report",
     "titleDefault": "Report",
     "severityLabel": "Severity Level:",
     "typeLabel": "Type:",
@@ -203,7 +203,7 @@
       "pothole": "Pothole",
       "accident": "Accident",
       "lighting": "Lighting",
-      "speedCamera": "Speed Camera",
+      "environment": "Environment",
       "other": "Other"
     },
     "filters": {
@@ -314,7 +314,7 @@
     "errorMessage": "Failed to activate location monitoring. Make sure to grant necessary permissions.",
     "ok": "OK",
     "disclosureTitle": "Background Location Access",
-    "disclosureMessage": "Kashif needs access to your location in the background to alert you about road hazards (potholes, accidents, speed cameras) while you are driving, even when the app is minimized. Your location data is only used for proximity alerts and is never shared with third parties.",
+    "disclosureMessage": "Kashif needs access to your location in the background to alert you about road hazards (potholes, accidents, environmental hazards) while you are driving, even when the app is minimized. Your location data is only used for proximity alerts and is never shared with third parties.",
     "disclosureAllow": "Allow",
     "disclosureCancel": "Cancel"
   },

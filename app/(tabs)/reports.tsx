@@ -126,8 +126,8 @@ const CATEGORY_TRANSLATIONS: { [key: string]: { en: string; ar: string } } = {
   "pothole": { en: "Pothole", ar: "حفرة" },
   "accident": { en: "Accident", ar: "حادث" },
   "lighting": { en: "Lighting", ar: "إضاءة" },
-  "speed_camera": { en: "Speed Camera", ar: "كاشف سرعة" },
-  "speedcamera": { en: "Speed Camera", ar: "كاشف سرعة" },
+  "speed_camera": { en: "Environment", ar: "خطر بيئي" },
+  "speedcamera": { en: "Environment", ar: "خطر بيئي" },
   "other": { en: "Other", ar: "أخرى" },
 };
 

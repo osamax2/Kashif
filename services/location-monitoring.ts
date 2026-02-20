@@ -24,7 +24,7 @@ interface AlertSettings {
   soundEnabled: boolean;
   warnPothole: boolean;
   warnAccident: boolean;
-  warnSpeed: boolean;
+  warnEnvironment: boolean;
   appVolume: number;
   language: string;
 }
@@ -41,7 +41,7 @@ class LocationMonitoringService {
     soundEnabled: true,
     warnPothole: true,
     warnAccident: true,
-    warnSpeed: true,
+    warnEnvironment: true,
     appVolume: 1,
     language: 'ar',
   };
@@ -220,19 +220,18 @@ class LocationMonitoringService {
   /**
    * Check if alert should be shown for this category
    * Category IDs from backend:
-   * 1 = Speed Camera (كاميرا مراقبة)
-   * 2 = Pothole (حفرة)
-   * 3 = Accident (حادث)
-   * 4 = Public Services
-   * 5 = Other
+   * 1 = Infrastructure / Pothole (حفرة)
+   * 2 = Environment (خطر بيئي)
+   * 3 = Public Safety / Accident (حادث)
+   * 6 = Mines (ألغام)
    */
   private shouldShowAlertForCategory(categoryId: number): boolean {
     switch (categoryId) {
-      case 1: // Speed Camera
-        return this.alertSettings.warnSpeed;
-      case 2: // Pothole
+      case 1: // Infrastructure / Pothole
         return this.alertSettings.warnPothole;
-      case 3: // Accident
+      case 2: // Environment
+        return this.alertSettings.warnEnvironment;
+      case 3: // Public Safety / Accident
         return this.alertSettings.warnAccident;
       default:
         return true;
@@ -246,46 +245,49 @@ class LocationMonitoringService {
     const lang = this.alertSettings.language;
     
     switch (categoryId) {
-      case 1: // Speed Camera (كاميرا مراقبة)
+      case 1: // Infrastructure / Pothole (حفرة)
         return {
-          title: lang === 'ar' ? '📷 تنبيه: كاشف سرعة' : '📷 Alert: Speed Camera',
-          message: lang === 'ar'
-            ? `يوجد كاشف سرعة على بعد ${distance} متر أمامك. التزم بالسرعة المحددة!`
-            : `There is a speed camera ${distance} meters ahead. Follow speed limit!`,
-        };
-      case 2: // Pothole (حفرة)
-        return {
-          title: lang === 'ar' ? '⚠️ تحذير: حفرة في الطريق' : '⚠️ Warning: Pothole Ahead',
+          title: lang === 'ar' ? '⚠️ تحذير: حفرة في الطريق' : lang === 'ku' ? '⚠️ Hişyarî: Çalêk li rê' : '⚠️ Warning: Pothole Ahead',
           message: lang === 'ar' 
             ? `يوجد حفرة على بعد ${distance} متر أمامك. كن حذراً!`
+            : lang === 'ku'
+            ? `Çalêk ${distance} metre li pêş te heye. Hay ji xwe hebin!`
             : `There is a pothole ${distance} meters ahead. Be careful!`,
         };
-      case 3: // Accident (حادث)
+      case 2: // Environment (خطر بيئي)
         return {
-          title: lang === 'ar' ? '🚨 تحذير: حادث مروري' : '🚨 Warning: Traffic Accident',
+          title: lang === 'ar' ? '🌿 تنبيه: خطر بيئي' : lang === 'ku' ? '🌿 Hişyarî: Metirsiya jîngehê' : '🌿 Alert: Environmental Hazard',
+          message: lang === 'ar'
+            ? `يوجد خطر بيئي على بعد ${distance} متر أمامك. كن حذراً!`
+            : lang === 'ku'
+            ? `Metirsiya jîngehê ${distance} metre li pêş te heye. Hay ji xwe hebin!`
+            : `There is an environmental hazard ${distance} meters ahead. Be careful!`,
+        };
+      case 3: // Public Safety / Accident (حادث)
+        return {
+          title: lang === 'ar' ? '🚨 تحذير: حادث مروري' : lang === 'ku' ? '🚨 Hişyarî: Qezaya trafîkê' : '🚨 Warning: Traffic Accident',
           message: lang === 'ar'
             ? `يوجد حادث مروري على بعد ${distance} متر أمامك. خفف السرعة!`
+            : lang === 'ku'
+            ? `Qezayek ${distance} metre li pêş te heye. Hêdî biçin!`
             : `There is a traffic accident ${distance} meters ahead. Slow down!`,
         };
-      case 4: // Public Services
+      case 6: // Mines (ألغام)
         return {
-          title: lang === 'ar' ? '⚠️ تنبيه: خدمات عامة' : '⚠️ Alert: Public Services',
+          title: lang === 'ar' ? '💣 تحذير: منطقة ألغام' : lang === 'ku' ? '💣 Hişyarî: Devera mînan' : '💣 Warning: Mine Area',
           message: lang === 'ar'
-            ? `يوجد تنبيه على بعد ${distance} متر أمامك`
-            : `Alert ${distance} meters ahead`,
-        };
-      case 5: // Other
-        return {
-          title: lang === 'ar' ? '⚠️ تنبيه' : '⚠️ Alert',
-          message: lang === 'ar'
-            ? `يوجد تنبيه على بعد ${distance} متر أمامك`
-            : `Alert ${distance} meters ahead`,
+            ? `يوجد تحذير ألغام على بعد ${distance} متر أمامك. ابتعد عن المنطقة!`
+            : lang === 'ku'
+            ? `Hişyariya mînan ${distance} metre li pêş te heye. Ji deverê dûr kevin!`
+            : `Mine warning ${distance} meters ahead. Stay away from the area!`,
         };
       default:
         return {
-          title: lang === 'ar' ? '⚠️ تحذير' : '⚠️ Warning',
+          title: lang === 'ar' ? '⚠️ تحذير' : lang === 'ku' ? '⚠️ Hişyarî' : '⚠️ Warning',
           message: lang === 'ar'
             ? `يوجد تنبيه على بعد ${distance} متر أمامك`
+            : lang === 'ku'
+            ? `Hişyarî ${distance} metre li pêş te heye`
             : `Alert ${distance} meters ahead`,
         };
     }
@@ -309,39 +311,45 @@ class LocationMonitoringService {
     let message = '';
 
     // Category IDs from backend:
-    // 1 = Speed Camera (كاميرا مراقبة)
-    // 2 = Pothole (حفرة)
-    // 3 = Accident (حادث)
+    // 1 = Infrastructure / Pothole (حفرة)
+    // 2 = Environment (خطر بيئي)
+    // 3 = Public Safety / Accident (حادث)
+    // 6 = Mines (ألغام)
     switch (categoryId) {
-      case 1: // Speed Camera
-        message = lang === 'ar'
-          ? `تنبيه! كاشف سرعة على بعد ${distance} متر`
-          : `Alert! Speed camera ahead at ${distance} meters`;
-        break;
-      case 2: // Pothole
+      case 1: // Infrastructure / Pothole
         message = lang === 'ar'
           ? `تحذير! حفرة في الطريق على بعد ${distance} متر`
+          : lang === 'ku'
+          ? `Hişyarî! Çalêk ${distance} metre li pêş te heye`
           : `Warning! Pothole ahead at ${distance} meters`;
         break;
-      case 3: // Accident
+      case 2: // Environment
+        message = lang === 'ar'
+          ? `تنبيه! خطر بيئي على بعد ${distance} متر`
+          : lang === 'ku'
+          ? `Hişyarî! Metirsiya jîngehê ${distance} metre li pêş te heye`
+          : `Alert! Environmental hazard ahead at ${distance} meters`;
+        break;
+      case 3: // Public Safety / Accident
         message = lang === 'ar'
           ? `تحذير! حادث مروري على بعد ${distance} متر`
+          : lang === 'ku'
+          ? `Hişyarî! Qezayek ${distance} metre li pêş te heye`
           : `Warning! Traffic accident ahead at ${distance} meters`;
         break;
-      case 4: // Public Services
+      case 6: // Mines
         message = lang === 'ar'
-          ? `تنبيه على بعد ${distance} متر`
-          : `Alert ${distance} meters ahead`;
-        break;
-      case 5: // Other
-        message = lang === 'ar'
-          ? `تنبيه على بعد ${distance} متر`
-          : `Alert ${distance} meters ahead`;
+          ? `تحذير! منطقة ألغام على بعد ${distance} متر`
+          : lang === 'ku'
+          ? `Hişyarî! Devera mînan ${distance} metre li pêş te heye`
+          : `Warning! Mine area ahead at ${distance} meters`;
         break;
       default:
         console.log('⚠️ Unknown category, using generic message');
         message = lang === 'ar'
           ? `تنبيه على بعد ${distance} متر`
+          : lang === 'ku'
+          ? `Hişyarî ${distance} metre li pêş te heye`
           : `Alert ${distance} meters ahead`;
     }
 

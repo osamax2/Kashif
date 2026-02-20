@@ -5,7 +5,7 @@ import NetInfo from '@react-native-community/netinfo';
 const PENDING_REPORTS_KEY = 'pending_reports';
 
 export interface PendingReport {
-    type: "pothole" | "accident" | "speed" | null;
+    type: "pothole" | "accident" | "environment" | "speed" | null;
     severity: "low" | "medium" | "high";
     address: string;
     notes: string;
