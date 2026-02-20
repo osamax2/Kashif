@@ -401,6 +401,7 @@ async def get_reports(
     for report in reports:
         report_dict = {
             "id": report.id,
+            "uuid": str(report.uuid) if report.uuid else None,
             "user_id": report.user_id,
             "title": report.title,
             "description": report.description,

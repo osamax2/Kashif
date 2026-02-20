@@ -1532,7 +1532,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 {categories.map((category) => {
                     const isActive = activeFilters.includes(category.id);
                     const color = getCategoryColor(category.id);
-                    const displayName = language === 'ar'
+                    const displayName = language === 'ku'
+                        ? (category.name_ku || category.name)
+                        : language === 'ar'
                         ? (category.name_ar || category.name)
                         : (category.name_en || category.name);
                     
@@ -1659,7 +1661,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             const catColor = getCategoryColor(Number(catId));
                             const catIcon = getCategoryIcon(Number(catId));
                             const catName = categories.find(c => c.id === Number(catId));
-                            const displayName = language === 'ar' 
+                            const displayName = language === 'ku' 
+                                ? (catName?.name_ku || catName?.name || '') 
+                                : language === 'ar' 
                                 ? (catName?.name_ar || catName?.name || '') 
                                 : (catName?.name_en || catName?.name || '');
                             return (

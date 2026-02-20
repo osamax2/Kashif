@@ -3,12 +3,17 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: kashif-rabbitmq
+    restart: unless-stopped
     # No ports exposed - only accessible internally via Docker network
     environment:
       RABBITMQ_DEFAULT_USER: kashif
       RABBITMQ_DEFAULT_PASS: kashif123
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     logging:
       driver: "json-file"
       options:
@@ -21,6 +26,7 @@ services:
   api-gateway:
     image: nginx:alpine
     container_name: kashif-gateway
+    restart: unless-stopped
     ports:
       - "127.0.0.1:8000:80"
     volumes:
@@ -37,6 +43,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     logging:
       driver: "json-file"
       options:
@@ -51,6 +61,8 @@ services:
       context: ./auth-service
       dockerfile: Dockerfile
     container_name: kashif-auth
+    restart: unless-stopped
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2"
     environment:
       DATABASE_URL: postgresql://kashif_auth:auth123@auth-db:5432/kashif_auth
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
@@ -70,9 +82,13 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 300M
     logging:
       driver: "json-file"
       options:
@@ -84,12 +100,17 @@ services:
   auth-db:
     image: postgres:15-alpine
     container_name: kashif-auth-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: kashif_auth
       POSTGRES_USER: kashif_auth
       POSTGRES_PASSWORD: auth123
     volumes:
       - auth_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - kashif-network
 
@@ -99,6 +120,8 @@ services:
       context: ./reporting-service
       dockerfile: Dockerfile
     container_name: kashif-reporting
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
     environment:
       DATABASE_URL: postgresql://kashif_reports:report123@reporting-db:5432/kashif_reports
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
@@ -112,9 +135,13 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 300M
     logging:
       driver: "json-file"
       options:
@@ -126,12 +153,17 @@ services:
   reporting-db:
     image: postgres:15-alpine
     container_name: kashif-reporting-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: kashif_reports
       POSTGRES_USER: kashif_reports
       POSTGRES_PASSWORD: report123
     volumes:
       - reporting_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - kashif-network
 
@@ -141,6 +173,8 @@ services:
       context: ./gamification-service
       dockerfile: Dockerfile
     container_name: kashif-gamification
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
     environment:
       DATABASE_URL: postgresql://kashif_gamif:gamif123@gamification-db:5432/kashif_gamification
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
@@ -152,9 +186,13 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     logging:
       driver: "json-file"
       options:
@@ -166,12 +204,17 @@ services:
   gamification-db:
     image: postgres:15-alpine
     container_name: kashif-gamification-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: kashif_gamification
       POSTGRES_USER: kashif_gamif
       POSTGRES_PASSWORD: gamif123
     volumes:
       - gamification_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - kashif-network
 
@@ -181,6 +224,8 @@ services:
       context: ./coupons-service
       dockerfile: Dockerfile
     container_name: kashif-coupons
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
     environment:
       DATABASE_URL: postgresql://kashif_coupons:coupon123@coupons-db:5432/kashif_coupons
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
@@ -192,9 +237,13 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     logging:
       driver: "json-file"
       options:
@@ -206,12 +255,17 @@ services:
   coupons-db:
     image: postgres:15-alpine
     container_name: kashif-coupons-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: kashif_coupons
       POSTGRES_USER: kashif_coupons
       POSTGRES_PASSWORD: coupon123
     volumes:
       - coupons_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - kashif-network
 
@@ -221,6 +275,8 @@ services:
       context: ./notification-service
       dockerfile: Dockerfile
     container_name: kashif-notification
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
     environment:
       DATABASE_URL: postgresql://kashif_notif:notif123@notification-db:5432/kashif_notifications
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
@@ -240,9 +296,13 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     logging:
       driver: "json-file"
       options:
@@ -254,12 +314,17 @@ services:
   notification-db:
     image: postgres:15-alpine
     container_name: kashif-notification-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: kashif_notifications
       POSTGRES_USER: kashif_notif
       POSTGRES_PASSWORD: notif123
     volumes:
       - notification_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - kashif-network
 

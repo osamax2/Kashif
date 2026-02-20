@@ -435,6 +435,7 @@ export default function ReportsScreen() {
   const getCategoryName = (categoryId: number): string => {
     const cat = categories.find((c) => c.id === categoryId);
     if (!cat) return language === "ar" ? "غير معروف" : "Unknown";
+    if (language === "ku" && cat.name_ku) return cat.name_ku;
     if (language === "ar" && cat.name_ar) return cat.name_ar;
     if (language !== "ar" && cat.name_en) return cat.name_en;
     return translateCategory(cat.name, language);
@@ -616,7 +617,7 @@ export default function ReportsScreen() {
             onPress={() => setActiveCategoryFilter(activeCategoryFilter === cat.id ? null : cat.id)}
           >
             <Text style={[styles.filterChipText, activeCategoryFilter === cat.id && styles.filterChipTextActive]}>
-              {language === 'ar' ? (cat.name_ar || cat.name) : (cat.name_en || cat.name)}
+              {language === 'ku' ? (cat.name_ku || cat.name) : language === 'ar' ? (cat.name_ar || cat.name) : (cat.name_en || cat.name)}
             </Text>
           </TouchableOpacity>
         ))}

@@ -60,6 +60,18 @@ export default function MapPage() {
   // Area search filter
   const [areaFilter, setAreaFilter] = useState<{ lat: number; lng: number; radius: number; name: string } | null>(null);
   const [areaRadius, setAreaRadius] = useState(2); // km
+
+  // Convert radius (km) to appropriate Leaflet zoom level
+  const radiusToZoom = (radiusKm: number): number => {
+    if (radiusKm <= 0.5) return 15;
+    if (radiusKm <= 1) return 14;
+    if (radiusKm <= 2) return 13;
+    if (radiusKm <= 3) return 12;
+    if (radiusKm <= 5) return 11;
+    if (radiusKm <= 10) return 10;
+    if (radiusKm <= 20) return 9;
+    return 8; // 50 km
+  };
   
   // Report Card Modal states
   const [showReportCard, setShowReportCard] = useState(false);
@@ -243,7 +255,7 @@ export default function MapPage() {
       const lat = parseFloat(result.location.lat);
       const lon = parseFloat(result.location.lon);
       setMapCenter([lat, lon]);
-      setMapZoom(15);
+      setMapZoom(radiusToZoom(areaRadius));
       setAreaFilter({ lat, lng: lon, radius: areaRadius, name: result.displayName });
     } else if (result.type === 'category' && result.category) {
       setCategoryFilter([result.category.id.toString()]);
@@ -688,6 +700,7 @@ export default function MapPage() {
                   const newRadius = Number(e.target.value);
                   setAreaRadius(newRadius);
                   setAreaFilter(prev => prev ? { ...prev, radius: newRadius } : null);
+                  setMapZoom(radiusToZoom(newRadius));
                 }}
                 className="text-xs border border-gray-300 rounded px-1.5 py-1"
               >

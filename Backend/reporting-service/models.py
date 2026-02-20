@@ -1,8 +1,10 @@
+import uuid as uuid_lib
 from datetime import datetime
 
 from database import Base
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer,
                         Numeric, String, Text, Enum)
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
 
@@ -20,6 +22,7 @@ class Category(Base):
     name = Column(String(100), nullable=False)
     name_ar = Column(String(100), nullable=True)
     name_en = Column(String(100), nullable=True)
+    name_ku = Column(String(100), nullable=True)
     color = Column(String(7), nullable=True)
     description = Column(Text, nullable=True)
 
@@ -55,6 +58,7 @@ class Report(Base):
     __tablename__ = "reports"
 
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), default=uuid_lib.uuid4, unique=True, nullable=False, index=True)
     user_id = Column(Integer, nullable=False, index=True)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     status_id = Column(Integer, ForeignKey("report_statuses.id"), nullable=False)

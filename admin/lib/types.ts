@@ -1,5 +1,6 @@
 export interface User {
   id: number;
+  uuid?: string;
   email: string;
   full_name: string;
   phone?: string;
@@ -17,6 +18,7 @@ export interface User {
 
 export interface Report {
   id: number;
+  uuid?: string;
   user_id: number;
   user_name?: string;
   user_phone?: string;
@@ -78,6 +80,9 @@ export interface Company {
 export interface Category {
   id: number;
   name: string;
+  name_ar?: string;
+  name_en?: string;
+  name_ku?: string;
   description?: string;
 }
 

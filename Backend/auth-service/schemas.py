@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
@@ -31,6 +32,7 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
+    uuid: Optional[UUID] = None
     total_points: int
     image_url: Optional[str] = None
     level_id: Optional[int] = None

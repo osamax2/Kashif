@@ -303,6 +303,7 @@ export interface Category {
   name: string;
   name_ar?: string;
   name_en?: string;
+  name_ku?: string;
   color?: string;
   description?: string;
 }

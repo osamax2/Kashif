@@ -1,7 +1,9 @@
+import uuid as uuid_lib
 from datetime import datetime
 
 from database import Base
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 
@@ -19,6 +21,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), default=uuid_lib.uuid4, unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     access_token = Column(String(255), nullable=True)  # Store current access token
