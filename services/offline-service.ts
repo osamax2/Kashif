@@ -248,17 +248,17 @@ export async function processSyncQueue(): Promise<number> {
       if (item.type === 'CREATE_REPORT') {
         // Map type to category_id
         const categoryMap: Record<string, number> = {
-          speed: 1, pothole: 2, accident: 3,
+          pothole: 1, environment: 2, accident: 3,
         };
         const severityMap: Record<string, string> = {
           low: 'low', medium: 'medium', high: 'high',
         };
 
         await reportingAPI.createReport({
-          title: item.data.type === 'speed' ? 'Speed Camera' :
-                 item.data.type === 'pothole' ? 'Pothole' : 'Accident',
+          title: item.data.type === 'pothole' ? 'Pothole' :
+                 item.data.type === 'environment' ? 'Environment' : 'Accident',
           description: item.data.notes || `${item.data.type} report`,
-          category_id: categoryMap[item.data.type || 'pothole'] || 2,
+          category_id: categoryMap[item.data.type || 'pothole'] || 1,
           severity: (severityMap[item.data.severity] as any) || 'medium',
           latitude: item.data.latitude || 0,
           longitude: item.data.longitude || 0,

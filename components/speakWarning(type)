@@ -2,7 +2,7 @@ async function speakWarning(type) {
 
     if (type === "pothole" && !warnPothole) return;
     if (type === "accident" && !warnAccident) return;
-    if (type === "speed" && !warnSpeed) return;
+    if (type === "environment" && !warnSpeed) return;
 
     let message = "";
 
@@ -13,8 +13,8 @@ async function speakWarning(type) {
         case "accident":
             message = "تحذير! حادث على الطريق";
             break;
-        case "speed":
-            message = "احذر! كاميرا سرعة أمامك";
+        case "environment":
+            message = "تنبيه! خطر بيئي أمامك";
             break;
     }
 

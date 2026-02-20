@@ -100,16 +100,16 @@
     "alertTypes": "Tîpên hişyariyê",
     "pothole": "Çal",
     "accident": "Qezayek",
-    "speedCamera": "Kamera lezê",
+    "environment": "Jîngehî",
     "testSoundText": "Ev test e",
     "warnPothole": "Hişyarî! Çalêk li pêş te heye",
     "warnAccident": "Hişyarî! Qezayek li ser rê heye",
-    "warnSpeed": "Hişyar be! Kamera lezê li pêş te heye"
+    "warnEnvironment": "Hişyarî! Metirsiya jîngehê li pêş te heye"
   },
   "reportDialog": {
     "titlePothole": "Agahdarî Çal",
     "titleAccident": "Agahdarî Qeza",
-    "titleSpeed": "Agahdarî Kamera Lezê",
+    "titleEnvironment": "Agahdarî Jîngehî",
     "titleDefault": "Agahdarî",
     "severityLabel": "Asteya xetereyê:",
     "typeLabel": "Tîp:",
@@ -203,7 +203,7 @@
       "pothole": "Çal",
       "accident": "Qeza",
       "lighting": "Ronahî",
-      "speedCamera": "Kamera lezê",
+      "environment": "Jîngehî",
       "other": "Yên din",
       "unknown": "Nenas"
     },

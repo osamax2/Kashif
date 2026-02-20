@@ -236,7 +236,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     // Individual warning toggles (moved out from Slider)
     const [warnPothole, setWarnPothole] = useState(true);
     const [warnAccident, setWarnAccident] = useState(true);
-    const [warnSpeed, setWarnSpeed] = useState(true);
+    const [warnSpeed, setWarnSpeed] = useState(true);  // renamed conceptually to warnEnvironment but keeping state key for AsyncStorage compat
     
     // Location monitoring state
     const [isMonitoringActive, setIsMonitoringActive] = useState(false);
@@ -310,8 +310,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     try {
                         // Map type to category_id
                         const categoryMap: Record<string, number> = {
-                            speed: 1,
-                            pothole: 2,
+                            pothole: 1,
+                            environment: 2,
                             accident: 3,
                         };
                         
@@ -323,10 +323,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         };
                         
                         await reportingAPI.createReport({
-                            title: report.type === 'speed' ? 'Speed Camera' : 
-                                   report.type === 'pothole' ? 'Pothole' : 'Accident',
+                            title: report.type === 'pothole' ? 'Pothole' : 
+                                   report.type === 'environment' ? 'Environment' : 'Accident',
                             description: report.notes || `${report.type} report`,
-                            category_id: categoryMap[report.type || 'pothole'] || 2,
+                            category_id: categoryMap[report.type || 'pothole'] || 1,
                             severity: severityMap[report.severity] || 'medium',
                             latitude: report.latitude || 0,
                             longitude: report.longitude || 0,
@@ -553,7 +553,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     soundEnabled,
                     warnPothole,
                     warnAccident,
-                    warnSpeed,
+                    warnEnvironment: warnSpeed,
                     appVolume,
                     language,
                 });
@@ -568,7 +568,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
 
     /** Dialog-Typ (welcher Meldungs-Typ wird erstellt?) */
     const [reportType, setReportType] = useState<
-        "pothole" | "accident" | "speed" | null
+        "pothole" | "accident" | "environment" | null
     >(null);
 
     /** MULTI-FILTER */
@@ -757,9 +757,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         
         const name = category.name_ar || category.name_en || category.name || "";
         
-        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "⚠️";
-        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "🚨";
-        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "📷";
+        if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("infrastructure")) return "⚠️";
+        if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("safety")) return "🚨";
+        if (name.includes("بيئ") || name.toLowerCase().includes("environment")) return "🌿";
+        if (name.includes("ألغام") || name.toLowerCase().includes("mine")) return "💣";
         return "📍";
     };
     
@@ -770,9 +771,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         
         // Fallback colors based on category name
         const name = category?.name_ar || category?.name_en || category?.name || "";
-        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "#22C55E"; // Green
-        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "#EF4444"; // Red
-        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "#F59E0B"; // Amber
+        if (name.includes("بيئ") || name.toLowerCase().includes("environment")) return "#4CAF50"; // Green
+        if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("safety")) return "#EF4444"; // Red
+        if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("infrastructure")) return "#F59E0B"; // Amber
+        if (name.includes("ألغام") || name.toLowerCase().includes("mine")) return "#FF5722"; // Deep Orange
         return "#3B82F6"; // Default blue
     };
     
@@ -1216,9 +1218,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 shouldSpeak = true;
             }
             break;
-        case "speed":
+        case "environment":
             if (warnSpeed) {
-                message = t('home.warnSpeed');
+                message = t('home.warnEnvironment');
                 shouldSpeak = true;
             }
             break;
@@ -1619,9 +1621,11 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.fabActionBtn}
-                            onPress={() => { setReportType("speed"); setMenuOpen(false); }}
+                            onPress={() => { setReportType("environment"); setMenuOpen(false); }}
                         >
-                            <Image source={require("../../assets/icons/speed.png")} style={styles.fabActionIcon} />
+                            <View style={[styles.fabActionIcon, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#E8F5E9' }]}>
+                                <Ionicons name="leaf" size={28} color="#4CAF50" />
+                            </View>
                         </TouchableOpacity>
                     </Animated.View>
                 )}
@@ -1757,9 +1761,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         if (reportType === 'pothole') {
                             categoryId = getCategoryByName('حفرة')?.id || 1;
                         } else if (reportType === 'accident') {
-                            categoryId = getCategoryByName('حادث')?.id || 2;
-                        } else if (reportType === 'speed') {
-                            categoryId = getCategoryByName('كاشف سرعة')?.id || 3;
+                            categoryId = getCategoryByName('حادث')?.id || 3;
+                        } else if (reportType === 'environment') {
+                            categoryId = getCategoryByName('خطر بيئي')?.id || 2;
                         }
                         
                         // Map severity to severity_id
@@ -1899,10 +1903,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole' 
-                                ? (language === 'ar' ? 'حفرة في الطريق' : 'Pothole on Road')
+                                ? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk li rê' : 'Pothole on Road')
                                 : data.type === 'accident'
-                                ? (language === 'ar' ? 'حادث مروري' : 'Traffic Accident')
-                                : (language === 'ar' ? 'كاشف سرعة' : 'Speed Camera'),
+                                ? (language === 'ar' ? 'حادث مروري' : language === 'ku' ? 'Qezaya trafîkê' : 'Traffic Accident')
+                                : (language === 'ar' ? 'خطر بيئي' : language === 'ku' ? 'Metirsiya jîngeyî' : 'Environmental Hazard'),
                             description: finalDescription,
                             category_id: categoryId,
                             latitude: locationToUse.latitude,
@@ -2009,7 +2013,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         <Text style={styles.modeText}>{t('home.accident')}</Text>
     </TouchableOpacity>
 
-    {/* كاشف السرعة - Green */}
+    {/* بيئة - Green */}
     <TouchableOpacity
         style={[
             styles.modeBox,
@@ -2019,14 +2023,14 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             const newValue = !warnSpeed;
             setWarnSpeed(newValue);
             if (newValue && soundEnabled) {
-                await speakWarning('speed');
+                await speakWarning('environment');
             }
         }}
     >
         <View style={[styles.modeIconCircle]}>
-            <Ionicons name="speedometer" size={26} color="#00FF00" />
+            <Ionicons name="leaf" size={26} color="#4CAF50" />
         </View>
-        <Text style={styles.modeText}>{t('home.speedCamera')}</Text>
+        <Text style={styles.modeText}>{t('home.environment')}</Text>
     </TouchableOpacity>
 
 </View>

@@ -28,7 +28,7 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
 
-type ReportType = "pothole" | "accident" | "speed" | null;
+type ReportType = "pothole" | "accident" | "environment" | null;
 
 interface Props {
   visible: boolean;
@@ -265,7 +265,7 @@ export default function ReportDialog({
   const titleByType: Record<Exclude<ReportType, null>, string> = {
     pothole: t("reportDialog.titlePothole"),
     accident: t("reportDialog.titleAccident"),
-    speed: t("reportDialog.titleSpeed"),
+    environment: t("reportDialog.titleEnvironment"),
   };
 
   const title = type ? titleByType[type] : t("reportDialog.titleDefault");
@@ -355,13 +355,13 @@ export default function ReportDialog({
                       { textAlign: effectiveRTL ? "right" : "left" },
                     ]}
                   >
-                    {type === "speed"
+                    {type === "environment"
                       ? t("reportDialog.typeLabel")
                       : t("reportDialog.severityLabel")}
                   </Text>
                 </View>
 
-                {type === "speed" ? (
+                {type === "environment" ? (
                   <View
                     style={[
                       styles.chipRow,
