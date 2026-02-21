@@ -8,8 +8,8 @@
     "edit": "Biguherîne",
     "close": "Bigire",
     "loading": "Tê barkirin...",
-    "error": "şaşîk çêbû",
-    "success": "Serkeftî bû",
+    "error": "Şaşîk çêbû",
+    "success": "Serkeftî",
     "yes": "Erê",
     "no": "Na",
     "search": "Lêgerîn",
@@ -21,7 +21,7 @@
     "login": "Têkeve Hesabî",
     "register": "Hesab çêkirin",
     "logout": "Derketin",
-    "email": "Email",
+    "email": "E-name",
     "password": "Şîfre",
     "confirmPassword": "Şîfreyê piştrast bike",
     "fullName": "Navê tevahî",
@@ -100,16 +100,16 @@
     "alertTypes": "Tîpên hişyariyê",
     "pothole": "Çal",
     "accident": "Qezayek",
-    "environment": "Jîngehî",
+    "speedCamera": "Kamera lezê",
     "testSoundText": "Ev test e",
     "warnPothole": "Hişyarî! Çalêk li pêş te heye",
     "warnAccident": "Hişyarî! Qezayek li ser rê heye",
-    "warnEnvironment": "Hişyarî! Metirsiya jîngehê li pêş te heye"
+    "warnSpeed": "Hişyar be! Kamera lezê li pêş te heye"
   },
   "reportDialog": {
     "titlePothole": "Agahdarî Çal",
     "titleAccident": "Agahdarî Qeza",
-    "titleEnvironment": "Agahdarî Jîngehî",
+    "titleSpeed": "Agahdarî Kamera Lezê",
     "titleDefault": "Agahdarî",
     "severityLabel": "Asteya xetereyê:",
     "typeLabel": "Tîp:",
@@ -187,7 +187,7 @@
     },
     "confirmSuccess": "Piştrast bû!",
     "confirmSuccessMessage": "Rapor piştrast bû! {points} xal stand",
-    "confirmError": "şaşî",
+    "confirmError": "Şaşî",
     "confirmErrorMessage": "Di piştrastkirinê de şaşîk çêbû",
     "noReports": "Hên tu Raporên tune ye",
     "createNewReport": "Ji nexşeyê Raporêk nû çêbike",
@@ -203,7 +203,7 @@
       "pothole": "Çal",
       "accident": "Qeza",
       "lighting": "Ronahî",
-      "environment": "Jîngehî",
+      "speedCamera": "Kamera lezê",
       "other": "Yên din",
       "unknown": "Nenas"
     },
@@ -311,7 +311,7 @@
     "privacyNote": "Cihê te ewle ye û dê tenê ji bo baştirkirina xizmetên hişyarkirinê were parvekirin",
     "activatedTitle": "Çalak bû",
     "activatedMessage": "Dema ku hûn nêzî çalên 200 metre dûr dibin hûn ê hişyar bibin.",
-    "errorTitle": "şaşî",
+    "errorTitle": "Şaşî",
     "errorMessage": "Çalakiya kontrola cîhê şewitî têk çû. Piştrast bikin ku hûn destûrên pêwîst dan.",
     "ok": "Temam"
   },
@@ -348,7 +348,7 @@
     "registerError": "Di dema qeydkirinê de xeletiyek çêbû",
     "connectionTimeout": "Demê girêdanê qediya, dîsa biceribîne",
     "connectionError": "Nekarî bi serverê ve were girêdan. Ji kerema xwe girêdana xwe ya înternetê kontrol bike",
-    "error": "şaşî"
+    "error": "Şaşî"
   },
   "coupons": {
     "screenTitle": "Kupon",
