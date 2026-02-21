@@ -22,7 +22,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Load saved language from localStorage
     const savedLanguage = localStorage.getItem(LANGUAGE_KEY) as Language;
-    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ar')) {
+    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ar' || savedLanguage === 'ku')) {
       setLanguageState(savedLanguage);
     }
     setMounted(true);
@@ -32,11 +32,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (mounted) {
       // Save language to localStorage
       localStorage.setItem(LANGUAGE_KEY, language);
-      
+
       // Update document direction
       document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
       document.documentElement.lang = language;
-      
+
       // Add/remove RTL class for Tailwind
       if (language === 'ar') {
         document.documentElement.classList.add('rtl');
@@ -51,7 +51,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleLanguage = () => {
-    setLanguageState(prev => prev === 'en' ? 'ar' : 'en');
+    setLanguageState(prev => prev === 'en' ? 'ar' : prev === 'ar' ? 'ku' : 'en');
   };
 
   const value: LanguageContextType = {
@@ -65,16 +65,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Prevent hydration mismatch
   if (!mounted) {
     return (
-      <LanguageContext.Provider value={{ ...value, t: translations.en, language: 'en', isRTL: false }}>
-        {children}
-      </LanguageContext.Provider>
+        <LanguageContext.Provider value={{ ...value, t: translations.en, language: 'en', isRTL: false }}>
+          {children}
+        </LanguageContext.Provider>
     );
   }
 
   return (
-    <LanguageContext.Provider value={value}>
-      {children}
-    </LanguageContext.Provider>
+      <LanguageContext.Provider value={value}>
+        {children}
+      </LanguageContext.Provider>
   );
 }
 
