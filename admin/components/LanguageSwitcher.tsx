@@ -1,61 +1,83 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { Globe } from 'lucide-react';
 
-interface LanguageSwitcherProps {
-  variant?: 'icon' | 'button' | 'dropdown';
+type LanguageSwitcherProps = {
   className?: string;
-}
+  variant?: 'default' | 'button';
+};
 
-export default function LanguageSwitcher({ variant = 'dropdown', className = '' }: LanguageSwitcherProps) {
-  const { language, toggleLanguage, isRTL } = useLanguage();
+const LANGUAGE_LABELS = {
+  en: 'English',
+  ar: 'العربية',
+  ku: 'kurdî',
+} as const;
 
-  if (variant === 'icon') {
-    return (
-        <button
-            onClick={toggleLanguage}
-            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition ${className}`}
-            title={
-              language === 'en'
-                  ? 'Switch to Arabic'
-                  : language === 'ar'
-                      ? 'Switch to Kurdish'
-                      : 'Switch to English'
-            }
-        >
-          <Globe className="w-5 h-5" />
-        </button>
-    );
-  }
+export default function LanguageSwitcher({ className = '', variant = 'default' }: LanguageSwitcherProps) {
+  const { language, setLanguage } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  if (variant === 'dropdown') {
-    return (
-        <div className={`relative inline-block ${className}`}>
-          <select
-              value={language}
-              onChange={(e) => toggleLanguage()}
-              className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="en">English</option>
-            <option value="ar">العربية</option>
-            <option value="ku">Kurdish</option>
-          </select>
-          <Globe className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" />
-        </div>
-    );
-  }
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
 
-  // Default: button variant
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
+
+  const baseWidth = variant === 'button' ? 'w-[170px]' : 'w-full';
+
   return (
+    <div ref={containerRef} className={`relative ${baseWidth} ${className}`}>
       <button
-          onClick={toggleLanguage}
-          className={`flex items-center gap-2 px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition font-medium ${className}`}
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="w-full h-8 rounded-md border border-[#B2C7E1] bg-[#D3E2F2] text-[#2E5E92] text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-[#DCE8F5] transition-colors focus:outline-none focus:ring-2 focus:ring-[#AFC7E3]"
       >
-        <Globe className="w-4 h-4" />
-        <span>
-        {language === 'en' ? 'العربية' : language === 'ar' ? 'Kurdish' : 'English'}
-      </span>
+        <span>{LANGUAGE_LABELS[language]}</span>
+        <Globe className="w-[13px] h-[13px] text-[#2E5E92]" />
       </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 mt-1 rounded-md border border-[#B2C7E1] bg-white shadow-lg overflow-hidden z-[60]">
+          <button
+            type="button"
+            onClick={() => {
+              setLanguage('en');
+              setOpen(false);
+            }}
+            className={`w-full h-8 px-3 text-sm text-center ${language === 'en' ? 'bg-[#E8F1FA] text-[#2E5E92] font-semibold' : 'text-[#2E5E92] hover:bg-[#F1F6FC]'}`}
+          >
+            English
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setLanguage('ar');
+              setOpen(false);
+            }}
+            className={`w-full h-8 px-3 text-sm text-center ${language === 'ar' ? 'bg-[#E8F1FA] text-[#2E5E92] font-semibold' : 'text-[#2E5E92] hover:bg-[#F1F6FC]'}`}
+          >
+            العربية
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setLanguage('ku');
+              setOpen(false);
+            }}
+            className={`w-full h-8 px-3 text-sm text-center ${language === 'ku' ? 'bg-[#E8F1FA] text-[#2E5E92] font-semibold' : 'text-[#2E5E92] hover:bg-[#F1F6FC]'}`}
+          >
+            kurdî
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
