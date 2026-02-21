@@ -731,7 +731,8 @@ export const translations = {
         user: 'Bikarhêner',
         company: 'Şirket',
         government: 'Hikûmet',
-      },companyuserStatuses: {
+      },
+      userStatuses: {
         active: 'Çalak',
         suspended: 'Rawestandî',
         banned: 'Qedexe kirî',
