@@ -23,7 +23,7 @@ interface Company {
 
 export default function CompaniesPage() {
   const router = useRouter();
-  const { t, isRTL } = useLanguage();
+  const {t, isRTL, language} = useLanguage();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
   const [search, setSearch] = useState('');
@@ -33,7 +33,7 @@ export default function CompaniesPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     logo_url: '',
@@ -52,17 +52,17 @@ export default function CompaniesPage() {
 
   useEffect(() => {
     let filtered = companies;
-    
+
     if (statusFilter !== 'ALL') {
       filtered = filtered.filter((c) => c.status === statusFilter);
     }
-    
+
     if (search) {
       filtered = filtered.filter((c) =>
-        c.name.toLowerCase().includes(search.toLowerCase())
+          c.name.toLowerCase().includes(search.toLowerCase())
       );
     }
-    
+
     setFilteredCompanies(filtered);
   }, [search, statusFilter, companies]);
 
@@ -71,9 +71,9 @@ export default function CompaniesPage() {
       setLoading(true);
       const data = await couponsAPI.getCompanies();
       // Filter out deleted companies
-      const activeCompanies = Array.isArray(data) 
-        ? data.filter(comp => comp.status !== 'DELETED') 
-        : [];
+      const activeCompanies = Array.isArray(data)
+          ? data.filter(comp => comp.status !== 'DELETED')
+          : [];
       setCompanies(activeCompanies);
       setFilteredCompanies(activeCompanies);
     } catch (error) {
@@ -85,15 +85,15 @@ export default function CompaniesPage() {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      alert(isRTL ? 'اسم الشركة مطلوب' : 'Company name is required');
+      alert(language === 'ar' ? 'اسم الشركة مطلوب' : language === 'ku' ? 'Navê şirkêtê pêwîst e' : 'Company name is required');
       return false;
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      alert(isRTL ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
+      alert(language === 'ar' ? 'البريد الإلكتروني غير صالح' : language === 'ku' ? 'Navnîşana e-nameyê ne derbasdar e' : 'Invalid email address');
       return false;
     }
     if (formData.phone && !/^[+]?[\d\s()-]{6,20}$/.test(formData.phone)) {
-      alert(isRTL ? 'رقم الهاتف غير صالح' : 'Invalid phone number');
+      alert(language === 'ar' ? 'رقم الهاتف غير صالح' : language === 'ku' ? 'Hejmara telefonê ne derbasdar e' : 'Invalid phone number');
       return false;
     }
     return true;
@@ -103,13 +103,13 @@ export default function CompaniesPage() {
     if (!validateForm()) return;
     try {
       await couponsAPI.createCompany(formData);
-      alert(isRTL ? 'تم إنشاء الشركة بنجاح!' : 'Company created successfully!');
+      alert(language === 'ar' ? 'تم إنشاء الشركة بنجاح!' : language === 'ku' ? 'Şirkêt bi serkeftin hate çêkirin!' : 'Company created successfully!');
       setShowCreateModal(false);
       resetForm();
       loadCompanies();
     } catch (error) {
       console.error('Failed to create company:', error);
-      alert(isRTL ? 'فشل في إنشاء الشركة' : 'Failed to create company');
+      alert(language === 'ar' ? 'فشل في إنشاء الشركة' : language === 'ku' ? 'Çêkirina şirkêtê têk çû' : 'Failed to create company');
     }
   };
 
@@ -134,27 +134,45 @@ export default function CompaniesPage() {
     if (!validateForm()) return;
     try {
       await couponsAPI.updateCompany(selectedCompany.id, formData);
-      alert(isRTL ? 'تم تحديث الشركة بنجاح!' : 'Company updated successfully!');
+      alert(language === 'ar' ? 'تم تحديث الشركة بنجاح!' : language === 'ku' ? 'Şirkêt bi serkeftin hate nûkirin!' : 'Company updated successfully!');
       setShowEditModal(false);
       resetForm();
       loadCompanies();
     } catch (error) {
       console.error('Failed to update company:', error);
       alert('Failed to update company');
-    }
+    }alert(
+        language === 'ar'
+            ? 'فشل في تحديث الشركة'
+            : language === 'ku'
+                ? 'Nûkirina şirkêtê têk çû'
+                : 'Failed to update company'
+    );
   };
 
   const handleDelete = async () => {
     if (!selectedCompany) return;
     try {
       await couponsAPI.deleteCompany(selectedCompany.id);
-      alert('Company deleted successfully!');
+      alert(
+          language === 'ar'
+              ? 'تم حذف الشركة بنجاح!'
+              : language === 'ku'
+                  ? 'Şirkêt bi serkeftin hate jêbirin!'
+                  : 'Company deleted successfully!'
+      );
       setShowDeleteModal(false);
       setSelectedCompany(null);
       loadCompanies();
     } catch (error) {
       console.error('Failed to delete company:', error);
-      alert('Failed to delete company');
+      alert(
+          language === 'ar'
+              ? 'فشل في حذف الشركة'
+              : language === 'ku'
+                  ? 'Jêbirina şirkêtê têk çû'
+                  : 'Failed to delete company'
+      );
     }
   };
 
@@ -174,203 +192,201 @@ export default function CompaniesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
     );
   }
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className={`mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-        <div className={isRTL ? 'text-right' : ''}>
-          <button
-            onClick={() => router.push('/dashboard/coupons')}
-            className={`flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2 sm:mb-3 text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
-          >
-            <ArrowLeft className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
-            {t.common.back} {t.nav.coupons}
-          </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.companies.title}</h1>
-          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{isRTL ? 'إدارة شركات القسائم' : 'Manage coupon companies'}</p>
-        </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowCreateModal(true);
-          }}
-          className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base w-full sm:w-auto ${isRTL ? 'flex-row-reverse' : ''}`}
-        >
-          <Plus className="w-5 h-5" />
-          {t.companies.addCompany}
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-6 space-y-4">
-        <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={isRTL ? 'بحث عن شركة...' : 'Search company...'}
-              className={`w-full py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
-            />
-          </div>
-          
-          {/* Status Filter */}
-          <div className="sm:w-48">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
+      <div dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className={`mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+          <div className={isRTL ? 'text-right' : ''}>
+            <button
+                onClick={() => router.push('/dashboard/coupons')}
+                className={`flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2 sm:mb-3 text-sm ${isRTL ? 'flex-row-reverse' : ''}`}
             >
-              <option value="ALL">{isRTL ? 'جميع الحالات' : 'All Statuses'}</option>
-              <option value="ACTIVE">{isRTL ? 'نشط' : 'Active'}</option>
-              <option value="INACTIVE">{isRTL ? 'غير نشط' : 'Inactive'}</option>
-            </select>
+              <ArrowLeft className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+              {t.common.back} {t.nav.coupons}
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.companies.title}</h1>
+            <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{language === 'ar' ? 'إدارة شركات القسائم' : language === 'ku' ? 'Rêveberiya şirkêtên kuponan' : 'Manage coupon companies'}</p>
           </div>
-          
-          {/* Results count */}
-          <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'sm:mr-auto' : 'sm:ml-auto'}`}>
-            {isRTL 
-              ? `${filteredCompanies.length} من ${companies.length} شركة`
-              : `${filteredCompanies.length} of ${companies.length} companies`
-            }
+          <button
+              onClick={() => {
+                resetForm();
+                setShowCreateModal(true);
+              }}
+              className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base w-full sm:w-auto ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Plus className="w-5 h-5" />
+            {t.companies.addCompany}
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="mb-6 space-y-4">
+          <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={language === 'ar' ? 'بحث عن شركة...' : language === 'ku' ? 'Li şirkêtê bigere...' : 'Search company...'}
+                  className={`w-full py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div className="sm:w-48">
+              <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
+              >
+                <option value="ALL">{language === 'ar' ? 'جميع الحالات' : language === 'ku' ? 'Hemû rewş' : 'All Statuses'}</option>
+                <option value="ACTIVE">{language === 'ar' ? 'نشط' : language === 'ku' ? 'Çalak' : 'Active'}</option>
+                <option value="INACTIVE">{language === 'ar' ? 'غير نشط' : language === 'ku' ? 'Neçalak' : 'Inactive'}</option>
+              </select>
+            </div>
+
+            {/* Results count */}
+            <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'sm:mr-auto' : 'sm:ml-auto'}`}>
+              {language === 'ar' ? `${filteredCompanies.length} من ${companies.length} شركة` : language === 'ku' ? `${filteredCompanies.length} ji ${companies.length} şirkêt` : `${filteredCompanies.length} of ${companies.length} companies`
+              }
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filteredCompanies.map((company) => (
-          <div key={company.id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition">
-            {company.logo_url && (
-              <img
-                src={getImageUrl(company.logo_url)}
-                alt={company.name}
-                className="w-full h-24 sm:h-32 object-contain rounded-lg mb-3 sm:mb-4"
-              />
-            )}
-            <h3 className={`font-semibold text-gray-900 text-base sm:text-lg mb-2 ${isRTL ? 'text-right' : ''}`}>{company.name}</h3>
-            <div className={`mb-3 ${isRTL ? 'text-right' : ''}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {filteredCompanies.map((company) => (
+              <div key={company.id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition">
+                {company.logo_url && (
+                    <img
+                        src={getImageUrl(company.logo_url)}
+                        alt={company.name}
+                        className="w-full h-24 sm:h-32 object-contain rounded-lg mb-3 sm:mb-4"
+                    />
+                )}
+                <h3 className={`font-semibold text-gray-900 text-base sm:text-lg mb-2 ${isRTL ? 'text-right' : ''}`}>{company.name}</h3>
+                <div className={`mb-3 ${isRTL ? 'text-right' : ''}`}>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                company.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                  company.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
               }`}>
                 {company.status}
               </span>
+                </div>
+                <div className={`flex flex-col xs:flex-row gap-2 ${isRTL ? 'xs:flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => handleEdit(company)}
+                      className="flex-1 px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-700 transition"
+                  >
+                    {t.common.edit}
+                  </button>
+                  <button
+                      onClick={() => {
+                        setSelectedCompany(company);
+                        setShowDeleteModal(true);
+                      }}
+                      className="flex-1 px-3 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 transition"
+                  >
+                    {t.common.delete}
+                  </button>
+                </div>
+              </div>
+          ))}
+        </div>
+
+        {filteredCompanies.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500">{language === 'ar' ? 'لم يتم العثور على شركات' : language === 'ku' ? 'Şirkêt nehatin dîtin' : 'No companies found'}</p>
             </div>
-            <div className={`flex flex-col xs:flex-row gap-2 ${isRTL ? 'xs:flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => handleEdit(company)}
-                className="flex-1 px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-700 transition"
-              >
-                {t.common.edit}
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedCompany(company);
-                  setShowDeleteModal(true);
-                }}
-                className="flex-1 px-3 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 transition"
-              >
-                {t.common.delete}
-              </button>
+        )}
+
+        {/* Create Modal */}
+        {showCreateModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.companies.addCompany}</h2>
+                <CompanyForm formData={formData} setFormData={setFormData} t={t} isRTL={isRTL} />
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        resetForm();
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleCreate}
+                      className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
+                  >
+                    {t.companies.addCompany}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && selectedCompany && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.companies.editCompany}</h2>
+                <CompanyForm formData={formData} setFormData={setFormData} t={t} isRTL={isRTL} />
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowEditModal(false);
+                        resetForm();
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleUpdate}
+                      className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
+                  >
+                    {t.users.saveChanges}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && selectedCompany && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-red-600 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.companies.deleteCompany}</h2>
+                <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
+                  {t.companies.confirmDelete} <strong>{selectedCompany.name}</strong>?
+                </p>
+                <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowDeleteModal(false);
+                        setSelectedCompany(null);
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleDelete}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    {t.common.delete}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
       </div>
-
-      {filteredCompanies.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">{isRTL ? 'لم يتم العثور على شركات' : 'No companies found'}</p>
-        </div>
-      )}
-
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.companies.addCompany}</h2>
-            <CompanyForm formData={formData} setFormData={setFormData} t={t} isRTL={isRTL} />
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  resetForm();
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleCreate}
-                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
-              >
-                {t.companies.addCompany}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {showEditModal && selectedCompany && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.companies.editCompany}</h2>
-            <CompanyForm formData={formData} setFormData={setFormData} t={t} isRTL={isRTL} />
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  resetForm();
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
-              >
-                {t.users.saveChanges}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedCompany && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-red-600 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.companies.deleteCompany}</h2>
-            <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
-              {t.companies.confirmDelete} <strong>{selectedCompany.name}</strong>?
-            </p>
-            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setSelectedCompany(null);
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                {t.common.delete}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
