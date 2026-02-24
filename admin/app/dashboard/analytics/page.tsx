@@ -708,7 +708,7 @@ export default function AnalyticsPage() {
       week: language === 'ar' ? 'هذا الأسبوع' : language === 'ku' ? 'Vê hefteyê' : 'This Week',
       month: language === 'ar' ? 'هذا الشهر' : language === 'ku' ? 'Vê mehê' : 'This Month',
       year: language === 'ar' ? 'هذا العام' : language === 'ku' ? 'Îsal' : 'This Year',
-      all: language === 'ar' ? 'الكل' : language === 'ku' ? 'Hemu dem' : 'All Time',
+      all: language === 'ar' ? 'الكل' : language === 'ku' ? 'Hemû dem' : 'All Time',
       custom: language === 'ar' ? 'نطاق مخصص' : language === 'ku' ? 'Dûrahiya taybet' : 'Custom Range',
     };
     return labels[filter];
