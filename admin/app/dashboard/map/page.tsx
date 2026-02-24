@@ -859,7 +859,7 @@ export default function MapPage() {
             {/* Date From */}
             <div className="flex flex-col">
               <label className={`text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
-                {language === 'ar' ? 'من تاريخ' : language === 'ku' ? 'Ji dîrokê ve' : 'From Date'}
+                {language === 'ar' ? 'من تاريخ' : language === 'ku' ? 'Ji ve rojê' : 'From Date'}
               </label>
               <div className="relative">
                 <Calendar className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 ${isRTL ? 'right-3' : 'left-3'}`} />
@@ -891,7 +891,7 @@ export default function MapPage() {
             {/* Time From */}
             <div className="flex flex-col">
               <label className={`text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
-                {language === 'ar' ? 'من وقت' : language === 'ku' ? 'Ji ber ku' : 'From Time'}
+                {language === 'ar' ? 'من وقت' : language === 'ku' ? 'Ji ve demê' : 'From Time'}
               </label>
               <input
                   type="time"
@@ -904,7 +904,7 @@ export default function MapPage() {
             {/* Time To */}
             <div className="flex flex-col">
               <label className={`text-xs text-gray-500 mb-1 ${isRTL ? 'text-right' : ''}`}>
-                {language === 'ar' ? 'إلى وقت' : language === 'ku' ? 'Heta demekê' : 'To Time'}
+                {language === 'ar' ? 'إلى وقت' : language === 'ku' ? 'Heta demê' : 'To Time'}
               </label>
               <input
                   type="time"
