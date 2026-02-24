@@ -14,6 +14,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 import * as Location from "expo-location";
+import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -954,10 +955,25 @@ export default function HomeScreen() {
 
                 // 6. Speak summary
                 if (routeData.total_hazards > 0 && soundEnabled) {
-                    const msg = language === 'ar'
-                        ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
-                        : language === 'ku' ? `Hişyariyê: li ser reya te ${routeData.total_hazards} metirsi heye` : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
-                    Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : language === 'ku' ? 'ku-TR' : 'en-US' });
+                    if (language === 'ku') {
+                        // Play pre-generated Kurdish route warning audio
+                        try {
+                            const { sound: kuRouteSound } = await Audio.Sound.createAsync(
+                                require('@/assets/sounds/ku/warning_route.mp3'),
+                                { shouldPlay: true, volume: appVolume }
+                            );
+                            kuRouteSound.setOnPlaybackStatusUpdate((s) => {
+                                if (s.isLoaded && s.didJustFinish) kuRouteSound.unloadAsync();
+                            });
+                        } catch (kuErr) {
+                            console.warn('Kurdish route audio failed:', kuErr);
+                        }
+                    } else {
+                        const msg = language === 'ar'
+                            ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
+                            : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
+                        Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+                    }
                 }
             } catch (hazardErr) {
                 console.warn('Failed to fetch route hazards (route still shown):', hazardErr);
@@ -1187,12 +1203,35 @@ export default function HomeScreen() {
         }
 
         if (shouldSpeak) {
-            await Speech.speak(message, {
-                language: language === 'ar' ? "ar-SA" : language === 'ku' ? "ku-TR" : "en-US",
-                rate: 0.9,
-                pitch: 1.0,
-                volume: appVolume,
-            });
+            if (language === 'ku') {
+                // Play pre-generated Kurdish audio file
+                try {
+                    const kuAudioMap: Record<string, any> = {
+                        'pothole': require('@/assets/sounds/ku/warn_pothole_short.mp3'),
+                        'accident': require('@/assets/sounds/ku/warn_accident_short.mp3'),
+                        'speed': require('@/assets/sounds/ku/warn_speed_short.mp3'),
+                    };
+                    const kuFile = kuAudioMap[type] || require('@/assets/sounds/ku/warning_generic.mp3');
+                    const { sound: kuWarnSound } = await Audio.Sound.createAsync(
+                        kuFile,
+                        { shouldPlay: true, volume: appVolume }
+                    );
+                    kuWarnSound.setOnPlaybackStatusUpdate((s) => {
+                        if (s.isLoaded && s.didJustFinish) kuWarnSound.unloadAsync();
+                    });
+                } catch (kuErr) {
+                    console.warn('Kurdish warning audio failed, falling back to Arabic TTS:', kuErr);
+                    await Speech.speak('تحذير!', { language: 'ar-SA', rate: 0.9, volume: appVolume });
+                }
+            } else {
+                const ttsLang = language === 'ar' ? 'ar-SA' : 'en-US';
+                await Speech.speak(message, {
+                    language: ttsLang,
+                    rate: 0.9,
+                    pitch: 1,
+                    volume: appVolume,
+                });
+            }
         }
     }
 

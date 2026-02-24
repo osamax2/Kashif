@@ -3,6 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { gamificationAPI } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Audio } from 'expo-av';
+import * as Speech from 'expo-speech';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -176,6 +177,18 @@ export default function AlertScreen() {
     };
   }, []);
 
+  // Pre-generated Kurdish audio files by category
+  const getKurdishAudioFile = () => {
+    switch (categoryIdNum) {
+      case 1: return require('../assets/sounds/ku/warning_pothole.mp3');
+      case 2: return require('../assets/sounds/ku/warning_environment.mp3');
+      case 3: return require('../assets/sounds/ku/warning_accident.mp3');
+      case 4: return require('../assets/sounds/ku/warning_speed_camera.mp3');
+      case 6: return require('../assets/sounds/ku/warning_mines.mp3');
+      default: return require('../assets/sounds/ku/warning_generic.mp3');
+    }
+  };
+
   const playAlertSound = async () => {
     console.log('🔊 playAlertSound called');
     try {
@@ -190,21 +203,16 @@ export default function AlertScreen() {
       });
       console.log('🔊 Audio mode set successfully');
 
-      // Try to play alert sound if it exists
-      console.log('🔊 Creating sound from alert.mp3...');
+      // Step 1: Play alert beep sound
+      console.log('🔊 Creating sound from alert.wav...');
       const { sound } = await Audio.Sound.createAsync(
-        require('../assets/sounds/alert.mp3'),
+        require('../assets/sounds/alert.wav'),
         { shouldPlay: true, volume: 1.0 }
       );
       console.log('🔊 Sound created, playing...');
 
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded) {
-          console.log('🔊 Playback status:', {
-            isPlaying: status.isPlaying,
-            positionMillis: status.positionMillis,
-            durationMillis: status.durationMillis,
-          });
           if (status.didJustFinish) {
             console.log('🔊 Alert sound finished playing');
             sound.unloadAsync();
@@ -214,9 +222,65 @@ export default function AlertScreen() {
 
       await sound.playAsync();
       console.log('🔊 playAsync completed');
+
+      // Step 2: Play voice warning after beep
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      if (language === 'ku') {
+        // Play pre-generated Kurdish audio file
+        console.log('🔊 Playing Kurdish voice warning...');
+        try {
+          const { sound: kuSound } = await Audio.Sound.createAsync(
+            getKurdishAudioFile(),
+            { shouldPlay: true, volume: 1.0 }
+          );
+          kuSound.setOnPlaybackStatusUpdate((status) => {
+            if (status.isLoaded && status.didJustFinish) {
+              kuSound.unloadAsync();
+            }
+          });
+        } catch (kuError) {
+          console.warn('⚠️ Kurdish audio failed:', kuError);
+        }
+      } else {
+        // Arabic or English TTS
+        const ttsMessage = language === 'ar'
+          ? 'تحذير! خطر في الأمام'
+          : 'Warning! Danger ahead';
+        await Speech.speak(ttsMessage, {
+          language: language === 'ar' ? 'ar-SA' : 'en-US',
+          rate: 0.9,
+          pitch: 1,
+        });
+      }
     } catch (error) {
-      console.error('❌ Alert sound error:', error);
-      console.error('❌ Error details:', JSON.stringify(error));
+      console.warn('⚠️ Alert sound failed, using TTS fallback:', error);
+      // Fallback: use Text-to-Speech
+      try {
+        if (language === 'ku') {
+          // Try Kurdish audio file as fallback
+          const { sound: kuFallback } = await Audio.Sound.createAsync(
+            getKurdishAudioFile(),
+            { shouldPlay: true, volume: 1.0 }
+          );
+          kuFallback.setOnPlaybackStatusUpdate((status) => {
+            if (status.isLoaded && status.didJustFinish) {
+              kuFallback.unloadAsync();
+            }
+          });
+        } else {
+          const ttsMessage = language === 'ar'
+            ? 'تحذير! خطر في الأمام'
+            : 'Warning! Danger ahead';
+          await Speech.speak(ttsMessage, {
+            language: language === 'ar' ? 'ar-SA' : 'en-US',
+            rate: 0.9,
+            pitch: 1,
+          });
+        }
+      } catch (ttsError) {
+        console.error('❌ TTS fallback also failed:', ttsError);
+      }
     }
   };
 
