@@ -6,15 +6,15 @@ import { Audio } from 'expo-av';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    Dimensions,
-    I18nManager,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    Vibration,
-    View,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  I18nManager,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Vibration,
+  View,
 } from 'react-native';
 
 I18nManager.allowRTL(true);
@@ -33,7 +33,7 @@ export default function AlertScreen() {
     distance: string;
     categoryId: string;
   }>();
-  
+
   const [distance, setDistance] = useState(parseInt(initialDistance || '200'));
   const [isConfirming, setIsConfirming] = useState(false);
   const categoryIdNum = parseInt(categoryId || '1');
@@ -66,6 +66,13 @@ export default function AlertScreen() {
           title: language === 'ar' ? '🚨 تحذير!' : language === 'ku' ? '🚨 Hişyarî!' : '🚨 Warning!',
           subtitle: language === 'ar' ? 'حادث مروري في الأمام' : language === 'ku' ? 'Qezayek li pêş te heye' : 'Traffic Accident Ahead',
         };
+      case 4: // Speed Camera
+        return {
+          icon: 'speedometer' as const,
+          iconColor: DESTRUCTIVE_RED,
+          title: language === 'ar' ? '📷 تنبيه!' : language === 'ku' ? '📷 Hişyarî!' : '📷 Alert!',
+          subtitle: language === 'ar' ? 'كاشف سرعة في الأمام' : language === 'ku' ? 'Kameraya lezê li pêş e' : 'Speed Camera Ahead',
+        };
       case 6: // Mines
         return {
           icon: 'warning' as const,
@@ -78,7 +85,7 @@ export default function AlertScreen() {
           icon: 'warning' as const,
           iconColor: DESTRUCTIVE_RED,
           title: language === 'ar' ? '⚠️ تحذير!' : language === 'ku' ? '⚠️ Hişyarî!' : '⚠️ Warning!',
-          subtitle: language === 'ar' ? 'خطر في الأمام' : language === 'ku' ? 'Xeterek li pêş te heye' : 'Hazard Ahead',
+          subtitle: language === 'ar' ? 'حفرة في الأمام' : language === 'ku' ? 'Çalek li pêş te heye' : 'Pothole Ahead',
         };
     }
   };
@@ -182,7 +189,7 @@ export default function AlertScreen() {
         playThroughEarpieceAndroid: false,
       });
       console.log('🔊 Audio mode set successfully');
-      
+
       // Try to play alert sound if it exists
       console.log('🔊 Creating sound from alert.mp3...');
       const { sound } = await Audio.Sound.createAsync(
@@ -190,7 +197,7 @@ export default function AlertScreen() {
         { shouldPlay: true, volume: 1.0 }
       );
       console.log('🔊 Sound created, playing...');
-      
+
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded) {
           console.log('🔊 Playback status:', {
@@ -204,7 +211,7 @@ export default function AlertScreen() {
           }
         }
       });
-      
+
       await sound.playAsync();
       console.log('🔊 playAsync completed');
     } catch (error) {
@@ -219,31 +226,31 @@ export default function AlertScreen() {
 
   const handleConfirm = async () => {
     if (!reportId || isConfirming) return;
-    
+
     try {
       setIsConfirming(true);
-      
+
       // Call API to confirm report and award 20 points
       const result = await gamificationAPI.confirmReport(parseInt(reportId));
-      
+
       console.log('✅ Report confirmed:', result.message, `+${result.points} points`);
-      
+
       // Refresh user data to update points
       await refreshUser();
-      
+
       // Show success message briefly before closing
       // You could add a success animation here if desired
       setTimeout(() => {
         router.back();
       }, 500);
-      
+
     } catch (error: any) {
       console.error('❌ Failed to confirm report:', error);
-      
+
       // Show error message
-      const errorMessage = error?.response?.data?.detail || 
-        (language === 'ar' ? 'فشل تأكيد البلاغ' : 'Failed to confirm report');
-      
+      const errorMessage = error?.response?.data?.detail ||
+          (language === 'ar' ? 'فشل تأكيد البلاغ' : language === 'ku' ? 'Piştrastkirina raporê têk çû' : 'Failed to confirm report');
+
       alert(errorMessage);
       setIsConfirming(false);
     }
@@ -308,73 +315,73 @@ export default function AlertScreen() {
         <Text style={styles.mainTitle}>{alertData.title}</Text>
         <Text style={styles.subtitle}>{alertData.subtitle}</Text>
 
-        {/* Distance Indicator */}
-        <Animated.View
-          style={[
-            styles.distanceCard,
-            {
-              transform: [{ scale: pulseAnim }],
-            },
-          ]}
-        >
-          <View style={styles.distanceContent}>
-            <Ionicons name="navigate" size={24} color={WHITE} style={styles.navigationIcon} />
-            <Text style={styles.distanceText}>{distance}{language === 'ar' ? 'م' : 'm'}</Text>
-          </View>
-          <Text style={styles.warningText}>
-            {language === 'ar' ? 'إبطئ السرعة وكن حذراً' : 'Slow down and be careful'}
-          </Text>
-        </Animated.View>
-
-        {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={handleConfirm}
-            activeOpacity={0.8}
-            disabled={isConfirming}
+          {/* Distance Indicator */}
+          <Animated.View
+              style={[
+                styles.distanceCard,
+                {
+                  transform: [{ scale: pulseAnim }],
+                },
+              ]}
           >
-            {isConfirming ? (
-              <ActivityIndicator size="small" color={DESTRUCTIVE_RED} />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={20} color={DESTRUCTIVE_RED} />
-                <Text style={styles.confirmButtonText}>
-                  {language === 'ar' ? 'شكراً للتأكيد (+20 نقطة)' : 'Thanks for confirming (+20 points)'}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.dismissButton}
-            onPress={handleDismiss}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="close-circle" size={20} color={WHITE} style={{ marginRight: 8 }} />
-            <Text style={styles.dismissButtonText}>
-              {language === 'ar' ? 'تجاهل' : 'Ignore'}
+            <View style={styles.distanceContent}>
+              <Ionicons name="navigate" size={24} color={WHITE} style={styles.navigationIcon} />
+              <Text style={styles.distanceText}>{distance}{language === 'ar' ? 'م' : language === 'ku' ? 'm' : 'm'}</Text>
+            </View>
+            <Text style={styles.warningText}>
+              {language === 'ar' ? 'إبطئ السرعة وكن حذراً' : language === 'ku' ? 'Lezê kêm bike û hişyar be' : 'Slow down and be careful'}
             </Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
+          </Animated.View>
 
-      {/* Road Visualization at Bottom */}
-      <View style={styles.roadContainer}>
-        <Animated.View
-          style={[
-            styles.roadLines,
-            {
-              transform: [{ translateY: roadTranslateY }],
-            },
-          ]}
-        >
-          {[0, 1, 2, 3, 4].map((i) => (
-            <View key={i} style={styles.roadLine} />
-          ))}
+          {/* Action Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirm}
+                activeOpacity={0.8}
+                disabled={isConfirming}
+            >
+              {isConfirming ? (
+                  <ActivityIndicator size="small" color={DESTRUCTIVE_RED} />
+              ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={20} color={DESTRUCTIVE_RED} />
+                    <Text style={styles.confirmButtonText}>
+                      {language === 'ar' ? 'شكراً للتأكيد (+20 نقطة)' : language === 'ku' ? 'Spas ji bo piştrastkirinê (+20 xal)' : 'Thanks for confirming (+20 points)'}
+                    </Text>
+                  </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={styles.dismissButton}
+                onPress={handleDismiss}
+                activeOpacity={0.7}
+            >
+              <Ionicons name="close-circle" size={20} color={WHITE} style={{ marginRight: 8 }} />
+              <Text style={styles.dismissButtonText}>
+                {language === 'ar' ? 'تجاهل' : language === 'ku' ? 'Guh nedê' : 'Ignore'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
+
+        {/* Road Visualization at Bottom */}
+        <View style={styles.roadContainer}>
+          <Animated.View
+              style={[
+                styles.roadLines,
+                {
+                  transform: [{ translateY: roadTranslateY }],
+                },
+              ]}
+          >
+            {[0, 1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.roadLine} />
+            ))}
+          </Animated.View>
+        </View>
       </View>
-    </View>
   );
 }
 

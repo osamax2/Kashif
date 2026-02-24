@@ -111,11 +111,11 @@
     "titleAccident": "Agahdarî Qeza",
     "titleSpeed": "Agahdarî Kamera Lezê",
     "titleDefault": "Agahdarî",
-    "severityLabel": "Asteya xetereyê:",
+    "severityLabel": "Asteya Metirsiê:",
     "typeLabel": "Tîp:",
     "severityLow": "Kêm",
     "severityMedium": "Nîvî",
-    "severityHigh": "xeter",
+    "severityHigh": "Metirsi",
     "radarFixed": "sabît",
     "radarMobile": "Gerok",
     "radarCamera": "Kamera çavdêrî",
@@ -174,7 +174,7 @@
     "reportNumber": "Hejmara Raporê",
     "date": "Dîrok",
     "category": "Kategorî",
-    "severity": "Asteya xetereyê",
+    "severity": "Asteya Metirsiê",
     "address": "Navnîşan",
     "detailsButton": "Detay",
     "close": "Bigire",
@@ -464,7 +464,7 @@
     "title": "Nexşeya germê",
     "enabled": "Nexşeya germê çalak bû",
     "disabled": "Nexşeya germê neçalak e",
-    "description": "Li gorî dendika raporê deverên xetereyê nîşan dide"
+    "description": "Li gorî dendika raporê deverên Metirsiê nîşan dide"
   },
   "achievements": {
     "title": "Destkeftî",
