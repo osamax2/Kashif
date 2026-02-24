@@ -3,11 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as RN from 'react-native';
 import ar from './locales/ar.json';
 import en from './locales/en.json';
+import ku from './locales/ku.json';
 
 // Safe I18nManager access
 const I18nManager = RN.I18nManager || { isRTL: false, allowRTL: () => {}, forceRTL: () => {} };
 
-export type Language = 'ar' | 'en';
+export type Language = 'ar' | 'en' | 'ku';
 
 export interface Translations {
   [key: string]: string | Translations;
@@ -16,6 +17,7 @@ export interface Translations {
 const translations: Record<Language, Translations> = {
   ar,
   en,
+  ku,
 };
 
 let currentLanguage: Language = 'ar'; // Default to Arabic
@@ -23,10 +25,10 @@ let currentLanguage: Language = 'ar'; // Default to Arabic
 export const initI18n = async (): Promise<Language> => {
   try {
     const savedLang = await AsyncStorage.getItem('app_language');
-    if (savedLang === 'ar' || savedLang === 'en') {
+    if (savedLang === 'ar' || savedLang === 'en' || savedLang === 'ku') {
       currentLanguage = savedLang;
     }
-    
+
     // Configure RTL/LTR (safe access)
     const shouldBeRTL = currentLanguage === 'ar';
     try {
@@ -37,7 +39,7 @@ export const initI18n = async (): Promise<Language> => {
     } catch (rtlError) {
       console.warn('I18nManager not available:', rtlError);
     }
-    
+
     return currentLanguage;
   } catch (error) {
     console.error('Error initializing i18n:', error);
@@ -49,7 +51,7 @@ export const setLanguage = async (lang: Language): Promise<void> => {
   try {
     currentLanguage = lang;
     await AsyncStorage.setItem('app_language', lang);
-    
+
     // Configure RTL/LTR (safe access)
     const shouldBeRTL = lang === 'ar';
     try {
@@ -77,7 +79,7 @@ export const isRTL = (): boolean => {
 const getNestedTranslation = (obj: Translations, path: string): string => {
   const keys = path.split('.');
   let value: any = obj;
-  
+
   for (const key of keys) {
     if (value && typeof value === 'object' && key in value) {
       value = value[key];
@@ -85,27 +87,27 @@ const getNestedTranslation = (obj: Translations, path: string): string => {
       return path; // Return key if not found
     }
   }
-  
+
   return typeof value === 'string' ? value : path;
 };
 
 // Main translation function
 export const t = (key: string, params?: Record<string, string | number>): string => {
   let translation = getNestedTranslation(translations[currentLanguage], key);
-  
+
   // Replace parameters
   if (params) {
     Object.keys(params).forEach((param) => {
       translation = translation.replace(`{{${param}}}`, String(params[param]));
     });
   }
-  
+
   return translation;
 };
 
 // Get locale for date formatting
 export const getLocale = (): string => {
-  return currentLanguage === 'ar' ? 'ar-SA' : 'en-US';
+  return currentLanguage === 'ar' ? 'ar-SA' : currentLanguage === 'ku' ? 'ku' : 'en-US';
 };
 
 export default {

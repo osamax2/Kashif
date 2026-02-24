@@ -20,52 +20,52 @@ const api: AxiosInstance = axios.create({
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
-  async (config) => {
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    async (config) => {
+      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
 );
 
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as any;
+    (response) => response,
+    async (error: AxiosError) => {
+      const originalRequest = error.config as any;
 
-    // If error is 401 and we haven't tried to refresh yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+      // If error is 401 and we haven't tried to refresh yet
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
 
-      try {
-        const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
-            refresh_token: refreshToken,
-          });
+        try {
+          const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+          if (refreshToken) {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+              refresh_token: refreshToken,
+            });
 
-          const { access_token, refresh_token } = response.data;
-          await AsyncStorage.setItem(TOKEN_KEY, access_token);
-          await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
+            const { access_token, refresh_token } = response.data;
+            await AsyncStorage.setItem(TOKEN_KEY, access_token);
+            await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
 
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
-          return api(originalRequest);
+            // Retry original request with new token
+            originalRequest.headers.Authorization = `Bearer ${access_token}`;
+            return api(originalRequest);
+          }
+        } catch (refreshError) {
+          // Refresh failed, logout user
+          await logout();
+          return Promise.reject(refreshError);
         }
-      } catch (refreshError) {
-        // Refresh failed, logout user
-        await logout();
-        return Promise.reject(refreshError);
       }
-    }
 
-    return Promise.reject(error);
-  }
+      return Promise.reject(error);
+    }
 );
 
 // Auth API
@@ -156,13 +156,13 @@ export const authAPI = {
     formData.append('password', data.password);
 
     const response = await axios.post<TokenResponse>(
-      `${API_BASE_URL}/api/auth/token`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
+        `${API_BASE_URL}/api/auth/token`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
     );
 
     // Save tokens
@@ -187,8 +187,8 @@ export const authAPI = {
   // Forgot password - request reset code
   forgotPassword: async (email: string): Promise<{ message: string }> => {
     const response = await axios.post<{ message: string }>(
-      `${API_BASE_URL}/api/auth/forgot-password`,
-      { email }
+        `${API_BASE_URL}/api/auth/forgot-password`,
+        { email }
     );
     return response.data;
   },
@@ -196,8 +196,8 @@ export const authAPI = {
   // Reset password with token
   resetPassword: async (token: string, newPassword: string): Promise<{ message: string }> => {
     const response = await axios.post<{ message: string }>(
-      `${API_BASE_URL}/api/auth/reset-password`,
-      { token, new_password: newPassword }
+        `${API_BASE_URL}/api/auth/reset-password`,
+        { token, new_password: newPassword }
     );
     return response.data;
   },
@@ -205,8 +205,8 @@ export const authAPI = {
   // Verify email code (for registration verification)
   verifyCode: async (email: string, code: string): Promise<{ message: string }> => {
     const response = await axios.post<{ message: string }>(
-      `${API_BASE_URL}/api/auth/verify-code`,
-      { email, code }
+        `${API_BASE_URL}/api/auth/verify-code`,
+        { email, code }
     );
     return response.data;
   },
@@ -214,8 +214,8 @@ export const authAPI = {
   // Resend verification code
   resendVerificationCode: async (email: string): Promise<{ message: string }> => {
     const response = await axios.post<{ message: string }>(
-      `${API_BASE_URL}/api/auth/resend-verification`,
-      { email }
+        `${API_BASE_URL}/api/auth/resend-verification`,
+        { email }
     );
     return response.data;
   },
@@ -237,17 +237,17 @@ export const authAPI = {
     const formData = new FormData();
     const uriParts = imageUri.split('.');
     const fileExtension = uriParts[uriParts.length - 1];
-    
+
     const file = {
       uri: imageUri,
       type: `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`,
       name: `profile_${Date.now()}.${fileExtension}`,
     } as any;
-    
+
     formData.append('file', file);
-    
+
     const token = await AsyncStorage.getItem(TOKEN_KEY);
-    
+
     const response = await fetch(`${API_BASE_URL}/api/auth/me/profile-picture`, {
       method: 'POST',
       headers: {
@@ -256,12 +256,12 @@ export const authAPI = {
       },
       body: formData,
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Failed to upload profile picture');
     }
-    
+
     return await response.json();
   },
 
@@ -407,7 +407,7 @@ export const gamificationAPI = {
   // Confirm report existence (award 20 points)
   confirmReport: async (reportId: number): Promise<{ points: number; message: string }> => {
     const response = await api.post<{ points: number; message: string }>(
-      `/api/gamification/confirm-report/${reportId}`
+        `/api/gamification/confirm-report/${reportId}`
     );
     return response.data;
   },
@@ -418,6 +418,7 @@ export interface Achievement {
   id: number;
   key: string;
   name_en: string;
+  name_ku: string;
   name_ar: string;
   description_en?: string;
   description_ar?: string;
@@ -681,8 +682,8 @@ export const reportingAPI = {
   },
 
   // Upload image for report - now includes AI analysis
-  uploadImage: async (imageUri: string): Promise<{ 
-    url: string; 
+  uploadImage: async (imageUri: string): Promise<{
+    url: string;
     filename: string;
     ai_analysis?: {
       num_potholes: number;
@@ -693,22 +694,22 @@ export const reportingAPI = {
     };
   }> => {
     const formData = new FormData();
-    
+
     // Get file extension from uri
     const uriParts = imageUri.split('.');
     const fileExtension = uriParts[uriParts.length - 1];
-    
+
     // Create file object for form data
     const file = {
       uri: imageUri,
       type: `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`,
       name: `photo_${Date.now()}.${fileExtension}`,
     } as any;
-    
+
     formData.append('file', file);
-    
+
     const token = await AsyncStorage.getItem(TOKEN_KEY);
-    
+
     const response = await fetch(`${API_BASE_URL}/api/reports/upload`, {
       method: 'POST',
       headers: {
@@ -717,12 +718,12 @@ export const reportingAPI = {
       },
       body: formData,
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Failed to upload image');
     }
-    
+
     const data = await response.json();
     // Return relative URL for storage, full URL only for display
     // The backend stores just /uploads/xxx.jpg which works with the proxy
@@ -782,8 +783,8 @@ export const reportingAPI = {
   // Confirm a report exists ("Still There" button)
   confirmReport: async (reportId: number, location?: { latitude: number; longitude: number }): Promise<ConfirmReportResponse> => {
     const response = await api.post<ConfirmReportResponse>(
-      `/api/reports/${reportId}/confirm`,
-      location ? { latitude: location.latitude, longitude: location.longitude } : {}
+        `/api/reports/${reportId}/confirm`,
+        location ? { latitude: location.latitude, longitude: location.longitude } : {}
     );
     return response.data;
   },
@@ -802,8 +803,8 @@ export const reportingAPI = {
 
   // Get reports along a route (Route Warning feature)
   getReportsAlongRoute: async (
-    waypoints: RouteWaypoint[],
-    bufferMeters: number = 200
+      waypoints: RouteWaypoint[],
+      bufferMeters: number = 200
   ): Promise<RouteReportsResponse> => {
     const response = await api.post<RouteReportsResponse>('/api/reports/along-route', {
       waypoints,

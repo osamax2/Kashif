@@ -105,49 +105,49 @@ export default function HomeScreen() {
     const { t, language } = useLanguage();
     const { reportCreated } = useDataSync();
     const { isOnline: networkOnline } = useOffline();
-    
+
     /** ONBOARDING TUTORIAL */
     const [showOnboarding, setShowOnboarding] = useState(false);
-    
+
     /** BACKEND DATA */
     const [reports, setReports] = useState<Report[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [severities, setSeverities] = useState<Severity[]>([]);
     const [statuses, setStatuses] = useState<ReportStatus[]>([]);
     const [loading, setLoading] = useState(true);
-    
+
     /** USER LOCATION */
     const [userLocation, setUserLocation] = useState<{
         latitude: number;
         longitude: number;
     } | null>(null);
-    
+
     const [mapRegion, setMapRegion] = useState({
         latitude: 33.5138,
         longitude: 36.2765,
         latitudeDelta: 0.2,
         longitudeDelta: 0.2,
     });
-    
+
     /** SEARCH */
     const [searchMarker, setSearchMarker] = useState<{
         latitude: number;
         longitude: number;
         title: string;
     } | null>(null);
-    
+
     /** LONG PRESS MARKER - when user long presses on map */
     const [longPressMarker, setLongPressMarker] = useState<{
         latitude: number;
         longitude: number;
     } | null>(null);
-    
+
     /** REPORT LOCATION - either from search, long press, or GPS */
     const [reportLocation, setReportLocation] = useState<{
         latitude: number;
         longitude: number;
     } | null>(null);
-    
+
     const mapRef = useRef<MapView>(null);
     const googlePlacesRef = useRef<any>(null);
     const lastSelectedCoords = useRef<{
@@ -212,21 +212,21 @@ export default function HomeScreen() {
     ).current;
     // ────────────────────────────────────────────────────────────────────
 
-const [audioVisible, setAudioVisible] = useState(false);
-const audioSheetY = useRef(new Animated.Value(0)).current;
+    const [audioVisible, setAudioVisible] = useState(false);
+    const audioSheetY = useRef(new Animated.Value(0)).current;
 
-const toggleSound = () => {
-    setSoundEnabled(!soundEnabled);
-};
-const activateWarningMode = () => {
-    setWarningsEnabled(true);
-    setNavigationEnabled(true);
-    if (!soundEnabled) setSoundEnabled(true);
-};
+    const toggleSound = () => {
+        setSoundEnabled(!soundEnabled);
+    };
+    const activateWarningMode = () => {
+        setWarningsEnabled(true);
+        setNavigationEnabled(true);
+        if (!soundEnabled) setSoundEnabled(true);
+    };
 
 
 // Audio Modi
-const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
+    const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     // Sound / warning / navigation toggles
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [warningsEnabled, setWarningsEnabled] = useState(true);
@@ -236,13 +236,11 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     // Individual warning toggles (moved out from Slider)
     const [warnPothole, setWarnPothole] = useState(true);
     const [warnAccident, setWarnAccident] = useState(true);
-    const [warnSpeed, setWarnSpeed] = useState(true);  // renamed conceptually to warnEnvironment but keeping state key for AsyncStorage compat
-    
+    const [warnSpeed, setWarnSpeed] = useState(true);
+
     // Location monitoring state
     const [isMonitoringActive, setIsMonitoringActive] = useState(false);
-    const [locationDisclosureShown, setLocationDisclosureShown] = useState(false);
-    const pendingMonitoringRef = useRef(false);
-    
+
     // PanResponder for swipe-to-dismiss audio sheet
     const panResponder = useRef(
         PanResponder.create({
@@ -283,7 +281,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         loadSettings();
         checkOnboarding();
     }, []);
-    
+
     // Check if onboarding should be shown
     const checkOnboarding = async () => {
         const shouldShow = await shouldShowOnboarding();
@@ -291,48 +289,48 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             setShowOnboarding(true);
         }
     };
-    
+
     // Handle onboarding completion
     const handleOnboardingComplete = () => {
         setShowOnboarding(false);
     };
-    
+
     // Sync pending offline reports when network is available
     useEffect(() => {
         const syncPendingReports = async () => {
             try {
                 const pendingReports = await getPendingReports();
                 if (pendingReports.length === 0) return;
-                
+
                 console.log(`Syncing ${pendingReports.length} pending reports...`);
-                
+
                 for (const report of pendingReports) {
                     try {
                         // Map type to category_id
                         const categoryMap: Record<string, number> = {
-                            pothole: 1,
-                            environment: 2,
+                            speed: 1,
+                            pothole: 2,
                             accident: 3,
                         };
-                        
+
                         // Map severity
                         const severityMap: Record<string, Severity> = {
                             low: 'low',
                             medium: 'medium',
                             high: 'high',
                         };
-                        
+
                         await reportingAPI.createReport({
-                            title: report.type === 'pothole' ? 'Pothole' : 
-                                   report.type === 'environment' ? 'Environment' : 'Accident',
+                            title: report.type === 'speed' ? 'Speed Camera' :
+                                report.type === 'pothole' ? 'Pothole' : 'Accident',
                             description: report.notes || `${report.type} report`,
-                            category_id: categoryMap[report.type || 'pothole'] || 1,
+                            category_id: categoryMap[report.type || 'pothole'] || 2,
                             severity: severityMap[report.severity] || 'medium',
                             latitude: report.latitude || 0,
                             longitude: report.longitude || 0,
                             address: report.address,
                         });
-                        
+
                         await removePendingReport(report.id);
                         console.log(`Synced pending report: ${report.id}`);
                     } catch (err) {
@@ -343,10 +341,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 console.error('Error syncing pending reports:', error);
             }
         };
-        
+
         // Sync on mount
         syncPendingReports();
-        
+
         // Subscribe to network changes
         const unsubscribe = subscribeToNetworkChanges(
             () => {
@@ -357,10 +355,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 console.log('Network unavailable');
             }
         );
-        
+
         return unsubscribe;
     }, []);
-    
+
     // Reload data when refresh is triggered from other screens
     const { refreshKey } = useDataSync();
     useEffect(() => {
@@ -368,15 +366,15 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             loadData(userLocation ?? undefined);
         }
     }, [refreshKey, userLocation]);
-    
+
     // Load backend data (with offline fallback)
     const loadData = async (location?: { latitude: number; longitude: number }) => {
         try {
             setLoading(true);
-            
+
             // Check if online
             const online = await checkConnectivity();
-            
+
             if (!online) {
                 // Offline fallback: load cached data
                 console.log('Offline — loading cached reports');
@@ -388,7 +386,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 setLoading(false);
                 return;
             }
-            
+
             const reportParams: {
                 skip: number;
                 limit?: number;
@@ -421,7 +419,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                     return [];
                 }),
             ]);
-            
+
             if (location) {
                 console.log(
                     `✅ Loaded ${reportsData.length} nearby reports within ${REPORT_RADIUS_KM}km`,
@@ -430,19 +428,19 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 console.log(`✅ Loaded ${reportsData.length} reports (default scope)`);
             }
             console.log(`✅ Loaded ${categoriesData.length} categories`);
-            
+
             // Normalize lat/lng to numbers (backend may return strings)
             const normalizedReports = reportsData.map((r: any) => ({
                 ...r,
                 latitude: typeof r.latitude === 'string' ? parseFloat(r.latitude) : r.latitude,
                 longitude: typeof r.longitude === 'string' ? parseFloat(r.longitude) : r.longitude,
             })).filter((r: any) => !isNaN(r.latitude) && !isNaN(r.longitude));
-            
+
             setReports(normalizedReports);
             setCategories(categoriesData);
             setSeverities(severitiesData);
             setStatuses(statusesData);
-            
+
             // Cache reports for offline use
             if (reportsData.length > 0) {
                 cacheNearbyReports(reportsData.map((r: any) => ({
@@ -467,7 +465,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             setLoading(false);
         }
     };
-    
+
     // Request user location
     const requestLocation = async () => {
         try {
@@ -477,23 +475,23 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 await loadData();
                 return;
             }
-            
+
             const location = await Location.getCurrentPositionAsync({});
             const userCoords = {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
             };
-            
+
             setUserLocation(userCoords);
             setReportLocation(userCoords); // Use GPS as default report location
-            
+
             const newRegion = {
                 ...userCoords,
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
             };
             setMapRegion(newRegion);
-            
+
             // Animate map to user location
             setTimeout(() => {
                 if (mapRef.current) {
@@ -519,13 +517,13 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 setWarningsEnabled(!!settings.warningsEnabled);
                 setNavigationEnabled(!!settings.navigationEnabled);
                 setAppVolume(typeof settings.appVolume === 'number' ? settings.appVolume : 1.0);
-                
+
                 // Load alert type settings
                 setWarnPothole(settings.warnPothole !== false);
                 setWarnAccident(settings.warnAccident !== false);
                 setWarnSpeed(settings.warnSpeed !== false);
             }
-            
+
             // Check if monitoring is active
             setIsMonitoringActive(locationMonitoringService.isActive());
         } catch (e) {
@@ -537,23 +535,23 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     useEffect(() => {
         const saveSettings = async () => {
             try {
-                const settings = { 
-                    soundEnabled, 
-                    warningsEnabled, 
-                    navigationEnabled, 
+                const settings = {
+                    soundEnabled,
+                    warningsEnabled,
+                    navigationEnabled,
                     appVolume,
                     warnPothole,
                     warnAccident,
                     warnSpeed,
                 };
                 await AsyncStorage.setItem("audioSettings", JSON.stringify(settings));
-                
+
                 // Update location monitoring service with new settings
                 locationMonitoringService.updateSettings({
                     soundEnabled,
                     warnPothole,
                     warnAccident,
-                    warnEnvironment: warnSpeed,
+                    warnSpeed,
                     appVolume,
                     language,
                 });
@@ -568,16 +566,16 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
 
     /** Dialog-Typ (welcher Meldungs-Typ wird erstellt?) */
     const [reportType, setReportType] = useState<
-        "pothole" | "accident" | "environment" | null
+        "pothole" | "accident" | "speed" | null
     >(null);
 
     /** MULTI-FILTER */
     const [activeFilters, setActiveFilters] = useState<number[]>([]);
-    
+
     // ─── REGION STATE + DEBOUNCED HANDLER ──────────────────────────────
     const [currentRegion, setCurrentRegion] = useState<Region>(mapRegion);
     const regionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    
+
     const handleRegionChange = useCallback((region: Region) => {
         if (regionTimerRef.current) clearTimeout(regionTimerRef.current);
         regionTimerRef.current = setTimeout(() => {
@@ -599,7 +597,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         let filtered = activeFilters.length === 0
             ? reports
             : reports.filter((r) => activeFilters.includes(r.category_id));
-        
+
         // Step 2: Viewport filter — only process markers actually in/near the visible region
         // Add 20% padding so markers don't pop in at the edge
         const padLat = currentRegion.latitudeDelta * 0.2;
@@ -608,23 +606,23 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         const maxLat = currentRegion.latitude + currentRegion.latitudeDelta / 2 + padLat;
         const minLng = currentRegion.longitude - currentRegion.longitudeDelta / 2 - padLng;
         const maxLng = currentRegion.longitude + currentRegion.longitudeDelta / 2 + padLng;
-        
+
         filtered = filtered.filter((r) => {
             const lat = Number.parseFloat(r.latitude.toString());
             const lng = Number.parseFloat(r.longitude.toString());
             return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
         });
-        
+
         return filtered;
     }, [reports, activeFilters, currentRegion]);
-    
+
     // Debug logging (throttled)
     useEffect(() => {
         console.log(`📍 Total: ${reports.length} | Viewport: ${visibleMarkers.length} | Filters: ${activeFilters.length}`);
     }, [reports.length, visibleMarkers.length, activeFilters.length]);
-    
+
     // ─── MARKER CLUSTERING ─────────────────────────────────────────────
-    
+
     type ClusterItem = {
         type: 'cluster';
         id: string;
@@ -639,49 +637,49 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         report: Report;
     };
     type MapItem = ClusterItem | SingleItem;
-    
+
     const clusteredMarkers: MapItem[] = useMemo(() => {
         if (!visibleMarkers.length) return [];
-        
+
         const delta = currentRegion.latitudeDelta;
         // Cluster radius ~ 8% of the visible area
         const clusterRadius = delta * 0.08;
-        
+
         // If zoomed in close enough, show individual markers
         if (delta < 0.015) {
             return visibleMarkers.map(r => ({ type: 'single' as const, report: r }));
         }
-        
+
         const used = new Set<number>();
         const items: MapItem[] = [];
-        
+
         for (let i = 0; i < visibleMarkers.length; i++) {
             if (used.has(i)) continue;
-            
+
             const r = visibleMarkers[i];
             const lat = Number.parseFloat(r.latitude.toString());
             const lng = Number.parseFloat(r.longitude.toString());
             if (Number.isNaN(lat) || Number.isNaN(lng)) continue;
-            
+
             const nearby: Report[] = [r];
             used.add(i);
-            
+
             for (let j = i + 1; j < visibleMarkers.length; j++) {
                 if (used.has(j)) continue;
                 const other = visibleMarkers[j];
                 const oLat = Number.parseFloat(other.latitude.toString());
                 const oLng = Number.parseFloat(other.longitude.toString());
                 if (Number.isNaN(oLat) || Number.isNaN(oLng)) continue;
-                
+
                 const dLat = Math.abs(lat - oLat);
                 const dLng = Math.abs(lng - oLng);
-                
+
                 if (dLat < clusterRadius && dLng < clusterRadius) {
                     nearby.push(other);
                     used.add(j);
                 }
             }
-            
+
             if (nearby.length === 1) {
                 items.push({ type: 'single', report: r });
             } else {
@@ -707,7 +705,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         }
         return items;
     }, [visibleMarkers, currentRegion.latitudeDelta]);
-    
+
     // Zoom into cluster on tap
     const onClusterPress = useCallback((cluster: ClusterItem) => {
         if (!mapRef.current) return;
@@ -745,62 +743,60 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             .filter(Boolean) as { latitude: number; longitude: number; weight: number }[];
     }, [heatmapEnabled, reports]);
     // ─── END HEATMAP DATA ──────────────────────────────────────────────
-    
+
     // Helper functions
     const getCategoryByName = (name: string): Category | undefined => {
         return categories.find(c => c.name === name);
     };
-    
+
     const getCategoryIcon = (categoryId: number): string => {
         const category = categories.find(c => c.id === categoryId);
         if (!category) return "📍";
-        
+
         const name = category.name_ar || category.name_en || category.name || "";
-        
-        if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("infrastructure")) return "⚠️";
-        if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("safety")) return "🚨";
-        if (name.includes("بيئ") || name.toLowerCase().includes("environment")) return "🌿";
-        if (name.includes("ألغام") || name.toLowerCase().includes("mine")) return "💣";
+
+        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "⚠️";
+        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "🚨";
+        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "📷";
         return "📍";
     };
-    
+
     // Get category color for markers
     const getCategoryColor = (categoryId: number): string => {
         const category = categories.find(c => c.id === categoryId);
         if (category?.color) return category.color;
-        
+
         // Fallback colors based on category name
         const name = category?.name_ar || category?.name_en || category?.name || "";
-        if (name.includes("بيئ") || name.toLowerCase().includes("environment")) return "#4CAF50"; // Green
-        if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("safety")) return "#EF4444"; // Red
-        if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("infrastructure")) return "#F59E0B"; // Amber
-        if (name.includes("ألغام") || name.toLowerCase().includes("mine")) return "#FF5722"; // Deep Orange
+        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "#22C55E"; // Green
+        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "#EF4444"; // Red
+        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "#F59E0B"; // Amber
         return "#3B82F6"; // Default blue
     };
-    
+
     // Navigate to selected place and automatically start route
     const navigateToPlace = (latitude: number, longitude: number, title: string) => {
         console.log('🧭 Navigating to place:', { latitude, longitude, title });
-        
+
         // Clear any existing route first
         if (routeCoords.length > 0) {
             clearRoute();
         }
-        
+
         const newRegion = {
             latitude,
             longitude,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
         };
-        
+
         setSearchMarker({ latitude, longitude, title });
         setReportLocation({ latitude, longitude }); // Use search location for reports
         setMapRegion(newRegion); // Update map region state
-        
+
         console.log('✅ Search marker set:', { latitude, longitude, title });
         console.log('✅ Report location updated to search location');
-        
+
         // Animate map to location
         if (mapRef.current) {
             try {
@@ -810,9 +806,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 console.error('❌ Animation error:', error);
             }
         }
-        
+
         Keyboard.dismiss();
-        
+
         // Automatically start route to the selected destination
         setRouteMode(true);
         setRouteDestination(title);
@@ -823,19 +819,19 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     const handleMapLongPress = async (event: any) => {
         const { coordinate } = event.nativeEvent;
         console.log('📍 Long press detected at:', coordinate);
-        
+
         // Set the long press marker
         setLongPressMarker({
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
         });
-        
+
         // Update report location to use this position
         setReportLocation({
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
         });
-        
+
         // Vibrate to give feedback
         try {
             const Haptics = require('expo-haptics');
@@ -843,10 +839,10 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
         } catch (e) {
             // Haptics not available, ignore
         }
-        
+
         console.log('✅ Long press marker set, report location updated');
     };
-    
+
     // Clear long press marker when menu is closed or report is submitted
     const clearLongPressMarker = () => {
         setLongPressMarker(null);
@@ -862,8 +858,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
     const fetchRouteToDestination = async (destLat: number, destLng: number) => {
         if (!userLocation) {
             Alert.alert(
-                language === 'ar' ? 'خطأ' : 'Error',
-                language === 'ar' ? 'يرجى تفعيل تحديد الموقع أولاً' : 'Please enable location first'
+                language === 'ar' ? 'خطأ' : language === 'ku' ? 'Şaşî' : 'Error',
+                language === 'ar' ? 'يرجى تفعيل تحديد الموقع أولاً' : language === 'ku' ? 'Ji kerema xwe peshi cihe xwe çalak bike' : 'Please enable location first'
             );
             setRouteMode(false);
             return;
@@ -960,8 +956,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 if (routeData.total_hazards > 0 && soundEnabled) {
                     const msg = language === 'ar'
                         ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
-                        : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
-                    Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+                        : language === 'ku' ? `Hişyariyê: li ser reya te ${routeData.total_hazards} metirsi heye` : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
+                    Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : language === 'ku' ? 'ku-TR' : 'en-US' });
                 }
             } catch (hazardErr) {
                 console.warn('Failed to fetch route hazards (route still shown):', hazardErr);
@@ -1045,38 +1041,38 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             console.log('⚠️ Search query too short');
             return;
         }
-        
+
         console.log('🔍 Searching with Geocoding API:', query);
-        
+
         try {
             const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
             // Add Syria bias to the search
             const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}`;
-            
+
             const response = await fetch(url);
             const data = await response.json();
-            
+
             console.log('📍 Geocoding response status:', data.status);
-            
+
             if (data.status === 'OK' && data.results && data.results.length > 0) {
                 const result = data.results[0];
                 const { lat, lng } = result.geometry.location;
                 const formattedAddress = result.formatted_address;
-                
+
                 console.log('✅ Geocoding found:', { lat, lng, formattedAddress });
-                
+
                 lastSelectedCoords.current = {
                     latitude: lat,
                     longitude: lng,
                     title: formattedAddress,
                 };
-                
+
                 // Update search text with formatted address
                 setSearchText(formattedAddress);
                 if (googlePlacesRef.current?.setAddressText) {
                     googlePlacesRef.current.setAddressText(formattedAddress);
                 }
-                
+
                 navigateToPlace(lat, lng, formattedAddress);
             } else {
                 console.log('⚠️ No geocoding results for:', query);
@@ -1084,25 +1080,25 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 const urlGlobal = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}`;
                 const responseGlobal = await fetch(urlGlobal);
                 const dataGlobal = await responseGlobal.json();
-                
+
                 if (dataGlobal.status === 'OK' && dataGlobal.results && dataGlobal.results.length > 0) {
                     const result = dataGlobal.results[0];
                     const { lat, lng } = result.geometry.location;
                     const formattedAddress = result.formatted_address;
-                    
+
                     console.log('✅ Global geocoding found:', { lat, lng, formattedAddress });
-                    
+
                     lastSelectedCoords.current = {
                         latitude: lat,
                         longitude: lng,
                         title: formattedAddress,
                     };
-                    
+
                     setSearchText(formattedAddress);
                     if (googlePlacesRef.current?.setAddressText) {
                         googlePlacesRef.current.setAddressText(formattedAddress);
                     }
-                    
+
                     navigateToPlace(lat, lng, formattedAddress);
                 } else {
                     console.log('❌ No geocoding results found globally');
@@ -1134,53 +1130,14 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             );
         }
     };
-    
+
     // Toggle monitoring when any alert type changes
     useEffect(() => {
         const updateMonitoring = async () => {
             const anyAlertEnabled = warnPothole || warnAccident || warnSpeed;
-            
+
             if (anyAlertEnabled && !isMonitoringActive) {
-                // Show prominent disclosure before requesting background location
-                if (!locationDisclosureShown) {
-                    pendingMonitoringRef.current = true;
-                    Alert.alert(
-                        t('locationMonitoring.disclosureTitle'),
-                        t('locationMonitoring.disclosureMessage'),
-                        [
-                            {
-                                text: t('locationMonitoring.disclosureCancel'),
-                                style: 'cancel',
-                                onPress: () => {
-                                    pendingMonitoringRef.current = false;
-                                    // Reset all toggles
-                                    setWarnPothole(false);
-                                    setWarnAccident(false);
-                                    setWarnSpeed(false);
-                                },
-                            },
-                            {
-                                text: t('locationMonitoring.disclosureAllow'),
-                                onPress: async () => {
-                                    setLocationDisclosureShown(true);
-                                    const success = await locationMonitoringService.startMonitoring();
-                                    if (success) {
-                                        setIsMonitoringActive(true);
-                                        console.log('✅ Location monitoring started');
-                                    } else {
-                                        setWarnPothole(false);
-                                        setWarnAccident(false);
-                                        setWarnSpeed(false);
-                                    }
-                                    pendingMonitoringRef.current = false;
-                                },
-                            },
-                        ],
-                        { cancelable: false }
-                    );
-                    return;
-                }
-                // Disclosure already shown, start directly
+                // Start monitoring
                 const success = await locationMonitoringService.startMonitoring();
                 if (success) {
                     setIsMonitoringActive(true);
@@ -1193,51 +1150,51 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 console.log('🛑 Location monitoring stopped');
             }
         };
-        
+
         updateMonitoring();
     }, [warnPothole, warnAccident, warnSpeed]);
 
 
 
     async function speakWarning(type: string) {
-    if (!soundEnabled) return;
+        if (!soundEnabled) return;
 
-    let message = "";
-    let shouldSpeak = false;
-    
-    switch (type) {
-        case "pothole":
-            if (warnPothole) {
-                message = t('home.warnPothole');
-                shouldSpeak = true;
-            }
-            break;
-        case "accident":
-            if (warnAccident) {
-                message = t('home.warnAccident');
-                shouldSpeak = true;
-            }
-            break;
-        case "environment":
-            if (warnSpeed) {
-                message = t('home.warnEnvironment');
-                shouldSpeak = true;
-            }
-            break;
-        default:
-            message = language === 'ar' ? 'تحذير!' : 'Warning!';
-            shouldSpeak = true;
-    }
+        let message = "";
+        let shouldSpeak = false;
 
-    if (shouldSpeak) {
-        await Speech.speak(message, {
-            language: language === 'ar' ? "ar-SA" : "en-US",
-            rate: 0.9,
-            pitch: 1.0,
-            volume: appVolume,
-        });
+        switch (type) {
+            case "pothole":
+                if (warnPothole) {
+                    message = t('home.warnPothole');
+                    shouldSpeak = true;
+                }
+                break;
+            case "accident":
+                if (warnAccident) {
+                    message = t('home.warnAccident');
+                    shouldSpeak = true;
+                }
+                break;
+            case "speed":
+                if (warnSpeed) {
+                    message = t('home.warnSpeed');
+                    shouldSpeak = true;
+                }
+                break;
+            default:
+                message = language === 'ar' ? 'تحذير!' : language === 'ku' ? 'Hişyariyê!' : 'Warning!';
+                shouldSpeak = true;
+        }
+
+        if (shouldSpeak) {
+            await Speech.speak(message, {
+                language: language === 'ar' ? "ar-SA" : language === 'ku' ? "ku-TR" : "en-US",
+                rate: 0.9,
+                pitch: 1.0,
+                volume: appVolume,
+            });
+        }
     }
-}
 
 
     return (
@@ -1267,7 +1224,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                 latitude: longPressMarker.latitude,
                                 longitude: longPressMarker.longitude,
                             }}
-                            title={language === 'ar' ? 'موقع البلاغ' : 'Report Location'}
+                            title={language === 'ar' ? 'موقع البلاغ' : language === 'ku' ? 'Cihê raporê' : 'Report Location'}
                             pinColor="orange"
                             draggable
                             onDragEnd={(e) => {
@@ -1281,7 +1238,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             </View>
                         </Marker>
                     )}
-                    
+
                     {/* Search Result Marker */}
                     {searchMarker && (
                         <Marker
@@ -1297,16 +1254,16 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             </View>
                         </Marker>
                     )}
-                    
+
                     {/* User Location Marker */}
                     {userLocation && (
                         <Marker
                             coordinate={userLocation}
-                            title="موقعك"
+                            title={language === 'ar' ? 'موقعك' : language === 'ku' ? 'Cihê te' : 'Your Location'}
                             pinColor="blue"
                         />
                     )}
-                    
+
                     {/* Report Markers (Clustered) */}
                     {clusteredMarkers.map((item) => {
                         try {
@@ -1321,11 +1278,11 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                         onPress={() => onClusterPress(item)}
                                         tracksViewChanges={false}
                                     >
-                                        <View style={[styles.clusterMarker, { 
-                                            backgroundColor: clusterColor, 
-                                            width: size, 
-                                            height: size, 
-                                            borderRadius: size / 2 
+                                        <View style={[styles.clusterMarker, {
+                                            backgroundColor: clusterColor,
+                                            width: size,
+                                            height: size,
+                                            borderRadius: size / 2
                                         }]}>
                                             <Text style={styles.clusterText}>{item.count}</Text>
                                         </View>
@@ -1337,15 +1294,15 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             const report = item.report;
                             const lat = parseFloat(report.latitude.toString());
                             const lng = parseFloat(report.longitude.toString());
-                            
+
                             if (isNaN(lat) || isNaN(lng)) {
                                 return null;
                             }
-                            
+
                             const categoryColor = getCategoryColor(report.category_id);
-                            
+
                             return (
-                                <Marker 
+                                <Marker
                                     key={`report-${report.id}`}
                                     coordinate={{
                                         latitude: lat,
@@ -1367,7 +1324,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             return null;
                         }
                     })}
-                    
+
                     {/* Route Polyline */}
                     {routeCoords.length > 1 && (
                         <Polyline
@@ -1377,24 +1334,24 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             lineDashPattern={[0]}
                         />
                     )}
-                    
+
                     {/* Route Hazard Markers */}
                     {routeHazards.map((hazard) => {
                         const hLat = typeof hazard.latitude === 'string' ? parseFloat(hazard.latitude) : hazard.latitude;
                         const hLng = typeof hazard.longitude === 'string' ? parseFloat(hazard.longitude) : hazard.longitude;
                         if (isNaN(hLat) || isNaN(hLng)) return null;
                         return (
-                        <Marker
-                            key={`hazard-${hazard.id}`}
-                            coordinate={{ latitude: hLat, longitude: hLng }}
-                            title={hazard.title || (language === 'ar' ? 'خطر' : 'Hazard')}
-                            description={`${Math.round(hazard.distance_from_route_meters)}m ${language === 'ar' ? 'من الطريق' : 'from route'}`}
-                            tracksViewChanges={false}
-                        >
-                            <View style={styles.routeHazardMarker}>
-                                <Text style={{ fontSize: 18 }}>{getCategoryIcon(hazard.category_id)}</Text>
-                            </View>
-                        </Marker>
+                            <Marker
+                                key={`hazard-${hazard.id}`}
+                                coordinate={{ latitude: hLat, longitude: hLng }}
+                                title={hazard.title || (language === 'ar' ? 'خطر' : language === 'ku' ? 'Metirsi' : 'Hazard')}
+                                description={`${Math.round(hazard.distance_from_route_meters)}m ${language === 'ar' ? 'من الطريق' : language === 'ku' ? 'ji ser reye' : 'from route'}`}
+                                tracksViewChanges={false}
+                            >
+                                <View style={styles.routeHazardMarker}>
+                                    <Text style={{ fontSize: 18 }}>{getCategoryIcon(hazard.category_id)}</Text>
+                                </View>
+                            </Marker>
                         );
                     })}
 
@@ -1426,7 +1383,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             <View style={styles.searchContainer}>
                 <GooglePlacesAutocomplete
                     ref={googlePlacesRef}
-                    placeholder={language === 'ar' ? 'ابحث عن موقع أو شارع' : 'Search for location or street'}
+                    placeholder={language === 'ar' ? 'ابحث عن موقع أو شارع' : language === 'ku' ? 'Li cîh an kolanekê bigerin' : 'Search for location or street'}
                     minLength={2}
                     debounce={400}
                     fetchDetails={true}
@@ -1485,7 +1442,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         },
                     }}
                     renderRightButton={() => (
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.searchIconContainer}
                             onPress={() => {
                                 setForceHideSuggestions(true);
@@ -1527,19 +1484,20 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             activeFilters.length === 0 && styles.categoryTextActive,
                         ]}
                     >
-                        {language === 'ar' ? 'الكل' : 'All'}
+                        {language === 'ar' ? 'الكل' : language === 'ku' ? 'Hemû' : 'All'}
                     </Text>
                 </TouchableOpacity>
 
                 {categories.map((category) => {
                     const isActive = activeFilters.includes(category.id);
                     const color = getCategoryColor(category.id);
-                    const displayName = language === 'ku'
-                        ? (category.name_ku || category.name)
-                        : language === 'ar'
-                        ? (category.name_ar || category.name)
-                        : (category.name_en || category.name);
-                    
+                    const displayName =
+                        language === 'ar'
+                            ? (category.name_ar || category.name)
+                            : language === 'ku'
+                                ? (category.name_ku || category.name)
+                                : (category.name_en || category.name);
+
                     return (
                         <TouchableOpacity
                             key={category.id}
@@ -1621,11 +1579,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.fabActionBtn}
-                            onPress={() => { setReportType("environment"); setMenuOpen(false); }}
+                            onPress={() => { setReportType("speed"); setMenuOpen(false); }}
                         >
-                            <View style={[styles.fabActionIcon, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#E8F5E9' }]}>
-                                <Ionicons name="leaf" size={28} color="#4CAF50" />
-                            </View>
+                            <Image source={require("../../assets/icons/speed.png")} style={styles.fabActionIcon} />
                         </TouchableOpacity>
                     </Animated.View>
                 )}
@@ -1636,7 +1592,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 <View style={styles.routeInputContainer}>
                     <View style={styles.routeLoadingOverlay}>
                         <Text style={{ color: '#0D2B66', fontSize: 14 }}>
-                            {language === 'ar' ? 'جاري تحميل المسار...' : 'Loading route...'}
+                            {language === 'ar' ? 'جاري تحميل المسار...' : language === 'ku' ? 'Rê te barkirin...' : 'Loading route...'}
                         </Text>
                     </View>
                 </View>
@@ -1651,8 +1607,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             {routeHazards.length > 0
                                 ? (language === 'ar'
                                     ? `${routeHazards.length} تحذير على الطريق`
-                                    : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`)
-                                : (language === 'ar' ? 'لا توجد مخاطر على الطريق ✓' : 'No hazards on route ✓')
+                                    : language === 'ku' ? `Li ser reye ${routeHazards.length} Hişyarî li ser rê` : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`)
+                                : (language === 'ar' ? 'لا توجد مخاطر على الطريق ✓' : language === 'ku' ? 'Li ser rê tu metirsi tune ye' : 'No hazards on route ✓')
                             }
                         </Text>
                         <TouchableOpacity onPress={clearRoute} style={{ marginLeft: 'auto' }}>
@@ -1660,26 +1616,27 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         </TouchableOpacity>
                     </View>
                     {routeHazards.length > 0 && (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
-                        {Object.entries(routeSummary).map(([catId, count]) => {
-                            const catColor = getCategoryColor(Number(catId));
-                            const catIcon = getCategoryIcon(Number(catId));
-                            const catName = categories.find(c => c.id === Number(catId));
-                            const displayName = language === 'ku' 
-                                ? (catName?.name_ku || catName?.name || '') 
-                                : language === 'ar' 
-                                ? (catName?.name_ar || catName?.name || '') 
-                                : (catName?.name_en || catName?.name || '');
-                            return (
-                                <View key={catId} style={[styles.routeSummaryCat, { backgroundColor: catColor + '20', borderColor: catColor }]}>
-                                    <Text style={{ fontSize: 16 }}>{catIcon}</Text>
-                                    <Text style={[styles.routeSummaryCatText, { color: catColor }]}>
-                                        {count} {displayName}
-                                    </Text>
-                                </View>
-                            );
-                        })}
-                    </ScrollView>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+                            {Object.entries(routeSummary).map(([catId, count]) => {
+                                const catColor = getCategoryColor(Number(catId));
+                                const catIcon = getCategoryIcon(Number(catId));
+                                const catName = categories.find(c => c.id === Number(catId));
+                                const displayName =
+                                    language === 'ar'
+                                        ? (catName?.name_ar || catName?.name || '')
+                                        : language === 'ku'
+                                            ? (catName?.name_ku || catName?.name || '')
+                                            : (catName?.name_en || catName?.name || '');
+                                return (
+                                    <View key={catId} style={[styles.routeSummaryCat, { backgroundColor: catColor + '20', borderColor: catColor }]}>
+                                        <Text style={{ fontSize: 16 }}>{catIcon}</Text>
+                                        <Text style={[styles.routeSummaryCatText, { color: catColor }]}>
+                                            {count} {displayName}
+                                        </Text>
+                                    </View>
+                                );
+                            })}
+                        </ScrollView>
                     )}
                 </View>
             )}
@@ -1688,19 +1645,21 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
             {/* INFO-BAR UNTEN */}
             <View style={styles.infoBar}>
                 <Text style={styles.infoText}>
-                    {language === 'ar' ? `عدد البلاغات النشطة: ${visibleMarkers.length} / ${reports.length} 📘` : `Active Reports: ${visibleMarkers.length} / ${reports.length} 📘`}
+                    {language === 'ar' ? `عدد البلاغات النشطة: ${visibleMarkers.length} / ${reports.length} 📘` : language === 'ku' ? `Hejmara raporên çalak: ${visibleMarkers.length} / ${reports.length}` : `Active Reports: ${visibleMarkers.length} / ${reports.length} 📘`}
                 </Text>
             </View>
-            
+
             {/* Long Press Hint - shows when marker is placed */}
             {longPressMarker && (
                 <View style={styles.longPressHint}>
                     <Text style={styles.longPressHintText}>
-                        {language === 'ar' 
-                            ? '📌 تم تحديد الموقع - اضغط + لإضافة بلاغ' 
-                            : '📌 Location set - tap + to add report'}
+                        {language === 'ar'
+                            ? '📌 تم تحديد الموقع - اضغط + لإضافة بلاغ'
+                            : language === 'ku'
+                                ? '📌 Cih hate diyarkirin - li + bide ji bo çêkirina raporê'
+                                : '📌 Location set - tap + to add report'}
                     </Text>
-                    <Pressable 
+                    <Pressable
                         onPress={clearLongPressMarker}
                         style={styles.longPressHintClose}
                     >
@@ -1714,9 +1673,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 visible={reportType !== null}
                 type={reportType}
                 address={
-                    longPressMarker 
-                        ? (language === 'ar' ? 'موقع مختار على الخريطة' : 'Selected map location')
-                        : searchMarker?.title || (language === 'ar' ? 'الموقع التلقائي' : 'Auto Location')
+                    longPressMarker
+                        ? (language === 'ar' ? 'موقع مختار على الخريطة' : language === 'ku' ? 'Cihê hilbijarti li ser nexşe' : 'Selected map location')
+                        : searchMarker?.title || (language === 'ar' ? 'الموقع التلقائي' : language === 'ku' ? 'Cihê bixweber' : 'Auto Location')
                 }
                 onClose={() => {
                     setReportType(null);
@@ -1727,7 +1686,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                         // Priority: Google Places > Long Press Marker > Search Marker > GPS
                         let locationToUse;
                         let locationSource = 'GPS';
-                        
+
                         if (data.latitude && data.longitude) {
                             // User selected a place from Google Places in the dialog
                             locationToUse = {
@@ -1750,22 +1709,22 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             locationSource = reportLocation ? 'Search' : 'GPS';
                             console.log('📍 Using GPS/search coordinates:', locationToUse);
                         }
-                        
+
                         if (!locationToUse) {
-                            alert(language === 'ar' ? 'يرجى تفعيل تحديد الموقع أو البحث عن موقع' : 'Please enable location or search for a location');
+                            alert(language === 'ar' ? 'يرجى تفعيل تحديد الموقع أو البحث عن موقع' : language === 'ku' ? 'Ji kerema xwe cîhê xwe çalak  bike an li ciheke bigere' : 'Please enable location or search for a location');
                             return;
                         }
-                        
+
                         // Map report type to category
                         let categoryId = 1;
                         if (reportType === 'pothole') {
                             categoryId = getCategoryByName('حفرة')?.id || 1;
                         } else if (reportType === 'accident') {
-                            categoryId = getCategoryByName('حادث')?.id || 3;
-                        } else if (reportType === 'environment') {
-                            categoryId = getCategoryByName('خطر بيئي')?.id || 2;
+                            categoryId = getCategoryByName('حادث')?.id || 2;
+                        } else if (reportType === 'speed') {
+                            categoryId = getCategoryByName('كاشف سرعة')?.id || 3;
                         }
-                        
+
                         // Map severity to severity_id
                         const severityMap: { [key: string]: number } = {
                             low: 1,
@@ -1773,9 +1732,9 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             high: 3,
                         };
                         let severityId = severityMap[data.severity] || 1;
-                        
+
                         console.log(`📤 Creating report at ${locationSource}:`, { categoryId, severityId, location: locationToUse });
-                        
+
                         // === DUPLICATE DETECTION ===
                         // Check for nearby similar reports before creating
                         try {
@@ -1784,32 +1743,32 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                 locationToUse.longitude,
                                 categoryId
                             );
-                            
+
                             if (dupCheck.has_duplicates && dupCheck.nearby_reports.length > 0) {
                                 const nearest = dupCheck.nearby_reports[0];
-                                const distText = nearest.distance_meters < 1 
-                                    ? (language === 'ar' ? 'أقل من 1 متر' : 'less than 1m')
+                                const distText = nearest.distance_meters < 1
+                                    ? (language === 'ar' ? 'أقل من 1 متر' : language === 'ku' ? 'kemtir ji 1m' : 'less than 1m')
                                     : `${Math.round(nearest.distance_meters)}m`;
-                                
+
                                 // Show confirmation dialog and wait for user decision
                                 const userChoice = await new Promise<'confirm' | 'create' | 'cancel'>((resolve) => {
                                     Alert.alert(
-                                        language === 'ar' ? '⚠️ بلاغ مشابه قريب' : '⚠️ Similar Report Nearby',
-                                        language === 'ar' 
+                                        language === 'ar' ? '⚠️ بلاغ مشابه قريب' : language === 'ku' ? 'Raporek wekhev li nêzîk' : '⚠️ Similar Report Nearby',
+                                        language === 'ar'
                                             ? `يوجد بلاغ مشابه على بعد ${distText}.\n\nهل تريد تأكيد البلاغ الموجود بدلاً من إنشاء بلاغ جديد؟`
                                             : `A similar report exists ${distText} away.\n\nWould you like to confirm the existing report instead of creating a new one?`,
                                         [
-                                            { text: language === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel', onPress: () => resolve('cancel') },
-                                            { text: language === 'ar' ? 'إنشاء جديد' : 'Create New', onPress: () => resolve('create') },
-                                            { text: language === 'ar' ? '✓ تأكيد الموجود' : '✓ Confirm Existing', onPress: () => resolve('confirm') },
+                                            { text: language === 'ar' ? 'إلغاء' : language === 'ku' ? 'Betal bike' : 'Cancel', style: 'cancel', onPress: () => resolve('cancel') },
+                                            { text: language === 'ar' ? 'إنشاء جديد' : language === 'ku' ? 'Çêkirina Nû' : 'Create New', onPress: () => resolve('create') },
+                                            { text: language === 'ar' ? '✓ تأكيد الموجود' : language === 'ku' ? '✓ Piştrastkirina Hebûnê' : '✓ Confirm Existing', onPress: () => resolve('confirm') },
                                         ]
                                     );
                                 });
-                                
+
                                 if (userChoice === 'cancel') {
                                     return; // User cancelled
                                 }
-                                
+
                                 if (userChoice === 'confirm') {
                                     // Confirm existing report instead
                                     try {
@@ -1817,22 +1776,22 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                             nearest.id,
                                             { latitude: locationToUse.latitude, longitude: locationToUse.longitude }
                                         );
-                                        
+
                                         Alert.alert(
-                                            language === 'ar' ? '✅ تم التأكيد' : '✅ Confirmed',
-                                            language === 'ar' 
+                                            language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? 'Hate pistrastkirin' : '✅ Confirmed',
+                                            language === 'ar'
                                                 ? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
-                                                : `Report #${nearest.id} confirmed! You earned ${confirmResult.points_awarded} points!`
+                                                : language === 'ku' ? `Rapor #${nearest.id} hate pistrastkirin! Tê ${confirmResult.points_awarded} xal wergirtim!!` : `Report #${nearest.id} confirmed! You earned ${confirmResult.points_awarded} points!`
                                         );
-                                        
+
                                         await loadData(locationToUse);
                                         reportCreated();
                                         await refreshUser();
                                     } catch (confirmError: any) {
                                         const detail = confirmError?.response?.data?.detail || '';
                                         Alert.alert(
-                                            language === 'ar' ? 'خطأ' : 'Error',
-                                            detail || (language === 'ar' ? 'فشل تأكيد البلاغ' : 'Failed to confirm report')
+                                            language === 'ar' ? 'خطأ' : language === 'ku' ? 'Cewti' : 'Error',
+                                            detail || (language === 'ar' ? 'فشل تأكيد البلاغ' : language === 'ku' ? 'Pistrastkirina raporê têkçûn ' : 'Failed to confirm report')
                                         );
                                     }
                                     return;
@@ -1844,7 +1803,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             console.warn('⚠️ Duplicate check failed, proceeding with creation:', dupError);
                             // Continue with report creation even if duplicate check fails
                         }
-                        
+
                         // Upload photo if provided - AI will analyze it
                         let photoUrl: string | undefined = undefined;
                         let aiDescription: string | undefined = undefined;
@@ -1856,28 +1815,28 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                 const uploadResult = await reportingAPI.uploadImage(data.photoUri);
                                 photoUrl = uploadResult.url;
                                 console.log('✅ Photo uploaded:', photoUrl);
-                                
+
                                 // Use AI analysis if available
                                 if (uploadResult.ai_analysis && uploadResult.ai_analysis.num_potholes > 0) {
                                     console.log('🤖 AI detected', uploadResult.ai_analysis.num_potholes, 'pothole(s)');
-                                    
+
                                     // Use AI description based on language
-                                    aiDescription = (language === 'ar' 
-                                        ? uploadResult.ai_analysis.ai_description_ar 
+                                    aiDescription = (language === 'ar'
+                                        ? uploadResult.ai_analysis.ai_description_ar
                                         : uploadResult.ai_analysis.ai_description) || undefined;
-                                    
+
                                     // Get annotated image URL if available
                                     if (uploadResult.ai_analysis.annotated_url) {
                                         aiAnnotatedUrl = uploadResult.ai_analysis.annotated_url;
                                         console.log('🎨 AI annotated image:', aiAnnotatedUrl);
                                     }
-                                    
+
                                     // Store detections as JSON string
                                     if (uploadResult.ai_analysis.detections && uploadResult.ai_analysis.detections.length > 0) {
                                         aiDetections = JSON.stringify(uploadResult.ai_analysis.detections);
                                         console.log('📦 AI detections stored:', uploadResult.ai_analysis.detections.length);
                                     }
-                                    
+
                                     // AI determines severity from photo analysis
                                     if (uploadResult.ai_analysis.max_severity === 'HIGH') {
                                         severityId = 3;
@@ -1895,18 +1854,18 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                 // Continue without photo if upload fails
                             }
                         }
-                        
+
                         // Create report - use AI description if available
-                        const finalDescription = aiDescription 
+                        const finalDescription = aiDescription
                             ? (data.notes ? `${data.notes}\n\n${aiDescription}` : aiDescription)
-                            : (data.notes || (language === 'ar' ? 'بلاغ جديد' : 'New Report'));
-                        
+                            : (data.notes || (language === 'ar' ? 'بلاغ جديد' : language === 'ku' ? 'Rapora nû' : 'New Report'));
+
                         const newReport = await reportingAPI.createReport({
-                            title: data.type === 'pothole' 
-                                ? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk li rê' : 'Pothole on Road')
+                            title: data.type === 'pothole'
+                                ? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalek li ser rê' : 'Pothole on Road')
                                 : data.type === 'accident'
-                                ? (language === 'ar' ? 'حادث مروري' : language === 'ku' ? 'Qezaya trafîkê' : 'Traffic Accident')
-                                : (language === 'ar' ? 'خطر بيئي' : language === 'ku' ? 'Metirsiya jîngeyî' : 'Environmental Hazard'),
+                                    ? (language === 'ar' ? 'حادث مروري' : language === 'ku' ? 'Qezaya trafîkê' : 'Traffic Accident')
+                                    : (language === 'ar' ? 'كاشف سرعة' : language === 'ku' ? 'Kameraya lezê' : 'Speed Camera'),
                             description: finalDescription,
                             category_id: categoryId,
                             latitude: locationToUse.latitude,
@@ -1917,152 +1876,152 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             ai_annotated_url: aiAnnotatedUrl,
                             ai_detections: aiDetections,
                         });
-                        
+
                         console.log('✅ Report created:', newReport.id);
-                        
+
                         // Clear long press marker after successful submission
                         if (longPressMarker) {
                             setLongPressMarker(null);
                             console.log('🗑️ Long press marker cleared');
                         }
-                        
+
                         // Refresh reports BEFORE closing dialog
                         await loadData(locationToUse);
-                        
+
                         console.log('✅ Data reloaded, total reports:', reports.length);
-                        
+
                         // Trigger app-wide refresh for profile and reports screens
                         reportCreated();
-                        
+
                         // Also refresh user data to update points
                         await refreshUser();
-                        
+
                         // Dialog will auto-close after showing success message
                         // The onClose() is called from ReportDialog.tsx after 1.5s
                     } catch (error) {
                         console.error('❌ Error creating report:', error);
-                        alert(language === 'ar' ? '❌ حدث خطأ أثناء إرسال البلاغ' : '❌ Error submitting report');
+                        alert(language === 'ar' ? '❌ حدث خطأ أثناء إرسال البلاغ' : language === 'ku' ? '❌ Di şandina raporê de xeletiyek çêbû' : '❌ Error submitting report');
                     }
                 }}
             />
             {/* AUDIO BOTTOM SHEET */}
-{audioVisible && (
-  <View style={styles.audioOverlay}>
-    {/* dunkler Hintergrund */}
-    <Pressable
-      style={styles.audioOverlayBg}
-      onPress={() => setAudioVisible(false)}
-    />
+            {audioVisible && (
+                <View style={styles.audioOverlay}>
+                    {/* dunkler Hintergrund */}
+                    <Pressable
+                        style={styles.audioOverlayBg}
+                        onPress={() => setAudioVisible(false)}
+                    />
 
-    {/* GLASS-SHEET */}
-    <Animated.View 
-      style={[
-        styles.audioSheetContainer,
-        { transform: [{ translateY: audioSheetY }] }
-      ]}
-    >
-      <BlurView intensity={55} tint="light" style={styles.audioSheet}>
-        <View {...panResponder.panHandlers} style={styles.audioSheetHandleArea}>
-          <View style={styles.audioSheetHandle} />
-        </View>
+                    {/* GLASS-SHEET */}
+                    <Animated.View
+                        style={[
+                            styles.audioSheetContainer,
+                            { transform: [{ translateY: audioSheetY }] }
+                        ]}
+                    >
+                        <BlurView intensity={55} tint="light" style={styles.audioSheet}>
+                            <View {...panResponder.panHandlers} style={styles.audioSheetHandleArea}>
+                                <View style={styles.audioSheetHandle} />
+                            </View>
 
-      <Text style={styles.audioTitle}>{t('home.soundSettings')}</Text>
-
-
-
-      {/* AUDIO MODES */}
-<View style={styles.modeRow}>
-
-    {/* حفرة - Yellow */}
-    <TouchableOpacity
-        style={[
-            styles.modeBox,
-            warnPothole && styles.modeBoxActive,
-        ]}
-        onPress={async () => {
-            const newValue = !warnPothole;
-            setWarnPothole(newValue);
-            if (newValue && soundEnabled) {
-                await speakWarning('pothole');
-            }
-        }}
-    >
-         <View style={[styles.modeIconCircle]}>
-            <Ionicons name="alert-circle" size={26} color="#FFD700" />
-        </View>
-        <Text style={styles.modeText}>{t('home.pothole')}</Text>
-    </TouchableOpacity>
-
-    {/* حادث - Red */}
-    <TouchableOpacity
-        style={[
-            styles.modeBox,
-            warnAccident && styles.modeBoxActive,
-        ]}
-        onPress={async () => {
-            const newValue = !warnAccident;
-            setWarnAccident(newValue);
-            if (newValue && soundEnabled) {
-                await speakWarning('accident');
-            }
-        }}
-    >
-        <View style={[styles.modeIconCircle]}>
-            <Ionicons name="warning" size={26} color="#FF0000" />
-        </View>
-        <Text style={styles.modeText}>{t('home.accident')}</Text>
-    </TouchableOpacity>
-
-    {/* بيئة - Green */}
-    <TouchableOpacity
-        style={[
-            styles.modeBox,
-            warnSpeed && styles.modeBoxActive,
-        ]}
-        onPress={async () => {
-            const newValue = !warnSpeed;
-            setWarnSpeed(newValue);
-            if (newValue && soundEnabled) {
-                await speakWarning('environment');
-            }
-        }}
-    >
-        <View style={[styles.modeIconCircle]}>
-            <Ionicons name="leaf" size={26} color="#4CAF50" />
-        </View>
-        <Text style={styles.modeText}>{t('home.environment')}</Text>
-    </TouchableOpacity>
-
-</View>
+                            <Text style={styles.audioTitle}>{t('home.soundSettings')}</Text>
 
 
 
-      {/* Close */}
-      <TouchableOpacity
-        style={styles.closeAudioBtn}
-        onPress={() => setAudioVisible(false)}
-      >
-        <Text style={styles.closeAudioText}>{t('common.close')}</Text>
-      </TouchableOpacity>
-      </BlurView>
-    </Animated.View>
-  </View>
-)}
+                            {/* AUDIO MODES */}
+                            <View style={styles.modeRow}>
+
+                                {/* حفرة - Yellow */}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.modeBox,
+                                        warnPothole && styles.modeBoxActive,
+                                    ]}
+                                    onPress={async () => {
+                                        const newValue = !warnPothole;
+                                        setWarnPothole(newValue);
+                                        if (newValue && soundEnabled) {
+                                            await speakWarning('pothole');
+                                        }
+                                    }}
+                                >
+                                    <View style={[styles.modeIconCircle]}>
+                                        <Ionicons name="alert-circle" size={26} color="#FFD700" />
+                                    </View>
+                                    <Text style={styles.modeText}>{t('home.pothole')}</Text>
+                                </TouchableOpacity>
+
+                                {/* حادث - Red */}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.modeBox,
+                                        warnAccident && styles.modeBoxActive,
+                                    ]}
+                                    onPress={async () => {
+                                        const newValue = !warnAccident;
+                                        setWarnAccident(newValue);
+                                        if (newValue && soundEnabled) {
+                                            await speakWarning('accident');
+                                        }
+                                    }}
+                                >
+                                    <View style={[styles.modeIconCircle]}>
+                                        <Ionicons name="warning" size={26} color="#FF0000" />
+                                    </View>
+                                    <Text style={styles.modeText}>{t('home.accident')}</Text>
+                                </TouchableOpacity>
+
+                                {/* كاشف السرعة - Green */}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.modeBox,
+                                        warnSpeed && styles.modeBoxActive,
+                                    ]}
+                                    onPress={async () => {
+                                        const newValue = !warnSpeed;
+                                        setWarnSpeed(newValue);
+                                        if (newValue && soundEnabled) {
+                                            await speakWarning('speed');
+                                        }
+                                    }}
+                                >
+                                    <View style={[styles.modeIconCircle]}>
+                                        <Ionicons name="speedometer" size={26} color="#00FF00" />
+                                    </View>
+                                    <Text style={styles.modeText}>{t('home.speedCamera')}</Text>
+                                </TouchableOpacity>
+
+                            </View>
+
+
+
+                            {/* Close */}
+                            <TouchableOpacity
+                                style={styles.closeAudioBtn}
+                                onPress={() => setAudioVisible(false)}
+                            >
+                                <Text style={styles.closeAudioText}>{t('common.close')}</Text>
+                            </TouchableOpacity>
+                        </BlurView>
+                    </Animated.View>
+                </View>
+            )}
 
             {/* MARKER DETAIL BOTTOM SHEET */}
             {markerDetailVisible && selectedReportForDonation && (
                 <View style={styles.markerDetailOverlay}>
-                    <TouchableOpacity 
-                        style={styles.markerDetailBackdrop} 
-                        activeOpacity={1} 
-                        onPress={() => setMarkerDetailVisible(false)} 
+                    <TouchableOpacity
+                        style={styles.markerDetailBackdrop}
+                        activeOpacity={1}
+                        onPress={() => setMarkerDetailVisible(false)}
                     />
                     <Animated.View style={[styles.markerDetailSheet, { transform: [{ translateY: markerDetailSheetY }] }]}>
                         <View {...markerDetailPanResponder.panHandlers} style={styles.markerDetailHandleArea}>
                             <View style={styles.markerDetailHandle} />
                         </View>
                         <Text style={styles.markerDetailTitle}>
-                            {selectedReportForDonation.title || categories.find(c => c.id === selectedReportForDonation.category_id)?.name || (language === 'ar' ? 'بلاغ' : 'Report')}
+                            {selectedReportForDonation.title || categories.find(c => c.id === selectedReportForDonation.category_id)?.name || (language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report')}
                         </Text>
                         {selectedReportForDonation.description ? (
                             <Text style={styles.markerDetailDesc} numberOfLines={3}>
@@ -2079,7 +2038,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                             >
                                 <Ionicons name="heart" size={18} color="#fff" />
                                 <Text style={styles.markerDetailDonateTxt}>
-                                    {language === 'ar' ? 'تبرع' : 'Donate'}
+                                    {language === 'ar' ? 'تبرع' : language === 'ku' ? 'Beşdarî kirin' : 'Donate'}
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -2087,7 +2046,7 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                                 onPress={() => setMarkerDetailVisible(false)}
                             >
                                 <Text style={styles.markerDetailCloseTxt}>
-                                    {language === 'ar' ? 'إغلاق' : 'Close'}
+                                    {language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -2107,8 +2066,8 @@ const [mode, setMode] = useState("alerts"); // "system" | "alerts" | "sound"
                 } : null}
             />
 
-    </View>
-)}
+        </View>
+    )}
 
 
 /* ================= STYLES ================= */
@@ -2208,9 +2167,9 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         backgroundColor: "#123a7a",
     },
-    marker: { 
-        backgroundColor: "#fff", 
-        padding: 6, 
+    marker: {
+        backgroundColor: "#fff",
+        padding: 6,
         borderRadius: 20,
         borderWidth: 2,
         borderColor: '#FFFFFF',
@@ -2360,10 +2319,10 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
     },
-soundIcon: {
-    fontSize: 26,
-    color: "#0D2B66",               // dunkelblau
-},
+    soundIcon: {
+        fontSize: 26,
+        color: "#0D2B66",               // dunkelblau
+    },
     heatmapButton: {
         width: 46,
         height: 46,
@@ -2450,304 +2409,304 @@ soundIcon: {
         elevation: 4,
     },
 
-bottomOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    top: 0,
-    justifyContent: "flex-end",
-    zIndex: 999,
-},
+    bottomOverlay: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        top: 0,
+        justifyContent: "flex-end",
+        zIndex: 999,
+    },
 
-overlayBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-},
+    overlayBackground: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+    },
 
-bottomSheet: {
-    backgroundColor: "#1E1E1E",
-    padding: 20,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingBottom: 60,
-},
+    bottomSheet: {
+        backgroundColor: "#1E1E1E",
+        padding: 20,
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
+        paddingBottom: 60,
+    },
 
-sheetHandle: {
-    width: 50,
-    height: 5,
-    backgroundColor: "#777",
-    borderRadius: 3,
-    alignSelf: "center",
-    marginBottom: 16,
-},
+    sheetHandle: {
+        width: 50,
+        height: 5,
+        backgroundColor: "#777",
+        borderRadius: 3,
+        alignSelf: "center",
+        marginBottom: 16,
+    },
 
-sheetTitle: {
-    color: "#FFF",
-    fontSize: 22,
-    textAlign: "center",
-    marginBottom: 20,
-    fontFamily: "Tajawal-Bold",
-},
-
-
-
-optionsRow: {
-    flexDirection: "row-reverse",
-    justifyContent: "space-between",
-    marginTop: 10,
-},
-
-optionBox: {
-    width: "30%",
-    backgroundColor: "#333",
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: "center",
-},
-
-optionText: {
-    color: "#FFF",
-    marginTop: 8,
-    fontFamily: "Tajawal-Regular",
-    fontSize: 14,
-},
-
-closeButton: {
-    backgroundColor: "#F4B400",
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 20,
-},
-
-closeText: {
-    textAlign: "center",
-    color: "#fff",
-    fontFamily: "Tajawal-Bold",
-    fontSize: 18,
-},
-
-audioOverlay: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    justifyContent: "flex-end",
-    zIndex: 9999,
-    elevation: 9999,
-},
-
-audioOverlayBg: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
-},
-
-audioSheetContainer: {
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    overflow: "hidden",
-},
-
-audioSheet: {
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    paddingBottom: Platform.OS === "ios" ? 90 : 85,
-    borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.1)",
-},
-
-audioSheetHandleArea: {
-    paddingVertical: 10,
-    marginHorizontal: -20,
-    marginTop: -20,
-    marginBottom: 10,
-    alignItems: "center",
-},
-
-audioSheetHandle: {
-    width: 45,
-    height: 5,
-    backgroundColor: "#000000",
-    borderRadius: 3,
-},
-
-audioTitle: {
-    color: "#000000",
-    fontSize: 22,
-    textAlign: "center",
-    marginBottom: 20,
-    fontFamily: "Tajawal-Bold",
-},
-
-
-modeRow: {
-    flexDirection: "row-reverse",
-    justifyContent: "space-between",
-    width: "100%",
-    marginTop: 10,
-    marginBottom: 20,
-},
-
-modeBox: {
-    width: "30%",
-    backgroundColor: "#0F356B",
-    borderRadius: 25,
-    paddingVertical: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-    shadowColor: "#000",
-    shadowOpacity: 0.22,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 6,
-    height: 125,   
-},
-
-modeBoxActive: {
-  borderColor: "#FFD166",
-    shadowColor: "#FFD166",
-    shadowOpacity: 0.45,
-    backgroundColor: "#17498F",
-},
-
-modeText: {
-    color: "#ffffffff",
-    fontSize: 14,
-    marginTop: 9,
-    paddingTop: 4,
-    fontFamily: "Tajawal-Medium",
-    textAlign: "center",
-},
-
-closeAudioBtn: {
-    backgroundColor: "#F4B400",
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginTop: 20,
-},
-
-closeAudioText: {
-    color: "#000000",
-    textAlign: "center",
-    fontSize: 18,
-    fontFamily: "Tajawal-Bold",
-},
-/* ===== VARIANTE 1 DESIGN ===== */
-
-modeBoxV1: {
-    width: "30%",
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
-    borderRadius: 18,
-    paddingVertical: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
-},
-
-modeBoxV1Active: {
-    backgroundColor: "rgba(255,209,102,0.25)",
-    borderColor: "#F4B400",
-    shadowColor: "#F4B400",
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 6,
-},
+    sheetTitle: {
+        color: "#FFF",
+        fontSize: 22,
+        textAlign: "center",
+        marginBottom: 20,
+        fontFamily: "Tajawal-Bold",
+    },
 
 
 
-modeIconCircle: {
-   width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "rgba(0,0,0,0.25)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: -13,
-},
+    optionsRow: {
+        flexDirection: "row-reverse",
+        justifyContent: "space-between",
+        marginTop: 10,
+    },
+
+    optionBox: {
+        width: "30%",
+        backgroundColor: "#333",
+        paddingVertical: 18,
+        borderRadius: 16,
+        alignItems: "center",
+    },
+
+    optionText: {
+        color: "#FFF",
+        marginTop: 8,
+        fontFamily: "Tajawal-Regular",
+        fontSize: 14,
+    },
+
+    closeButton: {
+        backgroundColor: "#F4B400",
+        paddingVertical: 12,
+        borderRadius: 10,
+        marginTop: 20,
+    },
+
+    closeText: {
+        textAlign: "center",
+        color: "#fff",
+        fontFamily: "Tajawal-Bold",
+        fontSize: 18,
+    },
+
+    audioOverlay: {
+        position: "absolute",
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        justifyContent: "flex-end",
+        zIndex: 9999,
+        elevation: 9999,
+    },
+
+    audioOverlayBg: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.45)",
+    },
+
+    audioSheetContainer: {
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
+        overflow: "hidden",
+    },
+
+    audioSheet: {
+        backgroundColor: "#FFFFFF",
+        padding: 20,
+        paddingBottom: Platform.OS === "ios" ? 90 : 85,
+        borderWidth: 1,
+        borderColor: "rgba(0, 0, 0, 0.1)",
+    },
+
+    audioSheetHandleArea: {
+        paddingVertical: 10,
+        marginHorizontal: -20,
+        marginTop: -20,
+        marginBottom: 10,
+        alignItems: "center",
+    },
+
+    audioSheetHandle: {
+        width: 45,
+        height: 5,
+        backgroundColor: "#000000",
+        borderRadius: 3,
+    },
+
+    audioTitle: {
+        color: "#000000",
+        fontSize: 22,
+        textAlign: "center",
+        marginBottom: 20,
+        fontFamily: "Tajawal-Bold",
+    },
+
+
+    modeRow: {
+        flexDirection: "row-reverse",
+        justifyContent: "space-between",
+        width: "100%",
+        marginTop: 10,
+        marginBottom: 20,
+    },
+
+    modeBox: {
+        width: "30%",
+        backgroundColor: "#0F356B",
+        borderRadius: 25,
+        paddingVertical: 18,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 2,
+        borderColor: "transparent",
+        shadowColor: "#000",
+        shadowOpacity: 0.22,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 8,
+        elevation: 6,
+        height: 125,
+    },
+
+    modeBoxActive: {
+        borderColor: "#FFD166",
+        shadowColor: "#FFD166",
+        shadowOpacity: 0.45,
+        backgroundColor: "#17498F",
+    },
+
+    modeText: {
+        color: "#ffffffff",
+        fontSize: 14,
+        marginTop: 9,
+        paddingTop: 4,
+        fontFamily: "Tajawal-Medium",
+        textAlign: "center",
+    },
+
+    closeAudioBtn: {
+        backgroundColor: "#F4B400",
+        paddingVertical: 14,
+        borderRadius: 12,
+        marginTop: 20,
+    },
+
+    closeAudioText: {
+        color: "#000000",
+        textAlign: "center",
+        fontSize: 18,
+        fontFamily: "Tajawal-Bold",
+    },
+    /* ===== VARIANTE 1 DESIGN ===== */
+
+    modeBoxV1: {
+        width: "30%",
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        borderRadius: 18,
+        paddingVertical: 5,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.15)",
+    },
+
+    modeBoxV1Active: {
+        backgroundColor: "rgba(255,209,102,0.25)",
+        borderColor: "#F4B400",
+        shadowColor: "#F4B400",
+        shadowOpacity: 0.4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 8,
+        elevation: 6,
+    },
+
+
+
+    modeIconCircle: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: "rgba(0,0,0,0.25)",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: -13,
+    },
 
 // ─── MARKER DETAIL BOTTOM SHEET ──────────────────────────────────
-markerDetailOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    zIndex: 9999,
-    justifyContent: 'flex-end',
-},
-markerDetailBackdrop: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-},
-markerDetailSheet: {
-    backgroundColor: '#1a1a2e',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 30,
-},
-markerDetailHandleArea: {
-    paddingVertical: 10,
-    marginHorizontal: -20,
-    marginTop: -20,
-    marginBottom: 6,
-    alignItems: 'center',
-},
-markerDetailHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    alignSelf: 'center',
-},
-markerDetailTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontFamily: 'Tajawal-Bold',
-    textAlign: 'center',
-    marginBottom: 8,
-},
-markerDetailDesc: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
-    fontFamily: 'Tajawal-Regular',
-    textAlign: 'center',
-    marginBottom: 16,
-},
-markerDetailActions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginTop: 8,
-},
-markerDetailDonateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E91E63',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 8,
-},
-markerDetailDonateTxt: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Tajawal-Bold',
-},
-markerDetailCloseBtn: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-},
-markerDetailCloseTxt: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Tajawal-Medium',
-},
+    markerDetailOverlay: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        zIndex: 9999,
+        justifyContent: 'flex-end',
+    },
+    markerDetailBackdrop: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    markerDetailSheet: {
+        backgroundColor: '#1a1a2e',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        paddingBottom: 30,
+    },
+    markerDetailHandleArea: {
+        paddingVertical: 10,
+        marginHorizontal: -20,
+        marginTop: -20,
+        marginBottom: 6,
+        alignItems: 'center',
+    },
+    markerDetailHandle: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        alignSelf: 'center',
+    },
+    markerDetailTitle: {
+        color: '#fff',
+        fontSize: 18,
+        fontFamily: 'Tajawal-Bold',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    markerDetailDesc: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 14,
+        fontFamily: 'Tajawal-Regular',
+        textAlign: 'center',
+        marginBottom: 16,
+    },
+    markerDetailActions: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 12,
+        marginTop: 8,
+    },
+    markerDetailDonateBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#E91E63',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12,
+        gap: 8,
+    },
+    markerDetailDonateTxt: {
+        color: '#fff',
+        fontSize: 16,
+        fontFamily: 'Tajawal-Bold',
+    },
+    markerDetailCloseBtn: {
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12,
+    },
+    markerDetailCloseTxt: {
+        color: '#fff',
+        fontSize: 16,
+        fontFamily: 'Tajawal-Medium',
+    },
 
 });
