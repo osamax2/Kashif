@@ -315,41 +315,84 @@ class LocationMonitoringService {
     // 2 = Environment (خطر بيئي)
     // 3 = Public Safety / Accident (حادث)
     // 6 = Mines (ألغام)
+    
+    // For Kurdish users, play pre-generated Kurdish audio files
+    if (lang === 'ku') {
+      console.log('🔊 Kurdish language detected, using pre-generated audio');
+      try {
+        // Initialize audio if not already done
+        await this.initializeAudio();
+
+        // Play alert beep first
+        try {
+          const { sound: alertSound } = await Audio.Sound.createAsync(
+            require('../assets/sounds/alert.wav'),
+            { shouldPlay: true, volume: this.alertSettings.appVolume }
+          );
+          console.log('🔊 Alert beep sound played');
+          setTimeout(() => { alertSound.unloadAsync().catch(() => {}); }, 2000);
+        } catch (soundError) {
+          console.warn('⚠️ Failed to play alert beep:', soundError);
+        }
+
+        // Small delay to let the beep play first
+        await new Promise(resolve => setTimeout(resolve, 600));
+
+        // Play Kurdish voice warning by category
+        const kuAudioMap: Record<number, any> = {
+          1: require('../assets/sounds/ku/warning_pothole.mp3'),
+          2: require('../assets/sounds/ku/warning_environment.mp3'),
+          3: require('../assets/sounds/ku/warning_accident.mp3'),
+          4: require('../assets/sounds/ku/warning_speed_camera.mp3'),
+          6: require('../assets/sounds/ku/warning_mines.mp3'),
+        };
+        const kuFile = kuAudioMap[categoryId] || require('../assets/sounds/ku/warning_generic.mp3');
+        
+        const { sound: kuSound } = await Audio.Sound.createAsync(
+          kuFile,
+          { shouldPlay: true, volume: this.alertSettings.appVolume }
+        );
+        console.log('🔊 Kurdish voice warning playing');
+        kuSound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            kuSound.unloadAsync().catch(() => {});
+          }
+        });
+        return; // Done - Kurdish audio played
+      } catch (kuError) {
+        console.warn('⚠️ Kurdish audio failed, falling back to Arabic TTS:', kuError);
+        // Fall through to Arabic TTS below
+      }
+    }
+
+    // Arabic or English TTS
+    const speechLang = lang === 'ar' ? 'ar' : 'en';
+
     switch (categoryId) {
       case 1: // Infrastructure / Pothole
-        message = lang === 'ar'
+        message = speechLang === 'ar'
           ? `تحذير! حفرة في الطريق على بعد ${distance} متر`
-          : lang === 'ku'
-          ? `Hişyarî! Çalêk ${distance} metre li pêş te heye`
           : `Warning! Pothole ahead at ${distance} meters`;
         break;
       case 2: // Environment
-        message = lang === 'ar'
+        message = speechLang === 'ar'
           ? `تنبيه! خطر بيئي على بعد ${distance} متر`
-          : lang === 'ku'
-          ? `Hişyarî! Metirsiya jîngehê ${distance} metre li pêş te heye`
           : `Alert! Environmental hazard ahead at ${distance} meters`;
         break;
       case 3: // Public Safety / Accident
-        message = lang === 'ar'
+        message = speechLang === 'ar'
           ? `تحذير! حادث مروري على بعد ${distance} متر`
-          : lang === 'ku'
-          ? `Hişyarî! Qezayek ${distance} metre li pêş te heye`
           : `Warning! Traffic accident ahead at ${distance} meters`;
         break;
       case 6: // Mines
-        message = lang === 'ar'
+        message = speechLang === 'ar'
           ? `تحذير! منطقة ألغام على بعد ${distance} متر`
-          : lang === 'ku'
-          ? `Hişyarî! Devera mînan ${distance} metre li pêş te heye`
           : `Warning! Mine area ahead at ${distance} meters`;
         break;
       default:
         console.log('⚠️ Unknown category, using generic message');
-        message = lang === 'ar'
+        message = speechLang === 'ar'
           ? `تنبيه على بعد ${distance} متر`
-          : lang === 'ku'
-          ? `Hişyarî ${distance} metre li pêş te heye`
           : `Alert ${distance} meters ahead`;
     }
 
@@ -363,7 +406,7 @@ class LocationMonitoringService {
       // Play alert beep sound first (works on all devices)
       try {
         const { sound: alertSound } = await Audio.Sound.createAsync(
-          require('../assets/sounds/alert.mp3'),
+          require('../assets/sounds/alert.wav'),
           { shouldPlay: true, volume: this.alertSettings.appVolume }
         );
         console.log('🔊 Alert beep sound played');
@@ -392,8 +435,8 @@ class LocationMonitoringService {
       const voices = await Speech.getAvailableVoicesAsync();
       console.log('🔊 Available voices count:', voices.length);
       
-      // Find a voice for the target language
-      const targetLangCode = lang === 'ar' ? 'ar' : 'en';
+      // Find a voice for the target language (Kurdish uses Arabic TTS)
+      const targetLangCode = speechLang === 'ar' ? 'ar' : 'en';
       const matchingVoices = voices.filter(v => 
         v.language.toLowerCase().startsWith(targetLangCode)
       );
@@ -401,14 +444,14 @@ class LocationMonitoringService {
       
       // Prefer specific voice identifiers if available
       let selectedVoice = matchingVoices.find(v => 
-        lang === 'ar' 
+        speechLang === 'ar' 
           ? v.identifier?.includes('ar-SA') || v.identifier?.includes('ar_SA')
           : v.identifier?.includes('en-US') || v.identifier?.includes('en_US')
       ) || matchingVoices[0];
       
       const speechOptions: Speech.SpeechOptions = {
-        language: lang === 'ar' ? 'ar-SA' : 'en-US',
-        rate: lang === 'ar' ? 0.85 : 0.9, // Slightly slower for Arabic
+        language: speechLang === 'ar' ? 'ar-SA' : 'en-US',
+        rate: speechLang === 'ar' ? 0.85 : 0.9, // Slightly slower for Arabic
         pitch: 1,
         volume: this.alertSettings.appVolume,
         onStart: () => console.log('🔊 Speech started'),
