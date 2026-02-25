@@ -255,7 +255,7 @@ export default function DonationsPage() {
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-4 py-3 text-gray-600 text-sm font-medium text-start">#</th>
                   <th className="px-4 py-3 text-gray-600 text-sm font-medium text-start">{language === 'ar' ? 'البلاغ' : language === 'ku' ? 'Rapor' : 'Report'}</th>
-                  <th className="px-4 py-3 text-gray-600 text-sm font-medium text-start">{language === 'ar' ? 'تكلفة الإصلاح' : language === 'ku' ? 'Nirxê çêkirina' : 'Repair Cost'}</th>
+                  <th className="px-4 py-3 text-gray-600 text-sm font-medium text-start">{language === 'ar' ? 'تكلفة الإصلاح' : language === 'ku' ? 'Nirxê çêkirinê' : 'Repair Cost'}</th>
                   <th className="px-4 py-3 text-gray-600 text-sm font-medium text-start">{language === 'ar' ? 'إجمالي التبرعات' : language === 'ku' ? 'Giştî Alîkariyên Darbendî' : 'Total Donated'}</th>
                   <th className="px-4 py-3 text-gray-600 text-sm font-medium text-start">{language === 'ar' ? 'التقدم' : language === 'ku' ? 'Pêşveçûn' : 'Progress'}</th>
                   <th className="px-4 py-3 text-gray-600 text-sm font-medium text-start">{language === 'ar' ? 'إجراء' : language === 'ku' ? 'Çalakî' : 'Action'}</th>
