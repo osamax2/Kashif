@@ -323,22 +323,39 @@ class LocationMonitoringService {
         // Initialize audio if not already done
         await this.initializeAudio();
 
-        // Play alert beep first
+        // Helper: play a sound and wait until it finishes
+        const playAndWait = (source: any, volume: number): Promise<void> => {
+          return new Promise(async (resolve, reject) => {
+            try {
+              const { sound } = await Audio.Sound.createAsync(source, {
+                shouldPlay: false,
+                volume,
+              });
+              sound.setOnPlaybackStatusUpdate((status) => {
+                if (status.isLoaded && status.didJustFinish) {
+                  sound.unloadAsync().catch(() => {});
+                  resolve();
+                }
+              });
+              await sound.playAsync();
+            } catch (err) {
+              reject(err);
+            }
+          });
+        };
+
+        // Step 1: Play alert beep and WAIT for it to finish
         try {
-          const { sound: alertSound } = await Audio.Sound.createAsync(
-            require('../assets/sounds/alert.wav'),
-            { shouldPlay: true, volume: this.alertSettings.appVolume }
-          );
-          console.log('🔊 Alert beep sound played');
-          setTimeout(() => { alertSound.unloadAsync().catch(() => {}); }, 2000);
+          await playAndWait(require('../assets/sounds/alert.wav'), this.alertSettings.appVolume);
+          console.log('🔊 Alert beep finished');
         } catch (soundError) {
           console.warn('⚠️ Failed to play alert beep:', soundError);
         }
 
-        // Small delay to let the beep play first
-        await new Promise(resolve => setTimeout(resolve, 600));
+        // Small gap between beep and voice
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Play Kurdish voice warning by category
+        // Step 2: Play Kurdish voice warning AFTER beep is done
         const kuAudioMap: Record<number, any> = {
           1: require('../assets/sounds/ku/warning_pothole.mp3'),
           2: require('../assets/sounds/ku/warning_environment.mp3'),
@@ -348,17 +365,9 @@ class LocationMonitoringService {
         };
         const kuFile = kuAudioMap[categoryId] || require('../assets/sounds/ku/warning_generic.mp3');
         
-        const { sound: kuSound } = await Audio.Sound.createAsync(
-          kuFile,
-          { shouldPlay: true, volume: this.alertSettings.appVolume }
-        );
-        console.log('🔊 Kurdish voice warning playing');
-        kuSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            kuSound.unloadAsync().catch(() => {});
-          }
-        });
-        return; // Done - Kurdish audio played
+        await playAndWait(kuFile, this.alertSettings.appVolume);
+        console.log('🔊 Kurdish voice warning finished');
+        return; // Done - Kurdish audio played sequentially
       } catch (kuError) {
         console.warn('⚠️ Kurdish audio failed, falling back to Arabic TTS:', kuError);
         // Fall through to Arabic TTS below
