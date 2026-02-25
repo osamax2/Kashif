@@ -99,22 +99,24 @@ def handle_report_status_updated(event_data):
             db.close()
             return
 
-        # Map status IDs to human readable names (ar/en)
+        # Map status IDs to human readable names (ar/en/ku)
         status_names = {
-            1: {"ar": "مفتوح", "en": "Open"},
-            2: {"ar": "قيد المراجعة", "en": "Under Review"},
-            3: {"ar": "قيد المعالجة", "en": "In Progress"},
-            4: {"ar": "تم الإصلاح", "en": "Resolved"},
-            5: {"ar": "مرفوض", "en": "Rejected"},
+            1: {"ar": "مفتوح", "en": "Open", "ku": "Vekirî"},
+            2: {"ar": "قيد المراجعة", "en": "Under Review", "ku": "Di lêkolînê de"},
+            3: {"ar": "قيد المعالجة", "en": "In Progress", "ku": "Di pêşveçûnê de"},
+            4: {"ar": "تم الإصلاح", "en": "Resolved", "ku": "Çareserkirî"},
+            5: {"ar": "مرفوض", "en": "Rejected", "ku": "Redkirî"},
         }
         
-        status_info = status_names.get(new_status_id, {"ar": f"حالة {new_status_id}", "en": f"Status {new_status_id}"})
+        status_info = status_names.get(new_status_id, {"ar": f"حالة {new_status_id}", "en": f"Status {new_status_id}", "ku": f"Rewş {new_status_id}"})
         
-        # Create notification with bilingual content
+        # Create notification with trilingual content
         title_ar = f"تحديث بلاغك #{report_id}"
         body_ar = f"تم تغيير حالة بلاغك إلى: {status_info['ar']}"
         title_en = f"Report #{report_id} Updated"
         body_en = f"Your report status changed to: {status_info['en']}"
+        title_ku = f"Rapora te #{report_id} hate nûkirin"
+        body_ku = f"Rewşa rapora te guherî: {status_info['ku']}"
         
         notification = crud.create_notification(
             db=db,
@@ -124,7 +126,9 @@ def handle_report_status_updated(event_data):
             notification_type="REPORT_UPDATE",
             related_report_id=report_id,
             title_en=title_en,
-            body_en=body_en
+            body_en=body_en,
+            title_ku=title_ku,
+            body_ku=body_ku
         )
         
         # Send push notification (respects preferences)
@@ -139,6 +143,8 @@ def handle_report_status_updated(event_data):
                 "new_status_id": str(new_status_id),
                 "title_en": title_en,
                 "body_en": body_en,
+                "title_ku": title_ku,
+                "body_ku": body_ku,
                 "type": "report_status_updated"
             },
             notification_type="REPORT_UPDATE"

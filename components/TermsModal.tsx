@@ -24,7 +24,7 @@ interface Props {
 }
 
 export default function TermsModal({ visible, onClose, onAccept, showAcceptButton = false }: Props) {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const insets = useSafeAreaInsets();
   const effectiveRTL = isRTL;
   const [tos, setTos] = useState<TermsOfService | null>(null);
@@ -51,8 +51,8 @@ export default function TermsModal({ visible, onClose, onAccept, showAcceptButto
     }
   };
 
-  const title = tos ? (effectiveRTL ? tos.title_ar : tos.title_en) : "";
-  const content = tos ? (effectiveRTL ? tos.content_ar : tos.content_en) : "";
+  const title = tos ? (language === 'ku' && tos.title_ku ? tos.title_ku : effectiveRTL ? tos.title_ar : tos.title_en) : "";
+  const content = tos ? (language === 'ku' && tos.content_ku ? tos.content_ku : effectiveRTL ? tos.content_ar : tos.content_en) : "";
 
   const dir: { textAlign: "right" | "left"; writingDirection: "rtl" | "ltr" } = {
     textAlign: effectiveRTL ? "right" : "left",

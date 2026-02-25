@@ -485,8 +485,8 @@ export default function ProfileScreen() {
       {achievements.length > 0 ? (
         <View style={styles.achievementsGrid}>
           {achievements.map((badge) => {
-            const name = effectiveRTL ? badge.name_en : badge.name_ar;
-            const desc = effectiveRTL ? badge.description_en : badge.description_ar;
+            const name = language === 'ku' ? (badge.name_ku || badge.name_en) : effectiveRTL ? badge.name_en : badge.name_ar;
+            const desc = language === 'ku' ? (badge.description_ku || badge.description_en) : effectiveRTL ? badge.description_en : badge.description_ar;
             return (
               <View
                 key={badge.id}
@@ -530,8 +530,8 @@ export default function ProfileScreen() {
 
       {challenges.length > 0 ? (
         challenges.map((ch) => {
-          const title = effectiveRTL ? ch.title_en : ch.title_ar;
-          const desc = effectiveRTL ? ch.description_en : ch.description_ar;
+          const title = language === 'ku' ? (ch.title_ku || ch.title_en) : effectiveRTL ? ch.title_en : ch.title_ar;
+          const desc = language === 'ku' ? (ch.description_ku || ch.description_en) : effectiveRTL ? ch.description_en : ch.description_ar;
           return (
             <View key={ch.id} style={[styles.challengeCard, ch.completed && styles.challengeCardDone]}>
               <View style={[styles.challengeHeader, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>

@@ -296,6 +296,7 @@ class AnalyzeResponse(BaseModel):
     max_severity: Optional[str] = None
     ai_description: Optional[str] = None
     ai_description_ar: Optional[str] = None
+    ai_description_ku: Optional[str] = None
     detections: list = []
     annotated_image_base64: Optional[str] = None  # Base64 encoded annotated image
     processing_time_ms: float = 0
@@ -384,9 +385,11 @@ async def analyze_image_only(
         # Create detailed description based on detections
         severity_map = {"LOW": "minor", "MEDIUM": "moderate", "HIGH": "severe"}
         severity_ar_map = {"LOW": "خفيفة", "MEDIUM": "متوسطة", "HIGH": "شديدة"}
+        severity_ku_map = {"LOW": "sivik", "MEDIUM": "navncî", "HIGH": "giran"}
         
         severity_text = severity_map.get(max_severity, "moderate")
         severity_ar = severity_ar_map.get(max_severity, "متوسطة")
+        severity_ku = severity_ku_map.get(max_severity, "navncî")
         
         # Calculate average size if available
         avg_width = sum(d.estimated_width_cm or 0 for d in result.detections) / max(len(result.detections), 1)
@@ -395,17 +398,21 @@ async def analyze_image_only(
         if num_potholes == 1:
             ai_description = f"AI detected 1 {severity_text} pothole"
             ai_description_ar = f"الذكاء الاصطناعي اكتشف حفرة واحدة {severity_ar}"
+            ai_description_ku = f"Zîrekiya destkirdî 1 çalêka {severity_ku} dît"
         else:
             ai_description = f"AI detected {num_potholes} potholes with {severity_text} severity"
             ai_description_ar = f"الذكاء الاصطناعي اكتشف {num_potholes} حفر بخطورة {severity_ar}"
+            ai_description_ku = f"Zîrekiya destkirdî {num_potholes} çalê bi giraniya {severity_ku} dît"
         
         if avg_width > 0:
             ai_description += f". Estimated average size: {avg_width:.0f}cm"
             ai_description_ar += f". الحجم التقديري: {avg_width:.0f}سم"
+            ai_description_ku += f". Mezinahiya texmînî: {avg_width:.0f}cm"
         
         if avg_area > 0:
             ai_description += f", area: {avg_area:.0f}cm²"
             ai_description_ar += f", المساحة: {avg_area:.0f}سم²"
+            ai_description_ku += f", rûber: {avg_area:.0f}cm²"
         
         detections = [d.to_dict() for d in result.detections]
         
@@ -416,6 +423,7 @@ async def analyze_image_only(
             max_severity=max_severity,
             ai_description=ai_description,
             ai_description_ar=ai_description_ar,
+            ai_description_ku=ai_description_ku,
             detections=detections,
             annotated_image_base64=annotated_base64,
             processing_time_ms=processing_time

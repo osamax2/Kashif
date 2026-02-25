@@ -41,6 +41,8 @@ class Notification(Base):
     body = Column(Text, nullable=False)
     title_en = Column(String(150), nullable=True)
     body_en = Column(Text, nullable=True)
+    title_ku = Column(String(150), nullable=True)
+    body_ku = Column(Text, nullable=True)
     type = Column(String(50), nullable=False)  # REPORT_UPDATE, POINTS_AWARDED, etc.
     related_report_id = Column(Integer, nullable=True)
     related_coupon_id = Column(Integer, nullable=True)

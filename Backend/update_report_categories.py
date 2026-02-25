@@ -16,23 +16,26 @@ DB_CONFIG = {
     'password': 'report123'
 }
 
-# Categories with Arabic names, English names, colors, and descriptions
+# Categories with Arabic names, English names, Kurdish names, colors, and descriptions
 CATEGORIES = [
     {
         'name_ar': 'حفرة',
         'name_en': 'Pothole',
+        'name_ku': 'Çal',
         'color': '#FFD700',  # Yellow/Gold
         'description': 'تقرير عن حفر في الطرق'
     },
     {
         'name_ar': 'حادث',
         'name_en': 'Accident',
+        'name_ku': 'Qeza',
         'color': '#FF0000',  # Red
         'description': 'تقرير عن حوادث مرورية'
     },
     {
         'name_ar': 'كاشف السرعة',
         'name_en': 'Speed Camera',
+        'name_ku': 'Kameraya Lezê',
         'color': '#00FF00',  # Green
         'description': 'تقرير عن مواقع كاشف السرعة'
     }
@@ -64,11 +67,11 @@ def update_categories():
             conn.commit()
             print("✅ Color column added")
         
-        # Check if name_ar and name_en columns exist
+        # Check if name_ar, name_en and name_ku columns exist
         cur.execute("""
             SELECT column_name 
             FROM information_schema.columns 
-            WHERE table_name='categories' AND column_name IN ('name_ar', 'name_en')
+            WHERE table_name='categories' AND column_name IN ('name_ar', 'name_en', 'name_ku')
         """)
         
         existing_columns = [row['column_name'] for row in cur.fetchall()]
@@ -99,6 +102,15 @@ def update_categories():
             conn.commit()
             print("✅ name_en column added")
         
+        if 'name_ku' not in existing_columns:
+            print("➕ Adding 'name_ku' column to categories table...")
+            cur.execute("""
+                ALTER TABLE categories 
+                ADD COLUMN IF NOT EXISTS name_ku VARCHAR(100)
+            """)
+            conn.commit()
+            print("✅ name_ku column added")
+        
         # Get existing categories
         cur.execute("SELECT id, name_en, name_ar FROM categories ORDER BY id")
         existing = cur.fetchall()
@@ -120,20 +132,21 @@ def update_categories():
                     UPDATE categories 
                     SET name_ar = %(name_ar)s, 
                         name_en = %(name_en)s, 
+                        name_ku = %(name_ku)s,
                         color = %(color)s, 
                         description = %(description)s
                     WHERE id = %(id)s
                     RETURNING id
                 """, {**cat, 'id': idx})
-                print(f"   🔄 Updated ID {idx}: {cat['name_ar']} ({cat['name_en']}) - {cat['color']}")
+                print(f"   🔄 Updated ID {idx}: {cat['name_ar']} ({cat['name_en']}/{cat['name_ku']}) - {cat['color']}")
             else:
                 # Insert new category with specific ID
                 cur.execute("""
-                    INSERT INTO categories (id, name_ar, name_en, color, description)
-                    VALUES (%(id)s, %(name_ar)s, %(name_en)s, %(color)s, %(description)s)
+                    INSERT INTO categories (id, name_ar, name_en, name_ku, color, description)
+                    VALUES (%(id)s, %(name_ar)s, %(name_en)s, %(name_ku)s, %(color)s, %(description)s)
                     RETURNING id
                 """, {**cat, 'id': idx})
-                print(f"   ✅ Inserted ID {idx}: {cat['name_ar']} ({cat['name_en']}) - {cat['color']}")
+                print(f"   ✅ Inserted ID {idx}: {cat['name_ar']} ({cat['name_en']}/{cat['name_ku']}) - {cat['color']}")
         
         # Commit the updates first
         conn.commit()
@@ -151,7 +164,7 @@ def update_categories():
         
         # Verify the update
         print("\n🔍 Verifying categories:")
-        cur.execute("SELECT id, name_ar, name_en, color, description FROM categories ORDER BY id")
+        cur.execute("SELECT id, name_ar, name_en, name_ku, color, description FROM categories ORDER BY id")
         categories = cur.fetchall()
         
         for cat in categories:
@@ -159,6 +172,7 @@ def update_categories():
    📌 Category ID: {cat['id']}
       Arabic: {cat['name_ar']}
       English: {cat['name_en']}
+      Kurdish: {cat.get('name_ku', 'N/A')}
       Color: {cat['color']}
       Description: {cat['description']}
             """)

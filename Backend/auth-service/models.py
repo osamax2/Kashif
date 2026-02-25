@@ -35,7 +35,7 @@ class User(Base):
     status = Column(String(50), default="ACTIVE", nullable=False)  # ACTIVE, BANNED, PENDING
     is_verified = Column(Boolean, default=False, nullable=False)  # Email verification status
     must_change_password = Column(Boolean, default=False, nullable=False)  # Force password change on first login
-    language = Column(String(2), default="ar", nullable=False)  # ar or en
+    language = Column(String(2), default="ar", nullable=False)  # ar, en or ku
     city = Column(String(100), nullable=True)  # City for government employees
     district = Column(String(100), nullable=True)  # District for government employees
     job_description = Column(String(255), nullable=True)  # Job description for government employees
@@ -100,8 +100,10 @@ class TermsOfService(Base):
     version = Column(String(20), nullable=False, unique=True)  # e.g. "1.0", "1.1"
     title_ar = Column(String(255), nullable=False)
     title_en = Column(String(255), nullable=False)
+    title_ku = Column(String(255), nullable=True)
     content_ar = Column(Text, nullable=False)
     content_en = Column(Text, nullable=False)
+    content_ku = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     requires_re_acceptance = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

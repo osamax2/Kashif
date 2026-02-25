@@ -1489,10 +1489,10 @@ def update_language_preference(
     current_user = auth.get_current_user(token, db)
     
     # Validate language
-    if language_data.language not in ['ar', 'en']:
+    if language_data.language not in ['ar', 'en', 'ku']:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid language. Must be 'ar' or 'en'"
+            detail="Invalid language. Must be 'ar', 'en' or 'ku'"
         )
     
     # Update user's language

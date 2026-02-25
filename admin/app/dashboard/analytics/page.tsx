@@ -36,6 +36,7 @@ interface CategoryStats {
   id: number;
   name: string;
   name_ar: string;
+  name_ku?: string;
   count: number;
 }
 
@@ -43,6 +44,7 @@ interface StatusStats {
   id: number;
   name: string;
   name_ar: string;
+  name_ku?: string;
   count: number;
   color: string;
 }
@@ -51,6 +53,7 @@ interface CouponStat {
   coupon_id: number;
   title: string;
   title_ar: string;
+  title_ku?: string;
   points_cost: number;
   redemption_count: number;
   last_redeemed: string | null;
@@ -167,7 +170,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, language, t }: { comp
         csvContent += `${language === 'ar' ? 'أداء الكوبونات' : language === 'ku' ? 'Çalakîya kuponan' : 'Coupon Performance'}\n`;
         csvContent += `${language === 'ar' ? 'الترتيب' : language === 'ku' ? 'Rêzî' : 'Rank'},${language === 'ar' ? 'الكوبون' : language === 'ku' ? 'Kupon' : 'Coupon'},${language === 'ar' ? 'النقاط' : language === 'ku' ? 'Xal' : 'Points'},${language === 'ar' ? 'الاستبدالات' : language === 'ku' ? 'Guhertinên' : 'Redemptions'},${language === 'ar' ? 'آخر استبدال' : language === 'ku' ? 'Guhertina dawîn' : 'Last Redeemed'}\n`;
         couponStats.forEach((c, i) => {
-          csvContent += `${i + 1},"${isRTL ? c.title_ar || c.title : c.title}",${c.points_cost},${c.redemption_count},${c.last_redeemed ? new Date(c.last_redeemed).toLocaleDateString() : 'N/A'}\n`;
+          csvContent += `${i + 1},"${language === 'ku' ? c.title_ku || c.title : isRTL ? c.title_ar || c.title : c.title}",${c.points_cost},${c.redemption_count},${c.last_redeemed ? new Date(c.last_redeemed).toLocaleDateString() : 'N/A'}\n`;
         });
         csvContent += '\n';
       }
@@ -187,7 +190,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, language, t }: { comp
         csvContent += `${language === 'ar' ? 'جميع الكوبونات' : language === 'ku' ? 'Hemî kupon' : 'All Coupons'}\n`;
         csvContent += `ID,${language === 'ar' ? 'الاسم' : language === 'ku' ? 'Nav' : 'Name'},${language === 'ar' ? 'النقاط' : language === 'ku' ? 'Xalên' : 'Points'},${language === 'ar' ? 'الحالة' : language === 'ku' ? 'Rewş' : 'Status'}\n`;
         coupons.forEach((c: any) => {
-          csvContent += `${c.id},"${isRTL ? c.title_ar || c.title : c.title}",${c.points_cost},${c.status}\n`;
+          csvContent += `${c.id},"${language === 'ku' ? c.title_ku || c.title : isRTL ? c.title_ar || c.title : c.title}",${c.points_cost},${c.status}\n`;
         });
       }
 
@@ -353,7 +356,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, language, t }: { comp
                       <div className="flex-1 min-w-0">
                         <div className={`flex items-center justify-between mb-1`}>
                     <span className="font-medium text-gray-900 truncate text-sm">
-                      {isRTL ? coupon.title_ar || coupon.title : coupon.title}
+                      {language === 'ku' ? coupon.title_ku || coupon.title : isRTL ? coupon.title_ar || coupon.title : coupon.title}
                     </span>
                           <span className="text-sm font-semibold text-purple-600 ml-2">
                       {coupon.redemption_count} {language === 'ar' ? 'استبدال' : language === 'ku' ? 'Guhertin' : 'uses'}
@@ -467,7 +470,7 @@ function CompanyAnalytics({ companyId, companyName, isRTL, language, t }: { comp
                       <tr key={coupon.id} className="hover:bg-gray-50">
                         <td className={`px-3 sm:px-4 py-3 ${isRTL ? 'text-right' : ''}`}>
                           <p className="font-medium text-gray-900 text-sm">
-                            {isRTL ? coupon.title_ar || coupon.title : coupon.title}
+                            {language === 'ku' ? coupon.title_ku || coupon.title : isRTL ? coupon.title_ar || coupon.title : coupon.title}
                           </p>
                         </td>
                         <td className={`px-3 sm:px-4 py-3 ${isRTL ? 'text-right' : ''}`}>
@@ -674,7 +677,7 @@ export default function AnalyticsPage() {
     // Calculate category stats
     const catStats: { [key: number]: CategoryStats } = {};
     categories.forEach((cat) => {
-      catStats[cat.id] = { id: cat.id, name: cat.name, name_ar: cat.name_ar || cat.name, count: 0 };
+      catStats[cat.id] = { id: cat.id, name: cat.name, name_ar: cat.name_ar || cat.name, name_ku: cat.name_ku || cat.name, count: 0 };
     });
     filtered.forEach((r) => {
       if (catStats[r.category_id]) {
@@ -692,7 +695,7 @@ export default function AnalyticsPage() {
     };
     const statStats: { [key: number]: StatusStats } = {};
     statuses.forEach((s) => {
-      statStats[s.id] = { id: s.id, name: s.name, name_ar: s.name_ar || s.name, count: 0, color: statusColors[s.id] || 'bg-gray-500' };
+      statStats[s.id] = { id: s.id, name: s.name, name_ar: s.name_ar || s.name, name_ku: s.name_ku || s.name, count: 0, color: statusColors[s.id] || 'bg-gray-500' };
     });
     filtered.forEach((r) => {
       if (statStats[r.status_id]) {
@@ -746,7 +749,7 @@ export default function AnalyticsPage() {
         csvContent += `${language === 'ar' ? 'البلاغات حسب الفئة' : language === 'ku' ? 'Raporên li gorî kategoriyê' : 'Reports by Category'}\n`;
         csvContent += `${language === 'ar' ? 'الفئة' : language === 'ku' ? 'Kategorî' : 'Category'},${language === 'ar' ? 'العدد' : language === 'ku' ? 'Hejmar' : 'Count'}\n`;
         categoryStats.forEach(cat => {
-          csvContent += `"${isRTL ? cat.name_ar : cat.name}",${cat.count}\n`;
+          csvContent += `"${language === 'ku' ? cat.name_ku || cat.name : isRTL ? cat.name_ar : cat.name}",${cat.count}\n`;
         });
         csvContent += '\n';
       }
@@ -756,7 +759,7 @@ export default function AnalyticsPage() {
         csvContent += `${language === 'ar' ? 'البلاغات حسب الحالة' : language === 'ku' ? 'Raporên li gorî rewşê' : 'Reports by Status'}\n`;
         csvContent += `${language === 'ar' ? 'الحالة' : language === 'ku' ? 'Rewş' : 'Status'},${language === 'ar' ? 'العدد' : language === 'ku' ? 'Hejmar' : 'Count'}\n`;
         statusStats.forEach(s => {
-          csvContent += `"${isRTL ? s.name_ar : s.name}",${s.count}\n`;
+          csvContent += `"${language === 'ku' ? s.name_ku || s.name : isRTL ? s.name_ar : s.name}",${s.count}\n`;
         });
         csvContent += '\n';
       }
@@ -788,7 +791,7 @@ export default function AnalyticsPage() {
         filteredReports.slice(0, 500).forEach(r => {
           const cat = categories.find(c => c.id === r.category_id);
           const status = statuses.find(s => s.id === r.status_id);
-          csvContent += `${r.id},"${r.title}","${isRTL ? (cat?.name_ar || cat?.name) : cat?.name}","${status?.name}",${new Date(r.created_at).toLocaleDateString()}\n`;
+          csvContent += `${r.id},"${r.title}","${language === 'ku' ? (cat?.name_ku || cat?.name) : isRTL ? (cat?.name_ar || cat?.name) : cat?.name}","${status?.name}",${new Date(r.created_at).toLocaleDateString()}\n`;
         });
       }
 
@@ -1106,7 +1109,7 @@ export default function AnalyticsPage() {
                 .filter((c) => catTimes[c.id]?.count > 0)
                 .map((c) => ({
                   id: c.id,
-                  name: isRTL ? c.name_ar : c.name,
+                  name: language === 'ku' ? c.name_ku || c.name : isRTL ? c.name_ar : c.name,
                   avgDays: catTimes[c.id].total / catTimes[c.id].count,
                   count: catTimes[c.id].count,
                 }))
@@ -1170,7 +1173,7 @@ export default function AnalyticsPage() {
                         <div key={cat.id} className={`flex items-center gap-3`}>
                           <div className="flex-1 min-w-0">
                             <div className={`flex items-center justify-between mb-1`}>
-                              <span className="font-medium text-gray-700 text-sm truncate">{isRTL ? cat.name_ar : cat.name}</span>
+                              <span className="font-medium text-gray-700 text-sm truncate">{language === 'ku' ? cat.name_ku || cat.name : isRTL ? cat.name_ar : cat.name}</span>
                               <span className="font-bold text-gray-600 text-sm">{cat.count}</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1207,7 +1210,7 @@ export default function AnalyticsPage() {
                     {statusStats.map((s) => (
                         <div key={s.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50`}>
                           <div className={`w-3 h-3 rounded-full ${s.color}`} />
-                          <span className="text-sm font-medium text-gray-700">{isRTL ? s.name_ar : s.name}</span>
+                          <span className="text-sm font-medium text-gray-700">{language === 'ku' ? s.name_ku || s.name : isRTL ? s.name_ar : s.name}</span>
                           <span className="text-sm font-bold text-gray-900">{s.count}</span>
                         </div>
                     ))}
@@ -1221,7 +1224,7 @@ export default function AnalyticsPage() {
 
                       return (
                           <div key={s.id} className={`flex items-center gap-2`}>
-                            <div className="w-24 text-sm text-gray-600 truncate">{isRTL ? s.name_ar : s.name}</div>
+                            <div className="w-24 text-sm text-gray-600 truncate">{language === 'ku' ? s.name_ku || s.name : isRTL ? s.name_ar : s.name}</div>
                             <div className="flex-1 bg-gray-200 rounded-full h-4">
                               <div className={`h-4 rounded-full ${s.color} flex items-center justify-end px-2`} style={{ width: `${Math.max(percentage, 10)}%` }}>
                                 <span className="text-xs font-bold text-white">{Math.round(percentage)}%</span>

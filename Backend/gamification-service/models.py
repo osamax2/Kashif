@@ -24,8 +24,10 @@ class Achievement(Base):
     key = Column(String(50), unique=True, nullable=False)  # e.g., "first_report"
     name_en = Column(String(100), nullable=False)
     name_ar = Column(String(100), nullable=False)
+    name_ku = Column(String(100), nullable=True)
     description_en = Column(Text, nullable=True)
     description_ar = Column(Text, nullable=True)
+    description_ku = Column(Text, nullable=True)
     icon = Column(String(10), nullable=False, default="🏆")
     category = Column(String(30), nullable=False, default="general")  # reporting, confirming, general
     condition_type = Column(String(30), nullable=False)  # report_count, confirm_count, night_report, pothole_count
@@ -56,8 +58,10 @@ class WeeklyChallenge(Base):
     id = Column(Integer, primary_key=True, index=True)
     title_en = Column(String(150), nullable=False)
     title_ar = Column(String(150), nullable=False)
+    title_ku = Column(String(150), nullable=True)
     description_en = Column(Text, nullable=True)
     description_ar = Column(Text, nullable=True)
+    description_ku = Column(Text, nullable=True)
     icon = Column(String(10), nullable=False, default="🎯")
     condition_type = Column(String(30), nullable=False)  # report_count, confirm_count
     target_value = Column(Integer, nullable=False, default=5)

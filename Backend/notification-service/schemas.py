@@ -62,6 +62,8 @@ class Notification(BaseModel):
     body: str
     title_en: Optional[str] = None
     body_en: Optional[str] = None
+    title_ku: Optional[str] = None
+    body_ku: Optional[str] = None
     type: str
     related_report_id: Optional[int] = None
     related_coupon_id: Optional[int] = None

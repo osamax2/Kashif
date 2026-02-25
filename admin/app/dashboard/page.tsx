@@ -10,6 +10,7 @@ interface CouponStat {
   coupon_id: number;
   title: string;
   title_ar: string;
+  title_ku?: string;
   points_cost: number;
   redemption_count: number;
   last_redeemed: string | null;
@@ -219,7 +220,7 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
                 <div className="flex-1 min-w-0">
                   <div className={`flex items-center justify-between mb-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <span className="font-medium text-gray-900 truncate text-sm">
-                      {isRTL ? coupon.title_ar || coupon.title : coupon.title}
+                      {language === 'ku' ? coupon.title_ku || coupon.title : isRTL ? coupon.title_ar || coupon.title : coupon.title}
                     </span>
                     <span className="text-sm font-semibold text-purple-600 ml-2">
                       {coupon.redemption_count} {isRTL ? 'استبدال' : 'uses'}

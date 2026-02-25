@@ -3,8 +3,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { gamificationAPI } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Audio } from 'expo-av';
-import * as Speech from 'expo-speech';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Speech from 'expo-speech';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
