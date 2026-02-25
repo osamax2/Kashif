@@ -189,6 +189,27 @@ export default function AlertScreen() {
     }
   };
 
+  // Helper: play an Audio.Sound and wait until it finishes
+  const playAndWait = (source: any, volume = 1.0): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { sound } = await Audio.Sound.createAsync(source, {
+          shouldPlay: false,
+          volume,
+        });
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            sound.unloadAsync();
+            resolve();
+          }
+        });
+        await sound.playAsync();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
   const playAlertSound = async () => {
     console.log('🔊 playAlertSound called');
     try {
@@ -203,42 +224,21 @@ export default function AlertScreen() {
       });
       console.log('🔊 Audio mode set successfully');
 
-      // Step 1: Play alert beep sound
-      console.log('🔊 Creating sound from alert.wav...');
-      const { sound } = await Audio.Sound.createAsync(
-        require('../assets/sounds/alert.wav'),
-        { shouldPlay: true, volume: 1.0 }
-      );
-      console.log('🔊 Sound created, playing...');
+      // Step 1: Play alert beep sound and WAIT for it to finish
+      console.log('🔊 Playing alert beep...');
+      await playAndWait(require('../assets/sounds/alert.wav'));
+      console.log('🔊 Alert beep finished');
 
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded) {
-          if (status.didJustFinish) {
-            console.log('🔊 Alert sound finished playing');
-            sound.unloadAsync();
-          }
-        }
-      });
+      // Small gap between beep and voice
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      await sound.playAsync();
-      console.log('🔊 playAsync completed');
-
-      // Step 2: Play voice warning after beep
-      await new Promise(resolve => setTimeout(resolve, 800));
-
+      // Step 2: Play voice warning AFTER beep is done
       if (language === 'ku') {
-        // Play pre-generated Kurdish audio file
+        // Play pre-generated Kurdish audio file sequentially
         console.log('🔊 Playing Kurdish voice warning...');
         try {
-          const { sound: kuSound } = await Audio.Sound.createAsync(
-            getKurdishAudioFile(),
-            { shouldPlay: true, volume: 1.0 }
-          );
-          kuSound.setOnPlaybackStatusUpdate((status) => {
-            if (status.isLoaded && status.didJustFinish) {
-              kuSound.unloadAsync();
-            }
-          });
+          await playAndWait(getKurdishAudioFile());
+          console.log('🔊 Kurdish voice warning finished');
         } catch (kuError) {
           console.warn('⚠️ Kurdish audio failed:', kuError);
         }
@@ -255,19 +255,10 @@ export default function AlertScreen() {
       }
     } catch (error) {
       console.warn('⚠️ Alert sound failed, using TTS fallback:', error);
-      // Fallback: use Text-to-Speech
+      // Fallback: play voice warning directly
       try {
         if (language === 'ku') {
-          // Try Kurdish audio file as fallback
-          const { sound: kuFallback } = await Audio.Sound.createAsync(
-            getKurdishAudioFile(),
-            { shouldPlay: true, volume: 1.0 }
-          );
-          kuFallback.setOnPlaybackStatusUpdate((status) => {
-            if (status.isLoaded && status.didJustFinish) {
-              kuFallback.unloadAsync();
-            }
-          });
+          await playAndWait(getKurdishAudioFile());
         } else {
           const ttsMessage = language === 'ar'
             ? 'تحذير! خطر في الأمام'
