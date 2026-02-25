@@ -177,7 +177,7 @@ check_ssh_bruteforce() {
 check_docker_containers() {
     log "Checking Docker containers..."
 
-    local expected_containers="kashif-admin kashif-gateway kashif-reporting kashif-auth kashif-notification kashif-gamification kashif-coupons kashif-pothole-detection"
+    local expected_containers="admin-admin kashif-gateway kashif-reporting kashif-auth kashif-notification kashif-gamification kashif-coupons kashif-pothole-detection"
 
     for container in $expected_containers; do
         local status
