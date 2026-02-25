@@ -51,42 +51,42 @@ export default function AlertScreen() {
           icon: 'warning' as const,
           iconColor: DESTRUCTIVE_RED,
           title: language === 'ar' ? '⚠️ تحذير!' : language === 'ku' ? '⚠️ Hişyarî!' : '⚠️ Warning!',
-          subtitle: language === 'ar' ? 'حفرة في الأمام' : language === 'ku' ? 'Çalêk li pêş te heye' : 'Pothole Ahead',
+          subtitle: language === 'ar' ? 'حفرة في الأمام' : language === 'ku' ? 'Çalêk li pêşiya te heye' : 'Pothole Ahead',
         };
       case 2: // Environment
         return {
           icon: 'leaf' as const,
           iconColor: '#4CAF50',
           title: language === 'ar' ? '🌿 تنبيه!' : language === 'ku' ? '🌿 Hişyarî!' : '🌿 Alert!',
-          subtitle: language === 'ar' ? 'خطر بيئي في الأمام' : language === 'ku' ? 'Metirsiya jîngeyê li pêş te' : 'Environmental Hazard Ahead',
+          subtitle: language === 'ar' ? 'خطر بيئي في الأمام' : language === 'ku' ? 'Metirsiya çevreyî li pêşiya te heye' : 'Environmental Hazard Ahead',
         };
       case 3: // Public Safety / Accident
         return {
           icon: 'alert-circle' as const,
           iconColor: DESTRUCTIVE_RED,
           title: language === 'ar' ? '🚨 تحذير!' : language === 'ku' ? '🚨 Hişyarî!' : '🚨 Warning!',
-          subtitle: language === 'ar' ? 'حادث مروري في الأمام' : language === 'ku' ? 'Qezayek li pêş te heye' : 'Traffic Accident Ahead',
+          subtitle: language === 'ar' ? 'حادث مروري في الأمام' : language === 'ku' ? 'Qezayek li pêşiya te heye' : 'Traffic Accident Ahead',
         };
       case 4: // Speed Camera
         return {
           icon: 'speedometer' as const,
           iconColor: DESTRUCTIVE_RED,
           title: language === 'ar' ? '📷 تنبيه!' : language === 'ku' ? '📷 Hişyarî!' : '📷 Alert!',
-          subtitle: language === 'ar' ? 'كاشف سرعة في الأمام' : language === 'ku' ? 'Kameraya lezê li pêş e' : 'Speed Camera Ahead',
+          subtitle: language === 'ar' ? 'كاشف سرعة في الأمام' : language === 'ku' ? 'Kameraya lezê li pêşiya te heye' : 'Speed Camera Ahead',
         };
       case 6: // Mines
         return {
           icon: 'warning' as const,
           iconColor: DESTRUCTIVE_RED,
           title: language === 'ar' ? '💣 تحذير!' : language === 'ku' ? '💣 Hişyarî!' : '💣 Warning!',
-          subtitle: language === 'ar' ? 'منطقة ألغام في الأمام' : language === 'ku' ? 'Devera mînan li pêş te heye' : 'Mine Area Ahead',
+          subtitle: language === 'ar' ? 'منطقة ألغام في الأمام' : language === 'ku' ? 'Devera mînan li pêşiya te heye' : 'Mine Area Ahead',
         };
       default:
         return {
           icon: 'warning' as const,
           iconColor: DESTRUCTIVE_RED,
           title: language === 'ar' ? '⚠️ تحذير!' : language === 'ku' ? '⚠️ Hişyarî!' : '⚠️ Warning!',
-          subtitle: language === 'ar' ? 'حفرة في الأمام' : language === 'ku' ? 'Çalek li pêş te heye' : 'Pothole Ahead',
+          subtitle: language === 'ar' ? 'حفرة في الأمام' : language === 'ku' ? 'Çalêk li pêşiya te heye' : 'Pothole Ahead',
         };
     }
   };
