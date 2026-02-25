@@ -27,25 +27,25 @@ output_dir.mkdir(parents=True, exist_ok=True)
 # Kurdish (Kurmanji) warning messages
 MESSAGES = {
     # Alert screen & location monitoring - by category
-    "warning_pothole": "Hişyarî! Çalêk li pêş te heye. Lezê kêm bike!",
-    "warning_environment": "Hişyarî! Metirsiya jîngeyê li pêş te heye. Hay ji xwe hebin!",
-    "warning_accident": "Hişyarî! Qezayek li pêş te heye. Hişyar bin!",
-    "warning_speed_camera": "Hişyarî! Kameraya lezê li pêş e. Lezê kêm bike!",
-    "warning_mines": "Hişyarî! Devera mînan li pêş te heye. Pir hay ji xwe hebin!",
+    "warning_pothole": "Hişyarî! Çalêk li pêşiya te heye. Lezê kêm bike!",
+    "warning_environment": "Hişyarî! Metirsiya çevreyî li pêşiya te heye.",
+    "warning_accident": "Hişyarî! Qezayek li pêşiya te heye. Hişyar bê!",
+    "warning_speed_camera": "Hişyarî! Kameraya lezê li pêşiya te heye.",
+    "warning_mines": "Hişyarî! Devera mînan li pêşiya te heye.",
     "warning_generic": "Hişyarî! Metirsî li pêşiya te heye.",
     
     # Route hazards summary
-    "warning_route": "Hişyarî! Li ser rêya te metirsî hene. Hay ji xwe hebin!",
+    "warning_route": "Hişyarî! Li ser rêya te metirsî heye.",
     
     # Simple short warnings
-    "warn_pothole_short": "Hişyarî! Çalêk li pêş te heye!",
+    "warn_pothole_short": "Hişyarî! Çalêk li pêşiya te heye!",
     "warn_accident_short": "Hişyarî! Qezayek li ser rê heye!",
-    "warn_speed_short": "Hişyarî! Kameraya lezê li pêş e!",
+    "warn_speed_short": "Hişyarî! Kameraya lezê li pêşiya te heye!",
 }
 
-# Turkish voice - closest to Kurdish pronunciation
-# EmelNeural is clear and natural
-VOICE = "tr-TR-EmelNeural"
+# Turkish male voice - closest to Kurdish pronunciation
+# AhmetNeural is a clear male voice
+VOICE = "tr-TR-AhmetNeural"
 RATE = "-5%"  # Slightly slower for clarity
 
 async def generate_audio(name: str, text: str):
