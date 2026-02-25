@@ -128,7 +128,7 @@ export default function MapPage() {
   const getCategoryName = (categoryId: number) => {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return 'Unknown';
-    return isRTL ? (category.name_ar || category.name) : category.name;
+    return language === 'ku' ? (category.name_ku || category.name) : isRTL ? (category.name_ar || category.name) : category.name;
   };
 
   const getStatusName = (statusId: number) => {
@@ -179,7 +179,8 @@ export default function MapPage() {
       const matchingCategories = categories.filter(cat => {
         const name = (cat.name || '').toLowerCase();
         const nameAr = (cat.name_ar || '').toLowerCase();
-        return name.includes(query) || nameAr.includes(query);
+        const nameKu = (cat.name_ku || '').toLowerCase();
+        return name.includes(query) || nameAr.includes(query) || nameKu.includes(query);
       });
 
       // Add matching categories to results
@@ -188,7 +189,7 @@ export default function MapPage() {
         results.push({
           type: 'category',
           category: cat,
-          displayName: isRTL ? (cat.name_ar || cat.name) : cat.name,
+          displayName: language === 'ku' ? (cat.name_ku || cat.name) : isRTL ? (cat.name_ar || cat.name) : cat.name,
           subtitle: `${reportsInCategory} ${language === 'ar' ? 'تقرير' : language === 'ku' ? 'Rapor' : 'reports'}`
         });
       });
@@ -721,7 +722,7 @@ export default function MapPage() {
                 {categoryFilter.length === 0
                     ? (language === 'ar' ? 'جميع الفئات' : language === 'ku' ? 'Hemû kategoriyan' : 'All Categories')
                     : categoryFilter.length === 1
-                        ? (isRTL ? categories.find(c => c.id.toString() === categoryFilter[0])?.name_ar || categories.find(c => c.id.toString() === categoryFilter[0])?.name : categories.find(c => c.id.toString() === categoryFilter[0])?.name)
+                        ? (language === 'ku' ? categories.find(c => c.id.toString() === categoryFilter[0])?.name_ku || categories.find(c => c.id.toString() === categoryFilter[0])?.name : isRTL ? categories.find(c => c.id.toString() === categoryFilter[0])?.name_ar || categories.find(c => c.id.toString() === categoryFilter[0])?.name : categories.find(c => c.id.toString() === categoryFilter[0])?.name)
                         : (language === 'ar' ? `${categoryFilter.length} فئات محددة` : language === 'ku' ? `${categoryFilter.length} Kategoriyên taybetî` : `${categoryFilter.length} selected`)
                 }
               </span>
@@ -764,7 +765,7 @@ export default function MapPage() {
                               className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                           />
                           <span className="text-sm text-gray-700">
-                      {isRTL ? cat.name_ar || cat.name : cat.name}
+                      {language === 'ku' ? cat.name_ku || cat.name : isRTL ? cat.name_ar || cat.name : cat.name}
                     </span>
                         </label>
                     ))}

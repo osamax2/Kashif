@@ -161,6 +161,12 @@ class ReportGenerator:
             "HIGH": "عالية"
         }
         
+        severity_ku = {
+            "LOW": "kêm",
+            "MEDIUM": "navncî",
+            "HIGH": "bilind"
+        }
+        
         return f"🚧 {num} حفرة - خطورة {severity_ar.get(severity, severity)}"
     
     async def create_report(

@@ -130,7 +130,9 @@ def create_notification(
     related_report_id: Optional[int] = None,
     related_coupon_id: Optional[int] = None,
     title_en: Optional[str] = None,
-    body_en: Optional[str] = None
+    body_en: Optional[str] = None,
+    title_ku: Optional[str] = None,
+    body_ku: Optional[str] = None
 ):
     """Create a new notification"""
     notification = models.Notification(
@@ -139,6 +141,8 @@ def create_notification(
         body=body,
         title_en=title_en,
         body_en=body_en,
+        title_ku=title_ku,
+        body_ku=body_ku,
         type=notification_type,
         related_report_id=related_report_id,
         related_coupon_id=related_coupon_id

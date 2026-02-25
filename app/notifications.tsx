@@ -25,7 +25,7 @@ const YELLOW = "#F4B400";
 
 export default function ModernNotifications() {
   const router = useRouter();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const { notifications, loading, refreshNotifications, markAsRead, markAllAsRead } =
     useNotifications();
 
@@ -119,10 +119,10 @@ export default function ModernNotifications() {
 
           <View style={{ flex: 1 }}>
             <Text style={[styles.msg, dir.textAlign, !item.is_read && styles.unreadText]}>
-              {(!effectiveRTL && item.title_en) ? item.title_en : item.title}
+              {language === 'ku' && item.title_ku ? item.title_ku : (!effectiveRTL && item.title_en) ? item.title_en : item.title}
             </Text>
             {item.body && <Text style={[styles.body, dir.textAlign]}>
-              {(!effectiveRTL && item.body_en) ? item.body_en : item.body}
+              {language === 'ku' && item.body_ku ? item.body_ku : (!effectiveRTL && item.body_en) ? item.body_en : item.body}
             </Text>}
             <Text style={[styles.time, dir.textAlign]}>{formatTime(item.created_at)}</Text>
           </View>

@@ -107,8 +107,10 @@ export interface TermsOfService {
   version: string;
   title_ar: string;
   title_en: string;
+  title_ku?: string;
   content_ar: string;
   content_en: string;
+  content_ku?: string;
   is_active: boolean;
   requires_re_acceptance: boolean;
   created_at: string;
@@ -422,6 +424,7 @@ export interface Achievement {
   name_ar: string;
   description_en?: string;
   description_ar?: string;
+  description_ku?: string;
   icon: string;
   category: string;
   condition_type: string;
@@ -463,8 +466,10 @@ export interface WeeklyChallenge {
   id: number;
   title_en: string;
   title_ar: string;
+  title_ku?: string;
   description_en: string;
   description_ar: string;
+  description_ku?: string;
   icon: string;
   condition_type: string;
   target_value: number;
@@ -690,6 +695,7 @@ export const reportingAPI = {
       max_severity: string | null;
       ai_description: string | null;
       ai_description_ar: string | null;
+      ai_description_ku: string | null;
       detections: any[];
     };
   }> => {

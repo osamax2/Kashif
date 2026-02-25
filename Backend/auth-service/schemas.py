@@ -23,7 +23,7 @@ class UserBase(BaseModel):
     phone: Optional[str] = None
     role: str = "USER"
     company_id: Optional[int] = None  # For COMPANY role users
-    language: str = "ar"  # ar or en
+    language: str = "ar"  # ar, en or ku
 
 
 class UserCreate(UserBase):
@@ -70,7 +70,7 @@ class TokenData(BaseModel):
 
 
 class LanguageUpdate(BaseModel):
-    language: str  # ar or en
+    language: str  # ar, en or ku
 
 
 class UserUpdate(BaseModel):
@@ -203,8 +203,10 @@ class TermsOfServiceCreate(BaseModel):
     version: str
     title_ar: str
     title_en: str
+    title_ku: Optional[str] = None
     content_ar: str
     content_en: str
+    content_ku: Optional[str] = None
     is_active: bool = True
     requires_re_acceptance: bool = False
 
@@ -213,8 +215,10 @@ class TermsOfServiceUpdate(BaseModel):
     """Schema for updating TOS"""
     title_ar: Optional[str] = None
     title_en: Optional[str] = None
+    title_ku: Optional[str] = None
     content_ar: Optional[str] = None
     content_en: Optional[str] = None
+    content_ku: Optional[str] = None
     is_active: Optional[bool] = None
     requires_re_acceptance: Optional[bool] = None
 
@@ -225,8 +229,10 @@ class TermsOfService(BaseModel):
     version: str
     title_ar: str
     title_en: str
+    title_ku: Optional[str] = None
     content_ar: str
     content_en: str
+    content_ku: Optional[str] = None
     is_active: bool
     requires_re_acceptance: bool
     created_at: datetime

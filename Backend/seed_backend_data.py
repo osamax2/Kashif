@@ -32,6 +32,7 @@ def seed_reports():
             id SERIAL PRIMARY KEY,
             name_en VARCHAR(100),
             name_ar VARCHAR(100),
+            name_ku VARCHAR(100),
             description TEXT
         );
         
@@ -46,7 +47,8 @@ def seed_reports():
             category_id INT REFERENCES categories(id),
             level INT,
             name_en VARCHAR(100),
-            name_ar VARCHAR(100)
+            name_ar VARCHAR(100),
+            name_ku VARCHAR(100)
         );
         
         CREATE TABLE IF NOT EXISTS reports (
@@ -66,14 +68,14 @@ def seed_reports():
     
     # Insert categories
     categories = [
-        ('Infrastructure', 'Infrastructure', 'البنية التحتية', 'Roads, bridges, public facilities'),
-        ('Environment', 'Environment', 'البيئة', 'Pollution, waste management'),
-        ('Safety', 'Safety', 'السلامة', 'Public safety concerns')
+        ('Infrastructure', 'Infrastructure', 'البنية التحتية', 'Binesazî', 'Roads, bridges, public facilities'),
+        ('Environment', 'Environment', 'البيئة', 'Jîngeh', 'Pollution, waste management'),
+        ('Safety', 'Safety', 'السلامة', 'Ewlehî', 'Public safety concerns')
     ]
     
     for cat in categories:
         cur.execute(
-            "INSERT INTO categories (name, name_en, name_ar, description) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
+            "INSERT INTO categories (name, name_en, name_ar, name_ku, description) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
             cat
         )
     
@@ -151,6 +153,7 @@ def seed_coupons():
             id SERIAL PRIMARY KEY,
             name_en VARCHAR(100),
             name_ar VARCHAR(100),
+            name_ku VARCHAR(100),
             icon TEXT
         );
         
@@ -160,8 +163,10 @@ def seed_coupons():
             category_id INT REFERENCES coupon_categories(id),
             title_en VARCHAR(200),
             title_ar VARCHAR(200),
+            title_ku VARCHAR(200),
             description_en TEXT,
             description_ar TEXT,
+            description_ku TEXT,
             code VARCHAR(50),
             discount_percentage INT,
             points_required INT,
@@ -187,14 +192,14 @@ def seed_coupons():
     
     # Insert categories
     categories = [
-        ('Food & Beverage', 'طعام ومشروبات', '🍔'),
-        ('Shopping', 'تسوق', '🛍️'),
-        ('Entertainment', 'ترفيه', '🎭')
+        ('Food & Beverage', 'طعام ومشروبات', 'Xwarin û Vexwarin', '🍔'),
+        ('Shopping', 'تسوق', 'Kirîn', '🛍️'),
+        ('Entertainment', 'ترفيه', 'Şahî', '🎭')
     ]
     
     for cat in categories:
         cur.execute(
-            "INSERT INTO coupon_categories (name_en, name_ar, icon) VALUES (%s, %s, %s)",
+            "INSERT INTO coupon_categories (name_en, name_ar, name_ku, icon) VALUES (%s, %s, %s, %s)",
             cat
         )
     
@@ -207,22 +212,22 @@ def seed_coupons():
     
     # Insert coupons
     coupon_templates = [
-        ('20% Off Any Purchase', 'خصم 20%', 'Get 20% off your next purchase', 'احصل على خصم 20%'),
-        ('Buy One Get One Free', 'اشتري واحد واحصل على الثاني مجانا', 'BOGO offer', 'عرض اشتري واحد واحصل على الثاني مجانا'),
-        ('Free Delivery', 'توصيل مجاني', 'Free delivery on orders', 'توصيل مجاني على الطلبات'),
-        ('30% Discount', 'خصم 30%', 'Special 30% discount', 'خصم خاص 30%'),
-        ('SR 50 Off', 'خصم 50 ريال', 'Get SR 50 off', 'احصل على خصم 50 ريال')
+        ('20% Off Any Purchase', 'خصم 20%', 'Daxistina 20%', 'Get 20% off your next purchase', 'احصل على خصم 20%', 'Li kirîna xwe ya paşîn 20% daxistin bistînin'),
+        ('Buy One Get One Free', 'اشتري واحد واحصل على الثاني مجانا', 'Yek Bikire Yek Belaş Bistîne', 'BOGO offer', 'عرض اشتري واحد واحصل على الثاني مجانا', 'Pêşniyara yek bikire yek belaş'),
+        ('Free Delivery', 'توصيل مجاني', 'Gihandina Belaş', 'Free delivery on orders', 'توصيل مجاني على الطلبات', 'Gihandina belaş li ser siparîşan'),
+        ('30% Discount', 'خصم 30%', 'Daxistina 30%', 'Special 30% discount', 'خصم خاص 30%', 'Daxistina taybet a 30%'),
+        ('SR 50 Off', 'خصم 50 ريال', 'Daxistina 50 Riyal', 'Get SR 50 off', 'احصل على خصم 50 ريال', '50 Riyal daxistin bistînin')
     ]
     
     for i in range(15):
         template = random.choice(coupon_templates)
         cur.execute("""
             INSERT INTO coupons (
-                company_id, category_id, title_en, title_ar, 
-                description_en, description_ar, code, 
+                company_id, category_id, title_en, title_ar, title_ku,
+                description_en, description_ar, description_ku, code, 
                 discount_percentage, points_required, 
                 max_redemptions, current_redemptions, expires_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             random.choice(company_ids),
             random.choice(category_ids),
@@ -230,6 +235,8 @@ def seed_coupons():
             template[1],
             template[2],
             template[3],
+            template[4],
+            template[5],
             f'CODE{random.randint(1000, 9999)}',
             random.choice([10, 15, 20, 25, 30]),
             random.randint(50, 500),

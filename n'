@@ -1,0 +1,11 @@
+Mt status
+t status 2>&1 | cat
+t --no-pager status
+t --no-pager log --oneline -5 2>&1
+ero "test"
+e iremote-tracking branch 'origin/eature/Ku_feature' into feature/Ku_feature
+# Please enter a commit message to explain why this merge is necessary,
+# especially if it merges an updated upstream into a topic branch.
+#
+# Lines starting with '#' will be ignored, and an empty message aborts
+# the commit.

@@ -48,8 +48,10 @@ class AchievementBase(BaseModel):
     key: str
     name_en: str
     name_ar: str
+    name_ku: Optional[str] = None
     description_en: Optional[str] = None
     description_ar: Optional[str] = None
+    description_ku: Optional[str] = None
     icon: str = "🏆"
     category: str = "general"
     condition_type: str
@@ -93,8 +95,10 @@ class AchievementCheckResult(BaseModel):
 class WeeklyChallengeBase(BaseModel):
     title_en: str
     title_ar: str
+    title_ku: Optional[str] = None
     description_en: Optional[str] = None
     description_ar: Optional[str] = None
+    description_ku: Optional[str] = None
     icon: str = "🎯"
     condition_type: str
     target_value: int = 5

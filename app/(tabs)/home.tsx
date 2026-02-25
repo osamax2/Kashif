@@ -12,9 +12,9 @@ import { getPendingReports, removePendingReport, subscribeToNetworkChanges } fro
 import { cacheNearbyReports, checkConnectivity, getCachedNearbyReports } from "@/services/offline-service";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Audio } from "expo-av";
 import { BlurView } from "expo-blur";
 import * as Location from "expo-location";
-import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -1862,6 +1862,8 @@ export default function HomeScreen() {
                                     // Use AI description based on language
                                     aiDescription = (language === 'ar'
                                         ? uploadResult.ai_analysis.ai_description_ar
+                                        : language === 'ku'
+                                        ? uploadResult.ai_analysis.ai_description_ku
                                         : uploadResult.ai_analysis.ai_description) || undefined;
 
                                     // Get annotated image URL if available
