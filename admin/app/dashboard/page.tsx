@@ -28,7 +28,7 @@ interface SummaryStats {
 }
 
 // Company Dashboard Component with Analytics
-function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | null; isRTL: boolean; t: any }) {
+function CompanyDashboard({ companyName, isRTL, t, language }: { companyName: string | null; isRTL: boolean; t: any; language: string }) {
   const router = useRouter();
   const [couponStats, setCouponStats] = useState<CouponStat[]>([]);
   const [timeData, setTimeData] = useState<TimeData[]>([]);
@@ -338,7 +338,7 @@ function CompanyDashboard({ companyName, isRTL, t }: { companyName: string | nul
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [roleChecked, setRoleChecked] = useState(false);
@@ -508,7 +508,7 @@ export default function DashboardPage() {
 
   // Company User Dashboard - simplified view (case insensitive check)
   if (userRole?.toUpperCase() === 'COMPANY') {
-    return <CompanyDashboard companyName={companyName} isRTL={isRTL} t={t} />;
+    return <CompanyDashboard companyName={companyName} isRTL={isRTL} t={t} language={language} />;
   }
 
   // Government User Dashboard - Reports and Map access only
