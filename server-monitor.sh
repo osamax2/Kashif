@@ -138,7 +138,7 @@ check_systemd_services() {
     log "Checking for suspicious systemd services..."
 
     local new_services
-    new_services=$(find /etc/systemd/system/ -maxdepth 1 -name "*.service" -mtime -1 -type f ! -name "kashif-monitor.service" ! -name "fail2ban.service" 2>/dev/null)
+    new_services=$(find /etc/systemd/system/ -maxdepth 1 -name "*.service" -mtime -1 -type f ! -name "kashif-monitor.service" ! -name "fail2ban.service" ! -name "snap.*.service" 2>/dev/null)
 
     if [[ -n "$new_services" ]]; then
         local details=""
