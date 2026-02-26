@@ -49,9 +49,8 @@ export default function CategoryForm({ formData, setFormData, t, isRTL }: any) {
           type="text"
           value={formData.name_ku}
           onChange={(e) => setFormData({ ...formData, name_ku: e.target.value })}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-right`}
-          dir="rtl"
-          placeholder="ناوی پۆلەکە بە کوردی"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent`}
+          placeholder="Navê kategoriyê bi Kurdî"
         />
       </div>
       
