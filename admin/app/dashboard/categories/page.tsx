@@ -10,6 +10,9 @@ import { useEffect, useState } from 'react';
 interface Category {
   id: number;
   name: string;
+  name_ar?: string;
+  name_en?: string;
+  name_ku?: string;
   description?: string;
   status: string;
   created_at: string;
@@ -27,6 +30,9 @@ export default function CategoriesPage() {
 
   const [formData, setFormData] = useState({
     name: '',
+    name_ar: '',
+    name_en: '',
+    name_ku: '',
     description: '',
   });
 
@@ -72,6 +78,9 @@ export default function CategoriesPage() {
     setSelectedCategory(category);
     setFormData({
       name: category.name,
+      name_ar: category.name_ar || '',
+      name_en: category.name_en || '',
+      name_ku: category.name_ku || '',
       description: category.description || '',
     });
     setShowEditModal(true);
@@ -108,6 +117,9 @@ export default function CategoriesPage() {
   const resetForm = () => {
     setFormData({
       name: '',
+      name_ar: '',
+      name_en: '',
+      name_ku: '',
       description: '',
     });
   };
