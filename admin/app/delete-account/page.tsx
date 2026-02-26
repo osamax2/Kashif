@@ -1,4 +1,9 @@
-export default function DeleteAccountPage({ language }: { language: string }) {
+'use client';
+
+import { useState } from 'react';
+
+export default function DeleteAccountPage() {
+  const [language, setLanguage] = useState('en');
   const isRTL = language === 'ar';
 
   return (
@@ -7,6 +12,19 @@ export default function DeleteAccountPage({ language }: { language: string }) {
           dir={isRTL ? 'rtl' : 'ltr'}
       >
         <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8">
+
+          {/* Language Switcher */}
+          <div className="flex justify-end mb-4">
+            <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+            >
+              <option value="en">English</option>
+              <option value="ar">العربية</option>
+              <option value="ku">Kurdî</option>
+            </select>
+          </div>
 
           {/* TITLE */}
           <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">
