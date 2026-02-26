@@ -335,9 +335,8 @@ export default function ReportCategoriesPage() {
                         type="text"
                         value={formData.name_ku}
                         onChange={(e) => setFormData({ ...formData, name_ku: e.target.value })}
-                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${isRTL ? 'text-right' : ''}`}
-                        placeholder={language === 'ar' ? 'اسم الفئة بالكردي' : language === 'ku' ? 'Nîmona: Çal' : 'e.g., ناوی پۆلە بە کوردی'}
-                        dir="rtl"
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                        placeholder={language === 'ar' ? 'اسم الفئة بالكردي' : language === 'ku' ? 'Mînak: Çal' : 'e.g., Navê kategoriyê bi Kurdî'}
                     />
                   </div>
                   <div>
@@ -471,8 +470,7 @@ export default function ReportCategoriesPage() {
                         type="text"
                         value={formData.name_ku}
                         onChange={(e) => setFormData({ ...formData, name_ku: e.target.value })}
-                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isRTL ? 'text-right' : ''}`}
-                        dir="rtl"
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                     />
                   </div>
                   <div>
