@@ -7,7 +7,7 @@ import { Award, Building2, CheckSquare, KeyRound, Landmark, RotateCcw, Search, S
 import { useEffect, useState } from 'react';
 
 export default function UsersPage() {
-  const { t, isRTL } = useLanguage();
+  const {t, isRTL, language} = useLanguage();
   const [currentUserRole, setCurrentUserRole] = useState('ADMIN');
   const [users, setUsers] = useState<User[]>([]);
   const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
@@ -99,9 +99,7 @@ export default function UsersPage() {
 
   const handleBulkUserStatus = async (newStatus: string) => {
     if (selectedUserIds.size === 0) return;
-    const confirmMsg = isRTL
-      ? `هل تريد تغيير حالة ${selectedUserIds.size} مستخدم إلى ${newStatus}?`
-      : `Change ${selectedUserIds.size} users to ${newStatus}?`;
+    const confirmMsg = language === 'ar' ? `هل تريد تغيير حالة ${selectedUserIds.size} مستخدم إلى ${newStatus}?` : language === 'ku' ? `Tu dixwazî rewşa ${selectedUserIds.size} bikarhêneran biguherînî bo ${newStatus}?` : `Change ${selectedUserIds.size} users to ${newStatus}?`;
     if (!confirm(confirmMsg)) return;
     setBulkUserLoading(true);
     try {
@@ -111,7 +109,7 @@ export default function UsersPage() {
       loadUsers();
     } catch (error) {
       console.error('Bulk user status update failed:', error);
-      alert(isRTL ? 'فشل في التحديث الجماعي' : 'Bulk update failed');
+      alert(language === 'ar' ? 'فشل في التحديث الجماعي' : language === 'ku' ? 'Nûvekirina komî têk çû' : 'Bulk update failed');
     } finally {
       setBulkUserLoading(false);
     }
@@ -130,21 +128,21 @@ export default function UsersPage() {
   useEffect(() => {
     const sourceUsers = activeTab === 'active' ? users : deletedUsers;
     let filtered = sourceUsers.filter(
-      (user) =>
-        user.full_name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase())
+        (user) =>
+            user.full_name.toLowerCase().includes(search.toLowerCase()) ||
+            user.email.toLowerCase().includes(search.toLowerCase())
     );
-    
+
     // Apply role filter
     if (roleFilter !== 'ALL') {
       filtered = filtered.filter((user) => user.role === roleFilter);
     }
-    
+
     // Apply status filter (only for active tab)
     if (statusFilter !== 'ALL' && activeTab === 'active') {
       filtered = filtered.filter((user) => user.status === statusFilter);
     }
-    
+
     setFilteredUsers(filtered);
   }, [search, users, deletedUsers, roleFilter, statusFilter, activeTab]);
 
@@ -173,9 +171,9 @@ export default function UsersPage() {
     try {
       const data = await couponsAPI.getCompanies();
       // Filter out deleted companies
-      const activeCompanies = Array.isArray(data) 
-        ? data.filter((comp: any) => comp.status !== 'DELETED') 
-        : [];
+      const activeCompanies = Array.isArray(data)
+          ? data.filter((comp: any) => comp.status !== 'DELETED')
+          : [];
       setCompanies(activeCompanies);
     } catch (error) {
       console.error('Failed to load companies:', error);
@@ -197,23 +195,23 @@ export default function UsersPage() {
   };
 
   const validateEmail = (email: string): string => {
-    if (!email.trim()) return isRTL ? 'البريد الإلكتروني مطلوب' : 'Email is required';
+    if (!email.trim()) return language === 'ar' ? 'البريد الإلكتروني مطلوب' : language === 'ku' ? 'E-name pêwîst e' : 'Email is required';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return isRTL ? 'صيغة البريد الإلكتروني غير صحيحة' : 'Invalid email format';
+    if (!emailRegex.test(email)) return language === 'ar' ? 'صيغة البريد الإلكتروني غير صحيحة' : language === 'ku' ? 'Forma e-nameyê ne derbasdar e' : 'Invalid email format';
     return '';
   };
 
   const validatePhone = (phone: string): string => {
-    if (!phone.trim()) return isRTL ? 'رقم الهاتف مطلوب' : 'Phone number is required';
+    if (!phone.trim()) return language === 'ar' ? 'رقم الهاتف مطلوب' : language === 'ku' ? 'Hejmara telefonê pêwîst e' : 'Phone number is required';
     const cleaned = phone.replace(/[\s\-()]/g, '');
     const phoneRegex = /^\+?[0-9]{7,15}$/;
-    if (!phoneRegex.test(cleaned)) return isRTL ? 'رقم الهاتف غير صحيح (7-15 رقم)' : 'Invalid phone number (7-15 digits)';
+    if (!phoneRegex.test(cleaned)) return language === 'ar' ? 'رقم الهاتف غير صحيح (7-15 رقم)' : language === 'ku' ? 'Hejmara telefonê ne derbasdar e (7-15 hejmar)' : 'Invalid phone number (7-15 digits)';
     return '';
   };
 
   const validateName = (name: string): string => {
-    if (!name.trim()) return isRTL ? 'الاسم الكامل مطلوب' : 'Full name is required';
-    if (name.trim().length < 2) return isRTL ? 'الاسم قصير جداً' : 'Name is too short';
+    if (!name.trim()) return language === 'ar' ? 'الاسم الكامل مطلوب' : language === 'ku' ? 'Navê tevahî pêwîst e' : 'Full name is required';
+    if (name.trim().length < 2) return language === 'ar' ? 'الاسم قصير جداً' : language === 'ku' ? 'Nav pir kurt ' : 'Name is too short';
     return '';
   };
 
@@ -226,7 +224,7 @@ export default function UsersPage() {
     if (companyUserForm.phone_number.trim()) {
       errors.phone_number = validatePhone(companyUserForm.phone_number);
     }
-    if (!companyUserForm.company_id) errors.company_id = isRTL ? 'يرجى اختيار الشركة' : 'Please select a company';
+    if (!companyUserForm.company_id) errors.company_id = language === 'ar' ? 'يرجى اختيار الشركة' : language === 'ku' ? 'Ji kerema xwe şirkete hilbijêre' : 'Please select a company';
     const passwordValidation = validatePassword(companyUserForm.password);
     if (!passwordValidation.valid) errors.password = passwordValidation.error;
 
@@ -243,7 +241,7 @@ export default function UsersPage() {
         company_id: parseInt(companyUserForm.company_id),
         phone_number: companyUserForm.phone_number || undefined,
       });
-      alert(isRTL ? 'تم إنشاء مستخدم الشركة بنجاح!' : 'Company user created successfully!');
+      alert(language === 'ar' ? 'تم إنشاء مستخدم الشركة بنجاح!' : language === 'ku' ? 'Bikarhênera şirkêtê bi serkeftin hate Çêkirin!' : 'Company user created successfully!');
       setShowCreateCompanyUserModal(false);
       setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '', phone_number: '' });
       setPasswordError('');
@@ -252,7 +250,7 @@ export default function UsersPage() {
     } catch (error: any) {
       console.error('Failed to create company user:', error);
       const detail = error.response?.data?.detail;
-      const msg = typeof detail === 'string' ? detail : (isRTL ? 'فشل في إنشاء مستخدم الشركة' : 'Failed to create company user');
+      const msg = typeof detail === 'string' ? detail : (language === 'ar' ? 'فشل في إنشاء مستخدم الشركة' : language === 'ku' ? 'Çêkirina bikarhênerê şîrketê Têk çû ' : 'Failed to create company user');
       setCompanyFormErrors({ _general: msg });
     }
   };
@@ -266,9 +264,9 @@ export default function UsersPage() {
     if (governmentUserForm.phone.trim()) {
       errors.phone = validatePhone(governmentUserForm.phone);
     }
-    if (!governmentUserForm.city.trim()) errors.city = isRTL ? 'المدينة مطلوبة' : 'City is required';
-    if (!governmentUserForm.district.trim()) errors.district = isRTL ? 'الحي مطلوب' : 'District is required';
-    if (!governmentUserForm.job_description.trim()) errors.job_description = isRTL ? 'المسمى الوظيفي مطلوب' : 'Job description is required';
+    if (!governmentUserForm.city.trim()) errors.city = language === 'ar' ? 'المدينة مطلوبة' : language === 'ku' ? 'Bajar pêwîst e' : 'City is required';
+    if (!governmentUserForm.district.trim()) errors.district = language === 'ar' ? 'الحي مطلوب' : language === 'ku' ? 'Navçeyê pêwîst e' : 'District is required';
+    if (!governmentUserForm.job_description.trim()) errors.job_description = language === 'ar' ? 'المسمى الوظيفي مطلوب' : language === 'ku' ? 'Sernavê karê pêwîst e' : 'Job description is required';
     const passwordValidation = validatePassword(governmentUserForm.password);
     if (!passwordValidation.valid) errors.password = passwordValidation.error;
 
@@ -286,7 +284,7 @@ export default function UsersPage() {
         district: governmentUserForm.district || undefined,
         job_description: governmentUserForm.job_description || undefined,
       });
-      alert(isRTL ? 'تم إنشاء الموظف الحكومي بنجاح!' : 'Government employee created successfully!');
+      alert(language === 'ar' ? 'تم إنشاء الموظف الحكومي بنجاح!' : language === 'ku' ? 'armendê hikûmetê bi serkeftin hate Çêkirin!' : 'Government employee created successfully!');
       setShowCreateGovernmentUserModal(false);
       setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '', city: '', district: '', job_description: '' });
       setGovernmentPasswordError('');
@@ -295,7 +293,7 @@ export default function UsersPage() {
     } catch (error: any) {
       console.error('Failed to create government user:', error);
       const detail = error.response?.data?.detail;
-      const msg = typeof detail === 'string' ? detail : (isRTL ? 'فشل في إنشاء الموظف الحكومي' : 'Failed to create government employee');
+      const msg = typeof detail === 'string' ? detail : (language === 'ar' ? 'فشل في إنشاء الموظف الحكومي' : language === 'ku' ? 'Çêkirina karmendê hikûmetê têk çû' : 'Failed to create government employee');
       setGovernmentFormErrors({ _general: msg });
     }
   };
@@ -319,7 +317,7 @@ export default function UsersPage() {
         full_name: normalUserForm.full_name,
         phone: normalUserForm.phone,
       });
-      alert(isRTL ? 'تم إنشاء المستخدم بنجاح!' : 'User created successfully!');
+      alert(language === 'ar' ? 'تم إنشاء المستخدم بنجاح!' : language === 'ku' ? 'Bikarhêner bi serkeftin hate Çêkirin!' : 'User created successfully!');
       setShowCreateNormalUserModal(false);
       setNormalUserForm({ email: '', password: '', full_name: '', phone: '' });
       setNormalUserPasswordError('');
@@ -328,7 +326,7 @@ export default function UsersPage() {
     } catch (error: any) {
       console.error('Failed to create normal user:', error);
       const detail = error.response?.data?.detail;
-      const msg = typeof detail === 'string' ? detail : (isRTL ? 'فشل في إنشاء المستخدم' : 'Failed to create user');
+      const msg = typeof detail === 'string' ? detail : (language === 'ar' ? 'فشل في إنشاء المستخدم' : language === 'ku' ? 'Çêkirina bikarhêner têk çû' : 'Failed to create user');
       setNormalFormErrors({ _general: msg });
     }
   };
@@ -354,7 +352,7 @@ export default function UsersPage() {
         full_name: adminUserForm.full_name,
         phone: adminUserForm.phone || undefined,
       });
-      alert(isRTL ? 'تم إنشاء المسؤول بنجاح!' : 'Admin created successfully!');
+      alert(language === 'ar' ? 'تم إنشاء المسؤول بنجاح!' : language === 'ku' ? 'Admin bi serkeftin hat Çêkirin!!' : 'Admin created successfully!');
       setShowCreateAdminUserModal(false);
       setAdminUserForm({ email: '', password: '', full_name: '', phone: '' });
       setAdminUserPasswordError('');
@@ -363,7 +361,7 @@ export default function UsersPage() {
     } catch (error: any) {
       console.error('Failed to create admin user:', error);
       const detail = error.response?.data?.detail;
-      const msg = typeof detail === 'string' ? detail : (isRTL ? 'فشل في إنشاء المسؤول' : 'Failed to create admin');
+      const msg = typeof detail === 'string' ? detail : (language === 'ar' ? 'فشل في إنشاء المسؤول' : language === 'ku' ? 'Çêkirina admin têk çû' : 'Failed to create admin');
       setAdminFormErrors({ _general: msg });
     }
   };
@@ -373,7 +371,7 @@ export default function UsersPage() {
 
     // Validate passwords match
     if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
-      setResetPasswordError(isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
+      setResetPasswordError(language === 'ar' ? 'كلمات المرور غير متطابقة' : language === 'ku' ? 'Şîfre ne wekhev in' : 'Passwords do not match');
       return;
     }
 
@@ -386,14 +384,14 @@ export default function UsersPage() {
 
     try {
       await usersAPI.resetPassword(selectedUser.id, resetPasswordForm.newPassword);
-      alert(isRTL ? 'تم إعادة تعيين كلمة المرور بنجاح!' : 'Password reset successfully!');
+      alert(language === 'ar' ? 'تم إعادة تعيين كلمة المرور بنجاح!' : language === 'ku' ? 'Şîfre bi serkeftin hate nûvekirin!' : 'Password reset successfully!');
       setShowResetPasswordModal(false);
       setResetPasswordForm({ newPassword: '', confirmPassword: '' });
       setResetPasswordError('');
       setSelectedUser(null);
     } catch (error: any) {
       console.error('Failed to reset password:', error);
-      alert(error.response?.data?.detail || (isRTL ? 'فشل في إعادة تعيين كلمة المرور' : 'Failed to reset password'));
+      alert(error.response?.data?.detail || (language === 'ar' ? 'فشل في إعادة تعيين كلمة المرور' : language === 'ku' ? 'Nûvekirina şîfreyê têk çû' : 'Failed to reset password'));
     }
   };
 
@@ -402,9 +400,9 @@ export default function UsersPage() {
 
     try {
       await usersAPI.awardPoints(
-        selectedUser.id,
-        parseInt(points),
-        description || 'Admin award'
+          selectedUser.id,
+          parseInt(points),
+          description || 'Admin award'
       );
       alert('Points awarded successfully!');
       setShowAwardModal(false);
@@ -447,14 +445,14 @@ export default function UsersPage() {
 
     try {
       await usersAPI.deleteUser(selectedUser.id);
-      alert(isRTL ? 'تم نقل المستخدم إلى سلة المحذوفات!' : 'User moved to trash!');
+      alert(language === 'ar' ? 'تم نقل المستخدم إلى سلة المحذوفات!' : language === 'ku' ? 'Bikarhêner hate şandin nav çopê' : 'User moved to trash!');
       setShowDeleteModal(false);
       setSelectedUser(null);
       loadUsers();
       loadDeletedUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
-      alert(isRTL ? 'فشل في حذف المستخدم' : 'Failed to delete user');
+      alert(language === 'ar' ? 'فشل في حذف المستخدم' : language === 'ku' ? 'Jêbirina bikarhêner têk çû' : 'Failed to delete user');
     }
   };
 
@@ -463,14 +461,14 @@ export default function UsersPage() {
 
     try {
       await usersAPI.restoreUser(selectedUser.id);
-      alert(isRTL ? 'تم استعادة المستخدم بنجاح!' : 'User restored successfully!');
+      alert(language === 'ar' ? 'تم استعادة المستخدم بنجاح!' : language === 'ku' ? 'Bikarhêner bi serkeftin hate vegerandin!' : 'User restored successfully!');
       setShowRestoreModal(false);
       setSelectedUser(null);
       loadUsers();
       loadDeletedUsers();
     } catch (error) {
       console.error('Failed to restore user:', error);
-      alert(isRTL ? 'فشل في استعادة المستخدم' : 'Failed to restore user');
+      alert(language === 'ar' ? 'فشل في استعادة المستخدم' : language === 'ku' ? 'Têk çû di vegerandina bikarhênerê de!' : 'Failed to restore user');
     }
   };
 
@@ -479,1373 +477,1363 @@ export default function UsersPage() {
 
     try {
       await usersAPI.permanentDeleteUser(selectedUser.id);
-      alert(isRTL ? 'تم حذف المستخدم نهائياً!' : 'User permanently deleted!');
+      alert(language === 'ar' ? 'تم حذف المستخدم نهائياً!' : language === 'ku' ? 'Bikarhêner herdemî hate jêbirin!' : 'User permanently deleted!');
       setShowPermanentDeleteModal(false);
       setSelectedUser(null);
       loadDeletedUsers();
     } catch (error) {
       console.error('Failed to permanently delete user:', error);
-      alert(isRTL ? 'فشل في حذف المستخدم نهائياً' : 'Failed to permanently delete user');
+      alert(language === 'ar' ? 'فشل في حذف المستخدم نهائياً' : language === 'ku' ? 'Jêbirina herdemî têk çû' : 'Failed to permanently delete user');
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
     );
   }
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className={`mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-        <div className={isRTL ? 'text-right' : ''}>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.users.title}</h1>
-          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.users.subtitle}</p>
-        </div>
-        {currentUserRole === 'ADMIN' && (
-          <div className={`flex flex-wrap gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <button
-              onClick={() => setShowCreateNormalUserModal(true)}
-              className={`flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
-            >
-              <UserPlus className="w-5 h-5" />
-              <span className="hidden sm:inline">{isRTL ? 'إضافة مستخدم' : 'Add User'}</span>
-              <span className="sm:hidden">{isRTL ? 'مستخدم' : 'User'}</span>
-            </button>
-            <button
-              onClick={() => setShowCreateGovernmentUserModal(true)}
-              className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
-            >
-              <Landmark className="w-5 h-5" />
-              <span className="hidden sm:inline">{isRTL ? 'إضافة موظف حكومي' : 'Add Government Employee'}</span>
-              <span className="sm:hidden">{isRTL ? 'موظف' : 'Gov'}</span>
-            </button>
-            <button
-              onClick={() => setShowCreateCompanyUserModal(true)}
-              className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
-            >
-              <Building2 className="w-5 h-5" />
-              <span className="hidden sm:inline">{t.users.createCompanyUser}</span>
-              <span className="sm:hidden">{isRTL ? 'شركة' : 'Company'}</span>
-            </button>
-            <button
-              onClick={() => setShowCreateAdminUserModal(true)}
-              className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
-            >
-              <Shield className="w-5 h-5" />
-              <span className="hidden sm:inline">{isRTL ? 'إضافة مسؤول' : 'Add Admin'}</span>
-              <span className="sm:hidden">{isRTL ? 'مسؤول' : 'Admin'}</span>
-            </button>
+      <div dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className={`mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+          <div className={isRTL ? 'text-right' : ''}>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.users.title}</h1>
+            <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">{t.users.subtitle}</p>
           </div>
-        )}
-      </div>
+          {currentUserRole === 'ADMIN' && (
+              <div className={`flex flex-wrap gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <button
+                    onClick={() => setShowCreateNormalUserModal(true)}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+                >
+                  <UserPlus className="w-5 h-5" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'إضافة مستخدم' : language === 'ku' ? 'Bikarhêner zêde bike' : 'Add User'}</span>
+                  <span className="sm:hidden">{language === 'ar' ? 'مستخدم' : language === 'ku' ? 'Bikarhener' : 'User'}</span>
+                </button>
+                <button
+                    onClick={() => setShowCreateGovernmentUserModal(true)}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+                >
+                  <Landmark className="w-5 h-5" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'إضافة موظف حكومي' : language === 'ku' ? 'Karmendê hikûmetê zêde bike' : 'Add Government Employee'}</span>
+                  <span className="sm:hidden">{language === 'ar' ? 'موظف' : language === 'ku' ? 'Karmend' : 'Gov'}</span>
+                </button>
+                <button
+                    onClick={() => setShowCreateCompanyUserModal(true)}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+                >
+                  <Building2 className="w-5 h-5" />
+                  <span className="hidden sm:inline">{t.users.createCompanyUser}</span>
+                  <span className="sm:hidden">{language === 'ar' ? 'شركة' : language === 'ku' ? 'Şîrket' : 'Company'}</span>
+                </button>
+                <button
+                    onClick={() => setShowCreateAdminUserModal(true)}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}
+                >
+                  <Shield className="w-5 h-5" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'إضافة مسؤول' : language === 'ku' ? 'Admin zêde bike' : 'Add Admin'}</span>
+                  <span className="sm:hidden">{language === 'ar' ? 'مسؤول' : language === 'ku' ? 'Admin' : 'Admin'}</span>
+                </button>
+              </div>
+          )}
+        </div>
 
-      {/* Tabs: Active Users / Trash */}
-      <div className={`flex gap-4 mb-6 border-b border-gray-200 ${isRTL ? 'flex-row-reverse' : ''}`}>
-        <button
-          onClick={() => setActiveTab('active')}
-          className={`pb-3 px-1 font-medium text-sm transition-colors ${
-            activeTab === 'active'
-              ? 'text-primary border-b-2 border-primary'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
+        {/* Tabs: Active Users / Trash */}
+        <div className={`flex gap-4 mb-6 border-b border-gray-200 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <button
+              onClick={() => setActiveTab('active')}
+              className={`pb-3 px-1 font-medium text-sm transition-colors ${
+                  activeTab === 'active'
+                      ? 'text-primary border-b-2 border-primary'
+                      : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
           <span className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <UserPlus className="w-4 h-4" />
-            {isRTL ? 'المستخدمين' : 'Users'} ({users.length})
+            {language === 'ar' ? 'المستخدمين' : language === 'ku' ? 'Bikarhêner' : 'Users'} ({users.length})
           </span>
-        </button>
-        {currentUserRole === 'ADMIN' && (
-          <button
-            onClick={() => setActiveTab('trash')}
-            className={`pb-3 px-1 font-medium text-sm transition-colors ${
-              activeTab === 'trash'
-                ? 'text-red-600 border-b-2 border-red-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
+          </button>
+          {currentUserRole === 'ADMIN' && (
+              <button
+                  onClick={() => setActiveTab('trash')}
+                  className={`pb-3 px-1 font-medium text-sm transition-colors ${
+                      activeTab === 'trash'
+                          ? 'text-red-600 border-b-2 border-red-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                  }`}
+              >
             <span className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <Trash2 className="w-4 h-4" />
-              {isRTL ? 'سلة المحذوفات' : 'Trash'} ({deletedUsers.length})
+              {language === 'ar' ? 'سلة المحذوفات' : language === 'ku' ? 'Jêbirî' : 'Trash'} ({deletedUsers.length})
             </span>
-          </button>
-        )}
-      </div>
-
-      {/* Search and Filters */}
-      <div className="mb-6 space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t.users.searchPlaceholder}
-            className={`w-full py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
-          />
+              </button>
+          )}
         </div>
-        
-        {/* Filters */}
-        <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-          {/* Role Filter */}
-          <div className="flex-1 sm:max-w-[200px]">
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
-            >
-              <option value="ALL">{isRTL ? 'جميع الأدوار' : 'All Roles'}</option>
-              <option value="USER">{t.users.roles.user}</option>
-              <option value="COMPANY">{t.users.roles.company}</option>
-              <option value="GOVERNMENT">{t.users.roles.government}</option>
-              <option value="ADMIN">{t.users.roles.admin}</option>
-            </select>
+
+        {/* Search and Filters */}
+        <div className="mb-6 space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'}`} />
+            <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t.users.searchPlaceholder}
+                className={`w-full py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
+            />
           </div>
-          
-          {/* Status Filter */}
-          <div className="flex-1 sm:max-w-[200px]">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
-            >
-              <option value="ALL">{isRTL ? 'جميع الحالات' : 'All Statuses'}</option>
-              <option value="ACTIVE">{t.users.userStatuses.active}</option>
-              <option value="SUSPENDED">{t.users.userStatuses.suspended}</option>
-              <option value="BANNED">{t.users.userStatuses.banned}</option>
-            </select>
-          </div>
-          
-          {/* Results count */}
-          <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'sm:mr-auto' : 'sm:ml-auto'}`}>
-            {isRTL 
-              ? `${filteredUsers.length} من ${activeTab === 'active' ? users.length : deletedUsers.length} مستخدم`
-              : `${filteredUsers.length} of ${activeTab === 'active' ? users.length : deletedUsers.length} users`
-            }
+
+          {/* Filters */}
+          <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            {/* Role Filter */}
+            <div className="flex-1 sm:max-w-[200px]">
+              <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
+              >
+                <option value="ALL">{language === 'ar' ? 'جميع الأدوار' : language === 'ku' ? 'Hemû rol' : 'All Roles'}</option>
+                <option value="USER">{t.users.roles.user}</option>
+                <option value="COMPANY">{t.users.roles.company}</option>
+                <option value="GOVERNMENT">{t.users.roles.government}</option>
+                <option value="ADMIN">{t.users.roles.admin}</option>
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex-1 sm:max-w-[200px]">
+              <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white ${isRTL ? 'text-right' : ''}`}
+              >
+                <option value="ALL">{language === 'ar' ? 'جميع الحالات' : language === 'ku' ? 'Hemû rewş' : 'All Statuses'}</option>
+                <option value="ACTIVE">{t.users.userStatuses.active}</option>
+                <option value="SUSPENDED">{t.users.userStatuses.suspended}</option>
+                <option value="BANNED">{t.users.userStatuses.banned}</option>
+              </select>
+            </div>
+
+            {/* Results count */}
+            <div className={`flex items-center text-sm text-gray-500 ${isRTL ? 'sm:mr-auto' : 'sm:ml-auto'}`}>
+              {language === 'ar' ? `${filteredUsers.length} من ${activeTab === 'active' ? users.length : deletedUsers.length} مستخدم` : language === 'ku' ? `${filteredUsers.length} ji ${activeTab === 'active' ? users.length : deletedUsers.length} bikarhêner` : `${filteredUsers.length} of ${activeTab === 'active' ? users.length : deletedUsers.length} users`
+              }
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Active Users Table */}
-      {activeTab === 'active' && (
-      <div>
-        {/* Bulk Actions Toolbar */}
-        {currentUserRole === 'ADMIN' && selectedUserIds.size > 0 && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex flex-wrap items-center gap-3">
+        {/* Active Users Table */}
+        {activeTab === 'active' && (
+            <div>
+              {/* Bulk Actions Toolbar */}
+              {currentUserRole === 'ADMIN' && selectedUserIds.size > 0 && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex flex-wrap items-center gap-3">
             <span className="text-sm font-medium text-blue-800">
-              {isRTL ? `${selectedUserIds.size} مستخدم محدد` : `${selectedUserIds.size} selected`}
+              {language === 'ar' ? `${selectedUserIds.size} مستخدم محدد` : language === 'ku' ? `${selectedUserIds.size} hilbijartî` : `${selectedUserIds.size} selected`}
             </span>
-            <button
-              onClick={() => handleBulkUserStatus('ACTIVE')}
-              disabled={bulkUserLoading}
-              className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-            >
-              {isRTL ? 'تفعيل' : 'Activate'}
-            </button>
-            <button
-              onClick={() => handleBulkUserStatus('BANNED')}
-              disabled={bulkUserLoading}
-              className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition disabled:opacity-50"
-            >
-              {isRTL ? 'حظر' : 'Ban'}
-            </button>
-            <button
-              onClick={() => setSelectedUserIds(new Set())}
-              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition"
-            >
-              {isRTL ? 'إلغاء التحديد' : 'Clear'}
-            </button>
-          </div>
-        )}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-3 py-4 w-12">
-                  <button onClick={toggleSelectAllUsers}>
-                    {selectedUserIds.size === filteredUsers.length && filteredUsers.length > 0 ? (
-                      <CheckSquare className="w-4 h-4 text-primary" />
-                    ) : (
-                      <Square className="w-4 h-4 text-gray-400" />
-                    )}
-                  </button>
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.users.user}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.users.userEmail}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.users.userPoints}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.users.role}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.common.status}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.common.actions}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr 
-                  key={user.id} 
-                  className={`hover:bg-gray-50 cursor-pointer ${selectedUserIds.has(user.id) ? 'bg-blue-50' : ''}`}
-                >
-                  <td className="px-3 py-4" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => toggleUserSelect(user.id)}>
-                      {selectedUserIds.has(user.id) ? (
-                        <CheckSquare className="w-4 h-4 text-primary" />
-                      ) : (
-                        <Square className="w-4 h-4 text-gray-400" />
-                      )}
+                    <button
+                        onClick={() => handleBulkUserStatus('ACTIVE')}
+                        disabled={bulkUserLoading}
+                        className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                    >
+                      {language === 'ar' ? 'تفعيل' : language === 'ku' ? 'Çalak bike' : 'Activate'}
                     </button>
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`} onClick={() => handleEdit(user)}>
-                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold flex-shrink-0">
-                        {user.full_name[0]?.toUpperCase()}
-                      </div>
-                      <div className={isRTL ? 'text-right' : 'text-left'}>
-                        <p className="font-medium text-gray-900">{user.full_name}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-600 ${isRTL ? 'text-right' : ''}`}>
-                    {user.email}
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
-                    <span className="text-yellow font-semibold">{user.total_points}</span>
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                    <button
+                        onClick={() => handleBulkUserStatus('BANNED')}
+                        disabled={bulkUserLoading}
+                        className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                    >
+                      {language === 'ar' ? 'حظر' : language === 'ku' ? 'Metirsi' : 'Ban'}
+                    </button>
+                    <button
+                        onClick={() => setSelectedUserIds(new Set())}
+                        className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition"
+                    >
+                      {language === 'ar' ? 'إلغاء التحديد' : language === 'ku' ? 'Hilbijartin betal bike' : 'Clear'}
+                    </button>
+                  </div>
+              )}
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-3 py-4 w-12">
+                        <button onClick={toggleSelectAllUsers}>
+                          {selectedUserIds.size === filteredUsers.length && filteredUsers.length > 0 ? (
+                              <CheckSquare className="w-4 h-4 text-primary" />
+                          ) : (
+                              <Square className="w-4 h-4 text-gray-400" />
+                          )}
+                        </button>
+                      </th>
+                      <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {t.users.user}
+                      </th>
+                      <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {t.users.userEmail}
+                      </th>
+                      <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {t.users.userPoints}
+                      </th>
+                      <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {t.users.role}
+                      </th>
+                      <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {t.common.status}
+                      </th>
+                      <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {t.common.actions}
+                      </th>
+                    </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                    {filteredUsers.map((user) => (
+                        <tr
+                            key={user.id}
+                            className={`hover:bg-gray-50 cursor-pointer ${selectedUserIds.has(user.id) ? 'bg-blue-50' : ''}`}
+                        >
+                          <td className="px-3 py-4" onClick={(e) => e.stopPropagation()}>
+                            <button onClick={() => toggleUserSelect(user.id)}>
+                              {selectedUserIds.has(user.id) ? (
+                                  <CheckSquare className="w-4 h-4 text-primary" />
+                              ) : (
+                                  <Square className="w-4 h-4 text-gray-400" />
+                              )}
+                            </button>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`} onClick={() => handleEdit(user)}>
+                            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold flex-shrink-0">
+                                {user.full_name[0]?.toUpperCase()}
+                              </div>
+                              <div className={isRTL ? 'text-right' : 'text-left'}>
+                                <p className="font-medium text-gray-900">{user.full_name}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-600 ${isRTL ? 'text-right' : ''}`}>
+                            {user.email}
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                            <span className="text-yellow font-semibold">{user.total_points}</span>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        user.role === 'ADMIN'
-                          ? 'bg-purple-100 text-purple-700'
-                          : user.role === 'COMPANY'
-                          ? 'bg-green-100 text-green-700'
-                          : user.role === 'GOVERNMENT'
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            user.role === 'ADMIN'
+                                ? 'bg-purple-100 text-purple-700'
+                                : user.role === 'COMPANY'
+                                    ? 'bg-green-100 text-green-700'
+                                    : user.role === 'GOVERNMENT'
+                                        ? 'bg-orange-100 text-orange-700'
+                                        : 'bg-blue-100 text-blue-700'
+                        }`}
                     >
                       {user.role === 'ADMIN' ? t.users.roles.admin : user.role === 'COMPANY' ? t.users.roles.company : user.role === 'GOVERNMENT' ? t.users.roles.government : t.users.roles.user}
                     </span>
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        user.status === 'ACTIVE'
-                          ? 'bg-green-100 text-green-700'
-                          : user.status === 'SUSPENDED'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                      }`}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            user.status === 'ACTIVE'
+                                ? 'bg-green-100 text-green-700'
+                                : user.status === 'SUSPENDED'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-red-100 text-red-700'
+                        }`}
                     >
                       {user.status === 'ACTIVE' ? t.users.userStatuses.active : user.status === 'SUSPENDED' ? t.users.userStatuses.suspended : user.status === 'BANNED' ? t.users.userStatuses.banned : user.status}
                     </span>
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
-                    {currentUserRole !== 'VIEWER' && (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedUser(user);
-                            setShowAwardModal(true);
-                          }}
-                          className={`text-primary hover:text-blue-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
-                          title={t.users.award}
-                        >
-                          <Award className="w-4 h-4 inline" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedUser(user);
-                            setResetPasswordForm({ newPassword: '', confirmPassword: '' });
-                            setResetPasswordError('');
-                            setShowResetPasswordModal(true);
-                          }}
-                          className={`text-orange-600 hover:text-orange-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
-                          title={isRTL ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
-                        >
-                          <KeyRound className="w-4 h-4 inline" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(user);
-                          }}
-                          className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
-                        >
-                          {t.common.edit}
-                        </button>
-                      </>
-                    )}
-                    {currentUserRole === 'ADMIN' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedUser(user);
-                          setShowDeleteModal(true);
-                        }}
-                        className="text-red-600 hover:text-red-800 font-medium"
-                      >
-                        {t.common.delete}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
+                            {currentUserRole !== 'VIEWER' && (
+                                <>
+                                  <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedUser(user);
+                                        setShowAwardModal(true);
+                                      }}
+                                      className={`text-primary hover:text-blue-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
+                                      title={t.users.award}
+                                  >
+                                    <Award className="w-4 h-4 inline" />
+                                  </button>
+                                  <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedUser(user);
+                                        setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+                                        setResetPasswordError('');
+                                        setShowResetPasswordModal(true);
+                                      }}
+                                      className={`text-orange-600 hover:text-orange-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
+                                      title={language === 'ar' ? 'إعادة تعيين كلمة المرور' : language === 'ku' ? 'Şîfreyê nûve bike ' : 'Reset Password'}
+                                  >
+                                    <KeyRound className="w-4 h-4 inline" />
+                                  </button>
+                                  <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEdit(user);
+                                      }}
+                                      className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-2' : 'mr-2'}`}
+                                  >
+                                    {t.common.edit}
+                                  </button>
+                                </>
+                            )}
+                            {currentUserRole === 'ADMIN' && (
+                                <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedUser(user);
+                                      setShowDeleteModal(true);
+                                    }}
+                                    className="text-red-600 hover:text-red-800 font-medium"
+                                >
+                                  {t.common.delete}
+                                </button>
+                            )}
+                          </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                  </table>
+                </div>
 
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">{t.users.noUsersFound}</p>
-          </div>
-        )}
-      </div>
-      </div>
-      )}
-
-      {/* Trash Table */}
-      {activeTab === 'trash' && (
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-red-50 border-b border-red-200">
-              <tr>
-                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.users.user}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.users.userEmail}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.users.role}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {isRTL ? 'تاريخ الحذف' : 'Deleted At'}
-                </th>
-                <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t.common.actions}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-red-50">
-                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
-                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <div className="w-10 h-10 rounded-full bg-red-400 text-white flex items-center justify-center font-semibold flex-shrink-0">
-                        {user.full_name[0]?.toUpperCase()}
-                      </div>
-                      <div className={isRTL ? 'text-right' : 'text-left'}>
-                        <p className="font-medium text-gray-900">{user.full_name}</p>
-                      </div>
+                {filteredUsers.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">{t.users.noUsersFound}</p>
                     </div>
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-600 ${isRTL ? 'text-right' : ''}`}>
-                    {user.email}
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                )}
+              </div>
+            </div>
+        )}
+
+        {/* Trash Table */}
+        {activeTab === 'trash' && (
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-red-50 border-b border-red-200">
+                  <tr>
+                    <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                      {t.users.user}
+                    </th>
+                    <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                      {t.users.userEmail}
+                    </th>
+                    <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                      {t.users.role}
+                    </th>
+                    <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                      {language === 'ar' ? 'تاريخ الحذف' : language === 'ku' ? 'Dîroka jêbirinê' : 'Deleted At'}
+                    </th>
+                    <th className={`px-6 py-4 text-xs font-semibold text-red-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                      {t.common.actions}
+                    </th>
+                  </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                  {filteredUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-red-50">
+                        <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
+                          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <div className="w-10 h-10 rounded-full bg-red-400 text-white flex items-center justify-center font-semibold flex-shrink-0">
+                              {user.full_name[0]?.toUpperCase()}
+                            </div>
+                            <div className={isRTL ? 'text-right' : 'text-left'}>
+                              <p className="font-medium text-gray-900">{user.full_name}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-600 ${isRTL ? 'text-right' : ''}`}>
+                          {user.email}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        user.role === 'ADMIN'
-                          ? 'bg-purple-100 text-purple-700'
-                          : user.role === 'COMPANY'
-                          ? 'bg-green-100 text-green-700'
-                          : user.role === 'GOVERNMENT'
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            user.role === 'ADMIN'
+                                ? 'bg-purple-100 text-purple-700'
+                                : user.role === 'COMPANY'
+                                    ? 'bg-green-100 text-green-700'
+                                    : user.role === 'GOVERNMENT'
+                                        ? 'bg-orange-100 text-orange-700'
+                                        : 'bg-blue-100 text-blue-700'
+                        }`}
                     >
                       {user.role === 'ADMIN' ? t.users.roles.admin : user.role === 'COMPANY' ? t.users.roles.company : user.role === 'GOVERNMENT' ? t.users.roles.government : t.users.roles.user}
                     </span>
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 ${isRTL ? 'text-right' : ''}`}>
-                    {user.deleted_at ? new Date(user.deleted_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) : '-'}
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowRestoreModal(true);
-                      }}
-                      className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-3' : 'mr-3'}`}
-                      title={isRTL ? 'استعادة' : 'Restore'}
-                    >
-                      <RotateCcw className="w-4 h-4 inline" /> {isRTL ? 'استعادة' : 'Restore'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowPermanentDeleteModal(true);
-                      }}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                      title={isRTL ? 'حذف نهائي' : 'Delete Forever'}
-                    >
-                      <Trash2 className="w-4 h-4 inline" /> {isRTL ? 'حذف نهائي' : 'Delete Forever'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+                          {user.deleted_at ? new Date(user.deleted_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : '-'}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${isRTL ? 'text-right' : ''}`}>
+                          <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setShowRestoreModal(true);
+                              }}
+                              className={`text-green-600 hover:text-green-800 font-medium ${isRTL ? 'ml-3' : 'mr-3'}`}
+                              title={language === 'ar' ? 'استعادة' : language === 'ku' ? 'Vegerin' : 'Restore'}
+                          >
+                            <RotateCcw className="w-4 h-4 inline" /> {language === 'ar' ? 'استعادة' : language === 'ku' ? 'Vegerin' : 'Restore'}
+                          </button>
+                          <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setShowPermanentDeleteModal(true);
+                              }}
+                              className="text-red-600 hover:text-red-800 font-medium"
+                              title={language === 'ar' ? 'حذف نهائي' : language === 'ku' ? 'Jebibe Forever' : 'Delete Forever'}
+                          >
+                            <Trash2 className="w-4 h-4 inline" /> {language === 'ar' ? 'حذف نهائي' : language === 'ku' ? 'Herdemî jê bibe' : 'Delete Forever'}
+                          </button>
+                        </td>
+                      </tr>
+                  ))}
+                  </tbody>
+                </table>
+              </div>
 
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
-            <Trash2 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="text-gray-500">{isRTL ? 'سلة المحذوفات فارغة' : 'Trash is empty'}</p>
-          </div>
+              {filteredUsers.length === 0 && (
+                  <div className="text-center py-12">
+                    <Trash2 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-gray-500">{language === 'ar' ? 'سلة المحذوفات فارغة' : language === 'ku' ? 'jêbirinê vala ye' : 'Trash is empty'}</p>
+                  </div>
+              )}
+            </div>
+        )}
+
+        {/* Award Points Modal */}
+        {showAwardModal && selectedUser && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.awardPointsTo} {selectedUser.full_name}
+                </h2>
+
+                {/* Current Points & Points After Summary */}
+                <div className="flex gap-4 mb-4">
+                  <div className="flex-1 bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">{t.users.currentPoints}</div>
+                    <div className="text-xl font-bold text-gray-900">{selectedUser.total_points ?? 0}</div>
+                  </div>
+                  <div className="flex items-center text-gray-400 text-xl">→</div>
+                  <div className={`flex-1 rounded-lg p-3 text-center ${
+                      parseInt(points) < 0
+                          ? 'bg-orange-50'
+                          : points
+                              ? 'bg-green-50'
+                              : 'bg-gray-50'
+                  }`}>
+                    <div className="text-xs text-gray-500 mb-1">{t.users.pointsAfter}</div>
+                    <div className={`text-xl font-bold ${
+                        parseInt(points) < 0
+                            ? 'text-orange-600'
+                            : points
+                                ? 'text-green-600'
+                                : 'text-gray-900'
+                    }`}>
+                      {points ? Math.max(0, (selectedUser.total_points ?? 0) + parseInt(points)) : selectedUser.total_points ?? 0}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Info if deduction exceeds current points */}
+                {points && (selectedUser.total_points ?? 0) + parseInt(points) < 0 && (
+                    <div className="mb-4 p-2 bg-orange-50 border border-orange-200 rounded-lg text-orange-600 text-sm text-center">
+                      ℹ️ {language === 'ar' ? 'سيتم خصم النقاط المتاحة فقط - النتيجة ستكون 0' : language === 'ku' ? 'Tenê xalên heyî dê bên jêbirin – encam dê 0 be' : 'Only available points will be deducted - result will be 0'}
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userPoints}
+                    </label>
+                    <input
+                        type="number"
+                        value={points}
+                        onChange={(e) => setPoints(e.target.value)}
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={t.users.pointsPlaceholder}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.reports.reportDescription}
+                    </label>
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        rows={3}
+                        placeholder={t.users.descriptionPlaceholder}
+                    />
+                  </div>
+                </div>
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowAwardModal(false);
+                        setPoints('');
+                        setDescription('');
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleAwardPoints}
+                      className="flex-1 px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-800"
+                  >
+                    {parseInt(points) < 0 ? (language === 'ar' ? 'خصم نقاط' : language === 'ku' ? 'Kêmkirina xalan' : 'Deduct Points') : t.users.awardPoints}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Edit User Modal */}
+        {showEditModal && selectedUser && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.editUser}: {selectedUser.full_name}
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.fullName}
+                    </label>
+                    <input
+                        type="text"
+                        value={editForm.full_name}
+                        onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userEmail}
+                    </label>
+                    <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.role}
+                    </label>
+                    <select
+                        value={editForm.role}
+                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                    >
+                      <option value="USER">{t.users.roles.user}</option>
+                      <option value="COMPANY">{t.users.roles.company}</option>
+                      <option value="GOVERNMENT">{t.users.roles.government}</option>
+                      <option value="ADMIN">{t.users.roles.admin}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.common.status}
+                    </label>
+                    <select
+                        value={editForm.status}
+                        onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                    >
+                      <option value="ACTIVE">{t.users.userStatuses.active}</option>
+                      <option value="SUSPENDED">{t.users.userStatuses.suspended}</option>
+                      <option value="BANNED">{t.users.userStatuses.banned}</option>
+                    </select>
+                  </div>
+                </div>
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => setShowEditModal(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleUpdate}
+                      className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
+                  >
+                    {t.users.saveChanges}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && selectedUser && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-red-600 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.users.deleteUser}</h2>
+                <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
+                  {language === 'ar' ? 'هل أنت متأكد من نقل' : language === 'ku' ? 'Tu bi rastî dixwazî bar bikî?' : 'Are you sure you want to move'} <strong>{selectedUser.full_name}</strong> {language === 'ar' ? 'إلى سلة المحذوفات؟' : language === 'ku' ? 'Bo qutîya jêbirinê?' : 'to trash?'}
+                </p>
+                <p className={`text-sm text-gray-500 mb-6 ${isRTL ? 'text-right' : ''}`}>
+                  {language === 'ar' ? 'يمكنك استعادة المستخدم لاحقاً من سلة المحذوفات.' : language === 'ku' ? 'Tu dikarî paşê bikarhêner ji çopê vegerînî.' : 'You can restore the user later from trash.'}
+                </p>
+                <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowDeleteModal(false);
+                        setSelectedUser(null);
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleDelete}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    {language === 'ar' ? 'نقل للمحذوفات' : language === 'ku' ? 'Ber bi  jêbirinê ve biçe' : 'Move to Trash'}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Restore User Modal */}
+        {showRestoreModal && selectedUser && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-green-600 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <RotateCcw className="w-6 h-6" />
+                  {language === 'ar' ? 'استعادة المستخدم' : language === 'ku' ? 'Bikarhêner vegerîne' : 'Restore User'}
+                </h2>
+                <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
+                  {language === 'ar' ? 'هل تريد استعادة' : language === 'ku' ? 'Tu dixwazî vegerînî' : 'Do you want to restore'} <strong>{selectedUser.full_name}</strong>?
+                </p>
+                <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowRestoreModal(false);
+                        setSelectedUser(null);
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleRestore}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    {language === 'ar' ? 'استعادة' : language === 'ku' ? 'Vegerin' : 'Restore'}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Permanent Delete Modal */}
+        {showPermanentDeleteModal && selectedUser && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-red-600 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <Trash2 className="w-6 h-6" />
+                  {language === 'ar' ? 'حذف نهائي' : language === 'ku' ? 'Jêbirina herdemî' : 'Permanent Delete'}
+                </h2>
+                <p className={`text-gray-700 mb-4 ${isRTL ? 'text-right' : ''}`}>
+                  {language === 'ar' ? 'هل أنت متأكد من حذف' : language === 'ku' ? 'Tu bi rastî dixwazî herdemî jê bibî' : 'Are you sure you want to permanently delete'} <strong>{selectedUser.full_name}</strong>?
+                </p>
+                <p className={`text-sm text-red-500 font-medium mb-6 p-3 bg-red-50 rounded-lg ${isRTL ? 'text-right' : ''}`}>
+                  ⚠️ {language === 'ar' ? 'هذا الإجراء لا يمكن التراجع عنه! سيتم حذف جميع بيانات المستخدم نهائياً.' : language === 'ku' ? 'Ev çalakî nayê vegerandin! Hemû daneyên bikarhêner dê herdemî bên jêbirin' : 'This action cannot be undone! All user data will be permanently deleted.'}
+                </p>
+                <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowPermanentDeleteModal(false);
+                        setSelectedUser(null);
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handlePermanentDelete}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    {language === 'ar' ? 'حذف نهائي' : language === 'ku' ? 'Herdemî jê bibe' : 'Delete Forever'}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Reset Password Modal */}
+        {showResetPasswordModal && selectedUser && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <KeyRound className="w-6 h-6 text-orange-600" />
+                  {language === 'ar' ? 'إعادة تعيين كلمة المرور' : language === 'ku' ? 'Şîfreyê nûve bike' : 'Reset Password'}
+                </h2>
+                <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+                  {language === 'ar' ? `إعادة تعيين كلمة المرور للمستخدم: ${selectedUser.full_name}` : language === 'ku' ? `Şîfreyê nûve bike bo bikarhêner: ${selectedUser.full_name}` : `Reset password for user: ${selectedUser.full_name}`}
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {language === 'ar' ? 'كلمة المرور الجديدة' : language === 'ku' ? 'Şîfreya nû' : 'New Password'} *
+                    </label>
+                    <input
+                        type="password"
+                        value={resetPasswordForm.newPassword}
+                        onChange={(e) => {
+                          setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value });
+                          setResetPasswordError('');
+                        }}
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="********"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {language === 'ar' ? 'تأكيد كلمة المرور' : language === 'ku' ? 'Şîfreyê piştrast bike' : 'Confirm Password'} *
+                    </label>
+                    <input
+                        type="password"
+                        value={resetPasswordForm.confirmPassword}
+                        onChange={(e) => {
+                          setResetPasswordForm({ ...resetPasswordForm, confirmPassword: e.target.value });
+                          setResetPasswordError('');
+                        }}
+                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="********"
+                    />
+                  </div>
+                  {resetPasswordError && (
+                      <p className={`text-red-500 text-sm ${isRTL ? 'text-right' : ''}`}>{resetPasswordError}</p>
+                  )}
+                  {/* Password requirements */}
+                  <div className={`text-xs text-gray-500 space-y-1 ${isRTL ? 'text-right' : ''}`}>
+                    <p className={resetPasswordForm.newPassword.length >= 8 ? 'text-green-600' : ''}>
+                      {language === 'ar' ? '• 8 أحرف على الأقل' : language === 'ku' ? '• Herî kêm 8 tîp' : '• At least 8 characters'}
+                    </p>
+                    <p className={/[A-Z]/.test(resetPasswordForm.newPassword) ? 'text-green-600' : ''}>
+                      {language === 'ar' ? '• حرف كبير واحد على الأقل' : language === 'ku' ? '• Herî kêm yek tîpa mezin' : '• At least one uppercase letter'}
+                    </p>
+                    <p className={/[a-z]/.test(resetPasswordForm.newPassword) ? 'text-green-600' : ''}>
+                      {language === 'ar' ? '• حرف صغير واحد على الأقل' : language === 'ku' ? '• Herî kêm yek tîpa biçûk' : '• At least one lowercase letter'}
+                    </p>
+                  </div>
+                </div>
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowResetPasswordModal(false);
+                        setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+                        setResetPasswordError('');
+                        setSelectedUser(null);
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleResetPassword}
+                      className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                  >
+                    {language === 'ar' ? 'إعادة تعيين' : language === 'ku' ? 'Nûve bike' : 'Reset Password'}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Create Company User Modal */}
+        {showCreateCompanyUserModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <Building2 className="w-6 h-6 text-primary" />
+                  {t.users.createCompanyUser}
+                </h2>
+                <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+                  {t.users.createCompanyUserDesc}
+                </p>
+                {companyFormErrors._general && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+                      <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors._general}</p>
+                    </div>
+                )}
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.fullName} *
+                    </label>
+                    <input
+                        type="text"
+                        value={companyUserForm.full_name}
+                        onChange={(e) => {
+                          setCompanyUserForm({ ...companyUserForm, full_name: e.target.value });
+                          setCompanyFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${companyFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="John Doe"
+                    />
+                    {companyFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.full_name}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userEmail} *
+                    </label>
+                    <input
+                        type="email"
+                        value={companyUserForm.email}
+                        onChange={(e) => {
+                          setCompanyUserForm({ ...companyUserForm, email: e.target.value });
+                          setCompanyFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${companyFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="user@company.com"
+                    />
+                    {companyFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.email}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userPhone}
+                    </label>
+                    <input
+                        type="tel"
+                        value={companyUserForm.phone_number}
+                        onChange={(e) => {
+                          setCompanyUserForm({ ...companyUserForm, phone_number: e.target.value });
+                          setCompanyFormErrors((prev) => { const n = {...prev}; delete n.phone_number; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${companyFormErrors.phone_number ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
+                        dir="ltr"
+                    />
+                    {companyFormErrors.phone_number && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.phone_number}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.auth.password} *
+                    </label>
+                    <input
+                        type="password"
+                        value={companyUserForm.password}
+                        onChange={(e) => {
+                          setCompanyUserForm({ ...companyUserForm, password: e.target.value });
+                          setPasswordError('');
+                          setCompanyFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${passwordError || companyFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="••••••••"
+                        minLength={8}
+                    />
+                    {/* Password requirements */}
+                    <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                      <p className={`${companyUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ ٨ أحرف على الأقل' : language === 'ku' ? '✓ Herî kêm 8 tîp' : '✓ At least 8 characters'}
+                      </p>
+                      <p className={`${/[A-Z]/.test(companyUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ حرف كبير واحد على الأقل (A-Z)' : language === 'ku' ? '✓ Herî kêm yek tîpa mezin (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                      </p>
+                      <p className={`${/[a-z]/.test(companyUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ حرف صغير واحد على الأقل (a-z)' : language === 'ku' ? '✓ Herî kêm yek tîpa biçûk (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                      </p>
+                    </div>
+                    {passwordError && (
+                        <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{passwordError}</p>
+                    )}
+                    {/* Note about password change on first login */}
+                    <p className={`mt-2 text-xs text-blue-600 ${isRTL ? 'text-right' : ''}`}>
+                      ℹ️ {t.users.mustChangePasswordNote}
+                    </p>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.company} *
+                    </label>
+                    <select
+                        value={companyUserForm.company_id}
+                        onChange={(e) => {
+                          setCompanyUserForm({ ...companyUserForm, company_id: e.target.value });
+                          setCompanyFormErrors((prev) => { const n = {...prev}; delete n.company_id; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${companyFormErrors.company_id ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                    >
+                      <option value="">{t.users.selectCompany}</option>
+                      {companies.map((company: any) => (
+                          <option key={company.id} value={company.id}>
+                            {company.name}
+                          </option>
+                      ))}
+                    </select>
+                    {companyFormErrors.company_id && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.company_id}</p>}
+                  </div>
+                </div>
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowCreateCompanyUserModal(false);
+                        setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '', phone_number: '' });
+                        setPasswordError('');
+                        setCompanyFormErrors({});
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleCreateCompanyUser}
+                      className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
+                  >
+                    {t.users.createUser}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Create Government User Modal */}
+        {showCreateGovernmentUserModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <Landmark className="w-6 h-6 text-green-600" />
+                  {language === 'ar' ? 'إضافة موظف حكومي' : language === 'ku' ? 'Karmendê hikûmetê zêde bike' : 'Add Government Employee'}
+                </h2>
+                <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+                  {language === 'ar' ? 'إنشاء حساب موظف حكومي للوصول إلى البلاغات والخريطة' : language === 'ku' ? 'Hesabek karmendê hikûmetê biafirîne ku bigihîje ragihandin û nexşeyê' : 'Create a government employee account with access to reports and map'}
+                </p>
+                {governmentFormErrors._general && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+                      <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors._general}</p>
+                    </div>
+                )}
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.fullName} *
+                    </label>
+                    <input
+                        type="text"
+                        value={governmentUserForm.full_name}
+                        onChange={(e) => {
+                          setGovernmentUserForm({ ...governmentUserForm, full_name: e.target.value });
+                          setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${governmentFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={language === 'ar' ? 'محمد أحمد' : language === 'ku' ? 'Mohammad Ahmad ' : 'John Doe'}
+                    />
+                    {governmentFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.full_name}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userEmail} *
+                    </label>
+                    <input
+                        type="email"
+                        value={governmentUserForm.email}
+                        onChange={(e) => {
+                          setGovernmentUserForm({ ...governmentUserForm, email: e.target.value });
+                          setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${governmentFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="user@gov.sa"
+                    />
+                    {governmentFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.email}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userPhone}
+                    </label>
+                    <input
+                        type="tel"
+                        value={governmentUserForm.phone}
+                        onChange={(e) => {
+                          setGovernmentUserForm({ ...governmentUserForm, phone: e.target.value });
+                          setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${governmentFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
+                        dir="ltr"
+                    />
+                    {governmentFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.phone}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {language === 'ar' ? 'المدينة' : language === 'ku' ? 'Bajar' : 'City'} *
+                    </label>
+                    <input
+                        type="text"
+                        value={governmentUserForm.city}
+                        onChange={(e) => {
+                          setGovernmentUserForm({ ...governmentUserForm, city: e.target.value });
+                          setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.city; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${governmentFormErrors.city ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={language === 'ar' ? 'الرياض' : language === 'ku' ? 'Riyadh' : 'Riyadh'}
+                    />
+                    {governmentFormErrors.city && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.city}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {language === 'ar' ? 'الحي' : language === 'ku' ? 'Taxê' : 'District'} *
+                    </label>
+                    <input
+                        type="text"
+                        value={governmentUserForm.district}
+                        onChange={(e) => {
+                          setGovernmentUserForm({ ...governmentUserForm, district: e.target.value });
+                          setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.district; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${governmentFormErrors.district ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={language === 'ar' ? 'العليا' : language === 'ku' ? 'Al Olaya' : 'Al Olaya'}
+                    />
+                    {governmentFormErrors.district && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.district}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {language === 'ar' ? 'المسمى الوظيفي' : language === 'ku' ? 'Navê karê' : 'Job Description'} *
+                    </label>
+                    <input
+                        type="text"
+                        value={governmentUserForm.job_description}
+                        onChange={(e) => {
+                          setGovernmentUserForm({ ...governmentUserForm, job_description: e.target.value });
+                          setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.job_description; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${governmentFormErrors.job_description ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={language === 'ar' ? 'مراقب بلدي' : language === 'ku' ? 'Çavdêriya bajarê' : 'Municipal Inspector'}
+                    />
+                    {governmentFormErrors.job_description && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.job_description}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.auth.password} *
+                    </label>
+                    <input
+                        type="password"
+                        value={governmentUserForm.password}
+                        onChange={(e) => {
+                          setGovernmentUserForm({ ...governmentUserForm, password: e.target.value });
+                          setGovernmentPasswordError('');
+                          setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${governmentPasswordError || governmentFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="••••••••"
+                        minLength={8}
+                    />
+                    {/* Password requirements */}
+                    <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                      <p className={`${governmentUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ ٨ أحرف على الأقل' : language === 'ku' ? '✓ Herî kêm 8 tîp' : '✓ At least 8 characters'}
+                      </p>
+                      <p className={`${/[A-Z]/.test(governmentUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ حرف كبير واحد على الأقل (A-Z)' : language === 'ku' ? '✓ Herî kêm yek tîpa mezin (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                      </p>
+                      <p className={`${/[a-z]/.test(governmentUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ حرف صغير واحد على الأقل (a-z)' : language === 'ku' ? '✓ Herî kêm yek tîpa biçûk (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                      </p>
+                    </div>
+                    {governmentPasswordError && (
+                        <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentPasswordError}</p>
+                    )}
+                    {/* Note about password change on first login */}
+                    <p className={`mt-2 text-xs text-blue-600 ${isRTL ? 'text-right' : ''}`}>
+                      ℹ️ {t.users.mustChangePasswordNote}
+                    </p>
+                  </div>
+                </div>
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowCreateGovernmentUserModal(false);
+                        setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '', city: '', district: '', job_description: '' });
+                        setGovernmentPasswordError('');
+                        setGovernmentFormErrors({});
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleCreateGovernmentUser}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    {t.users.createUser}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Create Normal User Modal */}
+        {showCreateNormalUserModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <UserPlus className="w-6 h-6 text-purple-600" />
+                  {language === 'ar' ? 'إضافة مستخدم جديد' : language === 'ku' ? 'Bikarhênerê nû zêde bike' : 'Add New User'}
+                </h2>
+                <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+                  {language === 'ar' ? 'إنشاء حساب مستخدم عادي يمكنه الإبلاغ وكسب النقاط' : language === 'ku' ? 'Çêkirina hesabek bikarhênerê hêsan ku dikare rapor bidê û xala bistîne' : 'Create a normal user account who can report issues and earn points'}
+                </p>
+                {normalFormErrors._general && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+                      <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors._general}</p>
+                    </div>
+                )}
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.fullName} *
+                    </label>
+                    <input
+                        type="text"
+                        value={normalUserForm.full_name}
+                        onChange={(e) => {
+                          setNormalUserForm({ ...normalUserForm, full_name: e.target.value });
+                          setNormalFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${normalFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={language === 'ar' ? 'محمد أحمد' : language === 'ku' ? 'Mohammad Ahmad' : 'John Doe'}
+                    />
+                    {normalFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.full_name}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userEmail} *
+                    </label>
+                    <input
+                        type="email"
+                        value={normalUserForm.email}
+                        onChange={(e) => {
+                          setNormalUserForm({ ...normalUserForm, email: e.target.value });
+                          setNormalFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${normalFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="user@example.com"
+                    />
+                    {normalFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.email}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userPhone} *
+                    </label>
+                    <input
+                        type="tel"
+                        value={normalUserForm.phone}
+                        onChange={(e) => {
+                          setNormalUserForm({ ...normalUserForm, phone: e.target.value });
+                          setNormalFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${normalFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
+                        dir="ltr"
+                    />
+                    {normalFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.phone}</p>}
+                    <p className={`mt-1 text-xs text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+                      {language === 'ar' ? 'رقم الهاتف مطلوب للمستخدمين العاديين' : language === 'ku' ? 'Hejmara telefonê ji bo bikarhênerên asayî pêwîst e' : 'Phone number is required for normal users'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.auth.password} *
+                    </label>
+                    <input
+                        type="password"
+                        value={normalUserForm.password}
+                        onChange={(e) => {
+                          setNormalUserForm({ ...normalUserForm, password: e.target.value });
+                          setNormalUserPasswordError('');
+                          setNormalFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${normalUserPasswordError || normalFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="••••••••"
+                        minLength={8}
+                    />
+                    {/* Password requirements */}
+                    <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                      <p className={`${normalUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ ٨ أحرف على الأقل' : language === 'ku' ? '✓ Herî kêm 8 tîp' : '✓ At least 8 characters'}
+                      </p>
+                      <p className={`${/[A-Z]/.test(normalUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ حرف كبير واحد على الأقل (A-Z)' : language === 'ku' ? '✓ Herî kêm yek tîpa mezin (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                      </p>
+                      <p className={`${/[a-z]/.test(normalUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ حرف صغير واحد على الأقل (a-z)' : language === 'ku' ? '✓ Herî kêm yek tîpa biçûk (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                      </p>
+                    </div>
+                    {normalUserPasswordError && (
+                        <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalUserPasswordError}</p>
+                    )}
+                  </div>
+                </div>
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowCreateNormalUserModal(false);
+                        setNormalUserForm({ email: '', password: '', full_name: '', phone: '' });
+                        setNormalUserPasswordError('');
+                        setNormalFormErrors({});
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleCreateNormalUser}
+                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  >
+                    {t.users.createUser}
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Create Admin User Modal */}
+        {showCreateAdminUserModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+                <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <Shield className="w-6 h-6 text-red-600" />
+                  {language === 'ar' ? 'إضافة مسؤول جديد' : language === 'ku' ? 'Rêveberê nû zêde bike' : 'Add New Admin'}
+                </h2>
+                <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
+                  {language === 'ar' ? 'إنشاء حساب مسؤول بصلاحيات كاملة للوصول إلى لوحة التحكم' : language === 'ku' ? 'Hesabê rêveberiyê bi gihîştina tevahî ya dashboardê çêbikê' : 'Create an admin account with full access to the dashboard'}
+                </p>
+                {adminFormErrors._general && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+                      <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors._general}</p>
+                    </div>
+                )}
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.fullName} *
+                    </label>
+                    <input
+                        type="text"
+                        value={adminUserForm.full_name}
+                        onChange={(e) => {
+                          setAdminUserForm({ ...adminUserForm, full_name: e.target.value });
+                          setAdminFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${adminFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={language === 'ar' ? 'محمد أحمد' : language === 'ku' ? 'Mohammad Ahmad' : 'John Doe'}
+                    />
+                    {adminFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.full_name}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userEmail} *
+                    </label>
+                    <input
+                        type="email"
+                        value={adminUserForm.email}
+                        onChange={(e) => {
+                          setAdminUserForm({ ...adminUserForm, email: e.target.value });
+                          setAdminFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${adminFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="admin@example.com"
+                    />
+                    {adminFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.email}</p>}
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.users.userPhone}
+                    </label>
+                    <input
+                        type="tel"
+                        value={adminUserForm.phone}
+                        onChange={(e) => {
+                          setAdminUserForm({ ...adminUserForm, phone: e.target.value });
+                          setAdminFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${adminFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
+                        dir="ltr"
+                    />
+                    {adminFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.phone}</p>}
+                    <p className={`mt-1 text-xs text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+                      {language === 'ar' ? 'رقم الهاتف اختياري للمسؤولين' : language === 'ku' ? 'Hejmara telefonê ji bo rêveberan ne pêwîst e' : 'Phone number is optional for admins'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
+                      {t.auth.password} *
+                    </label>
+                    <input
+                        type="password"
+                        value={adminUserForm.password}
+                        onChange={(e) => {
+                          setAdminUserForm({ ...adminUserForm, password: e.target.value });
+                          setAdminUserPasswordError('');
+                          setAdminFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
+                        }}
+                        className={`w-full px-4 py-2 border ${adminUserPasswordError || adminFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
+                        placeholder="••••••••"
+                        minLength={8}
+                    />
+                    {/* Password requirements */}
+                    <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
+                      <p className={`${adminUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ ٨ أحرف على الأقل' : language === 'ku' ? '✓ Herî kêm 8 tîp' : '✓ At least 8 characters'}
+                      </p>
+                      <p className={`${/[A-Z]/.test(adminUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ حرف كبير واحد على الأقل (A-Z)' : language === 'ku' ? '✓ Herî kêm yek tîpa mezin (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
+                      </p>
+                      <p className={`${/[a-z]/.test(adminUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                        {language === 'ar' ? '✓ حرف صغير واحد على الأقل (a-z)' : language === 'ku' ? '✓ Herî kêm yek tîpa biçûk (a-z)' : '✓ At least one lowercase letter (a-z)'}
+                      </p>
+                    </div>
+                    {adminUserPasswordError && (
+                        <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminUserPasswordError}</p>
+                    )}
+                  </div>
+                </div>
+                <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                      onClick={() => {
+                        setShowCreateAdminUserModal(false);
+                        setAdminUserForm({ email: '', password: '', full_name: '', phone: '' });
+                        setAdminUserPasswordError('');
+                        setAdminFormErrors({});
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                      onClick={handleCreateAdminUser}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    {t.users.createUser}
+                  </button>
+                </div>
+              </div>
+            </div>
         )}
       </div>
-      )}
-
-      {/* Award Points Modal */}
-      {showAwardModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
-              {t.users.awardPointsTo} {selectedUser.full_name}
-            </h2>
-
-            {/* Current Points & Points After Summary */}
-            <div className="flex gap-4 mb-4">
-              <div className="flex-1 bg-gray-50 rounded-lg p-3 text-center">
-                <div className="text-xs text-gray-500 mb-1">{t.users.currentPoints}</div>
-                <div className="text-xl font-bold text-gray-900">{selectedUser.total_points ?? 0}</div>
-              </div>
-              <div className="flex items-center text-gray-400 text-xl">→</div>
-              <div className={`flex-1 rounded-lg p-3 text-center ${
-                parseInt(points) < 0
-                    ? 'bg-orange-50'
-                    : points
-                      ? 'bg-green-50'
-                      : 'bg-gray-50'
-              }`}>
-                <div className="text-xs text-gray-500 mb-1">{t.users.pointsAfter}</div>
-                <div className={`text-xl font-bold ${
-                  parseInt(points) < 0
-                      ? 'text-orange-600'
-                      : points
-                        ? 'text-green-600'
-                        : 'text-gray-900'
-                }`}>
-                  {points ? Math.max(0, (selectedUser.total_points ?? 0) + parseInt(points)) : selectedUser.total_points ?? 0}
-                </div>
-              </div>
-            </div>
-
-            {/* Info if deduction exceeds current points */}
-            {points && (selectedUser.total_points ?? 0) + parseInt(points) < 0 && (
-              <div className="mb-4 p-2 bg-orange-50 border border-orange-200 rounded-lg text-orange-600 text-sm text-center">
-                ℹ️ {isRTL ? 'سيتم خصم النقاط المتاحة فقط - النتيجة ستكون 0' : 'Only available points will be deducted - result will be 0'}
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userPoints}
-                </label>
-                <input
-                  type="number"
-                  value={points}
-                  onChange={(e) => setPoints(e.target.value)}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={t.users.pointsPlaceholder}
-                />
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.reports.reportDescription}
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  rows={3}
-                  placeholder={t.users.descriptionPlaceholder}
-                />
-              </div>
-            </div>
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowAwardModal(false);
-                  setPoints('');
-                  setDescription('');
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleAwardPoints}
-                className="flex-1 px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-800"
-              >
-                {parseInt(points) < 0 ? (isRTL ? 'خصم نقاط' : 'Deduct Points') : t.users.awardPoints}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit User Modal */}
-      {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>
-              {t.users.editUser}: {selectedUser.full_name}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.fullName}
-                </label>
-                <input
-                  type="text"
-                  value={editForm.full_name}
-                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                />
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userEmail}
-                </label>
-                <input
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                />
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.role}
-                </label>
-                <select
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                >
-                  <option value="USER">{t.users.roles.user}</option>
-                  <option value="COMPANY">{t.users.roles.company}</option>
-                  <option value="GOVERNMENT">{t.users.roles.government}</option>
-                  <option value="ADMIN">{t.users.roles.admin}</option>
-                </select>
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.common.status}
-                </label>
-                <select
-                  value={editForm.status}
-                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                >
-                  <option value="ACTIVE">{t.users.userStatuses.active}</option>
-                  <option value="SUSPENDED">{t.users.userStatuses.suspended}</option>
-                  <option value="BANNED">{t.users.userStatuses.banned}</option>
-                </select>
-              </div>
-            </div>
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
-              >
-                {t.users.saveChanges}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-red-600 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.users.deleteUser}</h2>
-            <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
-              {isRTL ? 'هل أنت متأكد من نقل' : 'Are you sure you want to move'} <strong>{selectedUser.full_name}</strong> {isRTL ? 'إلى سلة المحذوفات؟' : 'to trash?'}
-            </p>
-            <p className={`text-sm text-gray-500 mb-6 ${isRTL ? 'text-right' : ''}`}>
-              {isRTL ? 'يمكنك استعادة المستخدم لاحقاً من سلة المحذوفات.' : 'You can restore the user later from trash.'}
-            </p>
-            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setSelectedUser(null);
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                {isRTL ? 'نقل للمحذوفات' : 'Move to Trash'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Restore User Modal */}
-      {showRestoreModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-green-600 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-              <RotateCcw className="w-6 h-6" />
-              {isRTL ? 'استعادة المستخدم' : 'Restore User'}
-            </h2>
-            <p className={`text-gray-700 mb-6 ${isRTL ? 'text-right' : ''}`}>
-              {isRTL ? 'هل تريد استعادة' : 'Do you want to restore'} <strong>{selectedUser.full_name}</strong>?
-            </p>
-            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowRestoreModal(false);
-                  setSelectedUser(null);
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleRestore}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                {isRTL ? 'استعادة' : 'Restore'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Permanent Delete Modal */}
-      {showPermanentDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-red-600 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-              <Trash2 className="w-6 h-6" />
-              {isRTL ? 'حذف نهائي' : 'Permanent Delete'}
-            </h2>
-            <p className={`text-gray-700 mb-4 ${isRTL ? 'text-right' : ''}`}>
-              {isRTL ? 'هل أنت متأكد من حذف' : 'Are you sure you want to permanently delete'} <strong>{selectedUser.full_name}</strong>?
-            </p>
-            <p className={`text-sm text-red-500 font-medium mb-6 p-3 bg-red-50 rounded-lg ${isRTL ? 'text-right' : ''}`}>
-              ⚠️ {isRTL ? 'هذا الإجراء لا يمكن التراجع عنه! سيتم حذف جميع بيانات المستخدم نهائياً.' : 'This action cannot be undone! All user data will be permanently deleted.'}
-            </p>
-            <div className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowPermanentDeleteModal(false);
-                  setSelectedUser(null);
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handlePermanentDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                {isRTL ? 'حذف نهائي' : 'Delete Forever'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Reset Password Modal */}
-      {showResetPasswordModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-              <KeyRound className="w-6 h-6 text-orange-600" />
-              {isRTL ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
-            </h2>
-            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
-              {isRTL 
-                ? `إعادة تعيين كلمة المرور للمستخدم: ${selectedUser.full_name}` 
-                : `Reset password for user: ${selectedUser.full_name}`}
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {isRTL ? 'كلمة المرور الجديدة' : 'New Password'} *
-                </label>
-                <input
-                  type="password"
-                  value={resetPasswordForm.newPassword}
-                  onChange={(e) => {
-                    setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value });
-                    setResetPasswordError('');
-                  }}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="********"
-                />
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {isRTL ? 'تأكيد كلمة المرور' : 'Confirm Password'} *
-                </label>
-                <input
-                  type="password"
-                  value={resetPasswordForm.confirmPassword}
-                  onChange={(e) => {
-                    setResetPasswordForm({ ...resetPasswordForm, confirmPassword: e.target.value });
-                    setResetPasswordError('');
-                  }}
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="********"
-                />
-              </div>
-              {resetPasswordError && (
-                <p className={`text-red-500 text-sm ${isRTL ? 'text-right' : ''}`}>{resetPasswordError}</p>
-              )}
-              {/* Password requirements */}
-              <div className={`text-xs text-gray-500 space-y-1 ${isRTL ? 'text-right' : ''}`}>
-                <p className={resetPasswordForm.newPassword.length >= 8 ? 'text-green-600' : ''}>
-                  {isRTL ? '• 8 أحرف على الأقل' : '• At least 8 characters'}
-                </p>
-                <p className={/[A-Z]/.test(resetPasswordForm.newPassword) ? 'text-green-600' : ''}>
-                  {isRTL ? '• حرف كبير واحد على الأقل' : '• At least one uppercase letter'}
-                </p>
-                <p className={/[a-z]/.test(resetPasswordForm.newPassword) ? 'text-green-600' : ''}>
-                  {isRTL ? '• حرف صغير واحد على الأقل' : '• At least one lowercase letter'}
-                </p>
-              </div>
-            </div>
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowResetPasswordModal(false);
-                  setResetPasswordForm({ newPassword: '', confirmPassword: '' });
-                  setResetPasswordError('');
-                  setSelectedUser(null);
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleResetPassword}
-                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-              >
-                {isRTL ? 'إعادة تعيين' : 'Reset Password'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Company User Modal */}
-      {showCreateCompanyUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-              <Building2 className="w-6 h-6 text-primary" />
-              {t.users.createCompanyUser}
-            </h2>
-            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
-              {t.users.createCompanyUserDesc}
-            </p>
-            {companyFormErrors._general && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
-                <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors._general}</p>
-              </div>
-            )}
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.fullName} *
-                </label>
-                <input
-                  type="text"
-                  value={companyUserForm.full_name}
-                  onChange={(e) => {
-                    setCompanyUserForm({ ...companyUserForm, full_name: e.target.value });
-                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${companyFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="John Doe"
-                />
-                {companyFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.full_name}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userEmail} *
-                </label>
-                <input
-                  type="email"
-                  value={companyUserForm.email}
-                  onChange={(e) => {
-                    setCompanyUserForm({ ...companyUserForm, email: e.target.value });
-                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${companyFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="user@company.com"
-                />
-                {companyFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.email}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userPhone}
-                </label>
-                <input
-                  type="tel"
-                  value={companyUserForm.phone_number}
-                  onChange={(e) => {
-                    setCompanyUserForm({ ...companyUserForm, phone_number: e.target.value });
-                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.phone_number; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${companyFormErrors.phone_number ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
-                  dir="ltr"
-                />
-                {companyFormErrors.phone_number && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.phone_number}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.auth.password} *
-                </label>
-                <input
-                  type="password"
-                  value={companyUserForm.password}
-                  onChange={(e) => {
-                    setCompanyUserForm({ ...companyUserForm, password: e.target.value });
-                    setPasswordError('');
-                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${passwordError || companyFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="••••••••"
-                  minLength={8}
-                />
-                {/* Password requirements */}
-                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
-                  <p className={`${companyUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
-                  </p>
-                  <p className={`${/[A-Z]/.test(companyUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
-                  </p>
-                  <p className={`${/[a-z]/.test(companyUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
-                  </p>
-                </div>
-                {passwordError && (
-                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{passwordError}</p>
-                )}
-                {/* Note about password change on first login */}
-                <p className={`mt-2 text-xs text-blue-600 ${isRTL ? 'text-right' : ''}`}>
-                  ℹ️ {t.users.mustChangePasswordNote}
-                </p>
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.company} *
-                </label>
-                <select
-                  value={companyUserForm.company_id}
-                  onChange={(e) => {
-                    setCompanyUserForm({ ...companyUserForm, company_id: e.target.value });
-                    setCompanyFormErrors((prev) => { const n = {...prev}; delete n.company_id; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${companyFormErrors.company_id ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                >
-                  <option value="">{t.users.selectCompany}</option>
-                  {companies.map((company: any) => (
-                    <option key={company.id} value={company.id}>
-                      {company.name}
-                    </option>
-                  ))}
-                </select>
-                {companyFormErrors.company_id && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{companyFormErrors.company_id}</p>}
-              </div>
-            </div>
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowCreateCompanyUserModal(false);
-                  setCompanyUserForm({ email: '', password: '', full_name: '', company_id: '', phone_number: '' });
-                  setPasswordError('');
-                  setCompanyFormErrors({});
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleCreateCompanyUser}
-                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-800"
-              >
-                {t.users.createUser}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Government User Modal */}
-      {showCreateGovernmentUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-              <Landmark className="w-6 h-6 text-green-600" />
-              {isRTL ? 'إضافة موظف حكومي' : 'Add Government Employee'}
-            </h2>
-            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
-              {isRTL 
-                ? 'إنشاء حساب موظف حكومي للوصول إلى البلاغات والخريطة' 
-                : 'Create a government employee account with access to reports and map'}
-            </p>
-            {governmentFormErrors._general && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
-                <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors._general}</p>
-              </div>
-            )}
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.fullName} *
-                </label>
-                <input
-                  type="text"
-                  value={governmentUserForm.full_name}
-                  onChange={(e) => {
-                    setGovernmentUserForm({ ...governmentUserForm, full_name: e.target.value });
-                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${governmentFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
-                />
-                {governmentFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.full_name}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userEmail} *
-                </label>
-                <input
-                  type="email"
-                  value={governmentUserForm.email}
-                  onChange={(e) => {
-                    setGovernmentUserForm({ ...governmentUserForm, email: e.target.value });
-                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${governmentFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="user@gov.sa"
-                />
-                {governmentFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.email}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userPhone}
-                </label>
-                <input
-                  type="tel"
-                  value={governmentUserForm.phone}
-                  onChange={(e) => {
-                    setGovernmentUserForm({ ...governmentUserForm, phone: e.target.value });
-                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${governmentFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
-                  dir="ltr"
-                />
-                {governmentFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.phone}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {isRTL ? 'المدينة' : 'City'} *
-                </label>
-                <input
-                  type="text"
-                  value={governmentUserForm.city}
-                  onChange={(e) => {
-                    setGovernmentUserForm({ ...governmentUserForm, city: e.target.value });
-                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.city; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${governmentFormErrors.city ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? 'الرياض' : 'Riyadh'}
-                />
-                {governmentFormErrors.city && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.city}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {isRTL ? 'الحي' : 'District'} *
-                </label>
-                <input
-                  type="text"
-                  value={governmentUserForm.district}
-                  onChange={(e) => {
-                    setGovernmentUserForm({ ...governmentUserForm, district: e.target.value });
-                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.district; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${governmentFormErrors.district ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? 'العليا' : 'Al Olaya'}
-                />
-                {governmentFormErrors.district && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.district}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {isRTL ? 'المسمى الوظيفي' : 'Job Description'} *
-                </label>
-                <input
-                  type="text"
-                  value={governmentUserForm.job_description}
-                  onChange={(e) => {
-                    setGovernmentUserForm({ ...governmentUserForm, job_description: e.target.value });
-                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.job_description; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${governmentFormErrors.job_description ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? 'مراقب بلدي' : 'Municipal Inspector'}
-                />
-                {governmentFormErrors.job_description && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentFormErrors.job_description}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.auth.password} *
-                </label>
-                <input
-                  type="password"
-                  value={governmentUserForm.password}
-                  onChange={(e) => {
-                    setGovernmentUserForm({ ...governmentUserForm, password: e.target.value });
-                    setGovernmentPasswordError('');
-                    setGovernmentFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${governmentPasswordError || governmentFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="••••••••"
-                  minLength={8}
-                />
-                {/* Password requirements */}
-                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
-                  <p className={`${governmentUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
-                  </p>
-                  <p className={`${/[A-Z]/.test(governmentUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
-                  </p>
-                  <p className={`${/[a-z]/.test(governmentUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
-                  </p>
-                </div>
-                {governmentPasswordError && (
-                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{governmentPasswordError}</p>
-                )}
-                {/* Note about password change on first login */}
-                <p className={`mt-2 text-xs text-blue-600 ${isRTL ? 'text-right' : ''}`}>
-                  ℹ️ {t.users.mustChangePasswordNote}
-                </p>
-              </div>
-            </div>
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowCreateGovernmentUserModal(false);
-                  setGovernmentUserForm({ email: '', password: '', full_name: '', phone: '', city: '', district: '', job_description: '' });
-                  setGovernmentPasswordError('');
-                  setGovernmentFormErrors({});
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleCreateGovernmentUser}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                {t.users.createUser}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Normal User Modal */}
-      {showCreateNormalUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-              <UserPlus className="w-6 h-6 text-purple-600" />
-              {isRTL ? 'إضافة مستخدم جديد' : 'Add New User'}
-            </h2>
-            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
-              {isRTL 
-                ? 'إنشاء حساب مستخدم عادي يمكنه الإبلاغ وكسب النقاط' 
-                : 'Create a normal user account who can report issues and earn points'}
-            </p>
-            {normalFormErrors._general && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
-                <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors._general}</p>
-              </div>
-            )}
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.fullName} *
-                </label>
-                <input
-                  type="text"
-                  value={normalUserForm.full_name}
-                  onChange={(e) => {
-                    setNormalUserForm({ ...normalUserForm, full_name: e.target.value });
-                    setNormalFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${normalFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
-                />
-                {normalFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.full_name}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userEmail} *
-                </label>
-                <input
-                  type="email"
-                  value={normalUserForm.email}
-                  onChange={(e) => {
-                    setNormalUserForm({ ...normalUserForm, email: e.target.value });
-                    setNormalFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${normalFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="user@example.com"
-                />
-                {normalFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.email}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userPhone} *
-                </label>
-                <input
-                  type="tel"
-                  value={normalUserForm.phone}
-                  onChange={(e) => {
-                    setNormalUserForm({ ...normalUserForm, phone: e.target.value });
-                    setNormalFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${normalFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
-                  dir="ltr"
-                />
-                {normalFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalFormErrors.phone}</p>}
-                <p className={`mt-1 text-xs text-gray-500 ${isRTL ? 'text-right' : ''}`}>
-                  {isRTL ? 'رقم الهاتف مطلوب للمستخدمين العاديين' : 'Phone number is required for normal users'}
-                </p>
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.auth.password} *
-                </label>
-                <input
-                  type="password"
-                  value={normalUserForm.password}
-                  onChange={(e) => {
-                    setNormalUserForm({ ...normalUserForm, password: e.target.value });
-                    setNormalUserPasswordError('');
-                    setNormalFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${normalUserPasswordError || normalFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="••••••••"
-                  minLength={8}
-                />
-                {/* Password requirements */}
-                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
-                  <p className={`${normalUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
-                  </p>
-                  <p className={`${/[A-Z]/.test(normalUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
-                  </p>
-                  <p className={`${/[a-z]/.test(normalUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
-                  </p>
-                </div>
-                {normalUserPasswordError && (
-                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{normalUserPasswordError}</p>
-                )}
-              </div>
-            </div>
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowCreateNormalUserModal(false);
-                  setNormalUserForm({ email: '', password: '', full_name: '', phone: '' });
-                  setNormalUserPasswordError('');
-                  setNormalFormErrors({});
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleCreateNormalUser}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-              >
-                {t.users.createUser}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Admin User Modal */}
-      {showCreateAdminUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-            <h2 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-              <Shield className="w-6 h-6 text-red-600" />
-              {isRTL ? 'إضافة مسؤول جديد' : 'Add New Admin'}
-            </h2>
-            <p className={`text-gray-600 text-sm mb-4 ${isRTL ? 'text-right' : ''}`}>
-              {isRTL 
-                ? 'إنشاء حساب مسؤول بصلاحيات كاملة للوصول إلى لوحة التحكم' 
-                : 'Create an admin account with full access to the dashboard'}
-            </p>
-            {adminFormErrors._general && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg">
-                <p className={`text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors._general}</p>
-              </div>
-            )}
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.fullName} *
-                </label>
-                <input
-                  type="text"
-                  value={adminUserForm.full_name}
-                  onChange={(e) => {
-                    setAdminUserForm({ ...adminUserForm, full_name: e.target.value });
-                    setAdminFormErrors((prev) => { const n = {...prev}; delete n.full_name; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${adminFormErrors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? 'محمد أحمد' : 'John Doe'}
-                />
-                {adminFormErrors.full_name && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.full_name}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userEmail} *
-                </label>
-                <input
-                  type="email"
-                  value={adminUserForm.email}
-                  onChange={(e) => {
-                    setAdminUserForm({ ...adminUserForm, email: e.target.value });
-                    setAdminFormErrors((prev) => { const n = {...prev}; delete n.email; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${adminFormErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="admin@example.com"
-                />
-                {adminFormErrors.email && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.email}</p>}
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.users.userPhone}
-                </label>
-                <input
-                  type="tel"
-                  value={adminUserForm.phone}
-                  onChange={(e) => {
-                    setAdminUserForm({ ...adminUserForm, phone: e.target.value });
-                    setAdminFormErrors((prev) => { const n = {...prev}; delete n.phone; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${adminFormErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
-                  dir="ltr"
-                />
-                {adminFormErrors.phone && <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminFormErrors.phone}</p>}
-                <p className={`mt-1 text-xs text-gray-500 ${isRTL ? 'text-right' : ''}`}>
-                  {isRTL ? 'رقم الهاتف اختياري للمسؤولين' : 'Phone number is optional for admins'}
-                </p>
-              </div>
-              <div>
-                <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-                  {t.auth.password} *
-                </label>
-                <input
-                  type="password"
-                  value={adminUserForm.password}
-                  onChange={(e) => {
-                    setAdminUserForm({ ...adminUserForm, password: e.target.value });
-                    setAdminUserPasswordError('');
-                    setAdminFormErrors((prev) => { const n = {...prev}; delete n.password; return n; });
-                  }}
-                  className={`w-full px-4 py-2 border ${adminUserPasswordError || adminFormErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none ${isRTL ? 'text-right' : ''}`}
-                  placeholder="••••••••"
-                  minLength={8}
-                />
-                {/* Password requirements */}
-                <div className={`mt-2 text-xs ${isRTL ? 'text-right' : ''}`}>
-                  <p className={`${adminUserForm.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ ٨ أحرف على الأقل' : '✓ At least 8 characters'}
-                  </p>
-                  <p className={`${/[A-Z]/.test(adminUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ حرف كبير واحد على الأقل (A-Z)' : '✓ At least one uppercase letter (A-Z)'}
-                  </p>
-                  <p className={`${/[a-z]/.test(adminUserForm.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isRTL ? '✓ حرف صغير واحد على الأقل (a-z)' : '✓ At least one lowercase letter (a-z)'}
-                  </p>
-                </div>
-                {adminUserPasswordError && (
-                  <p className={`mt-1 text-sm text-red-600 ${isRTL ? 'text-right' : ''}`}>{adminUserPasswordError}</p>
-                )}
-              </div>
-            </div>
-            <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <button
-                onClick={() => {
-                  setShowCreateAdminUserModal(false);
-                  setAdminUserForm({ email: '', password: '', full_name: '', phone: '' });
-                  setAdminUserPasswordError('');
-                  setAdminFormErrors({});
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleCreateAdminUser}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                {t.users.createUser}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
