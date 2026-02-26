@@ -32,7 +32,7 @@ send_alert() {
 
     local full_subject="[${prefix}] [${HOSTNAME}] ${subject}"
 
-    docker exec mailserver sh -c "printf 'From: Kashif Server Monitor <${FROM_EMAIL}>\nTo: ${ALERT_EMAIL}\nSubject: ${full_subject}\nContent-Type: text/plain; charset=UTF-8\nMIME-Version: 1.0\n\n${body}\n\n---\nServer: ${SERVER_IP} (${HOSTNAME})\nTime: $(date "+%Y-%m-%d %H:%M:%S %Z")\nMonitor: Kashif Security Monitor v1.0\n' | sendmail -f ${FROM_EMAIL} ${ALERT_EMAIL}" 2>/dev/null
+    docker exec mailserver sh -c "printf 'From: Kashif Server Monitor <${FROM_EMAIL}>\nTo: ${ALERT_EMAIL}\nSubject: ${full_subject}\nContent-Type: text/plain; charset=UTF-8\nMIME-Version: 1.0\n\n${body}\n\n---\nServer: ${SERVER_IP} (${HOSTNAME})\nTime: $(date "+%Y-%m-%d %H:%M:%S %Z")\nMonitor: Kashif Security Monitor v2.0\n' | sendmail -f ${FROM_EMAIL} ${ALERT_EMAIL}" 2>/dev/null
 
     log "ALERT SENT: [${priority}] ${subject}"
 }
