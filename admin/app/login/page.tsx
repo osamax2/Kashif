@@ -8,7 +8,7 @@ import { FormEvent, useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -110,7 +110,13 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          <p>{isRTL ? 'وصول المشرفين فقط' : 'Admin access only'}</p>
+          <p>
+            {language === 'ku'
+                ? 'Tenê ji bo rêveberan'
+                : isRTL
+                    ? 'وصول المشرفين فقط'
+                    : 'Admin access only'}
+          </p>
         </div>
       </div>
     </div>

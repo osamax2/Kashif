@@ -310,7 +310,7 @@ export default function CompaniesPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
                 <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.companies.addCompany}</h2>
-                <CompanyForm formData={formData} setFormData={setFormData} t={t} isRTL={isRTL} />
+                <CompanyForm formData={formData} setFormData={setFormData} language={language} t={t} isRTL={isRTL} />
                 <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <button
                       onClick={() => {
@@ -337,7 +337,7 @@ export default function CompaniesPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
                 <h2 className={`text-xl font-bold text-gray-900 mb-4 ${isRTL ? 'text-right' : ''}`}>{t.companies.editCompany}</h2>
-                <CompanyForm formData={formData} setFormData={setFormData} t={t} isRTL={isRTL} />
+                <CompanyForm formData={formData} setFormData={setFormData} language={language} t={t} isRTL={isRTL} />
                 <div className={`flex gap-3 mt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <button
                       onClick={() => {
