@@ -488,7 +488,7 @@ export default function ReportsPage() {
   const getCategoryName = (categoryId: number) => {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return 'Unknown';
-    return language === 'ku' ? (category.name_ku || category.name) : isRTL ? (category.name_ar || category.name) : category.name;
+    return isRTL ? (category.name_ar || category.name) : category.name;
   };
 
   const [exporting, setExporting] = useState(false);
@@ -658,7 +658,7 @@ export default function ReportsPage() {
                 <option value="ALL">{language === 'ar' ? 'جميع الفئات' : language === 'ku' ? 'Hemû Kategorî' : 'All Categories'}</option>
                 {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
-                      {language === 'ku' ? cat.name_ku || cat.name : isRTL ? cat.name_ar || cat.name : cat.name}
+                      {isRTL ? cat.name_ar || cat.name : cat.name}
                     </option>
                 ))}
               </select>
@@ -866,7 +866,7 @@ export default function ReportsPage() {
                   {category && (
                       <div className={`mb-3 flex items-center gap-2 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                  {language === 'ku' ? category.name_ku || category.name : isRTL ? category.name_ar || category.name : category.name}
+                  {isRTL ? category.name_ar || category.name : category.name}
                 </span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(report.severity_id)}`}>
                   {getSeverityIcon(report.severity_id)} {getSeverityLabel(report.severity_id)}
@@ -1378,7 +1378,7 @@ export default function ReportsPage() {
                                 {category && (
                                     <div className={`mb-2 ${isRTL ? 'text-right' : ''}`}>
                             <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
-                              {language === 'ku' ? category.name_ku || category.name : isRTL ? category.name_ar || category.name : category.name}
+                              {isRTL ? category.name_ar || category.name : category.name}
                             </span>
                                     </div>
                                 )}
