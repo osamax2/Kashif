@@ -323,7 +323,7 @@ export default function ReportCategoriesPage() {
                         value={formData.name_ar}
                         onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
                         className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${isRTL ? 'text-right' : ''}`}
-                        placeholder={language === 'ar' ? 'مثال: حفرة' : language === 'ku' ? 'Nîmona: Çalak' : 'e.g., حفرة'}
+                        placeholder={language === 'ar' ? 'مثال: حفرة' : language === 'ku' ? 'Nîmona: حفرة' : 'e.g., حفرة'}
                         dir="rtl"
                     />
                   </div>
@@ -336,7 +336,7 @@ export default function ReportCategoriesPage() {
                         value={formData.name_ku}
                         onChange={(e) => setFormData({ ...formData, name_ku: e.target.value })}
                         className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
-                        placeholder={language === 'ar' ? 'اسم الفئة بالكردي' : language === 'ku' ? 'Mînak: Çal' : 'e.g., Navê kategoriyê bi Kurdî'}
+                        placeholder={language === 'ar' ? 'اسم الفئة بالكردي' : language === 'ku' ? 'Nîmona: Çalak' : 'e.g., Navê kategoriyê bi Kurdî'}
                     />
                   </div>
                   <div>
