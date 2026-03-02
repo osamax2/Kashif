@@ -58,6 +58,7 @@ def health_check_detailed():
 
     # Check database
     start = time.time()
+    db = None
     try:
         db = next(get_db())
         db.execute(text("SELECT 1"))
@@ -65,13 +66,20 @@ def health_check_detailed():
     except Exception as e:
         checks["database"] = {"status": "unhealthy", "error": str(e)}
         overall = "unhealthy"
+    finally:
+        if db:
+            db.close()
 
-    # Check RabbitMQ
+    # Check RabbitMQ (with 5s connection timeout)
     start = time.time()
     try:
         import pika
         rabbitmq_url = os.getenv("RABBITMQ_URL", "amqp://kashif:kashif123@rabbitmq:5672/")
-        connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+        params = pika.URLParameters(rabbitmq_url)
+        params.blocked_connection_timeout = 5
+        params.socket_timeout = 5
+        params.stack_timeout = 5
+        connection = pika.BlockingConnection(params)
         connection.close()
         checks["rabbitmq"] = {"status": "healthy", "response_ms": round((time.time() - start) * 1000, 2)}
     except Exception as e:
