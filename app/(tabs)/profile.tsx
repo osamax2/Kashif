@@ -224,7 +224,11 @@ export default function ProfileScreen() {
   const changePhoto = () => {
     Alert.alert(
       t("profile.changePhoto"),
-      language === "ar" ? "اختر طريقة إضافة صورتك" : "Choose how to add your photo",
+        language === "ar"
+            ? "اختر طريقة إضافة صورتك"
+            : language === "ku"
+                ? "Rêya zêdekirina wêneyê xwe hilbijêre"
+                : "Choose how to add your photo",
       [
         { text: t("profile.takePhoto"), onPress: takePhoto },
         { text: t("profile.chooseFromGallery"), onPress: pickImage },
@@ -238,9 +242,12 @@ export default function ProfileScreen() {
     const pointText = points === 1 ? t("profile.point") : t("profile.points");
 
     // Sprache bleibt echte Sprache (isRTL)
-    const message = isRTL
-      ? `🔥 إنجازي مع كاشف!\nحصلت على ${points} ${pointText}.\nحمّل التطبيق واحصل على نقاط!\n\n${shareLink}`
-      : `🔥 My achievement with Kashif!\nI got ${points} ${pointText}.\nDownload the app and get points!\n\n${shareLink}`;
+    const message =
+        language === "ar"
+            ? `🔥 إنجازي مع كاشف!\nحصلت على ${points} ${pointText}.\nحمّل التطبيق واحصل على نقاط!\n\n${shareLink}`
+            : language === "ku"
+                ? `🔥 Serkeftina min bi Kashif re!\nMin ${points} ${pointText} wergirt.\nSepanê daxîne û xal bistîne!\n\n${shareLink}`
+                : `🔥 My achievement with Kashif!\nI got ${points} ${pointText}.\nDownload the app and get points!\n\n${shareLink}`;
 
     try {
       await Share.share({
@@ -352,10 +359,12 @@ export default function ProfileScreen() {
                       await AsyncStorage.setItem("profileImage", pendingImage);
                       setPendingImage(null);
                       Alert.alert(
-                        language === "ar" ? "تنبيه" : "Notice",
+                        language === "ar" ? "تنبيه" : language === "ku" ? "Hişyarî" : "Notice",
                         language === "ar" 
-                          ? "تم حفظ الصورة محلياً. سيتم رفعها لاحقاً." 
-                          : "Photo saved locally. It will be uploaded later."
+                          ? "تم حفظ الصورة محلياً. سيتم رفعها لاحقاً."
+                            : language === "ku"
+                               ? "Wêne bi herêmî hate tomar kirin. Paşê dê were barkirin."
+                               : "Photo saved locally. It will be uploaded later."
                       );
                     } finally {
                       setUploadingPhoto(false);

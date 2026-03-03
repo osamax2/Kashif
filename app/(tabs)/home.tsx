@@ -754,7 +754,7 @@ export default function HomeScreen() {
         const category = categories.find(c => c.id === categoryId);
         if (!category) return "📍";
 
-        const name = category.name_ar || category.name_en || category.name || "";
+        const name = category.name_ar || category.name_en || category.name_ku ||  category.name || "";
 
         if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "⚠️";
         if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "🚨";
@@ -768,10 +768,10 @@ export default function HomeScreen() {
         if (category?.color) return category.color;
 
         // Fallback colors based on category name
-        const name = category?.name_ar || category?.name_en || category?.name || "";
-        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "#22C55E"; // Green
-        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "#EF4444"; // Red
-        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "#F59E0B"; // Amber
+        const name = category?.name_ar || category?.name_en || category?.name_ku ||category?.name || "";
+        if(name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza") return "#22C55E"; // Green
+        if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("qezay")) return "#EF4444"; // Red
+        if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("Çalêk ")) return "#F59E0B"; // Amber
         return "#3B82F6"; // Default blue
     };
 
@@ -860,7 +860,7 @@ export default function HomeScreen() {
         if (!userLocation) {
             Alert.alert(
                 language === 'ar' ? 'خطأ' : language === 'ku' ? 'Şaşî' : 'Error',
-                language === 'ar' ? 'يرجى تفعيل تحديد الموقع أولاً' : language === 'ku' ? 'Ji kerema xwe peshi cihe xwe çalak bike' : 'Please enable location first'
+                language === 'ar' ? 'يرجى تفعيل تحديد الموقع أولاً' : language === 'ku' ? 'Ji kerema xwe berê cîhê xwe çalak bike' : 'Please enable location first'
             );
             setRouteMode(false);
             return;
@@ -967,6 +967,9 @@ export default function HomeScreen() {
                             });
                         } catch (kuErr) {
                             console.warn('Kurdish route audio failed:', kuErr);
+                        // 🔹 Fallback Kurdish TTS (nur falls Audio fehlschlägt)
+                        const msg = `Hişyarî: ${routeData.total_hazards} xeter li ser rêya te heye`;
+                        Speech.speak(msg, { language: 'ku-TR' });
                         }
                     } else {
                         const msg = language === 'ar'
@@ -1222,6 +1225,25 @@ export default function HomeScreen() {
                 } catch (kuErr) {
                     console.warn('Kurdish warning audio failed, falling back to Arabic TTS:', kuErr);
                     await Speech.speak('تحذير!', { language: 'ar-SA', rate: 0.9, volume: appVolume });
+                } catch (kuErr) {
+                    console.warn('Kurdish warning audio failed, falling back to Kurdish TTS:', kuErr);
+
+                    // 🔹 Kurmancî TTS fallback
+                    const kuMessage =
+                        type === 'pothole'
+                            ? 'Hişyarî, çala li pêş te ye!'
+                            : type === 'accident'
+                                ? 'Hişyarî, qezayek li pêş te heye!'
+                                : type === 'speed'
+                                    ? 'Hişyarî, radarê lezê li pêş te ye!'
+                                    : 'Hişyarî!';
+
+                    await Speech.speak(kuMessage, {
+                        language: 'ku-SY',
+                        rate: 0.9,
+                        pitch: 1,
+                        volume: appVolume,
+                    });
                 }
             } else {
                 const ttsLang = language === 'ar' ? 'ar-SA' : 'en-US';
@@ -1646,8 +1668,8 @@ export default function HomeScreen() {
                             {routeHazards.length > 0
                                 ? (language === 'ar'
                                     ? `${routeHazards.length} تحذير على الطريق`
-                                    : language === 'ku' ? `Li ser reye ${routeHazards.length} Hişyarî li ser rê` : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`)
-                                : (language === 'ar' ? 'لا توجد مخاطر على الطريق ✓' : language === 'ku' ? 'Li ser rê tu metirsi tune ye' : 'No hazards on route ✓')
+                                    : language === 'ku' ? `Li ser rê ${routeHazards.length} Hişyarî li ser rê` : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`)
+                                : (language === 'ar' ? 'لا توجد مخاطر على الطريق ✓' : language === 'ku' ? 'Li ser rê tu Metirsi tune ye' : 'No hazards on route ✓')
                             }
                         </Text>
                         <TouchableOpacity onPress={clearRoute} style={{ marginLeft: 'auto' }}>
@@ -1695,7 +1717,7 @@ export default function HomeScreen() {
                         {language === 'ar'
                             ? '📌 تم تحديد الموقع - اضغط + لإضافة بلاغ'
                             : language === 'ku'
-                                ? '📌 Cih hate diyarkirin - li + bide ji bo çêkirina raporê'
+                                ? '📌 Cihê hate diyarkirin - li + bide ji bo çêkirina raporê'
                                 : '📌 Location set - tap + to add report'}
                     </Text>
                     <Pressable
@@ -1756,12 +1778,25 @@ export default function HomeScreen() {
 
                         // Map report type to category
                         let categoryId = 1;
+
                         if (reportType === 'pothole') {
-                            categoryId = getCategoryByName('حفرة')?.id || 1;
+                            categoryId =
+                                getCategoryByName('حفرة')?.id ||
+                                getCategoryByName('çalak')?.id ||
+                                1;
+
                         } else if (reportType === 'accident') {
-                            categoryId = getCategoryByName('حادث')?.id || 2;
+                            categoryId =
+                                getCategoryByName('حادث')?.id ||
+                                getCategoryByName('qezay')?.id ||
+                                2;
+
                         } else if (reportType === 'speed') {
-                            categoryId = getCategoryByName('كاشف سرعة')?.id || 3;
+                            categoryId =
+                                getCategoryByName('كاشف سرعة')?.id ||
+                                getCategoryByName('radar leza')?.id ||
+                                getCategoryByName('leza')?.id ||
+                                3;
                         }
 
                         // Map severity to severity_id
@@ -1795,7 +1830,10 @@ export default function HomeScreen() {
                                         language === 'ar' ? '⚠️ بلاغ مشابه قريب' : language === 'ku' ? 'Raporek wekhev li nêzîk' : '⚠️ Similar Report Nearby',
                                         language === 'ar'
                                             ? `يوجد بلاغ مشابه على بعد ${distText}.\n\nهل تريد تأكيد البلاغ الموجود بدلاً من إنشاء بلاغ جديد؟`
-                                            : `A similar report exists ${distText} away.\n\nWould you like to confirm the existing report instead of creating a new one?`,
+                                            : language === 'ku'
+                                                ? `Raporek wekhev ${distText} dûr heye.\n\nTu dixwazî rapora heyî piştrast bikî li şûna çêkirina raporek nû?`
+                                                : `A similar report exists ${distText} away.\n\nWould you like to confirm the existing report instead of creating a new one?`,
+
                                         [
                                             { text: language === 'ar' ? 'إلغاء' : language === 'ku' ? 'Betal bike' : 'Cancel', style: 'cancel', onPress: () => resolve('cancel') },
                                             { text: language === 'ar' ? 'إنشاء جديد' : language === 'ku' ? 'Çêkirina Nû' : 'Create New', onPress: () => resolve('create') },
@@ -1820,7 +1858,7 @@ export default function HomeScreen() {
                                             language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? 'Hate pistrastkirin' : '✅ Confirmed',
                                             language === 'ar'
                                                 ? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
-                                                : language === 'ku' ? `Rapor #${nearest.id} hate pistrastkirin! Tê ${confirmResult.points_awarded} xal wergirtim!!` : `Report #${nearest.id} confirmed! You earned ${confirmResult.points_awarded} points!`
+                                                : language === 'ku' ? `Rapor #${nearest.id} hate piştrastkirin! Tê ${confirmResult.points_awarded} xal wergirtin!!` : `Report #${nearest.id} confirmed! You earned ${confirmResult.points_awarded} points!`
                                         );
 
                                         await loadData(locationToUse);
@@ -1830,7 +1868,7 @@ export default function HomeScreen() {
                                         const detail = confirmError?.response?.data?.detail || '';
                                         Alert.alert(
                                             language === 'ar' ? 'خطأ' : language === 'ku' ? 'Cewti' : 'Error',
-                                            detail || (language === 'ar' ? 'فشل تأكيد البلاغ' : language === 'ku' ? 'Pistrastkirina raporê têkçûn ' : 'Failed to confirm report')
+                                            detail || (language === 'ar' ? 'فشل تأكيد البلاغ' : language === 'ku' ? 'Piştrastkirin raporê têkçûn ' : 'Failed to confirm report')
                                         );
                                     }
                                     return;
@@ -1903,7 +1941,7 @@ export default function HomeScreen() {
 
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole'
-                                ? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalek li ser rê' : 'Pothole on Road')
+                                ? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk  li ser rê' : 'Pothole on Road')
                                 : data.type === 'accident'
                                     ? (language === 'ar' ? 'حادث مروري' : language === 'ku' ? 'Qezaya trafîkê' : 'Traffic Accident')
                                     : (language === 'ar' ? 'كاشف سرعة' : language === 'ku' ? 'Kameraya lezê' : 'Speed Camera'),
