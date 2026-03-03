@@ -50,22 +50,22 @@ const getPhotoUrl = (photoUrls: string | undefined): string | null => {
   if (!photoUrls) return null;
   const firstUrl = photoUrls.split(",")[0].trim();
   if (!firstUrl) return null;
-  
+
   // If already a full URL, return as is
   if (firstUrl.startsWith("http://") || firstUrl.startsWith("https://")) {
     return firstUrl;
   }
-  
+
   // If relative URL starting with /uploads/, convert to /api/reports/uploads/
   if (firstUrl.startsWith("/uploads/")) {
     return `${API_BASE_URL}/api/reports${firstUrl}`;
   }
-  
+
   // If relative URL (starts with /), prepend API base with /api/reports
   if (firstUrl.startsWith("/")) {
     return `${API_BASE_URL}/api/reports${firstUrl}`;
   }
-  
+
   // Otherwise prepend API base with /api/reports/
   return `${API_BASE_URL}/api/reports/${firstUrl}`;
 };
@@ -93,54 +93,60 @@ const getDisplayImageUrl = (report: { photo_urls?: string; ai_annotated_url?: st
 
 const getConfirmationMeta = (
   status: string
-): { icon: string; color: string; label: string; labelAr: string } => {
+): { icon: string; color: string; label: string; labelAr: string ; labelKu: string; } => {
   switch (status) {
     case "pending":
-      return { icon: "⏳", color: PENDING_COLOR, label: "Pending", labelAr: "قيد الانتظار" };
+      return { icon: "⏳", color: PENDING_COLOR, label: "Pending", labelAr: "قيد الانتظار", labelKu: "Li bendê ye" };
     case "confirmed":
-      return { icon: "✓", color: CONFIRMED_COLOR, label: "Confirmed", labelAr: "مؤكد" };
+      return { icon: "✓", color: CONFIRMED_COLOR, label: "Confirmed", labelAr: "مؤكد", labelKu: "Piştrastkirî" };
     case "expired":
-      return { icon: "✗", color: "#FF3B30", label: "Expired", labelAr: "منتهي" };
+      return { icon: "✗", color: "#FF3B30", label: "Expired", labelAr: "منتهي", labelKu: "Qediya" };
     default:
-      return { icon: "?", color: "#8E8E93", label: "Unknown", labelAr: "غير معروف" };
+      return { icon: "?", color: "#8E8E93", label: "Unknown", labelAr: "غير معروف", labelKu: "Nenas" };
   }
 };
 
 // Translation map for backend status keys → display names
-const STATUS_TRANSLATIONS: { [key: string]: { en: string; ar: string } } = {
-  "new": { en: "New", ar: "جديد" },
-  "open": { en: "Open", ar: "مفتوح" },
-  "in_progress": { en: "In Progress", ar: "قيد المعالجة" },
-  "resolved": { en: "Resolved", ar: "تم الإصلاح" },
-  "rejected": { en: "Rejected", ar: "مرفوض" },
-  "closed": { en: "Closed", ar: "مغلق" },
-  "under review": { en: "Under Review", ar: "قيد المراجعة" },
-  "being handled": { en: "In Progress", ar: "قيد المعالجة" },
-  "completed": { en: "Completed", ar: "مكتمل" },
+const STATUS_TRANSLATIONS: { [key: string]: { en: string; ar: string; ku: string } } = {
+  "new": { en: "New", ar: "جديد", ku: "Nû" },
+  "open": { en: "Open", ar: "مفتوح", ku: "Vekirî" },
+  "in_progress": { en: "In Progress", ar: "قيد المعالجة", ku: "Di pêş de" },
+  "resolved": { en: "Resolved", ar: "تم الإصلاح", ku: "Çareserkirî" },
+  "rejected": { en: "Rejected", ar: "مرفوض", ku: "Redkirî" },
+  "closed": { en: "Closed", ar: "مغلق", ku: "Girtî" },
+  "under review": { en: "Under Review", ar: "قيد المراجعة", ku: "Di nirxandinê de" },
+  "being handled": { en: "In Progress", ar: "قيد المعالجة", ku: "Di pêş de" },
+  "completed": { en: "Completed", ar: "مكتمل", ku: "Temam bû" },
 };
 
-const CATEGORY_TRANSLATIONS: { [key: string]: { en: string; ar: string } } = {
-  "infrastructure": { en: "Infrastructure", ar: "البنية التحتية" },
-  "environment": { en: "Environment", ar: "البيئة" },
-  "safety": { en: "Safety", ar: "السلامة" },
-  "pothole": { en: "Pothole", ar: "حفرة" },
-  "accident": { en: "Accident", ar: "حادث" },
-  "lighting": { en: "Lighting", ar: "إضاءة" },
-  "speed_camera": { en: "Environment", ar: "خطر بيئي" },
-  "speedcamera": { en: "Environment", ar: "خطر بيئي" },
-  "other": { en: "Other", ar: "أخرى" },
+const CATEGORY_TRANSLATIONS: { [key: string]: { en: string; ar: string; ku: string } } = {
+  "infrastructure": { en: "Infrastructure", ar: "البنية التحتية", ku: "Binyat" },
+  "environment": { en: "Environment", ar: "البيئة", ku: "Jîngeh" },
+  "safety": { en: "Safety", ar: "السلامة", ku: "Ewlehî" },
+  "pothole": { en: "Pothole", ar: "حفرة", ku: "Çala" },
+  "accident": { en: "Accident", ar: "حادث", ku: "Qezay" },
+  "lighting": { en: "Lighting", ar: "إضاءة", ku: "Ronahî" },
+  "other": { en: "Other", ar: "أخرى", ku: "Yên din" },
 };
 
-const SEVERITY_TRANSLATIONS: { [key: string]: { en: string; ar: string } } = {
-  "low": { en: "Low", ar: "منخفضة" },
-  "medium": { en: "Medium", ar: "متوسطة" },
-  "high": { en: "High", ar: "عالية" },
+const SEVERITY_TRANSLATIONS: { [key: string]: { en: string; ar: string; ku: string } } = {
+  "low": { en: "Low", ar: "منخفضة", ku: "Kêm" },
+  "medium": { en: "Medium", ar: "متوسطة", ku: "Navîn" },
+  "high": { en: "High", ar: "عالية", ku: "Bilind" },
 };
 
 const translateCategory = (name: string, language: string): string => {
   const key = name.toLowerCase().trim();
   const entry = CATEGORY_TRANSLATIONS[key];
-  if (entry) return language === "ar" ? entry.ar : entry.en;
+
+  if (entry) {
+    return language === "ar"
+        ? entry.ar
+        : language === "ku"
+            ? entry.ku
+            : entry.en;
+  }
+
   if (/[\u0600-\u06FF]/.test(name)) return name;
   return name;
 };
@@ -148,7 +154,15 @@ const translateCategory = (name: string, language: string): string => {
 const translateSeverity = (name: string, language: string): string => {
   const key = name.toLowerCase().trim();
   const entry = SEVERITY_TRANSLATIONS[key];
-  if (entry) return language === "ar" ? entry.ar : entry.en;
+
+  if (entry) {
+    return language === "ar"
+        ? entry.ar
+        : language === "ku"
+            ? entry.ku
+            : entry.en;
+  }
+
   if (/[\u0600-\u06FF]/.test(name)) return name;
   return name;
 };
@@ -156,8 +170,15 @@ const translateSeverity = (name: string, language: string): string => {
 const translateStatus = (statusName: string, language: string): string => {
   const key = statusName.toLowerCase().trim();
   const entry = STATUS_TRANSLATIONS[key];
-  if (entry) return language === "ar" ? entry.ar : entry.en;
-  // Fallback: check if it's already an Arabic name
+
+  if (entry) {
+    return language === "ar"
+        ? entry.ar
+        : language === "ku"
+            ? entry.ku
+            : entry.en;
+  }
+
   if (/[\u0600-\u06FF]/.test(statusName)) return statusName;
   return statusName;
 };
@@ -276,7 +297,7 @@ export default function ReportsScreen() {
       setLoading(true);
 
       const online = await checkConnectivity();
-      
+
       if (!online) {
         // Offline fallback: show cached user reports
         const cached = await getCachedUserReports();
@@ -301,7 +322,7 @@ export default function ReportsScreen() {
       setSeverities(severitiesData);
 
       calculateStats(reportsData, statusesData);
-      
+
       // Cache user reports for offline access
       if (reportsData.length > 0) {
         cacheUserReports(reportsData as any);
@@ -325,42 +346,35 @@ export default function ReportsScreen() {
       const statusName = (statusMap.get(report.status_id) || "").toLowerCase();
 
       if (
-        statusName.includes("مفتوح") ||
-        statusName.includes("open") ||
-        statusName.includes("new") ||
-        statusName === "مفتوح" ||
-        statusName === "open" ||
-        statusName === "new"
+          statusName.includes("مفتوح") ||
+          statusName.includes("open") ||
+          statusName.includes("new") ||
+          statusName.includes("vekirî") ||
+          statusName.includes("nû")
       ) {
         open++;
-      } else if (
-        statusName.includes("قيد المراجعة") ||
-        statusName.includes("قيد المعالجة") ||
-        statusName.includes("under review") ||
-        statusName.includes("in progress") ||
-        statusName.includes("in_progress") ||
-        statusName.includes("being handled") ||
-        statusName === "قيد المراجعة" ||
-        statusName === "قيد المعالجة" ||
-        statusName === "under review" ||
-        statusName === "in progress" ||
-        statusName === "in_progress"
+      }
+      else if (
+          statusName.includes("قيد المراجعة") ||
+          statusName.includes("قيد المعالجة") ||
+          statusName.includes("under review") ||
+          statusName.includes("in progress") ||
+          statusName.includes("in_progress") ||
+          statusName.includes("being handled") ||
+          statusName.includes("di pêş de") ||
+          statusName.includes("di nirxandinê de")
       ) {
         inProgress++;
-      } else if (
-        statusName.includes("تم الإصلاح") ||
-        statusName.includes("resolved") ||
-        statusName.includes("completed") ||
-        statusName === "تم الإصلاح" ||
-        statusName === "resolved" ||
-        statusName === "completed"
+      }
+      else if (
+          statusName.includes("تم الإصلاح") ||
+          statusName.includes("resolved") ||
+          statusName.includes("completed") ||
+          statusName.includes("çareserkirî") ||
+          statusName.includes("temam bû")
       ) {
         resolved++;
-      } else {
-        other++;
       }
-    });
-
     const total = reportsData.length || 1;
 
     setStats({
@@ -434,7 +448,7 @@ export default function ReportsScreen() {
   };
   const getCategoryName = (categoryId: number): string => {
     const cat = categories.find((c) => c.id === categoryId);
-    if (!cat) return language === "ar" ? "غير معروف" : "Unknown";
+    if (!cat) return language === "ar" ? "غير معروف" : language === "ku" ? "Nenas" : "Unknown"
     if (language === "ku" && cat.name_ku) return cat.name_ku;
     if (language === "ar" && cat.name_ar) return cat.name_ar;
     if (language !== "ar" && cat.name_en) return cat.name_en;
@@ -442,8 +456,12 @@ export default function ReportsScreen() {
   };
   const getSeverityName = (severityId: number): string => {
     const sev = severities.find((s) => s.id === severityId);
-    if (!sev) return language === "ar" ? "غير معروف" : "Unknown";
-    return translateSeverity(sev.name, language);
+    if (!sev)
+      return language === "ar"
+          ? "غير معروف"
+          : language === "ku"
+              ? "Nenas"
+              : "Unknown";    return translateSeverity(sev.name, language);
   };
 
   // Filtered reports based on search + filters
@@ -467,11 +485,18 @@ export default function ReportsScreen() {
   // ✅ Datum nach echter Sprache (nicht effectiveRTL)
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString(language === "ar" ? "ar-SY" : "en-US", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
+    return date.toLocaleDateString(
+        language === "ar"
+            ? "ar-SY"
+            : language === "ku"
+                ? "ku-SY"
+                : "en-US",
+        {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }
+    );
   };
 
   if (loading) {
@@ -583,7 +608,13 @@ export default function ReportsScreen() {
             style={[styles.searchInput, { textAlign: effectiveRTL ? 'right' : 'left' }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder={language === 'ar' ? 'ابحث في البلاغات...' : 'Search reports...'}
+            placeholder={
+              language === 'ar'
+                  ? 'ابحث في البلاغات...'
+                  : language === 'ku'
+                      ? 'Di raporan bigere...'
+                      : 'Search reports...'
+            }
             placeholderTextColor="rgba(255,255,255,0.4)"
             returnKeyType="search"
           />
@@ -607,7 +638,11 @@ export default function ReportsScreen() {
           onPress={() => setActiveCategoryFilter(null)}
         >
           <Text style={[styles.filterChipText, activeCategoryFilter === null && styles.filterChipTextActive]}>
-            {language === 'ar' ? 'الكل' : 'All'}
+            {language === 'ar'
+                ? 'الكل'
+                : language === 'ku'
+                    ? 'Hemû'
+                    : 'All'}
           </Text>
         </TouchableOpacity>
         {categories.map((cat) => (
@@ -635,7 +670,11 @@ export default function ReportsScreen() {
           onPress={() => setActiveStatusFilter(null)}
         >
           <Text style={[styles.filterChipText, activeStatusFilter === null && styles.filterChipTextActive]}>
-            {language === 'ar' ? 'كل الحالات' : 'All Statuses'}
+            {language === 'ar'
+                ? 'كل الحالات'
+                : language === 'ku'
+                    ? 'Hemû rewş'
+                    : 'All Statuses'}
           </Text>
         </TouchableOpacity>
         {statuses.map((st) => {
@@ -811,14 +850,20 @@ export default function ReportsScreen() {
                     </Text>
                     {selected.confirmation_status === "pending" && selected.user_id === user?.id && (
                       <Text style={styles.pendingHintText}>
-                        {language === "ar" ? "في انتظار تأكيد من مستخدم آخر" : "Waiting for confirmation from another user"}
+                        {language === "ar"
+                            ? "في انتظار تأكيد من مستخدم آخر"
+                            : language === "ku"
+                                ? "Li benda piştrastkirina ji bikarhênerê din"
+                                : "Waiting for confirmation from another user"}
                       </Text>
                     )}
                     {(selected.confirmation_count || 0) > 0 && (
                       <Text style={styles.confirmationCountText}>
-                        {language === "ar" 
-                          ? `تم التأكيد بواسطة ${selected.confirmation_count} مستخدم${selected.confirmation_count > 1 ? 'ين' : ''}` 
-                          : `Confirmed by ${selected.confirmation_count} user${selected.confirmation_count > 1 ? 's' : ''}`}
+                        {language === "ar"
+                            ? `تم التأكيد بواسطة ${selected.confirmation_count} مستخدم${selected.confirmation_count > 1 ? 'ين' : ''}`
+                            : language === "ku"
+                                ? `${selected.confirmation_count} bikarhêner piştrast kir`
+                                : `Confirmed by ${selected.confirmation_count} user${selected.confirmation_count > 1 ? 's' : ''}`}
                       </Text>
                     )}
                   </View>
@@ -836,7 +881,11 @@ export default function ReportsScreen() {
                     color="#FFD166" 
                   />
                   <Text style={styles.historyToggleText}>
-                    {language === "ar" ? "سجل الحالة" : "Status History"}
+                    {language === "ar"
+                        ? "لا يوجد سجل للحالة"
+                        : language === "ku"
+                            ? "Dîroka rewşê tune ye"
+                            : "No status history available"}
                   </Text>
                 </TouchableOpacity>
 
@@ -871,8 +920,11 @@ export default function ReportsScreen() {
                               </Text>
                               {oldStatusName && (
                                 <Text style={styles.historyFromText}>
-                                  {language === "ar" ? `من: ${oldStatusName}` : `From: ${oldStatusName}`}
-                                </Text>
+                                  {language === "ar"
+                                      ? `من: ${oldStatusName}`
+                                      : language === "ku"
+                                          ? `Ji: ${oldStatusName}`
+                                          : `From: ${oldStatusName}`}                                </Text>
                               )}
                               {entry.comment && (
                                 <Text style={[styles.historyComment, { textAlign: effectiveRTL ? "right" : "left" }]}>
@@ -886,7 +938,11 @@ export default function ReportsScreen() {
                       })
                     ) : (
                       <Text style={styles.noHistoryText}>
-                        {language === "ar" ? "لا يوجد سجل للحالة" : "No status history available"}
+                        {language === "ar"
+                            ? "لا يوجد سجل للحالة"
+                            : language === "ku"
+                                ? "Dîroka rewşê tune ye"
+                                : "No status history available"}
                       </Text>
                     )}
                   </View>
@@ -901,15 +957,61 @@ export default function ReportsScreen() {
                     const statusText = getStatusName(selected.status_id);
                     const lat = selected.latitude;
                     const lng = selected.longitude;
-                    const msg = `🚨 *${language === 'ar' ? 'بلاغ كاشف' : 'Kashif Report'}*\n\n📋 *${language === 'ar' ? 'العنوان' : 'Title'}:* ${title}\n📝 *${language === 'ar' ? 'الوصف' : 'Description'}:* ${desc}\n🔢 *${language === 'ar' ? 'رقم البلاغ' : 'Report #'}:* ${selected.id}\n📌 *${language === 'ar' ? 'الحالة' : 'Status'}:* ${statusText}\n\n📍 *${language === 'ar' ? 'الموقع' : 'Location'}:*\nhttps://www.google.com/maps?q=${lat},${lng}`;
+                    const msg = `🚨 *${
+                        language === 'ar'
+                            ? 'بلاغ كاشف'
+                            : language === 'ku'
+                                ? 'Raporek Kashif'
+                                : 'Kashif Report'
+                    }*\n\n📋 *${
+                        language === 'ar'
+                            ? 'العنوان'
+                            : language === 'ku'
+                                ? 'Sernav'
+                                : 'Title'
+                    }:* ${title}\n📝 *${
+                        language === 'ar'
+                            ? 'الوصف'
+                            : language === 'ku'
+                                ? 'Danasîn'
+                                : 'Description'
+                    }:* ${desc}\n🔢 *${
+                        language === 'ar'
+                            ? 'رقم البلاغ'
+                            : language === 'ku'
+                                ? 'Hejmara raporê'
+                                : 'Report #'
+                    }:* ${selected.id}\n📌 *${
+                        language === 'ar'
+                            ? 'الحالة'
+                            : language === 'ku'
+                                ? 'Rewş'
+                                : 'Status'
+                    }:* ${statusText}\n\n📍 *${
+                        language === 'ar'
+                            ? 'الموقع'
+                            : language === 'ku'
+                                ? 'Cih'
+                                : 'Location'
+                    }:*\nhttps://www.google.com/maps?q=${lat},${lng}`;
                     const url = `whatsapp://send?text=${encodeURIComponent(msg)}`;
                     Linking.openURL(url).catch(() => {
-                      Alert.alert(language === 'ar' ? 'واتساب غير مثبت على هذا الجهاز' : 'WhatsApp is not installed on this device');
+                      Alert.alert(
+                          language === 'ar'
+                              ? 'واتساب غير مثبت على هذا الجهاز'
+                              : language === 'ku'
+                                  ? 'WhatsApp li ser vê cîhazê tune ye'
+                                  : 'WhatsApp is not installed on this device'
+                      );
                     });
                   }}
                 >
                   <Text style={styles.whatsappButtonText}>
-                    {language === 'ar' ? '📱 مشاركة عبر واتساب' : '📱 Share via WhatsApp'}
+                    {language === 'ar'
+                        ? '📱 مشاركة عبر واتساب'
+                        : language === 'ku'
+                            ? '📱 Parvekirin bi WhatsApp'
+                            : '📱 Share via WhatsApp'}
                   </Text>
                 </Pressable>
 
@@ -922,7 +1024,11 @@ export default function ReportsScreen() {
                   }}
                 >
                   <Text style={styles.donateButtonText}>
-                    {language === 'ar' ? '❤️ تبرع' : '❤️ Donate'}
+                    {language === 'ar'
+                        ? '❤️ تبرع'
+                        : language === 'ku'
+                            ? '❤️ Bexş'
+                            : '❤️ Donate'}
                   </Text>
                 </Pressable>
 

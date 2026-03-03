@@ -244,12 +244,13 @@ export default function AlertScreen() {
         }
       } else {
         // Arabic or English TTS
-        const ttsMessage = language === 'ar'
-          ? 'تحذير! خطر في الأمام'
-          : 'Warning! Danger ahead';
+        const ttsMessage = language === 'ar' ? 'تحذير! خطر في الأمام' : language === 'ku' ? 'Hişyarî! Xetere li pêş e' : 'Warning! Danger ahead';
         await Speech.speak(ttsMessage, {
-          language: language === 'ar' ? 'ar-SA' : 'en-US',
-          rate: 0.9,
+          language: language === 'ar'
+              ? 'ar-SA'
+              : language === 'ku'
+                  ? 'ku-SY'
+                  : 'en-US'          rate: 0.9,
           pitch: 1,
         });
       }
@@ -260,12 +261,13 @@ export default function AlertScreen() {
         if (language === 'ku') {
           await playAndWait(getKurdishAudioFile());
         } else {
-          const ttsMessage = language === 'ar'
-            ? 'تحذير! خطر في الأمام'
-            : 'Warning! Danger ahead';
+          const ttsMessage = language === 'ar' ? 'تحذير! خطر في الأمام' : language === 'ku' ? 'Hişyarî! Xetere li pêş e' : 'Warning! Danger ahead';
           await Speech.speak(ttsMessage, {
-            language: language === 'ar' ? 'ar-SA' : 'en-US',
-            rate: 0.9,
+            language: language === 'ar'
+                ? 'ar-SA'
+                : language === 'ku'
+                    ? 'ku-SY'
+                    : 'en-US'            rate: 0.9,
             pitch: 1,
           });
         }
