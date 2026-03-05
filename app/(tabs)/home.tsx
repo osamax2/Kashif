@@ -769,7 +769,7 @@ export default function HomeScreen() {
 
         // Fallback colors based on category name
         const name = category?.name_ar || category?.name_en || category?.name_ku ||category?.name || "";
-        if(name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza") return "#22C55E"; // Green
+        if(name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza")) return "#22C55E"; // Green
         if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("qezay")) return "#EF4444"; // Red
         if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("Çalêk ")) return "#F59E0B"; // Amber
         return "#3B82F6"; // Default blue
@@ -1222,9 +1222,6 @@ export default function HomeScreen() {
                     kuWarnSound.setOnPlaybackStatusUpdate((s) => {
                         if (s.isLoaded && s.didJustFinish) kuWarnSound.unloadAsync();
                     });
-                } catch (kuErr) {
-                    console.warn('Kurdish warning audio failed, falling back to Arabic TTS:', kuErr);
-                    await Speech.speak('تحذير!', { language: 'ar-SA', rate: 0.9, volume: appVolume });
                 } catch (kuErr) {
                     console.warn('Kurdish warning audio failed, falling back to Kurdish TTS:', kuErr);
 
