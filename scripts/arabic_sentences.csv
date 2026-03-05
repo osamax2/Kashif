@@ -1,0 +1,285 @@
+﻿file,line,arabic_text,full_line
+app/(tabs)/home.tsx,759,حفرة,"if (name.includes(""حفرة"") || name.toLowerCase().includes(""pothole"")) return ""⚠️"";"
+app/(tabs)/home.tsx,760,حادث,"if (name.includes(""حادث"") || name.toLowerCase().includes(""accident"")) return ""🚨"";"
+app/(tabs)/home.tsx,761,كاشف,"if (name.includes(""كاشف"") || name.includes(""سرعة"") || name.toLowerCase().includes(""speed"")) return ""📷"";"
+app/(tabs)/home.tsx,761,سرعة,"if (name.includes(""كاشف"") || name.includes(""سرعة"") || name.toLowerCase().includes(""speed"")) return ""📷"";"
+app/(tabs)/home.tsx,772,كاشف,"if(name.includes(""كاشف"") || name.includes(""سرعة"") || name.toLowerCase().includes(""speed"") || name.toLowerCase().includes(""radar"") || name.toLowerCase().includes(""Radarê "")|| name.toLowerCase().includes(""leza"") return ""#22C55E""; // Green"
+app/(tabs)/home.tsx,772,سرعة,"if(name.includes(""كاشف"") || name.includes(""سرعة"") || name.toLowerCase().includes(""speed"") || name.toLowerCase().includes(""radar"") || name.toLowerCase().includes(""Radarê "")|| name.toLowerCase().includes(""leza"") return ""#22C55E""; // Green"
+app/(tabs)/home.tsx,773,حادث,"if (name.includes(""حادث"") || name.toLowerCase().includes(""accident"") || name.toLowerCase().includes(""qezay"")) return ""#EF4444""; // Red"
+app/(tabs)/home.tsx,774,حفرة,"if (name.includes(""حفرة"") || name.toLowerCase().includes(""pothole"") || name.toLowerCase().includes(""Çalêk "")) return ""#F59E0B""; // Amber"
+app/(tabs)/home.tsx,862,خطأ,"language === 'ar' ? 'خطأ' : language === 'ku' ? 'Şaşî' : 'Error',"
+app/(tabs)/home.tsx,863,يرجى تفعيل تحديد الموقع أولاً,language === 'ar' ? 'يرجى تفعيل تحديد الموقع أولاً' : language === 'ku' ? 'Ji kerema xwe berê cîhê xwe çalak bike' : 'Please enable location first'
+app/(tabs)/home.tsx,976,تحذير,? `تحذير: ${routeData.total_hazards} خطر على طريقك`
+app/(tabs)/home.tsx,976,خطر على طريقك,? `تحذير: ${routeData.total_hazards} خطر على طريقك`
+app/(tabs)/home.tsx,1204,تحذير,message = language === 'ar' ? 'تحذير!' : language === 'ku' ? 'Hişyariyê!' : 'Warning!';
+app/(tabs)/home.tsx,1227,تحذير,"await Speech.speak('تحذير!', { language: 'ar-SA', rate: 0.9, volume: appVolume });"
+app/(tabs)/home.tsx,1288,موقع البلاغ,title={language === 'ar' ? 'موقع البلاغ' : language === 'ku' ? 'Cihê raporê' : 'Report Location'}
+app/(tabs)/home.tsx,1323,موقعك,title={language === 'ar' ? 'موقعك' : language === 'ku' ? 'Cihê te' : 'Your Location'}
+app/(tabs)/home.tsx,1408,خطر,title={hazard.title || (language === 'ar' ? 'خطر' : language === 'ku' ? 'Metirsi' : 'Hazard')}
+app/(tabs)/home.tsx,1409,من الطريق,description={`${Math.round(hazard.distance_from_route_meters)}m ${language === 'ar' ? 'من الطريق' : language === 'ku' ? 'ji ser reye' : 'from route'}`}
+app/(tabs)/home.tsx,1447,ابحث عن موقع أو شارع,placeholder={language === 'ar' ? 'ابحث عن موقع أو شارع' : language === 'ku' ? 'Li cîh an kolanekê bigerin' : 'Search for location or street'}
+app/(tabs)/home.tsx,1548,الكل,{language === 'ar' ? 'الكل' : language === 'ku' ? 'Hemû' : 'All'}
+app/(tabs)/home.tsx,1656,جاري تحميل المسار,{language === 'ar' ? 'جاري تحميل المسار...' : language === 'ku' ? 'Rê te barkirin...' : 'Loading route...'}
+app/(tabs)/home.tsx,1670,تحذير على الطريق,? `${routeHazards.length} تحذير على الطريق`
+app/(tabs)/home.tsx,1672,لا توجد مخاطر على الطريق,: (language === 'ar' ? 'لا توجد مخاطر على الطريق ✓' : language === 'ku' ? 'Li ser rê tu Metirsi tune ye' : 'No hazards on route ✓')
+app/(tabs)/home.tsx,1709,عدد البلاغات النشطة,{language === 'ar' ? `عدد البلاغات النشطة: ${visibleMarkers.length} / ${reports.length} 📘` : language === 'ku' ? `Hejmara raporên çalak: ${visibleMarkers.length} / ${reports.length}` : `Active Reports: ${visibleMarkers.length} / ${reports.length} 📘`}
+app/(tabs)/home.tsx,1718,تم تحديد الموقع,? '📌 تم تحديد الموقع - اضغط + لإضافة بلاغ'
+app/(tabs)/home.tsx,1718,اضغط,? '📌 تم تحديد الموقع - اضغط + لإضافة بلاغ'
+app/(tabs)/home.tsx,1718,لإضافة بلاغ,? '📌 تم تحديد الموقع - اضغط + لإضافة بلاغ'
+app/(tabs)/home.tsx,1738,موقع مختار على الخريطة,? (language === 'ar' ? 'موقع مختار على الخريطة' : language === 'ku' ? 'Cihê hilbijarti li ser nexşe' : 'Selected map location')
+app/(tabs)/home.tsx,1739,الموقع التلقائي,: searchMarker?.title || (language === 'ar' ? 'الموقع التلقائي' : language === 'ku' ? 'Cihê bixweber' : 'Auto Location')
+app/(tabs)/home.tsx,1775,يرجى تفعيل تحديد الموقع أو البحث عن موقع,alert(language === 'ar' ? 'يرجى تفعيل تحديد الموقع أو البحث عن موقع' : language === 'ku' ? 'Ji kerema xwe cîhê xwe çalak  bike an li ciheke bigere' : 'Please enable location or search for a location');
+app/(tabs)/home.tsx,1784,حفرة,getCategoryByName('حفرة')?.id ||
+app/(tabs)/home.tsx,1790,حادث,getCategoryByName('حادث')?.id ||
+app/(tabs)/home.tsx,1796,كاشف سرعة,getCategoryByName('كاشف سرعة')?.id ||
+app/(tabs)/home.tsx,1824,أقل من 1 متر,? (language === 'ar' ? 'أقل من 1 متر' : language === 'ku' ? 'kemtir ji 1m' : 'less than 1m')
+app/(tabs)/home.tsx,1830,بلاغ مشابه قريب,"language === 'ar' ? '⚠️ بلاغ مشابه قريب' : language === 'ku' ? 'Raporek wekhev li nêzîk' : '⚠️ Similar Report Nearby',"
+app/(tabs)/home.tsx,1832,يوجد بلاغ مشابه على بعد,? `يوجد بلاغ مشابه على بعد ${distText}.\n\nهل تريد تأكيد البلاغ الموجود بدلاً من إنشاء بلاغ جديد؟`
+app/(tabs)/home.tsx,1832,هل تريد تأكيد البلاغ الموجود بدلاً من إنشاء بلاغ جديد؟,? `يوجد بلاغ مشابه على بعد ${distText}.\n\nهل تريد تأكيد البلاغ الموجود بدلاً من إنشاء بلاغ جديد؟`
+app/(tabs)/home.tsx,1838,إلغاء,"{ text: language === 'ar' ? 'إلغاء' : language === 'ku' ? 'Betal bike' : 'Cancel', style: 'cancel', onPress: () => resolve('cancel') },"
+app/(tabs)/home.tsx,1839,إنشاء جديد,"{ text: language === 'ar' ? 'إنشاء جديد' : language === 'ku' ? 'Çêkirina Nû' : 'Create New', onPress: () => resolve('create') },"
+app/(tabs)/home.tsx,1840,تأكيد الموجود,"{ text: language === 'ar' ? '✓ تأكيد الموجود' : language === 'ku' ? '✓ Piştrastkirina Hebûnê' : '✓ Confirm Existing', onPress: () => resolve('confirm') },"
+app/(tabs)/home.tsx,1858,تم التأكيد,"language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? 'Hate pistrastkirin' : '✅ Confirmed',"
+app/(tabs)/home.tsx,1860,تم تأكيد البلاغ,? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
+app/(tabs)/home.tsx,1860,حصلت على,? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
+app/(tabs)/home.tsx,1860,نقاط,? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
+app/(tabs)/home.tsx,1870,خطأ,"language === 'ar' ? 'خطأ' : language === 'ku' ? 'Cewti' : 'Error',"
+app/(tabs)/home.tsx,1871,فشل تأكيد البلاغ,detail || (language === 'ar' ? 'فشل تأكيد البلاغ' : language === 'ku' ? 'Piştrastkirin raporê têkçûn ' : 'Failed to confirm report')
+app/(tabs)/home.tsx,1940,بلاغ جديد,: (data.notes || (language === 'ar' ? 'بلاغ جديد' : language === 'ku' ? 'Rapora nû' : 'New Report'));
+app/(tabs)/home.tsx,1944,حفرة في الطريق,? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk  li ser rê' : 'Pothole on Road')
+app/(tabs)/home.tsx,1946,حادث مروري,? (language === 'ar' ? 'حادث مروري' : language === 'ku' ? 'Qezaya trafîkê' : 'Traffic Accident')
+app/(tabs)/home.tsx,1947,كاشف سرعة,": (language === 'ar' ? 'كاشف سرعة' : language === 'ku' ? 'Kameraya lezê' : 'Speed Camera'),"
+app/(tabs)/home.tsx,1982,حدث خطأ أثناء إرسال البلاغ,alert(language === 'ar' ? '❌ حدث خطأ أثناء إرسال البلاغ' : language === 'ku' ? '❌ Di şandina raporê de xeletiyek çêbû' : '❌ Error submitting report');
+app/(tabs)/home.tsx,2014,حفرة,{/* حفرة - Yellow */}
+app/(tabs)/home.tsx,2034,حادث,{/* حادث - Red */}
+app/(tabs)/home.tsx,2054,كاشف السرعة,{/* كاشف السرعة - Green */}
+app/(tabs)/home.tsx,2103,بلاغ,{selectedReportForDonation.title || categories.find(c => c.id === selectedReportForDonation.category_id)?.name || (language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report')}
+app/(tabs)/home.tsx,2120,تبرع,{language === 'ar' ? 'تبرع' : language === 'ku' ? 'Beşdarî kirin' : 'Donate'}
+app/(tabs)/home.tsx,2128,إغلاق,{language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}
+app/(tabs)/profile.tsx,228,اختر طريقة إضافة صورتك,"? ""اختر طريقة إضافة صورتك"""
+app/(tabs)/profile.tsx,247,إنجازي مع كاشف,? `🔥 إنجازي مع كاشف!\nحصلت على ${points} ${pointText}.\nحمّل التطبيق واحصل على نقاط!\n\n${shareLink}`
+app/(tabs)/profile.tsx,247,حصلت على,? `🔥 إنجازي مع كاشف!\nحصلت على ${points} ${pointText}.\nحمّل التطبيق واحصل على نقاط!\n\n${shareLink}`
+app/(tabs)/profile.tsx,247,حمّل التطبيق واحصل على نقاط,? `🔥 إنجازي مع كاشف!\nحصلت على ${points} ${pointText}.\nحمّل التطبيق واحصل على نقاط!\n\n${shareLink}`
+app/(tabs)/profile.tsx,362,تنبيه,"language === ""ar"" ? ""تنبيه"" : language === ""ku"" ? ""Hişyarî"" : ""Notice"","
+app/(tabs)/profile.tsx,364,تم حفظ الصورة محلياً. سيتم رفعها لاحقاً,"? ""تم حفظ الصورة محلياً. سيتم رفعها لاحقاً."""
+app/(tabs)/profile.tsx,451,مستخدم,"<Text style={styles.userName}>{user?.full_name || ""مستخدم""}</Text>"
+app/(tabs)/reports.tsx,99,قيد الانتظار,"return { icon: ""⏳"", color: PENDING_COLOR, label: ""Pending"", labelAr: ""قيد الانتظار"", labelKu: ""Li bendê ye"" };"
+app/(tabs)/reports.tsx,101,مؤكد,"return { icon: ""✓"", color: CONFIRMED_COLOR, label: ""Confirmed"", labelAr: ""مؤكد"", labelKu: ""Piştrastkirî"" };"
+app/(tabs)/reports.tsx,103,منتهي,"return { icon: ""✗"", color: ""#FF3B30"", label: ""Expired"", labelAr: ""منتهي"", labelKu: ""Qediya"" };"
+app/(tabs)/reports.tsx,105,غير معروف,"return { icon: ""?"", color: ""#8E8E93"", label: ""Unknown"", labelAr: ""غير معروف"", labelKu: ""Nenas"" };"
+app/(tabs)/reports.tsx,111,جديد,"""new"": { en: ""New"", ar: ""جديد"", ku: ""Nû"" },"
+app/(tabs)/reports.tsx,112,مفتوح,"""open"": { en: ""Open"", ar: ""مفتوح"", ku: ""Vekirî"" },"
+app/(tabs)/reports.tsx,113,قيد المعالجة,"""in_progress"": { en: ""In Progress"", ar: ""قيد المعالجة"", ku: ""Di pêş de"" },"
+app/(tabs)/reports.tsx,114,تم الإصلاح,"""resolved"": { en: ""Resolved"", ar: ""تم الإصلاح"", ku: ""Çareserkirî"" },"
+app/(tabs)/reports.tsx,115,مرفوض,"""rejected"": { en: ""Rejected"", ar: ""مرفوض"", ku: ""Redkirî"" },"
+app/(tabs)/reports.tsx,116,مغلق,"""closed"": { en: ""Closed"", ar: ""مغلق"", ku: ""Girtî"" },"
+app/(tabs)/reports.tsx,117,قيد المراجعة,"""under review"": { en: ""Under Review"", ar: ""قيد المراجعة"", ku: ""Di nirxandinê de"" },"
+app/(tabs)/reports.tsx,118,قيد المعالجة,"""being handled"": { en: ""In Progress"", ar: ""قيد المعالجة"", ku: ""Di pêş de"" },"
+app/(tabs)/reports.tsx,119,مكتمل,"""completed"": { en: ""Completed"", ar: ""مكتمل"", ku: ""Temam bû"" },"
+app/(tabs)/reports.tsx,123,البنية التحتية,"""infrastructure"": { en: ""Infrastructure"", ar: ""البنية التحتية"", ku: ""Binyat"" },"
+app/(tabs)/reports.tsx,124,البيئة,"""environment"": { en: ""Environment"", ar: ""البيئة"", ku: ""Jîngeh"" },"
+app/(tabs)/reports.tsx,125,السلامة,"""safety"": { en: ""Safety"", ar: ""السلامة"", ku: ""Ewlehî"" },"
+app/(tabs)/reports.tsx,126,حفرة,"""pothole"": { en: ""Pothole"", ar: ""حفرة"", ku: ""Çala"" },"
+app/(tabs)/reports.tsx,127,حادث,"""accident"": { en: ""Accident"", ar: ""حادث"", ku: ""Qezay"" },"
+app/(tabs)/reports.tsx,128,إضاءة,"""lighting"": { en: ""Lighting"", ar: ""إضاءة"", ku: ""Ronahî"" },"
+app/(tabs)/reports.tsx,129,أخرى,"""other"": { en: ""Other"", ar: ""أخرى"", ku: ""Yên din"" },"
+app/(tabs)/reports.tsx,133,منخفضة,"""low"": { en: ""Low"", ar: ""منخفضة"", ku: ""Kêm"" },"
+app/(tabs)/reports.tsx,134,متوسطة,"""medium"": { en: ""Medium"", ar: ""متوسطة"", ku: ""Navîn"" },"
+app/(tabs)/reports.tsx,135,عالية,"""high"": { en: ""High"", ar: ""عالية"", ku: ""Bilind"" },"
+app/(tabs)/reports.tsx,190,جديد,"""جديد"": { icon: ""🔍"", color: ""#4DA3FF"" },"
+app/(tabs)/reports.tsx,191,مفتوح,"""مفتوح"": { icon: ""🔍"", color: ""#4DA3FF"" },"
+app/(tabs)/reports.tsx,193,قيد المراجعة,"""قيد المراجعة"": { icon: ""⏳"", color: ""#FFD166"" },"
+app/(tabs)/reports.tsx,197,قيد المعالجة,"""قيد المعالجة"": { icon: ""🔧"", color: ""#FF9500"" },"
+app/(tabs)/reports.tsx,200,تم الإصلاح,"""تم الإصلاح"": { icon: ""✔"", color: ""#4CD964"" },"
+app/(tabs)/reports.tsx,201,مكتمل,"""مكتمل"": { icon: ""✔"", color: ""#4CD964"" },"
+app/(tabs)/reports.tsx,203,مرفوض,"""مرفوض"": { icon: ""✖"", color: ""#FF3B30"" },"
+app/(tabs)/reports.tsx,205,مغلق,"""مغلق"": { icon: ""🔒"", color: ""#8E8E93"" },"
+app/(tabs)/reports.tsx,349,مفتوح,"statusName.includes(""مفتوح"") ||"
+app/(tabs)/reports.tsx,358,قيد المراجعة,"statusName.includes(""قيد المراجعة"") ||"
+app/(tabs)/reports.tsx,359,قيد المعالجة,"statusName.includes(""قيد المعالجة"") ||"
+app/(tabs)/reports.tsx,370,تم الإصلاح,"statusName.includes(""تم الإصلاح"") ||"
+app/(tabs)/reports.tsx,446,غير معروف,"const raw = statuses.find((s) => s.id === statusId)?.name || ""غير معروف"";"
+app/(tabs)/reports.tsx,451,غير معروف,"if (!cat) return language === ""ar"" ? ""غير معروف"" : language === ""ku"" ? ""Nenas"" : ""Unknown"""
+app/(tabs)/reports.tsx,461,غير معروف,"? ""غير معروف"""
+app/(tabs)/reports.tsx,613,ابحث في البلاغات,? 'ابحث في البلاغات...'
+app/(tabs)/reports.tsx,642,الكل,? 'الكل'
+app/(tabs)/reports.tsx,674,كل الحالات,? 'كل الحالات'
+app/(tabs)/reports.tsx,854,في انتظار تأكيد من مستخدم آخر,"? ""في انتظار تأكيد من مستخدم آخر"""
+app/(tabs)/reports.tsx,863,تم التأكيد بواسطة,? `تم التأكيد بواسطة ${selected.confirmation_count} مستخدم${selected.confirmation_count > 1 ? 'ين' : ''}`
+app/(tabs)/reports.tsx,863,مستخدم,? `تم التأكيد بواسطة ${selected.confirmation_count} مستخدم${selected.confirmation_count > 1 ? 'ين' : ''}`
+app/(tabs)/reports.tsx,863,ين,? `تم التأكيد بواسطة ${selected.confirmation_count} مستخدم${selected.confirmation_count > 1 ? 'ين' : ''}`
+app/(tabs)/reports.tsx,885,لا يوجد سجل للحالة,"? ""لا يوجد سجل للحالة"""
+app/(tabs)/reports.tsx,924,من,? `من: ${oldStatusName}`
+app/(tabs)/reports.tsx,942,لا يوجد سجل للحالة,"? ""لا يوجد سجل للحالة"""
+app/(tabs)/reports.tsx,962,بلاغ كاشف,? 'بلاغ كاشف'
+app/(tabs)/reports.tsx,968,العنوان,? 'العنوان'
+app/(tabs)/reports.tsx,974,الوصف,? 'الوصف'
+app/(tabs)/reports.tsx,980,رقم البلاغ,? 'رقم البلاغ'
+app/(tabs)/reports.tsx,986,الحالة,? 'الحالة'
+app/(tabs)/reports.tsx,992,الموقع,? 'الموقع'
+app/(tabs)/reports.tsx,1001,واتساب غير مثبت على هذا الجهاز,? 'واتساب غير مثبت على هذا الجهاز'
+app/(tabs)/reports.tsx,1011,مشاركة عبر واتساب,? '📱 مشاركة عبر واتساب'
+app/(tabs)/reports.tsx,1028,تبرع,? '❤️ تبرع'
+app/(tabs)/settings.tsx,133,فشل الحفظ,": ""فشل الحفظ"""
+app/(tabs)/settings.tsx,185,مستخدم,"{user?.full_name || ""مستخدم""}"
+app/(tabs)/settings.tsx,292,تم إخفاء الاسم من قائمة البلاغات,": ""تم إخفاء الاسم من قائمة البلاغات"""
+app/(tabs)/settings.tsx,297,تم تفعيل الاسم في قائمة البلاغات,": ""تم تفعيل الاسم في قائمة البلاغات"";"
+app/(tabs)/settings.tsx,329,العربية,"choice === ""العربية"" || choice === t(""settings.languages.ar"")"
+app/alert-screen.tsx,53,تحذير,"title: language === 'ar' ? '⚠️ تحذير!' : language === 'ku' ? '⚠️ Hişyarî!' : '⚠️ Warning!',"
+app/alert-screen.tsx,54,حفرة في الأمام,"subtitle: language === 'ar' ? 'حفرة في الأمام' : language === 'ku' ? 'Çalêk li pêşiya te heye' : 'Pothole Ahead',"
+app/alert-screen.tsx,60,تنبيه,"title: language === 'ar' ? '🌿 تنبيه!' : language === 'ku' ? '🌿 Hişyarî!' : '🌿 Alert!',"
+app/alert-screen.tsx,61,خطر بيئي في الأمام,"subtitle: language === 'ar' ? 'خطر بيئي في الأمام' : language === 'ku' ? 'Metirsiya çevreyî li pêşiya te heye' : 'Environmental Hazard Ahead',"
+app/alert-screen.tsx,67,تحذير,"title: language === 'ar' ? '🚨 تحذير!' : language === 'ku' ? '🚨 Hişyarî!' : '🚨 Warning!',"
+app/alert-screen.tsx,68,حادث مروري في الأمام,"subtitle: language === 'ar' ? 'حادث مروري في الأمام' : language === 'ku' ? 'Qezayek li pêşiya te heye' : 'Traffic Accident Ahead',"
+app/alert-screen.tsx,74,تنبيه,"title: language === 'ar' ? '📷 تنبيه!' : language === 'ku' ? '📷 Hişyarî!' : '📷 Alert!',"
+app/alert-screen.tsx,75,كاشف سرعة في الأمام,"subtitle: language === 'ar' ? 'كاشف سرعة في الأمام' : language === 'ku' ? 'Kameraya lezê li pêşiya te heye' : 'Speed Camera Ahead',"
+app/alert-screen.tsx,81,تحذير,"title: language === 'ar' ? '💣 تحذير!' : language === 'ku' ? '💣 Hişyarî!' : '💣 Warning!',"
+app/alert-screen.tsx,82,منطقة ألغام في الأمام,"subtitle: language === 'ar' ? 'منطقة ألغام في الأمام' : language === 'ku' ? 'Devera mînan li pêşiya te heye' : 'Mine Area Ahead',"
+app/alert-screen.tsx,88,تحذير,"title: language === 'ar' ? '⚠️ تحذير!' : language === 'ku' ? '⚠️ Hişyarî!' : '⚠️ Warning!',"
+app/alert-screen.tsx,89,حفرة في الأمام,"subtitle: language === 'ar' ? 'حفرة في الأمام' : language === 'ku' ? 'Çalêk li pêşiya te heye' : 'Pothole Ahead',"
+app/alert-screen.tsx,247,تحذير! خطر في الأمام,const ttsMessage = language === 'ar' ? 'تحذير! خطر في الأمام' : language === 'ku' ? 'Hişyarî! Xetere li pêş e' : 'Warning! Danger ahead';
+app/alert-screen.tsx,264,تحذير! خطر في الأمام,const ttsMessage = language === 'ar' ? 'تحذير! خطر في الأمام' : language === 'ku' ? 'Hişyarî! Xetere li pêş e' : 'Warning! Danger ahead';
+app/alert-screen.tsx,309,فشل تأكيد البلاغ,(language === 'ar' ? 'فشل تأكيد البلاغ' : language === 'ku' ? 'Piştrastkirina raporê têk çû' : 'Failed to confirm report');
+app/alert-screen.tsx,386,م,<Text style={styles.distanceText}>{distance}{language === 'ar' ? 'م' : language === 'ku' ? 'm' : 'm'}</Text>
+app/alert-screen.tsx,389,إبطئ السرعة وكن حذراً,{language === 'ar' ? 'إبطئ السرعة وكن حذراً' : language === 'ku' ? 'Lezê kêm bike û hişyar be' : 'Slow down and be careful'}
+app/alert-screen.tsx,407,شكراً للتأكيد,{language === 'ar' ? 'شكراً للتأكيد (+20 نقطة)' : language === 'ku' ? 'Spas ji bo piştrastkirinê (+20 xal)' : 'Thanks for confirming (+20 points)'}
+app/alert-screen.tsx,407,نقطة,{language === 'ar' ? 'شكراً للتأكيد (+20 نقطة)' : language === 'ku' ? 'Spas ji bo piştrastkirinê (+20 xal)' : 'Thanks for confirming (+20 points)'}
+app/alert-screen.tsx,420,تجاهل,{language === 'ar' ? 'تجاهل' : language === 'ku' ? 'Guh nedê' : 'Ignore'}
+app/coupon-details.tsx,120,العنوان,"{language === ""ar"" ? ""العنوان"" : ""Address""}"
+app/forgot.tsx,37,الرجاء إدخال البريد الإلكتروني,"Alert.alert(t('common.error'), isRTL ? 'الرجاء إدخال البريد الإلكتروني' : 'Please enter your email');"
+app/forgot.tsx,41,الرجاء إدخال رقم الهاتف,"Alert.alert(t('common.error'), isRTL ? 'الرجاء إدخال رقم الهاتف' : 'Please enter your phone number');"
+app/forgot.tsx,51,تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني,"isRTL ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : 'Password reset link sent to your email',"
+app/forgot.tsx,65,إعادة التعيين عبر الهاتف غير متاح حالياً,isRTL ? 'إعادة التعيين عبر الهاتف غير متاح حالياً' : 'Phone reset is not available yet'
+app/forgot.tsx,70,فشل في إرسال طلب إعادة التعيين,(isRTL ? 'فشل في إرسال طلب إعادة التعيين' : 'Failed to send reset request');
+app/leaderboard.tsx,53,ترتيب الأصدقاء,"const title = isArabic ? ""ترتيب الأصدقاء"" : ""Friend Leaderboard"";"
+app/leaderboard.tsx,54,لا يوجد أصدقاء بعد. أضف شخصاً من صفحة الملف الشخصي,"const noFriendsText = isArabic ? ""لا يوجد أصدقاء بعد. أضف شخصاً من صفحة الملف الشخصي!"" : ""No friends yet. Add someone from your profile!"";"
+app/leaderboard.tsx,55,حدث خطأ أثناء تحميل الترتيب,"const errorText = isArabic ? ""حدث خطأ أثناء تحميل الترتيب"" : ""Failed to load leaderboard"";"
+app/leaderboard.tsx,56,إعادة المحاولة,"const retryText = isArabic ? ""إعادة المحاولة"" : ""Retry"";"
+app/leaderboard.tsx,57,نقطة,"const pointsLabel = isArabic ? ""نقطة"" : ""pts"";"
+app/leaderboard.tsx,58,أنت,"const youLabel = isArabic ? ""(أنت)"" : ""(You)"";"
+app/leaderboard.tsx,59,العودة للملف الشخصي,"const backLabel = isArabic ? ""العودة للملف الشخصي"" : ""Back to Profile"";"
+app/report-list.tsx,32,مفتوح,"""مفتوح"": { icon: ""🔍"", color: ""#4DA3FF"" },"
+app/report-list.tsx,33,تم الإصلاح,"""تم الإصلاح"": { icon: ""✔"", color: ""#4CD964"" },"
+app/report-list.tsx,34,قيد المراجعة,"""قيد المراجعة"": { icon: ""⏳"", color: ""#FFD166"" },"
+app/report-list.tsx,42,٣:٥٢ م,"time: ""٣:٥٢ م"","
+app/report-list.tsx,43,مفتوح,"status: ""مفتوح"","
+app/report-list.tsx,44,حفرة كبيرة في الشارع الرئيسي,"title: ""حفرة كبيرة في الشارع الرئيسي"","
+app/report-list.tsx,45,حفرة كبيرة,"short:""حفرة كبيرة"","
+app/report-list.tsx,47,حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم,"""حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم."","
+app/report-list.tsx,54,٣:٥٢ م,"time: ""٣:٥٢ م"","
+app/report-list.tsx,55,مفتوح,"status: ""مفتوح"","
+app/report-list.tsx,56,حفرة كبيرة في الشارع الرئيسي,"title: ""حفرة كبيرة في الشارع الرئيسي"","
+app/report-list.tsx,57,حفرة كبيرة,"short:""حفرة كبيرة"","
+app/report-list.tsx,59,حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم,"""حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم."","
+app/report-list.tsx,66,٣:٥٢ م,"time: ""٣:٥٢ م"","
+app/report-list.tsx,67,مفتوح,"status: ""مفتوح"","
+app/report-list.tsx,68,حفرة كبيرة في الشارع الرئيسي,"title: ""حفرة كبيرة في الشارع الرئيسي"","
+app/report-list.tsx,69,حفرة كبيرة,"short:""حفرة كبيرة"","
+app/report-list.tsx,71,حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم,"""حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم."","
+app/report-list.tsx,78,٣:٥٢ م,"time: ""٣:٥٢ م"","
+app/report-list.tsx,79,مفتوح,"status: ""مفتوح"","
+app/report-list.tsx,80,حفرة كبيرة في الشارع الرئيسي,"title: ""حفرة كبيرة في الشارع الرئيسي"","
+app/report-list.tsx,81,حفرة كبيرة,"short:""حفرة كبيرة"","
+app/report-list.tsx,83,حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم,"""حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم."","
+app/report-list.tsx,90,٣:٥٢ م,"time: ""٣:٥٢ م"","
+app/report-list.tsx,91,مفتوح,"status: ""مفتوح"","
+app/report-list.tsx,92,حفرة كبيرة في الشارع الرئيسي,"title: ""حفرة كبيرة في الشارع الرئيسي"","
+app/report-list.tsx,93,حفرة كبيرة,"short:""حفرة كبيرة"","
+app/report-list.tsx,95,حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم,"""حفرة عميقة أمام السوق، تسبب خطراً على السيارات والمشاة. تم الإبلاغ عنها صباح اليوم."","
+app/report-list.tsx,164,تفاصيل,<Text style={styles.swipeText}>ℹ️ تفاصيل</Text>
+app/report-list.tsx,178,البلاغات المفتوحة,"title=""البلاغات المفتوحة"""
+app/report-list.tsx,191,قائمة بلاغاتي,<Text style={styles.listHeaderText}>قائمة بلاغاتي</Text>
+app/report-list.tsx,244,رقم البلاغ,رقم البلاغ: {selected.id}
+app/report-list.tsx,247,التاريخ,التاريخ: {selected.date}
+app/report-list.tsx,283,بلاغ كاشف,"const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;"
+app/report-list.tsx,283,العنوان,"const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;"
+app/report-list.tsx,283,الوصف,"const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;"
+app/report-list.tsx,283,رقم البلاغ,"const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;"
+app/report-list.tsx,283,التاريخ,"const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;"
+app/report-list.tsx,283,الحالة,"const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;"
+app/report-list.tsx,283,الموقع,"const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;"
+app/report-list.tsx,286,غير مثبت على هذا الجهاز,alert('WhatsApp غير مثبت على هذا الجهاز');
+app/report-list.tsx,290,مشاركة عبر واتساب,<Text style={styles.whatsappButtonText}>مشاركة عبر واتساب</Text>
+app/report-list.tsx,301,تبرع,<Text style={styles.donateButtonText}>❤️ تبرع</Text>
+app/report-list.tsx,306,إغلاق,<Text style={styles.modalButtonText}>إغلاق</Text>
+app/reset-password.tsx,35,كلمة المرور يجب أن تكون 6 أحرف على الأقل,isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters'
+app/reset-password.tsx,43,كلمات المرور غير متطابقة,isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match'
+app/reset-password.tsx,51,رمز إعادة التعيين مفقود,isRTL ? 'رمز إعادة التعيين مفقود' : 'Reset token is missing'
+app/reset-password.tsx,61,تم تغيير كلمة المرور بنجاح,"isRTL ? 'تم تغيير كلمة المرور بنجاح' : 'Password changed successfully',"
+app/reset-password.tsx,66,فشل في تغيير كلمة المرور,(isRTL ? 'فشل في تغيير كلمة المرور' : 'Failed to reset password');
+app/verify-code.tsx,57,الرجاء إدخال الرمز الكامل,isRTL ? 'الرجاء إدخال الرمز الكامل' : 'Please enter the full code'
+app/verify-code.tsx,65,البريد الإلكتروني مفقود,isRTL ? 'البريد الإلكتروني مفقود' : 'Email is missing'
+app/verify-code.tsx,75,تم التحقق بنجاح,"isRTL ? 'تم التحقق بنجاح' : 'Verification successful',"
+app/verify-code.tsx,80,رمز التحقق غير صالح,(isRTL ? 'رمز التحقق غير صالح' : 'Invalid verification code');
+app/verify-code.tsx,95,تم إرسال رمز جديد,isRTL ? 'تم إرسال رمز جديد' : 'New code sent successfully'
+app/verify-code.tsx,99,فشل في إرسال الرمز,(isRTL ? 'فشل في إرسال الرمز' : 'Failed to send code');
+components/AudioSheet.tsx,33,إعدادات الصوت,<Text style={styles.title}>إعدادات الصوت</Text>
+components/AudioSheet.tsx,36,مستوى صوت التطبيق,<Text style={styles.label}>مستوى صوت التطبيق</Text>
+components/AudioSheet.tsx,73,النظام,<Text style={styles.modeText}>النظام</Text>
+components/AudioSheet.tsx,91,تحذيرات,<Text style={styles.modeText}>تحذيرات + الملاحة</Text>
+components/AudioSheet.tsx,91,الملاحة,<Text style={styles.modeText}>تحذيرات + الملاحة</Text>
+components/AudioSheet.tsx,110,الصوت مُفعل,"{soundEnabled ? ""الصوت مُفعل"" : ""الصوت مُغلق""}"
+components/AudioSheet.tsx,110,الصوت مُغلق,"{soundEnabled ? ""الصوت مُفعل"" : ""الصوت مُغلق""}"
+components/AudioSheet.tsx,119,إغلاق,<Text style={styles.closeText}>إغلاق</Text>
+components/ChangeModal.tsx,41,إلغاء,<Text style={styles.cancelText}>إلغاء</Text>
+components/ChangeModal.tsx,45,حفظ,<Text style={styles.saveText}>حفظ</Text>
+components/DonationModal.tsx,57,شام كاش,"name: ""شام كاش"","
+components/DonationModal.tsx,77,قريباً,"isRTL ? ""قريباً"" : ""Coming Soon"","
+components/DonationModal.tsx,79,خدمة الدفع غير متوفرة حالياً. سيتم تفعيلها قريباً,"? ""خدمة الدفع غير متوفرة حالياً. سيتم تفعيلها قريباً."""
+components/DonationModal.tsx,81,حسناً,"[{ text: isRTL ? ""حسناً"" : ""OK"" }]"
+components/DonationModal.tsx,98,تبرع لإصلاح الحفرة,"{isRTL ? ""تبرع لإصلاح الحفرة"" : ""Donate to Repair""}"
+components/DonationModal.tsx,109,بلاغ,"{report.title || (isRTL ? ""بلاغ"" : ""Report"")} #{report.id}"
+components/DonationModal.tsx,117,تكلفة الإصلاح,"{isRTL ? ""تكلفة الإصلاح:"" : ""Repair cost:""}"
+components/DonationModal.tsx,123,تم جمع,"{isRTL ? ""تم جمع:"" : ""Collected:""}"
+components/DonationModal.tsx,131,المتبقي,"{isRTL ? ""المتبقي:"" : ""Remaining:""}"
+components/DonationModal.tsx,156,لم يتم تحديد تكلفة الإصلاح بعد,"? ""لم يتم تحديد تكلفة الإصلاح بعد"""
+components/DonationModal.tsx,166,مبلغ التبرع,"{isRTL ? ""مبلغ التبرع ($)"" : ""Donation Amount ($)""}"
+components/DonationModal.tsx,191,أو أدخل مبلغ آخر,"placeholder={isRTL ? ""أو أدخل مبلغ آخر..."" : ""Or enter custom amount...""}"
+components/DonationModal.tsx,200,طريقة الدفع,"{isRTL ? ""طريقة الدفع"" : ""Payment Method""}"
+components/DonationModal.tsx,214,قريباً,"isRTL ? ""قريباً"" : ""Coming Soon"","
+components/DonationModal.tsx,216,غير متوفر حالياً,? `${method.name} غير متوفر حالياً`
+components/DonationModal.tsx,240,قريباً,"{isRTL ? ""قريباً"" : ""Soon""}"
+components/DonationModal.tsx,255,تبرع الآن,"{isRTL ? ""تبرع الآن"" : ""Donate Now""}"
+components/DonationModal.tsx,261,خدمة الدفع معطلة حالياً. سيتم تفعيلها قريباً,"? ""⚠️ خدمة الدفع معطلة حالياً. سيتم تفعيلها قريباً."""
+components/IOSActionSheet.tsx,48,إلغاء,<Text style={styles.cancelText}>إلغاء</Text>
+components/LanguageDropdown.tsx,32,العربية,"const languages = [""العربية"", ""English"", ""Deutsch"", ""Türkçe""];"
+components/LanguageDropdown.tsx,38,اللغة,<Text style={styles.label}>اللغة</Text>
+components/OnboardingTutorial.tsx,33,مرحباً بك في كاشف,"titleAr: ""مرحباً بك في كاشف!"","
+components/OnboardingTutorial.tsx,35,تطبيقك الذكي للإبلاغ عن مخاطر الطريق وتحذيرك منها أثناء القيادة,"descriptionAr: ""تطبيقك الذكي للإبلاغ عن مخاطر الطريق وتحذيرك منها أثناء القيادة"","
+components/OnboardingTutorial.tsx,42,الخريطة التفاعلية,"titleAr: ""الخريطة التفاعلية"","
+components/OnboardingTutorial.tsx,44,تصفح الخريطة لرؤية جميع البلاغات النشطة في منطقتك. النقاط الملونة تمثل أنواع مختلفة من المخاطر,"descriptionAr: ""تصفح الخريطة لرؤية جميع البلاغات النشطة في منطقتك. النقاط الملونة تمثل أنواع مختلفة من المخاطر"","
+components/OnboardingTutorial.tsx,51,إضافة بلاغ,"titleAr: ""إضافة بلاغ"","
+components/OnboardingTutorial.tsx,53,اضغط على زر,"descriptionAr: ""اضغط على زر + لإضافة بلاغ جديد. اختر نوع المخاطرة: حفرة 🕳️، حادث 🚗، أو خطر بيئي 🌿"","
+components/OnboardingTutorial.tsx,53,لإضافة بلاغ جديد. اختر نوع المخاطرة: حفرة,"descriptionAr: ""اضغط على زر + لإضافة بلاغ جديد. اختر نوع المخاطرة: حفرة 🕳️، حادث 🚗، أو خطر بيئي 🌿"","
+components/OnboardingTutorial.tsx,53,، حادث,"descriptionAr: ""اضغط على زر + لإضافة بلاغ جديد. اختر نوع المخاطرة: حفرة 🕳️، حادث 🚗، أو خطر بيئي 🌿"","
+components/OnboardingTutorial.tsx,53,، أو خطر بيئي,"descriptionAr: ""اضغط على زر + لإضافة بلاغ جديد. اختر نوع المخاطرة: حفرة 🕳️، حادث 🚗، أو خطر بيئي 🌿"","
+components/OnboardingTutorial.tsx,60,اختيار الموقع يدوياً,"titleAr: ""اختيار الموقع يدوياً"","
+components/OnboardingTutorial.tsx,62,اضغط مطولاً على أي مكان في الخريطة لوضع علامة واختيار موقع البلاغ يدوياً,"descriptionAr: ""اضغط مطولاً على أي مكان في الخريطة لوضع علامة واختيار موقع البلاغ يدوياً"","
+components/OnboardingTutorial.tsx,69,التقاط صور بالذكاء الاصطناعي,"titleAr: ""التقاط صور بالذكاء الاصطناعي"","
+components/OnboardingTutorial.tsx,71,التقط صورة للحفرة وسيقوم الذكاء الاصطناعي بتحليلها وتحديد حجمها وخطورتها تلقائياً,"descriptionAr: ""التقط صورة للحفرة وسيقوم الذكاء الاصطناعي بتحليلها وتحديد حجمها وخطورتها تلقائياً"","
+components/OnboardingTutorial.tsx,78,التنبيهات الصوتية,"titleAr: ""التنبيهات الصوتية"","
+components/OnboardingTutorial.tsx,80,اضغط على زر,"descriptionAr: ""اضغط على زر 🔔 لتفعيل التنبيهات الصوتية. ستحذرك عند الاقتراب من أي خطر على الطريق"","
+components/OnboardingTutorial.tsx,80,لتفعيل التنبيهات الصوتية. ستحذرك عند الاقتراب من أي خطر على الطريق,"descriptionAr: ""اضغط على زر 🔔 لتفعيل التنبيهات الصوتية. ستحذرك عند الاقتراب من أي خطر على الطريق"","
+components/OnboardingTutorial.tsx,87,تصفية البلاغات,"titleAr: ""تصفية البلاغات"","
+components/OnboardingTutorial.tsx,89,استخدم شريط الفئات في الأعلى لتصفية البلاغات حسب النوع: الكل، حفر، حوادث، أو بيئي,"descriptionAr: ""استخدم شريط الفئات في الأعلى لتصفية البلاغات حسب النوع: الكل، حفر، حوادث، أو بيئي"","
+components/OnboardingTutorial.tsx,96,البحث عن موقع,"titleAr: ""البحث عن موقع"","
+components/OnboardingTutorial.tsx,98,استخدم شريط البحث للعثور على أي موقع في سوريا والانتقال إليه مباشرة على الخريطة,"descriptionAr: ""استخدم شريط البحث للعثور على أي موقع في سوريا والانتقال إليه مباشرة على الخريطة"","
+components/OnboardingTutorial.tsx,105,نظام النقاط والمكافآت,"titleAr: ""نظام النقاط والمكافآت"","
+components/OnboardingTutorial.tsx,107,اكسب نقاط عند إضافة بلاغات مؤكدة! استبدل نقاطك بكوبونات وعروض حصرية,"descriptionAr: ""اكسب نقاط عند إضافة بلاغات مؤكدة! استبدل نقاطك بكوبونات وعروض حصرية"","
+components/OnboardingTutorial.tsx,114,أنت جاهز,"titleAr: ""أنت جاهز!"","
+components/OnboardingTutorial.tsx,116,ابدأ الآن بالإبلاغ عن مخاطر الطريق وساعد في جعل القيادة أكثر أماناً للجميع,"descriptionAr: ""ابدأ الآن بالإبلاغ عن مخاطر الطريق وساعد في جعل القيادة أكثر أماناً للجميع"","
+components/OnboardingTutorial.tsx,214,تخطي,{isRTL ? 'تخطي' : 'Skip'}
+components/OnboardingTutorial.tsx,278,ابدأ الآن,? (isRTL ? 'ابدأ الآن' : 'Start Now')
+components/OnboardingTutorial.tsx,279,التالي,: (isRTL ? 'التالي' : 'Next')
+components/QRCodeModal.tsx,51,رمز الكوبون,"{isRTL ? ""رمز الكوبون"" : ""Coupon Code""}"
+components/QRCodeModal.tsx,63,تم تفعيل الكوبون بنجاح,"{isRTL ? ""تم تفعيل الكوبون بنجاح!"" : ""Coupon Activated!""}"
+components/QRCodeModal.tsx,80,كود التحقق,"{isRTL ? ""كود التحقق"" : ""Verification Code""}"
+components/QRCodeModal.tsx,90,تم خصم,"? `تم خصم ${pointsSpent.toLocaleString(""ar-SA"")} نقطة`"
+components/QRCodeModal.tsx,90,نقطة,"? `تم خصم ${pointsSpent.toLocaleString(""ar-SA"")} نقطة`"
+components/QRCodeModal.tsx,100,اعرض هذا الرمز للموظف عند استخدام الكوبون,"? ""اعرض هذا الرمز للموظف عند استخدام الكوبون"""
+components/QRCodeModal.tsx,108,تم,"{isRTL ? ""تم"" : ""Done""}"
+components/ReportDialog.tsx,232,لا يوجد اتصال بالإنترنت,"isRTL ? ""لا يوجد اتصال بالإنترنت"" : ""No Internet Connection"","
+components/ReportDialog.tsx,234,تم حفظ البلاغ وسيتم إرساله تلقائياً عند الاتصال بالإنترنت,"? ""تم حفظ البلاغ وسيتم إرساله تلقائياً عند الاتصال بالإنترنت"""
+components/ReportDialog.tsx,236,حسناً,"[{ text: isRTL ? ""حسناً"" : ""OK"" }]"
+components/ReportDialog.tsx,571,م,"? ""م"""
+components/ReportDialog.tsx,574,ص,"? ""ص"""

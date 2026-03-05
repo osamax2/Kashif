@@ -250,7 +250,8 @@ export default function AlertScreen() {
               ? 'ar-SA'
               : language === 'ku'
                   ? 'ku-SY'
-                  : 'en-US'          rate: 0.9,
+                  : 'en-US',
+          rate: 0.9,
           pitch: 1,
         });
       }
@@ -267,7 +268,8 @@ export default function AlertScreen() {
                 ? 'ar-SA'
                 : language === 'ku'
                     ? 'ku-SY'
-                    : 'en-US'            rate: 0.9,
+                    : 'en-US',
+            rate: 0.9,
             pitch: 1,
           });
         }
