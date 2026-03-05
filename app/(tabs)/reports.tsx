@@ -374,7 +374,11 @@ export default function ReportsScreen() {
           statusName.includes("temam bû")
       ) {
         resolved++;
+      } else {
+        other++;
       }
+    });
+
     const total = reportsData.length || 1;
 
     setStats({
