@@ -18,8 +18,7 @@ import requests
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
 
 # Model versions on Replicate
-MIDAS_MODEL = "cjwbw/midas:a]"  # MiDaS model
-DEPTH_ANYTHING_MODEL = "cjwbw/depth-anything:latest"  # DepthAnything model
+MIDAS_MODEL = "cjwbw/midas"  # MiDaS model (primary depth estimator)
 
 # Replicate API endpoints
 REPLICATE_API_URL = "https://api.replicate.com/v1/predictions"

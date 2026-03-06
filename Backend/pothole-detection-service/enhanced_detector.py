@@ -77,7 +77,7 @@ class EnhancedPotholeDetector:
         self,
         roboflow_api_key: Optional[str] = None,
         replicate_api_token: Optional[str] = None,
-        depth_model: DepthModel = DepthModel.BOTH,
+        depth_model: DepthModel = DepthModel.MIDAS,  # Use MiDaS only for reliability
         enable_depth_estimation: bool = True,
         enable_reference_detection: bool = True,
         camera_height_m: float = 1.5
