@@ -414,6 +414,11 @@ async def analyze_image_only(
             ai_description_ar += f", المساحة: {avg_area:.0f}سم²"
             ai_description_ku += f", rûber: {avg_area:.0f}cm²"
         
+        # Add YOLOv8 attribution text
+        ai_description += "\n\n⚠️ This report was automatically created by the smart detection system (YOLOv8)"
+        ai_description_ar += "\n\n⚠️ تم إنشاء هذا التقرير تلقائياً بواسطة نظام الكشف الذكي (YOLOv8)"
+        ai_description_ku += "\n\n⚠️ Ev rapor bi awayekî otomatîk ji hêla pergala vedîtina jîr (YOLOv8) ve hatiye afirandin"
+        
         detections = [d.to_dict() for d in result.detections]
         
         return AnalyzeResponse(
