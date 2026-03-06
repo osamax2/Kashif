@@ -1887,7 +1887,7 @@ export default function HomeScreen() {
                                         );
 
                                         Alert.alert(
-                                            language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? 'Hate pistrastkirin' : '✅ Confirmed',
+                                            language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? '✅ Hate piştrastkirin' : '✅ Confirmed',
                                             language === 'ar'
                                                 ? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
                                                 : language === 'ku' ? `Rapor #${nearest.id} hate piştrastkirin! Tê ${confirmResult.points_awarded} xal wergirtin!!` : `Report #${nearest.id} confirmed! You earned ${confirmResult.points_awarded} points!`

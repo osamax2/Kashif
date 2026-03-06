@@ -62,13 +62,15 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       // Show simple alert that language changed
       Alert.alert(
-        newLang === 'ar' ? 'تم تغيير اللغة' : 'Language Changed',
+        newLang === 'ar' ? 'تم تغيير اللغة' : newLang === 'ku' ? 'Ziman hat guhertin' : 'Language Changed',
         newLang === 'ar' 
           ? 'الرجاء إغلاق التطبيق وإعادة فتحه لتطبيق التغييرات بالكامل'
+          : newLang === 'ku'
+          ? 'Ji kerema xwe sepanê bigire û ji nû ve veke da ku hemû guhertin werin sepandin'
           : 'Please close and reopen the app to apply all changes',
         [
           {
-            text: newLang === 'ar' ? 'حسناً' : 'OK',
+            text: newLang === 'ar' ? 'حسناً' : newLang === 'ku' ? 'Baş e' : 'OK',
             onPress: () => {
               // Force state update
               setLanguageState(newLang);
