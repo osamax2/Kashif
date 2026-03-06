@@ -128,12 +128,13 @@ def handle_report_status_updated(event_data):
             return
 
         # Map status IDs to human readable names (ar/en/ku)
+        # DB: 1=NEW, 2=IN_PROGRESS, 3=RESOLVED, 4=REJECTED, 5=CLOSED
         status_names = {
-            1: {"ar": "مفتوح", "en": "Open", "ku": "Vekirî"},
-            2: {"ar": "قيد المراجعة", "en": "Under Review", "ku": "Di lêkolînê de"},
-            3: {"ar": "قيد المعالجة", "en": "In Progress", "ku": "Di pêşveçûnê de"},
-            4: {"ar": "تم الإصلاح", "en": "Resolved", "ku": "Çareserkirî"},
-            5: {"ar": "مرفوض", "en": "Rejected", "ku": "Redkirî"},
+            1: {"ar": "جديد", "en": "New", "ku": "Nû"},
+            2: {"ar": "قيد المعالجة", "en": "In Progress", "ku": "Di pêş de"},
+            3: {"ar": "تم الإصلاح", "en": "Resolved", "ku": "Çareserkirî"},
+            4: {"ar": "مرفوض", "en": "Rejected", "ku": "Redkirî"},
+            5: {"ar": "مغلق", "en": "Closed", "ku": "Girtî"},
         }
         
         status_info = status_names.get(new_status_id, {"ar": f"حالة {new_status_id}", "en": f"Status {new_status_id}", "ku": f"Rewş {new_status_id}"})
