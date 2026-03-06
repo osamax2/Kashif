@@ -61,23 +61,30 @@ class PotholeDetection:
     severity: Optional[str] = None
     
     def to_dict(self):
+        def _float(v):
+            if v is None:
+                return None
+            if hasattr(v, 'item'):
+                return float(v.item())
+            return float(v)
+        
         return {
             "bbox": {
-                "x1": self.bbox.x1,
-                "y1": self.bbox.y1,
-                "x2": self.bbox.x2,
-                "y2": self.bbox.y2,
-                "width": self.bbox.width,
-                "height": self.bbox.height,
-                "area_pixels": self.bbox.area
+                "x1": int(self.bbox.x1),
+                "y1": int(self.bbox.y1),
+                "x2": int(self.bbox.x2),
+                "y2": int(self.bbox.y2),
+                "width": int(self.bbox.width),
+                "height": int(self.bbox.height),
+                "area_pixels": int(self.bbox.area)
             },
-            "confidence": round(self.confidence, 4),
-            "class_id": self.class_id,
+            "confidence": round(_float(self.confidence), 4),
+            "class_id": int(self.class_id),
             "class_name": self.class_name,
-            "estimated_width_cm": self.estimated_width_cm,
-            "estimated_height_cm": self.estimated_height_cm,
-            "estimated_depth_cm": self.estimated_depth_cm,
-            "estimated_area_cm2": self.estimated_area_cm2,
+            "estimated_width_cm": round(_float(self.estimated_width_cm), 1) if self.estimated_width_cm else None,
+            "estimated_height_cm": round(_float(self.estimated_height_cm), 1) if self.estimated_height_cm else None,
+            "estimated_depth_cm": round(_float(self.estimated_depth_cm), 1) if self.estimated_depth_cm else None,
+            "estimated_area_cm2": round(_float(self.estimated_area_cm2), 1) if self.estimated_area_cm2 else None,
             "severity": self.severity
         }
 
