@@ -21,10 +21,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك للكشف عن الحفر في الطريق أثناء القيادة",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "نحتاج إلى موقعك في الخلفية لتنبيهك عند اقترابك من حفر مُبلغ عنها",
+        "NSLocationAlwaysUsageDescription": "نحتاج إلى موقعك في الخلفية لتنبيهك عند اقترابك من حفر مُبلغ عنها",
         "UIBackgroundModes": [
-          "location",
-          "fetch",
-          "remote-notification",
           "location",
           "fetch",
           "remote-notification"
@@ -72,6 +70,16 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "We need your location in the background to alert you when approaching reported potholes.",
+          "locationWhenInUsePermission": "We need your location to detect potholes on the road while driving.",
+          "locationAlwaysPermission": "We need your location in the background to alert you when approaching reported potholes.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
       [
         "expo-splash-screen",
         {

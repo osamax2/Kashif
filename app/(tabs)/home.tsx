@@ -34,7 +34,7 @@ import {
     View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import MapView, { Heatmap, Marker, Polyline, Region, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Circle, Heatmap, Marker, Polyline, Region } from "react-native-maps";
 
 
 
@@ -743,6 +743,28 @@ export default function HomeScreen() {
             })
             .filter(Boolean) as { latitude: number; longitude: number; weight: number }[];
     }, [heatmapEnabled, reports]);
+
+    // iOS Circle-based heatmap: compute density color per point
+    const iosHeatmapCircles = useMemo(() => {
+        if (Platform.OS !== 'ios' || !heatmapEnabled || !heatmapPoints.length) return [];
+        // Count nearby points for each location to determine density
+        return heatmapPoints.map((point, index) => {
+            let nearby = 0;
+            for (const other of heatmapPoints) {
+                const dLat = point.latitude - other.latitude;
+                const dLng = point.longitude - other.longitude;
+                // ~500m radius check
+                if (dLat * dLat + dLng * dLng < 0.00002) nearby++;
+            }
+            // Map density to color: green(1) → yellow(2-3) → orange(4-6) → red(7+)
+            let fillColor: string;
+            if (nearby >= 7) fillColor = 'rgba(255, 0, 0, 0.25)';
+            else if (nearby >= 4) fillColor = 'rgba(255, 140, 0, 0.22)';
+            else if (nearby >= 2) fillColor = 'rgba(255, 255, 0, 0.20)';
+            else fillColor = 'rgba(0, 255, 0, 0.18)';
+            return { ...point, fillColor, key: `heatcircle-${index}` };
+        });
+    }, [heatmapEnabled, heatmapPoints]);
     // ─── END HEATMAP DATA ──────────────────────────────────────────────
 
     // Helper functions
@@ -1417,7 +1439,7 @@ export default function HomeScreen() {
                         );
                     })}
 
-                    {/* Heatmap Overlay - only on Android (Apple Maps doesn't support Heatmap) */}
+                    {/* Heatmap Overlay - native on Android, circle-based on iOS */}
                     {Platform.OS === 'android' && heatmapEnabled && heatmapPoints.length > 0 && (
                         <Heatmap
                             points={heatmapPoints}
@@ -1430,6 +1452,15 @@ export default function HomeScreen() {
                             }}
                         />
                     )}
+                    {Platform.OS === 'ios' && iosHeatmapCircles.map((circle) => (
+                        <Circle
+                            key={circle.key}
+                            center={{ latitude: circle.latitude, longitude: circle.longitude }}
+                            radius={150}
+                            fillColor={circle.fillColor}
+                            strokeColor="transparent"
+                        />
+                    ))}
                 </MapView>
 
             </View>
