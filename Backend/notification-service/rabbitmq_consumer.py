@@ -27,12 +27,22 @@ def handle_user_registered(event_data):
         language = event_data.get("language", "ar")
         
         if user_id:
+            title_ar = "مرحباً بك في Kashif!"
+            body_ar = "شكراً لتسجيلك. ابدأ بالإبلاغ عن المشاكل واكسب النقاط!"
+            title_en = "Welcome to Kashif!"
+            body_en = "Thanks for signing up. Start reporting road hazards and earn points!"
+            title_ku = "Bi xêr hatî Kashif!"
+            body_ku = "Spas ji bo tomarkirina te. Dest bi ragihandina metirsiyên rê bike û xalan bi dest bixe!"
             crud.create_notification(
                 db=db,
                 user_id=user_id,
-                title="مرحباً بك في Kashif!",
-                body="شكراً لتسجيلك. ابدأ بالإبلاغ عن المشاكل واكسب النقاط!",
-                notification_type="WELCOME"
+                title=title_ar,
+                body=body_ar,
+                notification_type="WELCOME",
+                title_en=title_en,
+                body_en=body_en,
+                title_ku=title_ku,
+                body_ku=body_ku
             )
             logger.info(f"Created welcome notification for user {user_id}")
         
@@ -62,22 +72,40 @@ def handle_report_created(event_data):
         report_id = event_data.get("report_id")
         
         if user_id and report_id:
+            title_ar = "تم استلام بلاغك"
+            body_ar = f"شكراً لك! تم استلام بلاغك #{report_id} وسيتم مراجعته قريباً."
+            title_en = "Report Received"
+            body_en = f"Thank you! Your report #{report_id} has been received and will be reviewed soon."
+            title_ku = "Rapora te hat wergirtin"
+            body_ku = f"Spas! Rapora te #{report_id} hat wergirtin û dê di demek nêzîk de were lêkolîn."
             notification = crud.create_notification(
                 db=db,
                 user_id=user_id,
-                title="تم استلام بلاغك",
-                body=f"شكراً لك! تم استلام بلاغك #{report_id} وسيتم مراجعته قريباً.",
+                title=title_ar,
+                body=body_ar,
                 notification_type="REPORT_UPDATE",
-                related_report_id=report_id
+                related_report_id=report_id,
+                title_en=title_en,
+                body_en=body_en,
+                title_ku=title_ku,
+                body_ku=body_ku
             )
             
             # Send push notification (respects preferences)
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
-                title="تم استلام بلاغك",
-                body=f"شكراً لك! تم استلام بلاغك #{report_id}",
-                data={"notification_id": str(notification.id), "report_id": str(report_id)},
+                title=title_ar,
+                body=body_ar,
+                data={
+                    "notification_id": str(notification.id),
+                    "report_id": str(report_id),
+                    "title_en": title_en,
+                    "body_en": body_en,
+                    "title_ku": title_ku,
+                    "body_ku": body_ku,
+                    "type": "report_created"
+                },
                 notification_type="REPORT_CREATED"
             )
         
@@ -166,21 +194,38 @@ def handle_points_awarded(event_data):
         description = event_data.get("description", "")
         
         if user_id and points:
+            title_ar = f"حصلت على {points} نقطة!"
+            body_ar = description or f"تم إضافة {points} نقطة إلى رصيدك"
+            title_en = f"You earned {points} points!"
+            body_en = f"{points} points have been added to your balance"
+            title_ku = f"Te {points} xal bi dest xist!"
+            body_ku = f"{points} xal li hesabê te hatin zêdekirin"
             notification = crud.create_notification(
                 db=db,
                 user_id=user_id,
-                title=f"حصلت على {points} نقطة!",
-                body=description or f"تم إضافة {points} نقطة إلى رصيدك",
-                notification_type="POINTS_AWARDED"
+                title=title_ar,
+                body=body_ar,
+                notification_type="POINTS_AWARDED",
+                title_en=title_en,
+                body_en=body_en,
+                title_ku=title_ku,
+                body_ku=body_ku
             )
             
             # Send push notification (respects preferences)
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
-                title=f"حصلت على {points} نقطة!",
-                body=description or f"تم إضافة {points} نقطة",
-                data={"notification_id": str(notification.id)},
+                title=title_ar,
+                body=body_ar,
+                data={
+                    "notification_id": str(notification.id),
+                    "title_en": title_en,
+                    "body_en": body_en,
+                    "title_ku": title_ku,
+                    "body_ku": body_ku,
+                    "type": "points_earned"
+                },
                 notification_type="POINTS_AWARDED"
             )
         
@@ -198,22 +243,40 @@ def handle_coupon_redeemed(event_data):
         coupon_id = event_data.get("coupon_id")
         
         if user_id:
+            title_ar = "تم استبدال القسيمة!"
+            body_ar = "تم استبدال القسيمة بنجاح. يمكنك استخدامها الآن."
+            title_en = "Coupon Redeemed!"
+            body_en = "Your coupon has been redeemed successfully. You can use it now."
+            title_ku = "Qepon hat guherandin!"
+            body_ku = "Qeponê te bi serkeftî hat guherandin. Tu dikarî niha bikar bînî."
             notification = crud.create_notification(
                 db=db,
                 user_id=user_id,
-                title="تم استبدال القسيمة!",
-                body="تم استبدال القسيمة بنجاح. يمكنك استخدامها الآن.",
+                title=title_ar,
+                body=body_ar,
                 notification_type="COUPON_REDEEMED",
-                related_coupon_id=coupon_id
+                related_coupon_id=coupon_id,
+                title_en=title_en,
+                body_en=body_en,
+                title_ku=title_ku,
+                body_ku=body_ku
             )
             
             # Send push notification (respects preferences)
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
-                title="تم استبدال القسيمة!",
-                body="يمكنك استخدام قسيمتك الآن",
-                data={"notification_id": str(notification.id), "coupon_id": str(coupon_id)},
+                title=title_ar,
+                body=body_ar,
+                data={
+                    "notification_id": str(notification.id),
+                    "coupon_id": str(coupon_id),
+                    "title_en": title_en,
+                    "body_en": body_en,
+                    "title_ku": title_ku,
+                    "body_ku": body_ku,
+                    "type": "coupon_redeemed"
+                },
                 notification_type="COUPON_REDEEMED"
             )
         
