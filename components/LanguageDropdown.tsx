@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // Safe I18nManager access
 const I18nManager = RN.I18nManager || { isRTL: false };
@@ -16,6 +17,7 @@ const YELLOW = "#F4B400";
 const WHITE = "#FFFFFF";
 
 export default function LanguageDropdown({ value, onChange }) {
+    const { language } = useLanguage();
     const [open, setOpen] = useState(false);
     const heightAnim = useRef(new Animated.Value(0)).current;
 
@@ -29,13 +31,13 @@ export default function LanguageDropdown({ value, onChange }) {
         }).start();
     };
 
-    const languages = ["العربية", "English", "Deutsch", "Türkçe"];
+    const languages = ["العربية", "English", "Deutsch", "Türkçe", "Kurdî"];
 
     return (
         <View style={styles.container}>
             {/* MAIN SELECTOR */}
             <TouchableOpacity onPress={toggleDropdown} style={styles.header}>
-                <Text style={styles.label}>اللغة</Text>
+                <Text style={styles.label}>{language === "ar" ? "اللغة" : language === "ku" ? "Ziman" : "Language"}</Text>
 
                 <View style={styles.valueRow}>
                     <Text style={styles.value}>{value}</Text>

@@ -30,8 +30,11 @@ const STATUS_META: {
     [key: string]: { icon: string; color: string };
 } = {
     "مفتوح": { icon: "🔍", color: "#4DA3FF" },
+    "Vekirî": { icon: "🔍", color: "#4DA3FF" },
     "تم الإصلاح": { icon: "✔", color: "#4CD964" },
+    "Çareserkirî": { icon: "✔", color: "#4CD964" },
     "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
+    "Di nirxandinê de": { icon: "⏳", color: "#FFD166" },
 };
 
 // Beispiel-Daten
@@ -161,7 +164,7 @@ export default function ReportsScreen() {
                 overshootRight={false}
                 renderRightActions={() => (
                     <View style={[styles.swipeAction, styles.swipeDetails]}>
-                        <Text style={styles.swipeText}>ℹ️ تفاصيل</Text>
+                        <Text style={styles.swipeText}>{language === 'ar' ? 'ℹ️ تفاصيل' : language === 'ku' ? 'ℹ️ Hûrgulî' : 'ℹ️ Details'}</Text>
                     </View>
                 )}
                 onSwipeableRightOpen={() => openDetails(item)}
@@ -175,7 +178,7 @@ export default function ReportsScreen() {
         <View style={styles.root}>
             {/* HEADER */}
             <Header
-                title="البلاغات المفتوحة"
+                title={language === 'ar' ? 'البلاغات المفتوحة' : language === 'ku' ? 'Raporên vekirî' : 'Open Reports'}
                 leftIcon={!isRTL ? "chevron-back" : undefined}
                 rightIcon={isRTL ? "chevron-forward" : undefined}
                 onLeftPress={() => router.back()}
@@ -188,7 +191,7 @@ export default function ReportsScreen() {
 
             {/* Überschrift Liste */}
             <View style={styles.listHeaderRow}>
-                <Text style={styles.listHeaderText}>قائمة بلاغاتي</Text>
+                <Text style={styles.listHeaderText}>{language === 'ar' ? 'قائمة بلاغاتي' : language === 'ku' ? 'Lîsteya raporên min' : 'My Reports List'}</Text>
             </View>
 
             {/* LISTE */}
@@ -241,10 +244,10 @@ export default function ReportsScreen() {
                                 {/* ID + Datum */}
                                 <View style={styles.modalMetaRow}>
                                     <Text style={styles.modalMetaText}>
-                                        رقم البلاغ: {selected.id}
+                                        {language === 'ar' ? 'رقم البلاغ:' : language === 'ku' ? 'Hejmara raporê:' : 'Report ID:'} {selected.id}
                                     </Text>
                                     <Text style={styles.modalMetaText}>
-                                        التاريخ: {selected.date}
+                                        {language === 'ar' ? 'التاريخ:' : language === 'ku' ? 'Dîrok:' : 'Date:'} {selected.date}
                                     </Text>
                                 </View>
 
@@ -280,14 +283,18 @@ export default function ReportsScreen() {
                                 <Pressable
                                     style={styles.whatsappButton}
                                     onPress={() => {
-                                        const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;
+                                        const msg = language === 'ar' 
+                                            ? `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`
+                                            : language === 'ku'
+                                            ? `🚨 *Raporek Kashif*\n\n📋 *Sernav:* ${selected.title}\n📝 *Danasîn:* ${selected.description}\n🔢 *Hejmara raporê:* ${selected.id}\n📅 *Dîrok:* ${selected.date}\n📌 *Rewş:* ${selected.status}\n\n📍 *Cih:*\nhttps://www.google.com/maps?q=33.5138,36.2765`
+                                            : `🚨 *Kashif Report*\n\n📋 *Title:* ${selected.title}\n📝 *Description:* ${selected.description}\n🔢 *Report ID:* ${selected.id}\n📅 *Date:* ${selected.date}\n📌 *Status:* ${selected.status}\n\n📍 *Location:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;
                                         const url = `whatsapp://send?text=${encodeURIComponent(msg)}`;
                                         Linking.openURL(url).catch(() => {
-                                            alert('WhatsApp غير مثبت على هذا الجهاز');
+                                            alert(language === 'ar' ? 'WhatsApp غير مثبت على هذا الجهاز' : language === 'ku' ? 'WhatsApp li ser vê cîhazê nehati sazkirin' : 'WhatsApp is not installed on this device');
                                         });
                                     }}
                                 >
-                                    <Text style={styles.whatsappButtonText}>مشاركة عبر واتساب</Text>
+                                    <Text style={styles.whatsappButtonText}>{language === 'ar' ? 'مشاركة عبر واتساب' : language === 'ku' ? 'Parvekirina bi WhatsApp' : 'Share via WhatsApp'}</Text>
                                 </Pressable>
 
                                 {/* Donate Button */}
@@ -298,12 +305,12 @@ export default function ReportsScreen() {
                                         setDonationModalVisible(true);
                                     }}
                                 >
-                                    <Text style={styles.donateButtonText}>❤️ تبرع</Text>
+                                    <Text style={styles.donateButtonText}>{language === 'ar' ? '❤️ تبرع' : language === 'ku' ? '❤️ Bexş' : '❤️ Donate'}</Text>
                                 </Pressable>
 
                                 {/* Close Button */}
                                 <Pressable style={styles.modalButton} onPress={closeDetails}>
-                                    <Text style={styles.modalButtonText}>إغلاق</Text>
+                                    <Text style={styles.modalButtonText}>{language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}</Text>
                                 </Pressable>
                             </>
                         )}

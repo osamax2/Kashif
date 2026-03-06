@@ -128,9 +128,9 @@ export default function SettingsScreen() {
             showToast(
                 language === "ku"
                     ? "Tomarkirin serneket"
-                    : effectiveRTL
-                        ? "Save failed"
-                        : "فشل الحفظ"
+                    : language === "ar"
+                        ? "فشل الحفظ"
+                        : "Save failed"
             );
         } finally {
             setPrefsSaving(false);
@@ -182,7 +182,7 @@ export default function SettingsScreen() {
             <Text
                 style={[styles.userName, { textAlign: effectiveRTL ? "right" : "left" }]}
             >
-                {user?.full_name || "مستخدم"}
+                {user?.full_name || (language === 'ar' ? "مستخدم" : language === 'ku' ? "Bikarhener" : "User")}
             </Text>
 
             {/* ACTIONS */}
@@ -287,14 +287,14 @@ export default function SettingsScreen() {
                             const message = value
                                 ? language === "ku"
                                     ? "Nav ji lîsteya raporan ve hat veşartin"
-                                    : effectiveRTL
-                                        ? "The name has been hidden from the list of reports"
-                                        : "تم إخفاء الاسم من قائمة البلاغات"
+                                    : language === "ar"
+                                        ? "تم إخفاء الاسم من قائمة البلاغات"
+                                        : "The name has been hidden from the list of reports"
                                 : language === "ku"
                                     ? "Nav di lîsteya raporan de dîsa çalak bû"
-                                    : effectiveRTL
-                                        ? "The name has been activated in the list of reports"
-                                        : "تم تفعيل الاسم في قائمة البلاغات";
+                                    : language === "ar"
+                                        ? "تم تفعيل الاسم في قائمة البلاغات"
+                                        : "The name has been activated in the list of reports";
 
                             setHideNameMessage(message);
                             setTimeout(() => setHideNameMessage(null), 3000);

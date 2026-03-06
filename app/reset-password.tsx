@@ -32,7 +32,7 @@ export default function ResetPasswordScreen() {
         if (!password || password.length < 6) {
             Alert.alert(
                 t('common.error'),
-                isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters'
+                language === 'ar' ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : language === 'ku' ? 'Şîfre divê herî kêm 6 tîp be' : 'Password must be at least 6 characters'
             );
             return;
         }
@@ -40,7 +40,7 @@ export default function ResetPasswordScreen() {
         if (password !== confirm) {
             Alert.alert(
                 t('common.error'),
-                isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match'
+                language === 'ar' ? 'كلمات المرور غير متطابقة' : language === 'ku' ? 'Şîfre hev nagirin' : 'Passwords do not match'
             );
             return;
         }
@@ -48,7 +48,7 @@ export default function ResetPasswordScreen() {
         if (!token) {
             Alert.alert(
                 t('common.error'),
-                isRTL ? 'رمز إعادة التعيين مفقود' : 'Reset token is missing'
+                language === 'ar' ? 'رمز إعادة التعيين مفقود' : language === 'ku' ? 'Koda vegerandinê winda ye' : 'Reset token is missing'
             );
             return;
         }
@@ -58,12 +58,12 @@ export default function ResetPasswordScreen() {
             await authAPI.resetPassword(token, password);
             Alert.alert(
                 t('common.success'),
-                isRTL ? 'تم تغيير كلمة المرور بنجاح' : 'Password changed successfully',
+                language === 'ar' ? 'تم تغيير كلمة المرور بنجاح' : language === 'ku' ? 'Şîfre bi serkeftin hate guherandin' : 'Password changed successfully',
                 [{ text: 'OK', onPress: () => router.replace("/index") }]
             );
         } catch (error: any) {
             const errorMessage = error?.response?.data?.detail || 
-                (isRTL ? 'فشل في تغيير كلمة المرور' : 'Failed to reset password');
+                (language === 'ar' ? 'فشل في تغيير كلمة المرور' : language === 'ku' ? 'Guherandina şîfreyê têk çû' : 'Failed to reset password');
             Alert.alert(t('common.error'), errorMessage);
         } finally {
             setLoading(false);

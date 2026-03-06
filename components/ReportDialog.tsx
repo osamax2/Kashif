@@ -229,11 +229,13 @@ export default function ReportDialog({
       });
 
       Alert.alert(
-        isRTL ? "لا يوجد اتصال بالإنترنت" : "No Internet Connection",
-        isRTL
+        language === 'ar' ? "لا يوجد اتصال بالإنترنت" : language === 'ku' ? "Têkilî bi Internetê tune ye" : "No Internet Connection",
+        language === 'ar'
           ? "تم حفظ البلاغ وسيتم إرساله تلقائياً عند الاتصال بالإنترنت"
+          : language === 'ku'
+          ? "Rapor hate parastin û dê bi xweber bi Internetê re were şandin"
           : "Report saved and will be sent automatically when connected to the internet",
-        [{ text: isRTL ? "حسناً" : "OK" }]
+        [{ text: language === 'ar' ? "حسناً" : language === 'ku' ? "Baş e" : "OK" }]
       );
 
       setTimeout(() => {
@@ -567,15 +569,19 @@ export default function ReportDialog({
                     new Date().getMinutes()
                   ).padStart(2, "0")} ${
                     new Date().getHours() >= 12
-                      ? isRTL
+                      ? language === 'ar'
                         ? "م"
+                        : language === 'ku'
+                        ? "PM"
                         : "PM"
-                      : isRTL
+                      : language === 'ar'
                       ? "ص"
+                      : language === 'ku'
+                      ? "AM"
                       : "AM"
                   }`}
                   {" • "}
-                  {new Date().toLocaleDateString(isRTL ? "ar-SY" : "en-US", {
+                  {new Date().toLocaleDateString(language === 'ar' ? "ar-SY" : language === 'ku' ? "ku" : "en-US", {
                     year: "numeric",
                     month: "2-digit",
                     day: "2-digit",
