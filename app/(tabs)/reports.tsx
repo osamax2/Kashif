@@ -185,24 +185,35 @@ const translateStatus = (statusName: string, language: string): string => {
 
 const getStatusMeta = (statusName: string, _language: string): { icon: string; color: string } => {
   const metaMap: { [key: string]: { icon: string; color: string } } = {
+    // English
     "new": { icon: "🔍", color: "#4DA3FF" },
     "open": { icon: "🔍", color: "#4DA3FF" },
-    "جديد": { icon: "🔍", color: "#4DA3FF" },
-    "مفتوح": { icon: "🔍", color: "#4DA3FF" },
     "under review": { icon: "⏳", color: "#FFD166" },
-    "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
     "in_progress": { icon: "🔧", color: "#FF9500" },
     "in progress": { icon: "🔧", color: "#FF9500" },
     "being handled": { icon: "🔧", color: "#FF9500" },
-    "قيد المعالجة": { icon: "🔧", color: "#FF9500" },
     "resolved": { icon: "✔", color: "#4CD964" },
     "completed": { icon: "✔", color: "#4CD964" },
+    "rejected": { icon: "✖", color: "#FF3B30" },
+    "closed": { icon: "🔒", color: "#8E8E93" },
+    // Arabic
+    "جديد": { icon: "🔍", color: "#4DA3FF" },
+    "مفتوح": { icon: "🔍", color: "#4DA3FF" },
+    "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
+    "قيد المعالجة": { icon: "🔧", color: "#FF9500" },
     "تم الإصلاح": { icon: "✔", color: "#4CD964" },
     "مكتمل": { icon: "✔", color: "#4CD964" },
-    "rejected": { icon: "✖", color: "#FF3B30" },
     "مرفوض": { icon: "✖", color: "#FF3B30" },
-    "closed": { icon: "🔒", color: "#8E8E93" },
     "مغلق": { icon: "🔒", color: "#8E8E93" },
+    // Kurdish
+    "nû": { icon: "🔍", color: "#4DA3FF" },
+    "vekirî": { icon: "🔍", color: "#4DA3FF" },
+    "di nirxandinê de": { icon: "⏳", color: "#FFD166" },
+    "di pêş de": { icon: "🔧", color: "#FF9500" },
+    "çareserkirî": { icon: "✔", color: "#4CD964" },
+    "temam bû": { icon: "✔", color: "#4CD964" },
+    "redkirî": { icon: "✖", color: "#FF3B30" },
+    "girtî": { icon: "🔒", color: "#8E8E93" },
   };
   return metaMap[statusName.toLowerCase().trim()] || { icon: "📋", color: "#8E8E93" };
 };
@@ -850,6 +861,8 @@ export default function ReportsScreen() {
                       {getConfirmationMeta(selected.confirmation_status).icon}{" "}
                       {language === "ar"
                         ? getConfirmationMeta(selected.confirmation_status).labelAr
+                        : language === "ku"
+                        ? getConfirmationMeta(selected.confirmation_status).labelKu
                         : getConfirmationMeta(selected.confirmation_status).label}
                     </Text>
                     {selected.confirmation_status === "pending" && selected.user_id === user?.id && (
@@ -1155,6 +1168,8 @@ const ReportCard = React.memo(function ReportCard({
                   {getConfirmationMeta(report.confirmation_status).icon}{" "}
                   {language === "ar"
                     ? getConfirmationMeta(report.confirmation_status).labelAr
+                    : language === "ku"
+                    ? getConfirmationMeta(report.confirmation_status).labelKu
                     : getConfirmationMeta(report.confirmation_status).label}
                 </Text>
               </View>
