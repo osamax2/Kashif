@@ -10,6 +10,7 @@ import {
     ActivityIndicator,
     Alert,
     Animated,
+    BackHandler,
     Image,
     Keyboard,
     KeyboardAvoidingView,
@@ -76,6 +77,18 @@ export default function ReportDialog({
   const [checkingImage, setCheckingImage] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // ──── Handle Android Back Button ────
+  useEffect(() => {
+    if (!visible) return;
+    
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true; // Prevent default back behavior
+    });
+    
+    return () => backHandler.remove();
+  }, [visible, onClose]);
 
   // ──── Image Quality Check ────
   const MIN_WIDTH = 640;
