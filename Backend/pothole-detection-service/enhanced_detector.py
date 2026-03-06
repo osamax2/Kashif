@@ -157,10 +157,15 @@ class EnhancedPotholeDetector:
                     
                     # Step 2b: Re-filter detections using depth map
                     # This catches flat objects (cards, shadows) that passed initial filter
+                    # Use higher score threshold since we already passed initial filter
+                    # and now have depth info to distinguish real depressions from surface anomalies
                     image = cv2.imread(image_path)
                     if image is not None and depth_result.depth_map is not None:
                         print("🧠 Running depth-based validation on detections...")
-                        depth_filter = DetectionFilter(min_confidence=0.35)
+                        depth_filter = DetectionFilter(
+                            min_confidence=0.35,
+                            min_overall_score=0.70  # Stricter with depth data available
+                        )
                         valid, rejected = depth_filter.filter_detections(
                             image, base_result.detections, depth_result.depth_map
                         )
@@ -200,16 +205,40 @@ class EnhancedPotholeDetector:
                     print(f"🎯 Reference object '{reference.object_type}' found at "
                           f"bbox=({reference.bbox[0]},{reference.bbox[1]},{reference.bbox[2]},{reference.bbox[3]})")
                     
-                    # Filter out detections that overlap significantly with the reference object
+                    # Filter out detections that ARE primarily the reference object
+                    # But keep detections that CONTAIN the reference (pothole near the card)
+                    ref_area = max(
+                        (reference.bbox[2] - reference.bbox[0]) * (reference.bbox[3] - reference.bbox[1]), 1
+                    )
                     filtered_detections = []
                     for det in base_result.detections:
-                        overlap = self._bbox_overlap_ratio(
-                            (det.bbox.x1, det.bbox.y1, det.bbox.x2, det.bbox.y2),
-                            reference.bbox
-                        )
-                        if overlap > 0.15:  # >15% overlap with reference object = not a pothole
-                            print(f"   🚫 Removed detection overlapping reference object "
-                                  f"(overlap={overlap:.0%}, conf={det.confidence:.2f})")
+                        det_bbox = (det.bbox.x1, det.bbox.y1, det.bbox.x2, det.bbox.y2)
+                        det_area = max(det.bbox.area, 1)
+                        
+                        # Calculate intersection
+                        ix1 = max(det_bbox[0], reference.bbox[0])
+                        iy1 = max(det_bbox[1], reference.bbox[1])
+                        ix2 = min(det_bbox[2], reference.bbox[2])
+                        iy2 = min(det_bbox[3], reference.bbox[3])
+                        
+                        if ix2 > ix1 and iy2 > iy1:
+                            intersection = (ix2 - ix1) * (iy2 - iy1)
+                            # What fraction of the DETECTION is the reference?
+                            det_is_ref = intersection / det_area
+                            # What fraction of the REFERENCE is in the detection?
+                            ref_in_det = intersection / ref_area
+                            
+                            # Only reject if detection is PRIMARILY the reference object
+                            # (reference covers >25% of detection area AND >50% of reference is inside)
+                            if det_is_ref > 0.25 and ref_in_det > 0.50:
+                                print(f"   🚫 Removed detection (primarily reference object: "
+                                      f"det_is_ref={det_is_ref:.0%}, ref_in_det={ref_in_det:.0%}, "
+                                      f"conf={det.confidence:.2f})")
+                            else:
+                                # Detection is much larger than the reference → real pothole near card
+                                print(f"   ✅ Kept detection (pothole contains reference: "
+                                      f"det_is_ref={det_is_ref:.0%}, conf={det.confidence:.2f})")
+                                filtered_detections.append(det)
                         else:
                             filtered_detections.append(det)
                     
