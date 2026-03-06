@@ -211,6 +211,7 @@ async def upload_image(
             "max_severity": ai_result.get("max_severity"),
             "ai_description": ai_result.get("ai_description"),
             "ai_description_ar": ai_result.get("ai_description_ar"),
+            "ai_description_ku": ai_result.get("ai_description_ku"),
             "detections": ai_result.get("detections", [])
         }
         # Add annotated image URL if available

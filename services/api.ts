@@ -696,6 +696,7 @@ export const reportingAPI = {
       ai_description: string | null;
       ai_description_ar: string | null;
       ai_description_ku: string | null;
+      annotated_url?: string;
       detections: any[];
     };
   }> => {
@@ -737,7 +738,6 @@ export const reportingAPI = {
       url: data.url, // Keep relative URL like /uploads/xxx.jpg
       filename: data.filename,
       ai_analysis: data.ai_analysis,
-      annotated_url: data.ai_analysis?.annotated_url, // URL to AI annotated image
     };
   },
 
