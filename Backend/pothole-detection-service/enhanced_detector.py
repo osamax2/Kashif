@@ -19,6 +19,7 @@ from roboflow_detector import (
 )
 from depth_estimator import DepthEstimator, DepthModel, DepthEstimationResult
 from dimension_calculator import DimensionCalculator, PotholeDimensions, dimensions_to_dict, _to_python_float
+from detection_filter import DetectionFilter
 
 
 @dataclass
@@ -153,12 +154,31 @@ class EnhancedPotholeDetector:
                     print(f"✅ Depth estimation succeeded: {depth_result.model_used}")
                     if depth_result.confidence_score > 0:
                         print(f"   Model agreement: {depth_result.confidence_score:.2%}")
+                    
+                    # Step 2b: Re-filter detections using depth map
+                    # This catches flat objects (cards, shadows) that passed initial filter
+                    image = cv2.imread(image_path)
+                    if image is not None and depth_result.depth_map is not None:
+                        print("🧠 Running depth-based validation on detections...")
+                        depth_filter = DetectionFilter(min_confidence=0.35)
+                        valid, rejected = depth_filter.filter_detections(
+                            image, base_result.detections, depth_result.depth_map
+                        )
+                        if rejected:
+                            print(f"🚫 Depth filter removed {len(rejected)} flat-area detection(s)")
+                            base_result.detections[:] = valid
+                            # Re-generate annotated image with only valid detections
+                            if save_annotated and valid:
+                                annotated_path = self.roboflow_detector._save_annotated_image(
+                                    image, valid, image_path, output_dir
+                                )
+                                base_result.annotated_image_path = annotated_path
                 else:
                     print(f"⚠️ Depth estimation failed: {depth_result.error}")
             except Exception as e:
                 print(f"❌ Depth estimation error: {e}")
         
-        # Step 3: Calculate dimensions
+        # Step 3: Calculate dimensions (and filter reference object overlaps)
         dimensions = None
         depth_map_path = None
         
@@ -168,13 +188,53 @@ class EnhancedPotholeDetector:
             if image is None:
                 raise ValueError(f"Could not read image: {image_path}")
             
-            # Extract bounding boxes
+            # Step 3a: Detect reference object and filter overlapping detections
+            if self.enable_reference and base_result.detections:
+                reference = None
+                for ref_type in ["credit_card", "smartphone", "ruler_10cm"]:
+                    reference = self.dimension_calculator.detect_reference_object(image, ref_type)
+                    if reference:
+                        break
+                
+                if reference:
+                    print(f"🎯 Reference object '{reference.object_type}' found at "
+                          f"bbox=({reference.bbox[0]},{reference.bbox[1]},{reference.bbox[2]},{reference.bbox[3]})")
+                    
+                    # Filter out detections that overlap significantly with the reference object
+                    filtered_detections = []
+                    for det in base_result.detections:
+                        overlap = self._bbox_overlap_ratio(
+                            (det.bbox.x1, det.bbox.y1, det.bbox.x2, det.bbox.y2),
+                            reference.bbox
+                        )
+                        if overlap > 0.15:  # >15% overlap with reference object = not a pothole
+                            print(f"   🚫 Removed detection overlapping reference object "
+                                  f"(overlap={overlap:.0%}, conf={det.confidence:.2f})")
+                        else:
+                            filtered_detections.append(det)
+                    
+                    if len(filtered_detections) < len(base_result.detections):
+                        base_result.detections[:] = filtered_detections
+                        print(f"   Remaining detections after reference filter: {len(filtered_detections)}")
+                        
+                        # Re-generate annotated image
+                        if save_annotated and filtered_detections:
+                            annotated_path = self.roboflow_detector._save_annotated_image(
+                                image, filtered_detections, image_path, output_dir
+                            )
+                            base_result.annotated_image_path = annotated_path
+            
+            # Step 3b: Extract bounding boxes for remaining detections
             bboxes = [
                 (d.bbox.x1, d.bbox.y1, d.bbox.x2, d.bbox.y2)
                 for d in base_result.detections
             ]
             
-            # Calculate dimensions
+            if not bboxes:
+                print("ℹ️ No valid potholes remaining after filtering")
+                return EnhancedDetectionResult(base_result=base_result, depth_result=depth_result)
+            
+            # Step 3c: Calculate dimensions
             if depth_result and depth_result.success:
                 dimensions = self.dimension_calculator.calculate_all_dimensions(
                     image=image,
@@ -211,6 +271,31 @@ class EnhancedPotholeDetector:
             dimensions=dimensions,
             depth_map_path=depth_map_path
         )
+    
+    @staticmethod
+    def _bbox_overlap_ratio(
+        bbox1: Tuple[int, int, int, int],
+        bbox2: Tuple[int, int, int, int]
+    ) -> float:
+        """
+        Calculate the overlap ratio between two bounding boxes.
+        Returns the fraction of bbox2 that is contained within bbox1.
+        
+        Used to check if a reference object (bbox2) is inside/overlapped 
+        by a pothole detection (bbox1).
+        """
+        x1 = max(bbox1[0], bbox2[0])
+        y1 = max(bbox1[1], bbox2[1])
+        x2 = min(bbox1[2], bbox2[2])
+        y2 = min(bbox1[3], bbox2[3])
+        
+        if x2 <= x1 or y2 <= y1:
+            return 0.0
+        
+        intersection = (x2 - x1) * (y2 - y1)
+        bbox2_area = max((bbox2[2] - bbox2[0]) * (bbox2[3] - bbox2[1]), 1)
+        
+        return intersection / bbox2_area
     
     def _estimate_basic_dimensions(
         self, 
