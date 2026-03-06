@@ -759,6 +759,7 @@ export default function HomeScreen() {
         if (name.includes("حفرة") || name.includes("Çalêk") || name.toLowerCase().includes("pothole")) return "⚠️";
         if (name.includes("حادث") || name.includes("Qezay") || name.toLowerCase().includes("accident")) return "🚨";
         if (name.includes("كاشف") || name.includes("Kashif") || name.includes("سرعة") || name.includes("Lez") || name.toLowerCase().includes("speed")) return "📷";
+        if (name.includes("بيئة") || name.includes("Jîngeh") || name.toLowerCase().includes("environment")) return "🌿";
         return "📍";
     };
 
@@ -772,6 +773,7 @@ export default function HomeScreen() {
         if(name.includes("كاشف") || name.includes("Kashif") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza")) return "#22C55E"; // Green
         if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("qezay")) return "#EF4444"; // Red
         if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("Çalêk ")) return "#F59E0B"; // Amber
+        if (name.includes("بيئ") || name.includes("Jîngeh") || name.toLowerCase().includes("environment")) return "#10B981"; // Emerald green for environment
         return "#3B82F6"; // Default blue
     };
 
@@ -2070,7 +2072,17 @@ export default function HomeScreen() {
                             <View style={styles.markerDetailHandle} />
                         </View>
                         <Text style={styles.markerDetailTitle}>
-                            {selectedReportForDonation.title || categories.find(c => c.id === selectedReportForDonation.category_id)?.name || (language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report')}
+                            {selectedReportForDonation.title || (() => {
+                                const cat = categories.find(c => c.id === selectedReportForDonation.category_id);
+                                if (cat) {
+                                    return language === 'ar' 
+                                        ? (cat.name_ar || cat.name_en || cat.name || 'بلاغ')
+                                        : language === 'ku'
+                                        ? (cat.name_ku || cat.name_en || cat.name || 'Rapor')
+                                        : (cat.name_en || cat.name || 'Report');
+                                }
+                                return language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report';
+                            })()}
                         </Text>
                         {selectedReportForDonation.description ? (
                             <Text style={styles.markerDetailDesc} numberOfLines={3}>
