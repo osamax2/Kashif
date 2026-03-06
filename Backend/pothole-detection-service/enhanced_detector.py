@@ -18,7 +18,7 @@ from roboflow_detector import (
     PotholeEstimator
 )
 from depth_estimator import DepthEstimator, DepthModel, DepthEstimationResult
-from dimension_calculator import DimensionCalculator, PotholeDimensions, dimensions_to_dict
+from dimension_calculator import DimensionCalculator, PotholeDimensions, dimensions_to_dict, _to_python_float
 
 
 @dataclass
@@ -37,8 +37,8 @@ class EnhancedDetectionResult:
             result["depth_estimation"] = {
                 "success": self.depth_result.success,
                 "model_used": self.depth_result.model_used,
-                "processing_time_ms": self.depth_result.processing_time_ms,
-                "confidence_score": self.depth_result.confidence_score,
+                "processing_time_ms": _to_python_float(self.depth_result.processing_time_ms),
+                "confidence_score": _to_python_float(self.depth_result.confidence_score),
             }
         
         # Add enhanced dimensions
@@ -51,12 +51,12 @@ class EnhancedDetectionResult:
             for i, det in enumerate(result.get("detections", [])):
                 if i < len(self.dimensions):
                     dim = self.dimensions[i]
-                    det["estimated_width_cm"] = dim.width_cm
-                    det["estimated_height_cm"] = dim.length_cm
-                    det["estimated_depth_cm"] = dim.depth_cm
-                    det["estimated_area_cm2"] = dim.area_cm2
-                    det["estimated_volume_cm3"] = dim.volume_cm3
-                    det["dimension_confidence"] = dim.confidence
+                    det["estimated_width_cm"] = _to_python_float(dim.width_cm)
+                    det["estimated_height_cm"] = _to_python_float(dim.length_cm)
+                    det["estimated_depth_cm"] = _to_python_float(dim.depth_cm)
+                    det["estimated_area_cm2"] = _to_python_float(dim.area_cm2)
+                    det["estimated_volume_cm3"] = _to_python_float(dim.volume_cm3)
+                    det["dimension_confidence"] = _to_python_float(dim.confidence)
                     det["calibration_method"] = dim.calibration_method
         
         if self.depth_map_path:

@@ -397,22 +397,31 @@ class DimensionCalculator:
         return results
 
 
+def _to_python_float(val) -> float:
+    """Convert numpy float to Python float for JSON serialization"""
+    if val is None:
+        return 0.0
+    if hasattr(val, 'item'):
+        return float(val.item())
+    return float(val)
+
+
 def dimensions_to_dict(dims: PotholeDimensions) -> Dict[str, Any]:
     """Convert PotholeDimensions to dictionary for JSON serialization"""
     return {
-        "width_cm": dims.width_cm,
-        "length_cm": dims.length_cm,
-        "depth_cm": dims.depth_cm,
-        "area_cm2": dims.area_cm2,
-        "volume_cm3": dims.volume_cm3,
+        "width_cm": _to_python_float(dims.width_cm),
+        "length_cm": _to_python_float(dims.length_cm),
+        "depth_cm": _to_python_float(dims.depth_cm),
+        "area_cm2": _to_python_float(dims.area_cm2),
+        "volume_cm3": _to_python_float(dims.volume_cm3),
         "calibration_method": dims.calibration_method,
-        "confidence": dims.confidence,
+        "confidence": _to_python_float(dims.confidence),
         "pixel_dimensions": {
-            "width": dims.pixel_width,
-            "height": dims.pixel_height
+            "width": int(dims.pixel_width),
+            "height": int(dims.pixel_height)
         },
         "depth_map_stats": {
-            "mean": dims.depth_map_mean,
-            "max": dims.depth_map_max
+            "mean": _to_python_float(dims.depth_map_mean),
+            "max": _to_python_float(dims.depth_map_max)
         }
     }
