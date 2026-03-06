@@ -83,8 +83,8 @@ class DepthEstimator:
         b64_data = base64.b64encode(image_data).decode("utf-8")
         return f"data:{mime_type};base64,{b64_data}"
     
-    def _call_replicate(self, model_id: str, image_uri: str, timeout: int = 60) -> Optional[Dict[str, Any]]:
-        """Call Replicate API and wait for result"""
+    def _call_replicate(self, model_id: str, image_uri: str, timeout: int = 300) -> Optional[Dict[str, Any]]:
+        """Call Replicate API and wait for result (default 5 min for cold start)"""
         try:
             # Replicate supports two formats:
             # 1. Full version hash: "owner/model:abc123..."
