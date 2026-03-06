@@ -34,7 +34,7 @@ import {
     View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import MapView, { Heatmap, Marker, Polyline, Region } from "react-native-maps";
+import MapView, { Heatmap, Marker, Polyline, Region, PROVIDER_GOOGLE } from "react-native-maps";
 
 
 
@@ -1417,8 +1417,8 @@ export default function HomeScreen() {
                         );
                     })}
 
-                    {/* Heatmap Overlay */}
-                    {heatmapEnabled && heatmapPoints.length > 0 && (
+                    {/* Heatmap Overlay - only on Android (Apple Maps doesn't support Heatmap) */}
+                    {Platform.OS === 'android' && heatmapEnabled && heatmapPoints.length > 0 && (
                         <Heatmap
                             points={heatmapPoints}
                             radius={40}
