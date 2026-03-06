@@ -1880,63 +1880,23 @@ export default function HomeScreen() {
                             // Continue with report creation even if duplicate check fails
                         }
 
-                        // Upload photo if provided - AI will analyze it
+                        // Upload photo if provided - FAST mode, AI runs in background
                         let photoUrl: string | undefined = undefined;
-                        let aiDescription: string | undefined = undefined;
-                        let aiAnnotatedUrl: string | undefined = undefined;
-                        let aiDetections: string | undefined = undefined;
                         if (data.photoUri) {
                             try {
-                                console.log('📷 Uploading photo with AI analysis...');
-                                const uploadResult = await reportingAPI.uploadImage(data.photoUri);
+                                console.log('📷 Uploading photo (fast mode, AI will run in background)...');
+                                // Use asyncAI=true for fast upload - AI will run after report creation
+                                const uploadResult = await reportingAPI.uploadImage(data.photoUri, true);
                                 photoUrl = uploadResult.url;
                                 console.log('✅ Photo uploaded:', photoUrl);
-
-                                // Use AI analysis if available
-                                if (uploadResult.ai_analysis && uploadResult.ai_analysis.num_potholes > 0) {
-                                    console.log('🤖 AI detected', uploadResult.ai_analysis.num_potholes, 'pothole(s)');
-
-                                    // Use AI description based on language
-                                    aiDescription = (language === 'ar'
-                                        ? uploadResult.ai_analysis.ai_description_ar
-                                        : language === 'ku'
-                                        ? uploadResult.ai_analysis.ai_description_ku
-                                        : uploadResult.ai_analysis.ai_description) || undefined;
-
-                                    // Get annotated image URL if available
-                                    if (uploadResult.ai_analysis.annotated_url) {
-                                        aiAnnotatedUrl = uploadResult.ai_analysis.annotated_url;
-                                        console.log('🎨 AI annotated image:', aiAnnotatedUrl);
-                                    }
-
-                                    // Store detections as JSON string
-                                    if (uploadResult.ai_analysis.detections && uploadResult.ai_analysis.detections.length > 0) {
-                                        aiDetections = JSON.stringify(uploadResult.ai_analysis.detections);
-                                        console.log('📦 AI detections stored:', uploadResult.ai_analysis.detections.length);
-                                    }
-
-                                    // AI determines severity from photo analysis
-                                    if (uploadResult.ai_analysis.max_severity === 'HIGH') {
-                                        severityId = 3;
-                                        console.log('🤖 AI set severity to HIGH from photo');
-                                    } else if (uploadResult.ai_analysis.max_severity === 'MEDIUM') {
-                                        severityId = 2;
-                                        console.log('🤖 AI set severity to MEDIUM from photo');
-                                    } else if (uploadResult.ai_analysis.max_severity === 'LOW') {
-                                        severityId = 1;
-                                        console.log('🤖 AI set severity to LOW from photo');
-                                    }
-                                }
                             } catch (uploadError) {
                                 console.warn('⚠️ Photo upload failed, continuing without photo:', uploadError);
                                 // Continue without photo if upload fails
                             }
                         }
 
-                        // Create report - use AI description if available
-                        const finalDescription = aiDescription
-                            ? (data.notes ? `${data.notes}\n\n${aiDescription}` : aiDescription)
-                            : (data.notes || (language === 'ar' ? 'بلاغ جديد' : language === 'ku' ? 'Rapora nû' : 'New Report'));
+                        // Create report immediately
+                        const finalDescription = data.notes || (language === 'ar' ? 'بلاغ جديد' : language === 'ku' ? 'Rapora nû' : 'New Report');
 
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole'
@@ -1951,11 +1911,22 @@ export default function HomeScreen() {
                             address_text: data.address,
                             severity_id: severityId,
                             photo_urls: photoUrl,
-                            ai_annotated_url: aiAnnotatedUrl,
-                            ai_detections: aiDetections,
                         });
 
                         console.log('✅ Report created:', newReport.id);
+
+                        // Trigger AI analysis in background (will send push notification when done)
+                        if (photoUrl && data.type === 'pothole') {
+                            try {
+                                console.log('🔄 Triggering AI analysis in background...');
+                                reportingAPI.triggerAIAnalysis(newReport.id, language).catch(e => {
+                                    console.warn('⚠️ AI analysis trigger failed:', e);
+                                });
+                                console.log('✅ AI analysis triggered - notification will be sent when complete');
+                            } catch (analyzeError) {
+                                console.warn('⚠️ Could not trigger AI analysis:', analyzeError);
+                            }
+                        }
 
                         // Clear long press marker after successful submission
                         if (longPressMarker) {

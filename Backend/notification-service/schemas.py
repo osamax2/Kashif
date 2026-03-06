@@ -55,6 +55,15 @@ class BroadcastNotificationCreate(BaseModel):
     target_role: Optional[str] = None  # None = all users, "USER" = regular users, "COMPANY" = company users, "GOVERNMENT" = government employees
 
 
+class InternalPushRequest(BaseModel):
+    """Schema for internal service-to-service push requests"""
+    user_id: int
+    title: str
+    body: str
+    data: Optional[dict] = None
+    notification_type: str = "report_update"
+
+
 class Notification(BaseModel):
     id: int
     user_id: int
