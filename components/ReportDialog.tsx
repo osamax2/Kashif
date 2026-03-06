@@ -55,7 +55,7 @@ export default function ReportDialog({
   onClose,
   onSubmit,
 }: Props) {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
   // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
   const effectiveRTL = !isRTL;
