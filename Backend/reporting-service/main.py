@@ -785,6 +785,57 @@ async def trigger_ai_analysis(
     }
 
 
+@app.post("/internal/{report_id}/analyze")
+async def trigger_ai_analysis_internal(
+    report_id: int,
+    x_internal_key: str = Header(None, alias="X-Internal-Key"),
+    language: str = Query("en", description="User's language for notifications"),
+    db: Session = Depends(get_db)
+):
+    """
+    Internal endpoint to trigger AI analysis without user auth.
+    Used by admin panel or automated systems.
+    """
+    # Verify internal API key
+    if x_internal_key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid internal API key")
+    
+    report = crud.get_report(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    # Get photo URL
+    photo_url = report.photo_urls
+    if not photo_url:
+        raise HTTPException(status_code=400, detail="Report has no photo to analyze")
+    
+    # Build file path from URL
+    if photo_url.startswith("/uploads/"):
+        filename = os.path.basename(photo_url)
+        file_path = os.path.join(UPLOAD_DIR, filename)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid photo URL")
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Photo file not found")
+    
+    # Schedule background processing
+    logger.info(f"🔄 [Internal] Triggering AI analysis for report {report_id}")
+    asyncio.create_task(process_ai_background(
+        file_path=file_path,
+        unique_filename=filename,
+        user_id=report.user_id,
+        report_id=report_id,
+        language=language
+    ))
+    
+    return {
+        "success": True,
+        "message": "AI analysis started (internal trigger)",
+        "report_id": report_id
+    }
+
+
 @app.get("/my-reports", response_model=List[schemas.Report])
 async def get_my_reports(
     skip: int = 0,
