@@ -151,7 +151,8 @@ class DetectionFilter:
         roi_gray = gray[y1:y2, x1:x2]
         roi_edges = edges[y1:y2, x1:x2]
         
-        # Pre-compute area fraction
+        # Pre-compute area fraction and pixel count
+        roi_pixels = max((x2 - x1) * (y2 - y1), 1)
         bbox_area_fraction = bbox.area / img_area
         aspect = max(bbox.width, bbox.height) / max(min(bbox.width, bbox.height), 1)
         
@@ -187,6 +188,28 @@ class DetectionFilter:
                 reason=f"corner_detection (touches {edges_touched} image edges)"
             )
         
+        # 1d. Check for concentrated colorful patches inside the detection
+        # Credit cards, phones, etc. have distinct saturated colors
+        # If the bbox contains such an object, it's detecting the object not a pothole
+        roi_hsv = cv2.cvtColor(roi_color, cv2.COLOR_BGR2HSV)
+        sat_channel = roi_hsv[:, :, 1]
+        high_sat_mask = (sat_channel > 90).astype(np.uint8)
+        # Find contiguous colorful patches
+        sat_contours, _ = cv2.findContours(
+            high_sat_mask * 255, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+        for sc in sat_contours:
+            sat_area = cv2.contourArea(sc)
+            if sat_area > roi_pixels * 0.02:  # >2% of detection is a colorful patch
+                sx, sy, sw, sh = cv2.boundingRect(sc)
+                sat_aspect = max(sw, sh) / max(min(sw, sh), 1)
+                if 1.2 < sat_aspect < 2.5:  # Card/phone-like aspect ratio
+                    return FilterResult(
+                        is_pothole=False,
+                        reason=f"contains_reference_object "
+                               f"(colorful_patch={sat_area/roi_pixels:.1%}, aspect={sat_aspect:.1f})"
+                    )
+        
         # 2. Reference object check (credit card shape)
         if (self.CARD_ASPECT_RATIO_MIN <= aspect <= self.CARD_ASPECT_RATIO_MAX
                 and bbox_area_fraction < self.CARD_MAX_AREA_FRACTION):
@@ -203,7 +226,6 @@ class DetectionFilter:
         texture_score = float(np.std(roi_gray))
         
         # 4. Edge density (fraction of edge pixels in ROI)
-        roi_pixels = max((x2 - x1) * (y2 - y1), 1)
         edge_density = float(np.count_nonzero(roi_edges)) / roi_pixels
         
         # 5. Color variance (average std across channels)
