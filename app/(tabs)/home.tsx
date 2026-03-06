@@ -756,9 +756,9 @@ export default function HomeScreen() {
 
         const name = category.name_ar || category.name_en || category.name_ku ||  category.name || "";
 
-        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "⚠️";
-        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "🚨";
-        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "📷";
+        if (name.includes("حفرة") || name.includes("Çalêk") || name.toLowerCase().includes("pothole")) return "⚠️";
+        if (name.includes("حادث") || name.includes("Qezay") || name.toLowerCase().includes("accident")) return "🚨";
+        if (name.includes("كاشف") || name.includes("Kashif") || name.includes("سرعة") || name.includes("Lez") || name.toLowerCase().includes("speed")) return "📷";
         return "📍";
     };
 
@@ -769,7 +769,7 @@ export default function HomeScreen() {
 
         // Fallback colors based on category name
         const name = category?.name_ar || category?.name_en || category?.name_ku ||category?.name || "";
-        if(name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza")) return "#22C55E"; // Green
+        if(name.includes("كاشف") || name.includes("Kashif") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza")) return "#22C55E"; // Green
         if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("qezay")) return "#EF4444"; // Red
         if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("Çalêk ")) return "#F59E0B"; // Amber
         return "#3B82F6"; // Default blue
@@ -974,8 +974,10 @@ export default function HomeScreen() {
                     } else {
                         const msg = language === 'ar'
                             ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
+                            : language === 'ku'
+                            ? `Hişyarî: ${routeData.total_hazards} metirsî li ser rêya te`
                             : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
-                        Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+                        Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : language === 'ku' ? 'ku-TR' : 'en-US' });
                     }
                 }
             } catch (hazardErr) {

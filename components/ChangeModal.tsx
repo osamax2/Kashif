@@ -8,6 +8,7 @@ import {
     Modal,
     StyleSheet,
 } from "react-native";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
@@ -21,6 +22,7 @@ export default function ChangeModal({
                                         setValue,
                                         onSave,
                                     }) {
+    const { language } = useLanguage();
     return (
         <Modal visible={visible} transparent animationType="fade">
             <View style={styles.overlay}>
@@ -38,11 +40,11 @@ export default function ChangeModal({
 
                     <View style={styles.buttonsRow}>
                         <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                            <Text style={styles.cancelText}>إلغاء</Text>
+                            <Text style={styles.cancelText}>{language === "ar" ? "إلغاء" : language === "ku" ? "Betal bike" : "Cancel"}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.saveBtn} onPress={onSave}>
-                            <Text style={styles.saveText}>حفظ</Text>
+                            <Text style={styles.saveText}>{language === "ar" ? "حفظ" : language === "ku" ? "Parastin" : "Save"}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

@@ -117,7 +117,7 @@ export default function CouponDetails() {
         {coupon.address && (
           <>
             <Text style={styles.sectionTitle}>
-              {language === "ar" ? "العنوان" : "Address"}
+              {language === "ar" ? "العنوان" : language === "ku" ? "Sernav" : "Address"}
             </Text>
 
             <TouchableOpacity

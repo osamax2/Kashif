@@ -21,8 +21,10 @@ interface TutorialStep {
     icon: string;
     titleAr: string;
     titleEn: string;
+    titleKu?: string;
     descriptionAr: string;
     descriptionEn: string;
+    descriptionKu?: string;
     color: string;
 }
 
@@ -32,8 +34,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "🗺️",
         titleAr: "مرحباً بك في كاشف!",
         titleEn: "Welcome to Kashif!",
+        titleKu: "Bi xêr hatî Kashifê!",
         descriptionAr: "تطبيقك الذكي للإبلاغ عن مخاطر الطريق وتحذيرك منها أثناء القيادة",
         descriptionEn: "Your smart app for reporting road hazards and warning you while driving",
+        descriptionKu: "Sepana te ya jîr ji bo raporkirina xeterên rêyê û hişyarkirina te di dema ajotinê de",
         color: "#0D2B66",
     },
     {
@@ -41,8 +45,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "📍",
         titleAr: "الخريطة التفاعلية",
         titleEn: "Interactive Map",
+        titleKu: "Nexşeya têkilîdar",
         descriptionAr: "تصفح الخريطة لرؤية جميع البلاغات النشطة في منطقتك. النقاط الملونة تمثل أنواع مختلفة من المخاطر",
         descriptionEn: "Browse the map to see all active reports in your area. Colored dots represent different types of hazards",
+        descriptionKu: "Nexşeyê bigere da ku hemû raporên çalak li herêma te bibînî. Nîşanên rengîn cureyên cuda yên xeteran nîşan didin",
         color: "#1A3B7A",
     },
     {
@@ -50,8 +56,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "➕",
         titleAr: "إضافة بلاغ",
         titleEn: "Add Report",
+        titleKu: "Zêdekirina raporê",
         descriptionAr: "اضغط على زر + لإضافة بلاغ جديد. اختر نوع المخاطرة: حفرة 🕳️، حادث 🚗، أو خطر بيئي 🌿",
         descriptionEn: "Tap the + button to add a new report. Choose hazard type: Pothole 🕳️, Accident 🚗, or Environment 🌿",
+        descriptionKu: "Li bişkoja + bikirtîne da ku raporê nvî zêde bikî. Cureya xeterê hilbijêre: Çal 🕳️, Qeza 🚗, an Jîngehî 🌿",
         color: "#F4B400",
     },
     {
@@ -59,8 +67,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "📌",
         titleAr: "اختيار الموقع يدوياً",
         titleEn: "Manual Location Selection",
+        titleKu: "Hilbijartina cihê bi destan",
         descriptionAr: "اضغط مطولاً على أي مكان في الخريطة لوضع علامة واختيار موقع البلاغ يدوياً",
         descriptionEn: "Long press anywhere on the map to place a pin and manually select the report location",
+        descriptionKu: "Li ser her cihî li nexşeyê dirêj bide da ku nîşanê danî û cihê raporê bi destan hilbijêrî",
         color: "#FF9500",
     },
     {
@@ -68,8 +78,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "📷",
         titleAr: "التقاط صور بالذكاء الاصطناعي",
         titleEn: "AI Photo Analysis",
+        titleKu: "Wêne girtin bi zeka çêkirî",
         descriptionAr: "التقط صورة للحفرة وسيقوم الذكاء الاصطناعي بتحليلها وتحديد حجمها وخطورتها تلقائياً",
         descriptionEn: "Take a photo of the pothole and AI will analyze it, automatically detecting its size and severity",
+        descriptionKu: "Wêneya çalayê bigire û zeka çêkirî dê mezinahî û xeternakîya wê bi xweber diyar bike",
         color: "#5856D6",
     },
     {
@@ -77,8 +89,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "🔊",
         titleAr: "التنبيهات الصوتية",
         titleEn: "Voice Warnings",
+        titleKu: "Hişyarîyên dengî",
         descriptionAr: "اضغط على زر 🔔 لتفعيل التنبيهات الصوتية. ستحذرك عند الاقتراب من أي خطر على الطريق",
         descriptionEn: "Tap the 🔔 button to enable voice warnings. You'll be alerted when approaching any road hazard",
+        descriptionKu: "Li bişkoja 🔔 bikirtîne da ku hişyarîyên dengî aktiv bikî. Dê te hişyar bikin dema ku nêzîkî her xeterekê dibî",
         color: "#34C759",
     },
     {
@@ -86,8 +100,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "🔍",
         titleAr: "تصفية البلاغات",
         titleEn: "Filter Reports",
+        titleKu: "Fîltrekirina raporan",
         descriptionAr: "استخدم شريط الفئات في الأعلى لتصفية البلاغات حسب النوع: الكل، حفر، حوادث، أو بيئي",
         descriptionEn: "Use the category bar at the top to filter reports by type: All, Potholes, Accidents, or Environment",
+        descriptionKu: "Şerîta kategoriyan li jor bikar bîne da ku raporan li gorî cureyê fîltre bikî: hemû, çala, qezay an jîngehî",
         color: "#FF2D55",
     },
     {
@@ -95,8 +111,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "🔎",
         titleAr: "البحث عن موقع",
         titleEn: "Search Location",
+        titleKu: "Cih bigere",
         descriptionAr: "استخدم شريط البحث للعثور على أي موقع في سوريا والانتقال إليه مباشرة على الخريطة",
         descriptionEn: "Use the search bar to find any location in Syria and navigate to it directly on the map",
+        descriptionKu: "Şerîta lêgerînê bikar bîne da ku her cihî li Sûriyê bibînî û rasterast li nexşeyê biçe wê cihê",
         color: "#007AFF",
     },
     {
@@ -104,8 +122,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "⭐",
         titleAr: "نظام النقاط والمكافآت",
         titleEn: "Points & Rewards",
+        titleKu: "Pergala xal û xelatan",
         descriptionAr: "اكسب نقاط عند إضافة بلاغات مؤكدة! استبدل نقاطك بكوبونات وعروض حصرية",
         descriptionEn: "Earn points for confirmed reports! Redeem your points for coupons and exclusive offers",
+        descriptionKu: "Dema ku raporên piştrastkirî zêde dikî xal bistîne! Xalên xwe bi kupon û pêşniyarên taybet biguherîne",
         color: "#FFD700",
     },
     {
@@ -113,8 +133,10 @@ const tutorialSteps: TutorialStep[] = [
         icon: "🚀",
         titleAr: "أنت جاهز!",
         titleEn: "You're Ready!",
+        titleKu: "Tu amade yî!",
         descriptionAr: "ابدأ الآن بالإبلاغ عن مخاطر الطريق وساعد في جعل القيادة أكثر أماناً للجميع",
         descriptionEn: "Start now by reporting road hazards and help make driving safer for everyone",
+        descriptionKu: "Niha dest pê bike bi raporkirina xeterên rêyê û alîkarî bike ku ajotin ji bo hemûyan ewletir bibe",
         color: "#0D2B66",
     },
 ];

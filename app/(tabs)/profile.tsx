@@ -448,7 +448,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* USER */}
-      <Text style={styles.userName}>{user?.full_name || "مستخدم"}</Text>
+      <Text style={styles.userName}>{user?.full_name || (language === 'ar' ? "مستخدم" : language === 'ku' ? "Bikarhêner" : "User")}</Text>
       <Text style={styles.userEmail}>{user?.email || ""}</Text>
 
       {/* PROGRESS */}

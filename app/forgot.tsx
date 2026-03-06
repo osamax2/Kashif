@@ -22,7 +22,7 @@ const I18nManager = RN.I18nManager || { isRTL: false };
 const BLUE = "#0D2B66";
 
 export default function ForgotScreen() {
-    const { t, isRTL } = useLanguage();
+    const { t, isRTL, language } = useLanguage();
     const [method, setMethod] = useState<"email" | "phone" | null>(null);
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
@@ -34,11 +34,11 @@ export default function ForgotScreen() {
 
     const handleSubmit = async () => {
         if (method === "email" && !email) {
-            Alert.alert(t('common.error'), isRTL ? 'الرجاء إدخال البريد الإلكتروني' : 'Please enter your email');
+            Alert.alert(t('common.error'), language === 'ar' ? 'الرجاء إدخال البريد الإلكتروني' : language === 'ku' ? 'Ji kerema xwe re e-nameyê binivîse' : 'Please enter your email');
             return;
         }
         if (method === "phone" && !phone) {
-            Alert.alert(t('common.error'), isRTL ? 'الرجاء إدخال رقم الهاتف' : 'Please enter your phone number');
+            Alert.alert(t('common.error'), language === 'ar' ? 'الرجاء إدخال رقم الهاتف' : language === 'ku' ? 'Ji kerema xwe re hejmara telefonê binivîse' : 'Please enter your phone number');
             return;
         }
 
@@ -48,7 +48,7 @@ export default function ForgotScreen() {
                 await authAPI.forgotPassword(email);
                 Alert.alert(
                     t('common.success'),
-                    isRTL ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : 'Password reset link sent to your email',
+                    language === 'ar' ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : language === 'ku' ? 'Girêdana vegerandina şîfreyê hate şandin bo e-nameya te' : 'Password reset link sent to your email',
                     [{ 
                         text: 'OK', 
                         onPress: () => {
@@ -62,12 +62,12 @@ export default function ForgotScreen() {
                 // Phone-based reset would need SMS service
                 Alert.alert(
                     t('common.info'),
-                    isRTL ? 'إعادة التعيين عبر الهاتف غير متاح حالياً' : 'Phone reset is not available yet'
+                    language === 'ar' ? 'إعادة التعيين عبر الهاتف غير متاح حالياً' : language === 'ku' ? 'Vegerandin bi telefonê niha neberdest e' : 'Phone reset is not available yet'
                 );
             }
         } catch (error: any) {
             const errorMessage = error?.response?.data?.detail || 
-                (isRTL ? 'فشل في إرسال طلب إعادة التعيين' : 'Failed to send reset request');
+                (language === 'ar' ? 'فشل في إرسال طلب إعادة التعيين' : language === 'ku' ? 'Şandina daxwaza vegerandinê têk çû' : 'Failed to send reset request');
             Alert.alert(t('common.error'), errorMessage);
         } finally {
             setLoading(false);
