@@ -687,9 +687,10 @@ export const reportingAPI = {
   },
 
   // Upload image for report - now includes AI analysis
-  uploadImage: async (imageUri: string): Promise<{
+  uploadImage: async (imageUri: string, asyncAI: boolean = false): Promise<{
     url: string;
     filename: string;
+    ai_processing?: string;
     ai_analysis?: {
       num_potholes: number;
       max_severity: string | null;
@@ -717,7 +718,12 @@ export const reportingAPI = {
 
     const token = await AsyncStorage.getItem(TOKEN_KEY);
 
-    const response = await fetch(`${API_BASE_URL}/api/reports/upload`, {
+    // Add async_ai parameter if requested
+    const url = asyncAI 
+      ? `${API_BASE_URL}/api/reports/upload?async_ai=true`
+      : `${API_BASE_URL}/api/reports/upload`;
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -737,8 +743,25 @@ export const reportingAPI = {
     return {
       url: data.url, // Keep relative URL like /uploads/xxx.jpg
       filename: data.filename,
+      ai_processing: data.ai_processing,
       ai_analysis: data.ai_analysis,
     };
+  },
+
+  // Trigger AI analysis on a report (runs in background, sends push notification when done)
+  triggerAIAnalysis: async (reportId: number, language: string = 'en'): Promise<{
+    success: boolean;
+    message: string;
+    report_id: number;
+  }> => {
+    const response = await api.post<{
+      success: boolean;
+      message: string;
+      report_id: number;
+    }>(`/api/reports/${reportId}/analyze`, null, {
+      params: { language }
+    });
+    return response.data;
   },
 
   // Get user's reports (includes pending)

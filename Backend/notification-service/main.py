@@ -348,6 +348,45 @@ def verify_internal_key(x_internal_key: str = Header(None)):
         raise HTTPException(status_code=403, detail="Invalid internal API key")
 
 
+@app.post("/internal/push")
+def internal_send_push(
+    request: schemas.InternalPushRequest,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_key)
+):
+    """
+    Internal endpoint for service-to-service push notifications.
+    Used by reporting-service to send AI analysis completion notifications.
+    """
+    try:
+        # Send push notification
+        result = fcm_service.send_push_notification(
+            db=db,
+            user_id=request.user_id,
+            title=request.title,
+            body=request.body,
+            data=request.data,
+            notification_type=request.notification_type
+        )
+        
+        # Also create notification record in database
+        crud.create_notification(
+            db=db,
+            user_id=request.user_id,
+            title=request.title,
+            body=request.body,
+            notification_type=request.notification_type,
+            related_report_id=request.data.get("report_id") if request.data else None
+        )
+        
+        logger.info(f"Internal push sent to user {request.user_id}: {request.title}")
+        return {"success": True, "result": result}
+        
+    except Exception as e:
+        logger.error(f"Internal push failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
 @app.delete("/internal/user-data/{user_id}")
 def delete_user_data(
     user_id: int,
