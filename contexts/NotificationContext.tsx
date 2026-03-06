@@ -65,8 +65,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Load notifications when user logs in
   useEffect(() => {
     if (isAuthenticated && user) {
-      refreshNotifications();
-      updateUnreadCount();
+      refreshNotifications(); // This already calls updateUnreadCount internally
       // Register for push notifications
       registerForPushNotifications();
     } else {

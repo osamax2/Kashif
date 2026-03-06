@@ -489,7 +489,7 @@ export default function ReportDialog({
                         }
                       }}
                       query={{
-                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
                         language: isRTL ? "ar" : "en", // ✅ Sprache bleibt echte Sprache
                       }}
                       textInputProps={{
