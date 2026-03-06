@@ -856,7 +856,7 @@ export default function HomeScreen() {
     };
 
     // ─── ROUTE WARNING FUNCTIONS ────────────────────────────────────────
-    const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4';
 
     const fetchRouteToDestination = async (destLat: number, destLng: number) => {
         if (!userLocation) {
@@ -1068,7 +1068,7 @@ export default function HomeScreen() {
         console.log('🔍 Searching with Geocoding API:', query);
 
         try {
-            const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+            const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4';
             // Add Syria bias to the search
             const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}`;
 
@@ -1474,7 +1474,7 @@ export default function HomeScreen() {
                         console.error('❌ Places API Error:', error);
                     }}
                     query={{
-                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
                         language: language,
                     }}
                     enablePoweredByContainer={false}

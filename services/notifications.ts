@@ -200,8 +200,8 @@ class NotificationService {
       const response = await api.get<{ unread_count: number }>('/api/notifications/unread-count');
       return response.data.unread_count;
     } catch (error: any) {
-      // Silently return 0 if endpoint not available
-      if (error?.response?.status === 404) {
+      // Silently return 0 if endpoint not available or rate-limited
+      if (error?.response?.status === 404 || error?.response?.status === 429) {
         return 0;
       }
       console.error('Failed to get unread count:', error);
