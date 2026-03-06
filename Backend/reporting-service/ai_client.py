@@ -49,7 +49,8 @@ async def analyze_image(image_path: str, upload_dir: str = "/app/uploads") -> Op
         content_type = content_type_map.get(ext, 'image/jpeg')
         
         # Read file and send to AI service with enhanced depth estimation
-        async with httpx.AsyncClient(timeout=120.0) as client:  # Longer timeout for depth estimation
+        # MiDaS depth estimation via Replicate can take 4-5 minutes on cold start
+        async with httpx.AsyncClient(timeout=360.0) as client:  # 6 min timeout for depth estimation
             with open(full_path, 'rb') as f:
                 files = {'file': (filename, f, content_type)}
                 
