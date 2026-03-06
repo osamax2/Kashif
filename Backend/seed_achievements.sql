@@ -47,4 +47,6 @@ VALUES
     ('points_100', 'Point Collector', 'جامع النقاط', 'Berhevkarê Xalan', 'Accumulate 100 total points', 'اجمع ١٠٠ نقطة', '100 xalan berhev bike', '💯', 'general', 'points_total', 100, 0),
     ('points_500', 'Points Pro', 'محترف النقاط', 'Profesyonelê Xalan', 'Accumulate 500 total points', 'اجمع ٥٠٠ نقطة', '500 xalan berhev bike', '🎯', 'general', 'points_total', 500, 0),
     ('points_1000', 'Points Master', 'سيد النقاط', 'Mamosteyê Xalan', 'Accumulate 1000 total points', 'اجمع ١٠٠٠ نقطة', '1000 xalan berhev bike', '💎', 'general', 'points_total', 1000, 0)
-ON CONFLICT (key) DO NOTHING;
+ON CONFLICT (key) DO UPDATE SET
+    name_ku = EXCLUDED.name_ku,
+    description_ku = EXCLUDED.description_ku;
