@@ -345,7 +345,7 @@ services:
       ADMIN_USER_ID: "2"
       # Roboflow API for pretrained pothole detection model
       # Get free API key at https://roboflow.com
-      ROBOFLOW_API_KEY: "${ROBOFLOW_API_KEY:-}"
+      ROBOFLOW_API_KEY: "${ROBOFLOW_API_KEY:-Pb3G6QRYMasm5Ax5e10S}"
       ADMIN_EMAIL: "admin@kashif.com"
       ADMIN_PASSWORD: "Admin123!"
     volumes:
