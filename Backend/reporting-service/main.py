@@ -212,11 +212,24 @@ async def upload_image(
             "ai_description": ai_result.get("ai_description"),
             "ai_description_ar": ai_result.get("ai_description_ar"),
             "ai_description_ku": ai_result.get("ai_description_ku"),
-            "detections": ai_result.get("detections", [])
+            "detections": ai_result.get("detections", []),
+            "enhanced_dimensions": ai_result.get("enhanced_dimensions"),
+            "depth_estimation": ai_result.get("depth_estimation")
         }
         # Add annotated image URL if available
         if annotated_filename:
             response["ai_analysis"]["annotated_url"] = f"/uploads/{annotated_filename}"
+        
+        # Save depth map if available
+        depth_map_base64 = ai_result.get("depth_map_base64")
+        if depth_map_base64:
+            import base64
+            depth_map_filename = f"depth_{unique_filename}"
+            depth_map_path = os.path.join(UPLOAD_DIR, depth_map_filename)
+            with open(depth_map_path, "wb") as f:
+                f.write(base64.b64decode(depth_map_base64))
+            response["ai_analysis"]["depth_map_url"] = f"/uploads/{depth_map_filename}"
+            logger.info(f"Saved depth map: {depth_map_filename}")
     
     return response
 

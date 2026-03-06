@@ -461,7 +461,7 @@ class EnhancedAnalyzeResponse(BaseModel):
 @app.post("/analyze-enhanced", response_model=EnhancedAnalyzeResponse)
 async def analyze_with_depth(
     file: UploadFile = File(...),
-    use_both_depth_models: bool = Query(True, description="Use both MiDaS and DepthAnything"),
+    use_both_depth_models: bool = Query(False, description="Use only MiDaS depth model"),
     detect_reference_object: bool = Query(True, description="Try to detect reference objects for calibration")
 ):
     """
