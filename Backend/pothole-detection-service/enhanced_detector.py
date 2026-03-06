@@ -289,7 +289,8 @@ def create_enhanced_detector(
     roboflow_key = roboflow_key or os.getenv("ROBOFLOW_API_KEY")
     replicate_token = replicate_token or os.getenv("REPLICATE_API_TOKEN")
     
-    depth_model = DepthModel.BOTH if use_both_models else DepthModel.DEPTH_ANYTHING
+    # Use MiDaS only for reliability when not using both models
+    depth_model = DepthModel.BOTH if use_both_models else DepthModel.MIDAS
     
     return EnhancedPotholeDetector(
         roboflow_api_key=roboflow_key,
