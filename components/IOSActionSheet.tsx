@@ -2,12 +2,11 @@
 import React from "react";
 import {
     Modal,
-    View,
+    StyleSheet,
     Text,
     TouchableOpacity,
-    StyleSheet,
     TouchableWithoutFeedback,
-    Animated,
+    View
 } from "react-native";
 import { useLanguage } from "../contexts/LanguageContext";
 

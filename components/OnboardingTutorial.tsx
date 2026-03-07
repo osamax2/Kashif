@@ -145,6 +145,13 @@ interface Props {
     readonly onComplete: () => void;
 }
 
+// Helper to pick the right localized text
+function pickText(language: string, ar: string, en: string, ku?: string): string {
+    if (language === 'ar') return ar;
+    if (language === 'ku' && ku) return ku;
+    return en;
+}
+
 export default function OnboardingTutorial({ onComplete }: Props) {
     const { language } = useLanguage();
     const isRTL = language === 'ar';
@@ -233,7 +240,7 @@ export default function OnboardingTutorial({ onComplete }: Props) {
                 {!isLastStep && (
                     <Pressable style={styles.skipButton} onPress={handleSkip}>
                         <Text style={styles.skipText}>
-                            {isRTL ? 'تخطي' : 'Skip'}
+                            {pickText(language, 'تخطي', 'Skip', 'Derbas bike')}
                         </Text>
                     </Pressable>
                 )}
@@ -255,12 +262,12 @@ export default function OnboardingTutorial({ onComplete }: Props) {
 
                     {/* Title */}
                     <Text style={[styles.title, isRTL && styles.rtlText]}>
-                        {isRTL ? step.titleAr : step.titleEn}
+                        {pickText(language, step.titleAr, step.titleEn, step.titleKu)}
                     </Text>
 
                     {/* Description */}
                     <Text style={[styles.description, isRTL && styles.rtlText]}>
-                        {isRTL ? step.descriptionAr : step.descriptionEn}
+                        {pickText(language, step.descriptionAr, step.descriptionEn, step.descriptionKu)}
                     </Text>
                 </Animated.View>
 
@@ -297,8 +304,8 @@ export default function OnboardingTutorial({ onComplete }: Props) {
                     >
                         <Text style={styles.nextButtonText}>
                             {isLastStep 
-                                ? (isRTL ? 'ابدأ الآن' : 'Start Now')
-                                : (isRTL ? 'التالي' : 'Next')
+                                ? pickText(language, 'ابدأ الآن', 'Start Now', 'Niha dest pê bike')
+                                : pickText(language, 'التالي', 'Next', 'Pêş de')
                             }
                         </Text>
                         {!isLastStep && (

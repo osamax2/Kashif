@@ -399,7 +399,7 @@ export default function SettingsScreen() {
                                 <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", justifyContent: "space-between" }}>
                                     <View style={{ alignItems: "center" }}>
                                         <Text style={{ color: "#ccc", fontSize: 12, marginBottom: 4 }}>{t("settings.quietHoursStart")}</Text>
-                                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                        <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", alignItems: "center" }}>
                                             <TouchableOpacity
                                                 onPress={() => setQuietHoursStart((prev) => (prev === 0 ? 23 : prev - 1))}
                                                 style={{ padding: 8 }}
@@ -419,7 +419,7 @@ export default function SettingsScreen() {
                                     </View>
                                     <View style={{ alignItems: "center" }}>
                                         <Text style={{ color: "#ccc", fontSize: 12, marginBottom: 4 }}>{t("settings.quietHoursEnd")}</Text>
-                                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                        <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", alignItems: "center" }}>
                                             <TouchableOpacity
                                                 onPress={() => setQuietHoursEnd((prev) => (prev === 0 ? 23 : prev - 1))}
                                                 style={{ padding: 8 }}
