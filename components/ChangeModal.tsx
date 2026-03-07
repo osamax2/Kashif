@@ -1,12 +1,12 @@
 // components/ChangeModal.tsx
 import React from "react";
 import {
-    View,
+    Modal,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    Modal,
-    StyleSheet,
+    View,
 } from "react-native";
 import { useLanguage } from "../contexts/LanguageContext";
 

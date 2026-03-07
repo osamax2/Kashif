@@ -10,16 +10,16 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const PRIMARY = "#0D2B66";
@@ -169,11 +169,11 @@ export default function CouponsScreen() {
       
       <View style={styles.header}>
 
-  {/* Back Icon – Englisch */}
+  {/* Back Icon – English & Kurdish (left side) */}
   {!isRTL && (
     <TouchableOpacity
       onPress={() => router.back()}
-      style={styles.backBtnRight}
+      style={styles.backBtnLeft}
     >
       <Ionicons name="chevron-back" size={30} color={YELLOW} />
     </TouchableOpacity>
@@ -184,11 +184,11 @@ export default function CouponsScreen() {
     {t("coupons.screenTitle")}
   </Text>
 
-  {/* Back Icon – Arabisch */}
+  {/* Back Icon – Arabisch (right side) */}
   {isRTL && (
     <TouchableOpacity
       onPress={() => router.back()}
-      style={styles.backBtnLeft}
+      style={styles.backBtnRight}
     >
       <Ionicons name="chevron-forward" size={30} color={YELLOW} />
     </TouchableOpacity>
