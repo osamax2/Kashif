@@ -168,6 +168,19 @@ export default function CouponsScreen() {
       {/* HEADER */}
       
       <View style={styles.header}>
+ {/* Back Icon – Arabisch (right side) */}
+ {isRTL && (
+    <TouchableOpacity
+      onPress={() => router.back()}
+      style={styles.backBtnRight}
+    >
+      <Ionicons name="chevron-forward" size={30} color={YELLOW} />
+    </TouchableOpacity>
+  )}
+   {/* Titel bleibt in der Mitte */}
+  <Text style={styles.headerTitle}>
+    {t("coupons.screenTitle")}
+  </Text>
 
   {/* Back Icon – English & Kurdish (left side) */}
   {!isRTL && (
@@ -179,20 +192,10 @@ export default function CouponsScreen() {
     </TouchableOpacity>
   )}
 
-  {/* Titel bleibt in der Mitte */}
-  <Text style={styles.headerTitle}>
-    {t("coupons.screenTitle")}
-  </Text>
+ 
 
-  {/* Back Icon – Arabisch (right side) */}
-  {isRTL && (
-    <TouchableOpacity
-      onPress={() => router.back()}
-      style={styles.backBtnRight}
-    >
-      <Ionicons name="chevron-forward" size={30} color={YELLOW} />
-    </TouchableOpacity>
-  )}
+  
+ 
 </View>
 
       {/* Tabs */}
@@ -408,13 +411,13 @@ const styles = StyleSheet.create({
   },
   backBtnLeft: {
   position: "absolute",
-  left: 0,
+  right: 0,
   padding: 6,
 },
 
 backBtnRight: {
   position: "absolute",
-  right: 0,
+  left: 0,
   padding: 6,
 },
 });
