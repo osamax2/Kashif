@@ -309,9 +309,9 @@ export default function HomeScreen() {
                     try {
                         // Map type to category_id
                         const categoryMap: Record<string, number> = {
-                            speed: 1,
-                            pothole: 2,
-                            accident: 3,
+                            pothole: 1,
+                            accident: 2,
+                            environment: 3,
                         };
 
                         // Map severity
@@ -322,8 +322,8 @@ export default function HomeScreen() {
                         };
 
                         await reportingAPI.createReport({
-                            title: report.type === 'speed' ? 'Speed Camera' :
-                                report.type === 'pothole' ? 'Pothole' : 'Accident',
+                            title: report.type === 'pothole' ? 'Pothole' :
+                                report.type === 'accident' ? 'Accident' : 'Environmental Hazard',
                             description: report.notes || `${report.type} report`,
                             category_id: categoryMap[report.type || 'pothole'] || 2,
                             severity: severityMap[report.severity] || 'medium',
@@ -552,7 +552,7 @@ export default function HomeScreen() {
                     soundEnabled,
                     warnPothole,
                     warnAccident,
-                    warnSpeed,
+                    warnEnvironment: warnSpeed,
                     appVolume,
                     language,
                 });
@@ -567,7 +567,7 @@ export default function HomeScreen() {
 
     /** Dialog-Typ (welcher Meldungs-Typ wird erstellt?) */
     const [reportType, setReportType] = useState<
-        "pothole" | "accident" | "speed" | null
+        "pothole" | "accident" | "environment" | null
     >(null);
 
     /** MULTI-FILTER */
@@ -1220,9 +1220,9 @@ export default function HomeScreen() {
                     shouldSpeak = true;
                 }
                 break;
-            case "speed":
+            case "environment":
                 if (warnSpeed) {
-                    message = t('home.warnSpeed');
+                    message = t('home.warnEnvironment') || (language === 'ar' ? 'تحذير! خطر بيئي قريب' : language === 'ku' ? 'Hişyarî! Metirsiya jîngehî li pêş te ye' : 'Warning! Environmental hazard ahead');
                     shouldSpeak = true;
                 }
                 break;
@@ -1238,7 +1238,7 @@ export default function HomeScreen() {
                     const kuAudioMap: Record<string, any> = {
                         'pothole': require('@/assets/sounds/ku/warn_pothole_short.mp3'),
                         'accident': require('@/assets/sounds/ku/warn_accident_short.mp3'),
-                        'speed': require('@/assets/sounds/ku/warn_speed_short.mp3'),
+                        'environment': require('@/assets/sounds/ku/warn_speed_short.mp3'),
                     };
                     const kuFile = kuAudioMap[type] || require('@/assets/sounds/ku/warning_generic.mp3');
                     const { sound: kuWarnSound } = await Audio.Sound.createAsync(
@@ -1257,8 +1257,8 @@ export default function HomeScreen() {
                             ? 'Hişyarî, çala li pêş te ye!'
                             : type === 'accident'
                                 ? 'Hişyarî, qezayek li pêş te heye!'
-                                : type === 'speed'
-                                    ? 'Hişyarî, radarê lezê li pêş te ye!'
+                                : type === 'environment'
+                                    ? 'Hişyarî, metirsiya jîngehî li pêş te ye!'
                                     : 'Hişyarî!';
 
                     await Speech.speak(kuMessage, {
@@ -1672,9 +1672,11 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.fabActionBtn}
-                            onPress={() => { setReportType("speed"); setMenuOpen(false); }}
+                            onPress={() => { setReportType("environment"); setMenuOpen(false); }}
                         >
-                            <Image source={require("../../assets/icons/speed.png")} style={styles.fabActionIcon} />
+                            <View style={[styles.fabActionIcon, { justifyContent: 'center', alignItems: 'center' }]}>
+                                <Text style={{ fontSize: 24 }}>🌿</Text>
+                            </View>
                         </TouchableOpacity>
                     </Animated.View>
                 )}
@@ -1823,11 +1825,11 @@ export default function HomeScreen() {
                                 getCategoryByName('qezay')?.id ||
                                 2;
 
-                        } else if (reportType === 'speed') {
+                        } else if (reportType === 'environment') {
                             categoryId =
-                                getCategoryByName('كاشف سرعة')?.id ||
-                                getCategoryByName('radar leza')?.id ||
-                                getCategoryByName('leza')?.id ||
+                                getCategoryByName('خطر بيئي')?.id ||
+                                getCategoryByName('بيئ')?.id ||
+                                getCategoryByName('jîngehî')?.id ||
                                 3;
                         }
 
@@ -1936,7 +1938,7 @@ export default function HomeScreen() {
                                 ? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk  li ser rê' : 'Pothole on Road')
                                 : data.type === 'accident'
                                     ? (language === 'ar' ? 'حادث مروري' : language === 'ku' ? 'Qezaya trafîkê' : 'Traffic Accident')
-                                    : (language === 'ar' ? 'كاشف سرعة' : language === 'ku' ? 'Kameraya lezê' : 'Speed Camera'),
+                                    : (language === 'ar' ? 'خطر بيئي' : language === 'ku' ? 'Metirsiya jîngehî' : 'Environmental Hazard'),
                             description: finalDescription,
                             category_id: categoryId,
                             latitude: locationToUse.latitude,
@@ -2064,14 +2066,14 @@ export default function HomeScreen() {
                                         const newValue = !warnSpeed;
                                         setWarnSpeed(newValue);
                                         if (newValue && soundEnabled) {
-                                            await speakWarning('speed');
+                                            await speakWarning('environment');
                                         }
                                     }}
                                 >
                                     <View style={[styles.modeIconCircle]}>
-                                        <Ionicons name="speedometer" size={26} color="#00FF00" />
+                                        <Ionicons name="leaf" size={26} color="#10B981" />
                                     </View>
-                                    <Text style={styles.modeText}>{t('home.speedCamera')}</Text>
+                                    <Text style={styles.modeText}>{t('home.environmentHazard') || (language === 'ar' ? 'خطر بيئي' : language === 'ku' ? 'Metirsiya jîngehî' : 'Environment')}</Text>
                                 </TouchableOpacity>
 
                             </View>

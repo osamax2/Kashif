@@ -371,38 +371,11 @@ export default function ReportDialog({
                     ]}
                   >
                     {type === "environment"
-                      ? t("reportDialog.typeLabel")
+                      ? t("reportDialog.severityLabel")
                       : t("reportDialog.severityLabel")}
                   </Text>
                 </View>
 
-                {type === "environment" ? (
-                  <View
-                    style={[
-                      styles.chipRow,
-                      { flexDirection: effectiveRTL ? "row-reverse" : "row" },
-                    ]}
-                  >
-                    <Chip
-                      label={t("reportDialog.radarFixed")}
-                      active={severity === "low"}
-                      variant="radar"
-                      onPress={() => setSeverity("low")}
-                    />
-                    <Chip
-                      label={t("reportDialog.radarMobile")}
-                      active={severity === "medium"}
-                      variant="radar"
-                      onPress={() => setSeverity("medium")}
-                    />
-                    <Chip
-                      label={t("reportDialog.radarCamera")}
-                      active={severity === "high"}
-                      variant="radar"
-                      onPress={() => setSeverity("high")}
-                    />
-                  </View>
-                ) : (
                   <View
                     style={[
                       styles.chipRow,
@@ -428,7 +401,6 @@ export default function ReportDialog({
                       onPress={() => setSeverity("high")}
                     />
                   </View>
-                )}
 
                 {/* Adresse */}
                 <View style={styles.sectionRow}>

@@ -221,18 +221,18 @@ class LocationMonitoringService {
    * Check if alert should be shown for this category
    * Category IDs from backend:
    * 1 = Infrastructure / Pothole (حفرة)
-   * 2 = Environment (خطر بيئي)
-   * 3 = Public Safety / Accident (حادث)
+   * 2 = Accident (حادث)
+   * 3 = Environment (خطر بيئي)
    * 6 = Mines (ألغام)
    */
   private shouldShowAlertForCategory(categoryId: number): boolean {
     switch (categoryId) {
       case 1: // Infrastructure / Pothole
         return this.alertSettings.warnPothole;
-      case 2: // Environment
-        return this.alertSettings.warnEnvironment;
-      case 3: // Public Safety / Accident
+      case 2: // Accident (حادث)
         return this.alertSettings.warnAccident;
+      case 3: // Environment (خطر بيئي)
+        return this.alertSettings.warnEnvironment;
       default:
         return true;
     }
@@ -254,16 +254,7 @@ class LocationMonitoringService {
             ? `Çalêk ${distance} metre li pêş te heye. Hay ji xwe hebin!`
             : `There is a pothole ${distance} meters ahead. Be careful!`,
         };
-      case 2: // Environment (خطر بيئي)
-        return {
-          title: lang === 'ar' ? '🌿 تنبيه: خطر بيئي' : lang === 'ku' ? '🌿 Hişyarî: Metirsiya jîngehê' : '🌿 Alert: Environmental Hazard',
-          message: lang === 'ar'
-            ? `يوجد خطر بيئي على بعد ${distance} متر أمامك. كن حذراً!`
-            : lang === 'ku'
-            ? `Metirsiya jîngehê ${distance} metre li pêş te heye. Hay ji xwe hebin!`
-            : `There is an environmental hazard ${distance} meters ahead. Be careful!`,
-        };
-      case 3: // Public Safety / Accident (حادث)
+      case 2: // Accident (حادث)
         return {
           title: lang === 'ar' ? '🚨 تحذير: حادث مروري' : lang === 'ku' ? '🚨 Hişyarî: Qezaya trafîkê' : '🚨 Warning: Traffic Accident',
           message: lang === 'ar'
@@ -271,6 +262,15 @@ class LocationMonitoringService {
             : lang === 'ku'
             ? `Qezayek ${distance} metre li pêş te heye. Hêdî biçin!`
             : `There is a traffic accident ${distance} meters ahead. Slow down!`,
+        };
+      case 3: // Environment (خطر بيئي)
+        return {
+          title: lang === 'ar' ? '🌿 تنبيه: خطر بيئي' : lang === 'ku' ? '🌿 Hişyarî: Metirsiya jîngehê' : '🌿 Alert: Environmental Hazard',
+          message: lang === 'ar'
+            ? `يوجد خطر بيئي على بعد ${distance} متر أمامك. كن حذراً!`
+            : lang === 'ku'
+            ? `Metirsiya jîngehê ${distance} metre li pêş te heye. Hay ji xwe hebin!`
+            : `There is an environmental hazard ${distance} meters ahead. Be careful!`,
         };
       case 6: // Mines (ألغام)
         return {
@@ -312,8 +312,8 @@ class LocationMonitoringService {
 
     // Category IDs from backend:
     // 1 = Infrastructure / Pothole (حفرة)
-    // 2 = Environment (خطر بيئي)
-    // 3 = Public Safety / Accident (حادث)
+    // 2 = Accident (حادث)
+    // 3 = Environment (خطر بيئي)
     // 6 = Mines (ألغام)
     
     // For Kurdish users, play pre-generated Kurdish audio files
@@ -358,8 +358,8 @@ class LocationMonitoringService {
         // Step 2: Play Kurdish voice warning AFTER beep is done
         const kuAudioMap: Record<number, any> = {
           1: require('../assets/sounds/ku/warning_pothole.mp3'),
-          2: require('../assets/sounds/ku/warning_environment.mp3'),
-          3: require('../assets/sounds/ku/warning_accident.mp3'),
+          2: require('../assets/sounds/ku/warning_accident.mp3'),
+          3: require('../assets/sounds/ku/warning_environment.mp3'),
           4: require('../assets/sounds/ku/warning_speed_camera.mp3'),
           6: require('../assets/sounds/ku/warning_mines.mp3'),
         };
@@ -383,15 +383,15 @@ class LocationMonitoringService {
           ? `تحذير! حفرة في الطريق على بعد ${distance} متر`
           : `Warning! Pothole ahead at ${distance} meters`;
         break;
-      case 2: // Environment
-        message = speechLang === 'ar'
-          ? `تنبيه! خطر بيئي على بعد ${distance} متر`
-          : `Alert! Environmental hazard ahead at ${distance} meters`;
-        break;
-      case 3: // Public Safety / Accident
+      case 2: // Accident (حادث)
         message = speechLang === 'ar'
           ? `تحذير! حادث مروري على بعد ${distance} متر`
           : `Warning! Traffic accident ahead at ${distance} meters`;
+        break;
+      case 3: // Environment (خطر بيئي)
+        message = speechLang === 'ar'
+          ? `تنبيه! خطر بيئي على بعد ${distance} متر`
+          : `Alert! Environmental hazard ahead at ${distance} meters`;
         break;
       case 6: // Mines
         message = speechLang === 'ar'

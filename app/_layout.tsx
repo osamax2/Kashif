@@ -61,6 +61,7 @@ function RootLayoutNav() {
 
                 {/* Optional screens */}
                 <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+                <Stack.Screen name="alert-screen" options={{ presentation: "modal", animation: "fade" }} />
             </Stack>
 
             <StatusBar style="auto" />
