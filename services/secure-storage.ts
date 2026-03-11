@@ -9,21 +9,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MIGRATION_KEY = '@kashif_secure_migrated';
 
+// SecureStore keys must only contain alphanumeric, '.', '-', '_' characters
+function sanitizeKey(key: string): string {
+  return key.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
 export async function secureGet(key: string): Promise<string | null> {
   try {
-    return await SecureStore.getItemAsync(key);
+    return await SecureStore.getItemAsync(sanitizeKey(key));
   } catch {
     return null;
   }
 }
 
 export async function secureSet(key: string, value: string): Promise<void> {
-  await SecureStore.setItemAsync(key, value);
+  await SecureStore.setItemAsync(sanitizeKey(key), value);
 }
 
 export async function secureDelete(key: string): Promise<void> {
   try {
-    await SecureStore.deleteItemAsync(key);
+    await SecureStore.deleteItemAsync(sanitizeKey(key));
   } catch {
     // Ignore if key doesn't exist
   }
@@ -44,7 +49,7 @@ export async function migrateTokensToSecureStore(keys: string[]): Promise<void> 
   for (const key of keys) {
     const value = await AsyncStorage.getItem(key);
     if (value) {
-      await SecureStore.setItemAsync(key, value);
+      await SecureStore.setItemAsync(sanitizeKey(key), value);
       await AsyncStorage.removeItem(key);
     }
   }
