@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { secureGet, secureSet, secureMultiDelete, migrateTokensToSecureStore } from './secure-storage';
+import { resolveApiBaseUrl, getBaseUrl, resetBaseUrl } from './api-config';
 
-// API Base URL - Production API endpoint with HTTPS
-const API_BASE_URL = 'https://api.kashifroad.com';
+// API Base URL - resolved dynamically at startup, can be updated via remote config
+let API_BASE_URL = 'https://api.kashifroad.com';
 
 // Storage keys
 const TOKEN_KEY = '@kashif_access_token';
@@ -68,9 +69,30 @@ api.interceptors.response.use(
         }
       }
 
+      // On network/connection errors, try re-resolving the API URL
+      if (!error.response && (error.code === 'ECONNABORTED' || error.message?.includes('Network Error'))) {
+        resetBaseUrl();
+      }
+
       return Promise.reject(error);
     }
 );
+
+/**
+ * Initialize API with the best available server URL.
+ * Call this once at app startup. If the primary domain is down,
+ * it will automatically switch to a fallback URL.
+ * Can be updated remotely via api-config.json on GitHub without a new app release.
+ */
+export async function initApi(): Promise<void> {
+  try {
+    const baseUrl = await resolveApiBaseUrl();
+    API_BASE_URL = baseUrl;
+    api.defaults.baseURL = baseUrl;
+  } catch {
+    // Keep default URL if resolution fails
+  }
+}
 
 // Auth API
 export interface RegisterData {

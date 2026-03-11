@@ -24,6 +24,7 @@ import { OfflineProvider } from '@/contexts/OfflineContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { checkDeviceIntegrity } from '@/services/root-detection';
 import { checkAndPromptForUpdate, clearUpdateCache } from '@/services/updateChecker';
+import { initApi } from '@/services/api';
 
 export const unstable_settings = {
     initialRouteName: "index",
@@ -36,6 +37,9 @@ function RootLayoutNav() {
 
     // Check for app updates on startup
     React.useEffect(() => {
+        // Resolve best API URL (supports remote config + fallback)
+        initApi().catch(() => {});
+
         // Check for rooted/jailbroken device
         checkDeviceIntegrity(language).catch(() => {});
 
