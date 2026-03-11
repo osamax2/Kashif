@@ -43,11 +43,13 @@ const CARD_BORDER = "rgba(255,255,255,0.18)";
 const YELLOW = "#F4B400";
 const PENDING_COLOR = "#FF9500";
 const CONFIRMED_COLOR = "#4CD964";
-const API_BASE_URL = "https://api.kashifroad.com";
+
+import { getBaseUrl } from "@/services/api-config";
 
 // Helper function to get full photo URL
 const getPhotoUrl = (photoUrls: string | undefined): string | null => {
   if (!photoUrls) return null;
+  const API_URL = getBaseUrl();
   const firstUrl = photoUrls.split(",")[0].trim();
   if (!firstUrl) return null;
 
@@ -58,20 +60,21 @@ const getPhotoUrl = (photoUrls: string | undefined): string | null => {
 
   // If relative URL starting with /uploads/, convert to /api/reports/uploads/
   if (firstUrl.startsWith("/uploads/")) {
-    return `${API_BASE_URL}/api/reports${firstUrl}`;
+    return `${API_URL}/api/reports${firstUrl}`;
   }
 
   // If relative URL (starts with /), prepend API base with /api/reports
   if (firstUrl.startsWith("/")) {
-    return `${API_BASE_URL}/api/reports${firstUrl}`;
+    return `${API_URL}/api/reports${firstUrl}`;
   }
 
   // Otherwise prepend API base with /api/reports/
-  return `${API_BASE_URL}/api/reports/${firstUrl}`;
+  return `${API_URL}/api/reports/${firstUrl}`;
 };
 
 // Get the best image to display (annotated if available, otherwise original)
 const getDisplayImageUrl = (report: { photo_urls?: string; ai_annotated_url?: string }): string | null => {
+  const API_URL = getBaseUrl();
   // Prefer AI annotated image if available
   if (report.ai_annotated_url) {
     const url = report.ai_annotated_url.trim();
@@ -80,12 +83,12 @@ const getDisplayImageUrl = (report: { photo_urls?: string; ai_annotated_url?: st
     }
     // Handle /uploads/ prefix
     if (url.startsWith("/uploads/")) {
-      return `${API_BASE_URL}/api/reports${url}`;
+      return `${API_URL}/api/reports${url}`;
     }
     if (url.startsWith("/")) {
-      return `${API_BASE_URL}/api/reports${url}`;
+      return `${API_URL}/api/reports${url}`;
     }
-    return `${API_BASE_URL}/api/reports/${url}`;
+    return `${API_URL}/api/reports/${url}`;
   }
   // Fall back to original photo
   return getPhotoUrl(report.photo_urls);

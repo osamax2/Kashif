@@ -1,0 +1,7 @@
+{
+  "baseUrl": "https://api.kashifroad.com",
+  "fallbackUrls": [
+    "http://87.106.51.243:2299"
+  ],
+  "updatedAt": "2026-03-12"
+}

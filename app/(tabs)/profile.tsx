@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Achievement, achievementAPI, authAPI, challengeAPI, FriendInfo, friendsAPI, gamificationAPI, Level, lookupAPI, PointTransaction, reportingAPI, WeeklyChallenge } from "@/services/api";
+import { getBaseUrl } from "@/services/api-config";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
@@ -185,7 +186,7 @@ export default function ProfileScreen() {
       if (user?.image_url) {
         const serverUrl = user.image_url.startsWith("http")
           ? user.image_url
-          : `https://api.kashifroad.com${user.image_url}`;
+          : `${getBaseUrl()}${user.image_url}`;
         setProfileImage(serverUrl);
         return;
       }
@@ -345,7 +346,7 @@ export default function ProfileScreen() {
                       const result = await authAPI.uploadProfilePicture(pendingImage);
                       const serverUrl = result.image_url.startsWith("http")
                         ? result.image_url
-                        : `https://api.kashifroad.com${result.image_url}`;
+                        : `${getBaseUrl()}${result.image_url}`;
                       setProfileImage(serverUrl);
                       // Clear old local storage
                       await AsyncStorage.removeItem("profileImage");
