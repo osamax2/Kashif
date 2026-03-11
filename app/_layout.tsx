@@ -6,12 +6,23 @@ import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+// CWE-532: Strip sensitive info from logs in production
+if (!__DEV__) {
+  const noop = () => {};
+  console.log = noop;
+  console.warn = noop;
+  console.error = noop;
+  console.info = noop;
+  console.debug = noop;
+}
+
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { DataSyncProvider } from '@/contexts/DataSyncContext';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { OfflineProvider } from '@/contexts/OfflineContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { checkDeviceIntegrity } from '@/services/root-detection';
 import { checkAndPromptForUpdate, clearUpdateCache } from '@/services/updateChecker';
 
 export const unstable_settings = {
@@ -25,6 +36,9 @@ function RootLayoutNav() {
 
     // Check for app updates on startup
     React.useEffect(() => {
+        // Check for rooted/jailbroken device
+        checkDeviceIntegrity(language).catch(() => {});
+
         const checkUpdate = async () => {
             try {
                 // Clear cache on each app start to ensure update dialog shows
