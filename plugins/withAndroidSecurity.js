@@ -111,12 +111,45 @@ function withAndroidSecurity(config) {
     return config;
   });
 
-  // Step 5: Modify build.gradle (app-level) for ProGuard and R8
+  // Step 5: Modify build.gradle (app-level) for ProGuard, R8, and release signing
   config = withDangerousMod(config, [
     'android',
     async (config) => {
       const buildGradlePath = path.join(config.modRequest.platformProjectRoot, 'app', 'build.gradle');
       let buildGradle = fs.readFileSync(buildGradlePath, 'utf-8');
+
+      // Copy keystore to android/app/ if it exists in project root
+      const projectRoot = path.join(config.modRequest.platformProjectRoot, '..');
+      const keystoreSrc = path.join(projectRoot, 'kashif-release.keystore');
+      const keystoreDst = path.join(config.modRequest.platformProjectRoot, 'app', 'kashif-release.keystore');
+      if (fs.existsSync(keystoreSrc) && !fs.existsSync(keystoreDst)) {
+        fs.copyFileSync(keystoreSrc, keystoreDst);
+      }
+
+      // Add release signing config if not present
+      if (!buildGradle.includes('kashif-release.keystore')) {
+        buildGradle = buildGradle.replace(
+          /signingConfigs\s*\{/,
+          `signingConfigs {
+        release {
+            storeFile file('kashif-release.keystore')
+            storePassword 'Kashif2026Release'
+            keyAlias 'kashif-key'
+            keyPassword 'Kashif2026Release'
+        }`
+        );
+      }
+
+      // Always ensure release build type uses release signing config
+      // Count occurrences of signingConfig signingConfigs.debug — the second one is in release block
+      const debugSigningPattern = 'signingConfig signingConfigs.debug';
+      const firstIdx = buildGradle.indexOf(debugSigningPattern);
+      if (firstIdx !== -1) {
+        const secondIdx = buildGradle.indexOf(debugSigningPattern, firstIdx + debugSigningPattern.length);
+        if (secondIdx !== -1) {
+          buildGradle = buildGradle.substring(0, secondIdx) + 'signingConfig signingConfigs.release' + buildGradle.substring(secondIdx + debugSigningPattern.length);
+        }
+      }
 
       // Enable minification for release builds
       if (buildGradle.includes('minifyEnabled false') && buildGradle.includes('release {')) {
