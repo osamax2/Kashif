@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError, AxiosInstance } from 'axios';
+import { secureGet, secureSet, secureMultiDelete, migrateTokensToSecureStore } from './secure-storage';
 
 // API Base URL - Production API endpoint with HTTPS
 const API_BASE_URL = 'https://api.kashifroad.com';
@@ -18,10 +19,13 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+// One-time migration from AsyncStorage to SecureStore
+migrateTokensToSecureStore([TOKEN_KEY, REFRESH_TOKEN_KEY]).catch(() => {});
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
     async (config) => {
-      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      const token = await secureGet(TOKEN_KEY);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -43,15 +47,15 @@ api.interceptors.response.use(
         originalRequest._retry = true;
 
         try {
-          const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+          const refreshToken = await secureGet(REFRESH_TOKEN_KEY);
           if (refreshToken) {
             const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
               refresh_token: refreshToken,
             });
 
             const { access_token, refresh_token } = response.data;
-            await AsyncStorage.setItem(TOKEN_KEY, access_token);
-            await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
+            await secureSet(TOKEN_KEY, access_token);
+            await secureSet(REFRESH_TOKEN_KEY, refresh_token);
 
             // Retry original request with new token
             originalRequest.headers.Authorization = `Bearer ${access_token}`;
@@ -167,9 +171,9 @@ export const authAPI = {
         }
     );
 
-    // Save tokens
-    await AsyncStorage.setItem(TOKEN_KEY, response.data.access_token);
-    await AsyncStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
+    // Save tokens securely
+    await secureSet(TOKEN_KEY, response.data.access_token);
+    await secureSet(REFRESH_TOKEN_KEY, response.data.refresh_token);
 
     return response.data;
   },
@@ -183,7 +187,8 @@ export const authAPI = {
 
   // Logout
   logout: async (): Promise<void> => {
-    await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
+    await secureMultiDelete([TOKEN_KEY, REFRESH_TOKEN_KEY]);
+    await AsyncStorage.removeItem(USER_KEY);
   },
 
   // Forgot password - request reset code
@@ -248,7 +253,7 @@ export const authAPI = {
 
     formData.append('file', file);
 
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    const token = await secureGet(TOKEN_KEY);
 
     const response = await fetch(`${API_BASE_URL}/api/auth/me/profile-picture`, {
       method: 'POST',
@@ -353,7 +358,7 @@ export const lookupAPI = {
 
 // Helper function to check if user is logged in
 export const isLoggedIn = async (): Promise<boolean> => {
-  const token = await AsyncStorage.getItem(TOKEN_KEY);
+  const token = await secureGet(TOKEN_KEY);
   return !!token;
 };
 
@@ -716,7 +721,7 @@ export const reportingAPI = {
 
     formData.append('file', file);
 
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    const token = await secureGet(TOKEN_KEY);
 
     // Add async_ai parameter if requested
     const url = asyncAI 

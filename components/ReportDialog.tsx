@@ -2,6 +2,7 @@
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { isOnline, savePendingReport } from "@/services/offline-reports";
+import * as Crypto from "expo-crypto";
 import * as FileSystem from "expo-file-system";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
@@ -204,7 +205,7 @@ export default function ReportDialog({
   }, [visible, initialAddress]);
 
   const handleSend = async () => {
-    const id = Math.floor(1000 + Math.random() * 9000).toString();
+    const id = Crypto.randomUUID();
 
     // Sprache bleibt nach "isRTL" (arabisch vs englisch)
     const time = new Date().toLocaleString(isRTL ? "ar-SY" : "en-US", {
