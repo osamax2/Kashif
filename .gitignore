@@ -44,8 +44,9 @@ app-example
 .android/
 .cache/
 
-# APK files
+# APK / AAB files
 *.apk
+*.aab
 kashif-5177f-firebase-adminsdk-fbsvc-3812afab80.json
 
 # Backend images
