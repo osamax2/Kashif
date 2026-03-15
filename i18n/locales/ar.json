@@ -104,6 +104,7 @@
     "testSoundText": "هذا اختبار",
     "warnPothole": "تحذير! توجد حفرة أمامك",
     "warnAccident": "تحذير! حادث على الطريق",
+    "environmentHazard": "خطر بيئي",
     "warnEnvironment": "تنبيه! خطر بيئي أمامك"
   },
   "reportDialog": {
