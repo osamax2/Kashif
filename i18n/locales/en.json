@@ -101,6 +101,7 @@
     "pothole": "Pothole",
     "accident": "Accident",
     "environment": "Environment",
+    "environmentHazard": "Environment Hazard",
     "testSoundText": "This is a test",
     "warnPothole": "Warning! Pothole ahead",
     "warnAccident": "Warning! Accident on the road",

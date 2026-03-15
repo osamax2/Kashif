@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError, AxiosInstance } from 'axios';
-import { secureGet, secureSet, secureMultiDelete, migrateTokensToSecureStore } from './secure-storage';
-import { resolveApiBaseUrl, getBaseUrl, resetBaseUrl } from './api-config';
+import { resetBaseUrl, resolveApiBaseUrl } from './api-config';
+import { migrateTokensToSecureStore, secureGet, secureMultiDelete, secureSet } from './secure-storage';
 
 // API Base URL - resolved dynamically at startup, can be updated via remote config
 let API_BASE_URL = 'https://api.kashifroad.com';

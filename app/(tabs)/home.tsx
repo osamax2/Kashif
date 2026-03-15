@@ -2073,7 +2073,7 @@ export default function HomeScreen() {
                                     <View style={[styles.modeIconCircle]}>
                                         <Ionicons name="leaf" size={26} color="#10B981" />
                                     </View>
-                                    <Text style={styles.modeText}>{t('home.environmentHazard') || (language === 'ar' ? 'خطر بيئي' : language === 'ku' ? 'Metirsiya jîngehî' : 'Environment')}</Text>
+                                    <Text style={styles.modeText}>{t('home.environmentHazard')}</Text>
                                 </TouchableOpacity>
 
                             </View>

@@ -22,9 +22,9 @@ import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { OfflineProvider } from '@/contexts/OfflineContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { initApi } from '@/services/api';
 import { checkDeviceIntegrity } from '@/services/root-detection';
 import { checkAndPromptForUpdate, clearUpdateCache } from '@/services/updateChecker';
-import { initApi } from '@/services/api';
 
 export const unstable_settings = {
     initialRouteName: "index",
