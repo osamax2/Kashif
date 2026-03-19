@@ -14,6 +14,7 @@ import NotificationService from "@/services/notifications";
 import {
     ActivityIndicator,
     Alert,
+    Platform,
     ScrollView,
     StyleSheet,
     Switch,
@@ -21,6 +22,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
@@ -29,9 +31,12 @@ const CARD = "#133B7A";
 export default function SettingsScreen() {
     const { user, logout } = useAuth();
     const { language, setLanguage, t, isRTL } = useLanguage();
-
-    // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
+    // Arabic = text LEFT, English/Kurdish = text RIGHT (inverted layout)
     const effectiveRTL = !isRTL;
+    const insets = useSafeAreaInsets();
+    const bottomPadding = Platform.OS === 'android'
+        ? Math.max(insets.bottom, 16) + 140
+        : insets.bottom + 150;
 
     const [hideName, setHideName] = useState(false);
     const [notifReports, setNotifReports] = useState(true);
@@ -140,7 +145,7 @@ export default function SettingsScreen() {
     return (
         <ScrollView
             style={styles.root}
-            contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
+            contentContainerStyle={{ paddingBottom: bottomPadding, flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
         >
             {/* Header */}

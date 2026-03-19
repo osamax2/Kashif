@@ -21,6 +21,7 @@ import {
     ActivityIndicator,
     Alert,
     Animated,
+    BackHandler,
     FlatList,
     Image,
     Linking,
@@ -460,6 +461,16 @@ export default function ReportsScreen() {
     setHistoryExpanded(false);
   };
 
+  // Handle Android back button when detail modal is open
+  useEffect(() => {
+    if (!detailVisible) return;
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      closeDetails();
+      return true;
+    });
+    return () => handler.remove();
+  }, [detailVisible]);
+
   const getStatusName = (statusId: number): string => {
     const raw = statuses.find((s) => s.id === statusId)?.name || "غير معروف";
     return translateStatus(raw, language);
@@ -760,7 +771,7 @@ export default function ReportsScreen() {
       )}
 
       {/* DETAILS MODAL */}
-      <Modal visible={detailVisible} transparent animationType="slide">
+      <Modal visible={detailVisible} transparent animationType="slide" onRequestClose={closeDetails}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalGlass}>
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: '90%' }}>
@@ -1066,14 +1077,15 @@ export default function ReportsScreen() {
                       )}
                     </Pressable>
                   )}
-
-                  <Pressable style={[styles.modalButton, { flex: 1 }]} onPress={closeDetails}>
-                    <Text style={styles.modalButtonText}>{t("reports.close")}</Text>
-                  </Pressable>
                 </View>
               </>
             )}
             </ScrollView>
+
+            {/* Close button - always visible at bottom */}
+            <Pressable style={styles.modalButton} onPress={closeDetails}>
+              <Text style={styles.modalButtonText}>{t("reports.close")}</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
