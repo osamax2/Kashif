@@ -7,6 +7,7 @@ import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useOffline } from "@/contexts/OfflineContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, RouteReport, Severity } from "@/services/api";
+import { getBaseUrl } from "@/services/api-config";
 import locationMonitoringService from "@/services/location-monitoring";
 import { getPendingReports, removePendingReport, subscribeToNetworkChanges } from "@/services/offline-reports";
 import { cacheNearbyReports, checkConnectivity, getCachedNearbyReports } from "@/services/offline-service";
@@ -23,6 +24,7 @@ import {
     Animated,
     Image,
     Keyboard,
+    Linking,
     PanResponder,
     Platform,
     Pressable,
@@ -35,6 +37,7 @@ import {
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import MapView, { Circle, Heatmap, Marker, Polyline, Region } from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 
 
@@ -106,6 +109,7 @@ export default function HomeScreen() {
     const { t, language } = useLanguage();
     const { reportCreated } = useDataSync();
     const { isOnline: networkOnline } = useOffline();
+    const insets = useSafeAreaInsets();
 
     /** ONBOARDING TUTORIAL */
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -1628,7 +1632,7 @@ export default function HomeScreen() {
             <View
                 style={[
                     styles.fabBar,
-                    { right: 14 },
+                    { right: 14, bottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 80 : insets.bottom + 85 },
                 ]}
             >
                 {/* HEATMAP TOGGLE BUTTON (bottom) */}
@@ -2004,7 +2008,7 @@ export default function HomeScreen() {
                             { transform: [{ translateY: audioSheetY }] }
                         ]}
                     >
-                        <BlurView intensity={55} tint="light" style={styles.audioSheet}>
+                        <BlurView intensity={55} tint="light" style={[styles.audioSheet, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 80 : insets.bottom + 90 }]}>
                             <View {...panResponder.panHandlers} style={styles.audioSheetHandleArea}>
                                 <View style={styles.audioSheetHandle} />
                             </View>
@@ -2094,7 +2098,7 @@ export default function HomeScreen() {
 
             {/* MARKER DETAIL BOTTOM SHEET */}
             {markerDetailVisible && selectedReportForDonation && (
-                <View style={styles.markerDetailOverlay}>
+                <View style={[styles.markerDetailOverlay, { bottom: 65 + (Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 10 : 15) }]}>
                     <TouchableOpacity
                         style={styles.markerDetailBackdrop}
                         activeOpacity={1}
@@ -2104,6 +2108,38 @@ export default function HomeScreen() {
                         <View {...markerDetailPanResponder.panHandlers} style={styles.markerDetailHandleArea}>
                             <View style={styles.markerDetailHandle} />
                         </View>
+
+                        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
+                        {/* Photo */}
+                        {(() => {
+                            const API_URL = getBaseUrl();
+                            let imgUrl: string | null = null;
+                            const r = selectedReportForDonation;
+                            if (r.ai_annotated_url) {
+                                const url = r.ai_annotated_url.trim();
+                                if (url.startsWith('http://') || url.startsWith('https://')) imgUrl = url;
+                                else if (url.startsWith('/uploads/')) imgUrl = `${API_URL}/api/reports${url}`;
+                                else if (url.startsWith('/')) imgUrl = `${API_URL}/api/reports${url}`;
+                                else imgUrl = `${API_URL}/api/reports/${url}`;
+                            } else if (r.photo_urls) {
+                                const firstUrl = r.photo_urls.split(',')[0].trim();
+                                if (firstUrl) {
+                                    if (firstUrl.startsWith('http://') || firstUrl.startsWith('https://')) imgUrl = firstUrl;
+                                    else if (firstUrl.startsWith('/uploads/')) imgUrl = `${API_URL}/api/reports${firstUrl}`;
+                                    else if (firstUrl.startsWith('/')) imgUrl = `${API_URL}/api/reports${firstUrl}`;
+                                    else imgUrl = `${API_URL}/api/reports/${firstUrl}`;
+                                }
+                            }
+                            return imgUrl ? (
+                                <Image
+                                    source={{ uri: imgUrl }}
+                                    style={{ width: '100%', height: 180, borderRadius: 12, marginBottom: 12 }}
+                                    resizeMode="cover"
+                                />
+                            ) : null;
+                        })()}
+
+                        {/* Title */}
                         <Text style={styles.markerDetailTitle}>
                             {selectedReportForDonation.title || (() => {
                                 const cat = categories.find(c => c.id === selectedReportForDonation.category_id);
@@ -2117,33 +2153,80 @@ export default function HomeScreen() {
                                 return language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report';
                             })()}
                         </Text>
+
+                        {/* Category & Severity */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <Text style={{ color: '#ccc', fontSize: 13, fontFamily: 'Tajawal-Regular' }}>
+                                {getCategoryIcon(selectedReportForDonation.category_id)} {(() => {
+                                    const cat = categories.find(c => c.id === selectedReportForDonation.category_id);
+                                    if (!cat) return '';
+                                    return language === 'ar' ? (cat.name_ar || cat.name) : language === 'ku' ? (cat.name_ku || cat.name) : (cat.name_en || cat.name);
+                                })()}
+                            </Text>
+                            <Text style={{ color: '#ccc', fontSize: 13, fontFamily: 'Tajawal-Regular' }}>
+                                #{selectedReportForDonation.id}
+                            </Text>
+                        </View>
+
+                        {/* Address */}
+                        {selectedReportForDonation.address_text && (
+                            <Text style={{ color: '#aaa', fontSize: 13, marginBottom: 8, fontFamily: 'Tajawal-Regular' }}>
+                                📍 {selectedReportForDonation.address_text}
+                            </Text>
+                        )}
+
+                        {/* Description */}
                         {selectedReportForDonation.description ? (
-                            <Text style={styles.markerDetailDesc} numberOfLines={3}>
+                            <Text style={styles.markerDetailDesc}>
                                 {selectedReportForDonation.description}
                             </Text>
                         ) : null}
-                        <View style={styles.markerDetailActions}>
-                            <TouchableOpacity
-                                style={styles.markerDetailDonateBtn}
-                                onPress={() => {
-                                    setMarkerDetailVisible(false);
-                                    setDonationModalVisible(true);
-                                }}
-                            >
-                                <Ionicons name="heart" size={18} color="#fff" />
-                                <Text style={styles.markerDetailDonateTxt}>
-                                    {language === 'ar' ? 'تبرع' : language === 'ku' ? 'Beşdarî kirin' : 'Donate'}
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.markerDetailCloseBtn}
-                                onPress={() => setMarkerDetailVisible(false)}
-                            >
-                                <Text style={styles.markerDetailCloseTxt}>
-                                    {language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+
+                        {/* Share WhatsApp Button */}
+                        <TouchableOpacity
+                            style={{ backgroundColor: '#25D366', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 12, flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                            onPress={() => {
+                                const r = selectedReportForDonation;
+                                const title = r.title || (language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report');
+                                const desc = r.description || '';
+                                const lat = r.latitude;
+                                const lng = r.longitude;
+                                const msg = `🚨 *${language === 'ar' ? 'بلاغ كاشف' : language === 'ku' ? 'Raporek Kashif' : 'Kashif Report'}*\n\n📋 *${language === 'ar' ? 'العنوان' : language === 'ku' ? 'Sernav' : 'Title'}:* ${title}\n📝 *${language === 'ar' ? 'الوصف' : language === 'ku' ? 'Danasîn' : 'Description'}:* ${desc}\n🔢 *#${r.id}*\n\n📍 *${language === 'ar' ? 'الموقع' : language === 'ku' ? 'Cih' : 'Location'}:*\nhttps://www.google.com/maps?q=${lat},${lng}`;
+                                Linking.openURL(`whatsapp://send?text=${encodeURIComponent(msg)}`).catch(() => {
+                                    Alert.alert(language === 'ar' ? 'واتساب غير مثبت' : language === 'ku' ? 'WhatsApp tune ye' : 'WhatsApp not installed');
+                                });
+                            }}
+                        >
+                            <Ionicons name="logo-whatsapp" size={18} color="#fff" />
+                            <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Tajawal-Bold' }}>
+                                {language === 'ar' ? 'مشاركة عبر واتساب' : language === 'ku' ? 'Parvekirin bi WhatsApp' : 'Share via WhatsApp'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {/* Donate Button */}
+                        <TouchableOpacity
+                            style={styles.markerDetailDonateBtn}
+                            onPress={() => {
+                                setMarkerDetailVisible(false);
+                                setDonationModalVisible(true);
+                            }}
+                        >
+                            <Ionicons name="heart" size={18} color="#fff" />
+                            <Text style={styles.markerDetailDonateTxt}>
+                                {language === 'ar' ? 'تبرع' : language === 'ku' ? 'Bexş' : 'Donate'}
+                            </Text>
+                        </TouchableOpacity>
+                        </ScrollView>
+
+                        {/* Close - always visible */}
+                        <TouchableOpacity
+                            style={styles.markerDetailCloseBtn}
+                            onPress={() => setMarkerDetailVisible(false)}
+                        >
+                            <Text style={styles.markerDetailCloseTxt}>
+                                {language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}
+                            </Text>
+                        </TouchableOpacity>
                     </Animated.View>
                 </View>
             )}
@@ -2726,7 +2809,7 @@ const styles = StyleSheet.create({
 // ─── MARKER DETAIL BOTTOM SHEET ──────────────────────────────────
     markerDetailOverlay: {
         position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
+        top: 0, left: 0, right: 0,
         zIndex: 9999,
         justifyContent: 'flex-end',
     },
@@ -2740,7 +2823,8 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20,
-        paddingBottom: 30,
+        paddingBottom: 10,
+        maxHeight: '70%',
     },
     markerDetailHandleArea: {
         paddingVertical: 10,
@@ -2768,7 +2852,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'Tajawal-Regular',
         textAlign: 'center',
-        marginBottom: 16,
+        marginBottom: 8,
     },
     markerDetailActions: {
         flexDirection: 'row',
@@ -2779,23 +2863,24 @@ const styles = StyleSheet.create({
     markerDetailDonateBtn: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#E91E63',
-        paddingHorizontal: 24,
         paddingVertical: 12,
-        borderRadius: 12,
+        borderRadius: 10,
         gap: 8,
+        marginTop: 8,
     },
     markerDetailDonateTxt: {
         color: '#fff',
-        fontSize: 16,
+        fontSize: 15,
         fontFamily: 'Tajawal-Bold',
     },
     markerDetailCloseBtn: {
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
-        paddingHorizontal: 24,
         paddingVertical: 12,
-        borderRadius: 12,
+        borderRadius: 10,
+        marginTop: 12,
     },
     markerDetailCloseTxt: {
         color: '#fff',
