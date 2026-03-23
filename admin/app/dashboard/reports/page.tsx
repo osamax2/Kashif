@@ -912,7 +912,7 @@ export default function ReportsPage() {
           <div class="report-field"><strong>${labels.category}:</strong> ${getCategoryName(report.category_id)}</div>
           <div class="report-field"><strong>${labels.severity}:</strong> <span class="${severityClass}">${getSeverityLabel(report.severity_id)}</span></div>
           <div class="report-field"><strong>${labels.address}:</strong> ${report.address_text || '-'}</div>
-          <div class="report-field"><strong>${labels.coordinates}:</strong> ${report.latitude}, ${report.longitude}</div>
+          <div class="report-field"><strong>${labels.coordinates}:</strong> <a href="https://www.google.com/maps?q=${report.latitude},${report.longitude}" target="_blank" style="color: #2563eb; text-decoration: underline;">${report.latitude}, ${report.longitude}</a></div>
           <div class="report-field"><strong>${labels.date}:</strong> ${new Date(report.created_at).toLocaleDateString()}</div>
           <div class="report-field"><strong>${labels.repairCost}:</strong> ${report.repair_cost ? `$${report.repair_cost}` : '-'}</div>
           <div class="description-full">
