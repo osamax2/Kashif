@@ -9,6 +9,7 @@ from typing import Annotated, List, Optional
 import ai_client
 import auth_client
 import crud
+import mahlula_client
 import models
 import notification_client
 import schemas
@@ -425,6 +426,54 @@ def get_severities(category_id: Optional[int] = None, db: Session = Depends(get_
     return crud.get_severities(db=db, category_id=category_id)
 
 
+async def _forward_to_mahlula(report):
+    """Background task: forward a Damascus report to the Mahlula portal."""
+    try:
+        # Get user phone number and name from auth service
+        user_phone = "0000000000"
+        user_full_name = ""
+        try:
+            user_info = auth_client.get_user_by_id(report.user_id)
+            if user_info:
+                if user_info.get("phone"):
+                    user_phone = user_info["phone"]
+                if user_info.get("full_name"):
+                    user_full_name = user_info["full_name"]
+        except Exception as e:
+            logger.warning(f"Mahlula: could not fetch user {report.user_id} info: {e}")
+
+        # Resolve image path from photo_urls
+        image_path = None
+        if report.photo_urls:
+            import json as _json
+            try:
+                urls = _json.loads(report.photo_urls)
+            except (ValueError, TypeError):
+                urls = [u.strip() for u in report.photo_urls.split(",") if u.strip()]
+            if urls:
+                first_url = urls[0]
+                # Convert /uploads/xxx.jpg to local path
+                if first_url.startswith("/uploads/"):
+                    image_path = os.path.join(UPLOAD_DIR, os.path.basename(first_url))
+
+        result = await mahlula_client.forward_to_mahlula(
+            latitude=float(report.latitude),
+            longitude=float(report.longitude),
+            description=report.description or report.title or "",
+            category_id=report.category_id,
+            image_path=image_path,
+            address=report.address_text or "",
+            phone=user_phone,
+            full_name=user_full_name,
+        )
+        if result:
+            logger.info(f"📋 Report {report.id} forwarded to Mahlula: complaint #{result}")
+        else:
+            logger.warning(f"📋 Report {report.id} Mahlula forwarding failed")
+    except Exception as e:
+        logger.error(f"📋 Mahlula forwarding error for report {report.id}: {e}")
+
+
 @app.post("/", response_model=schemas.Report)
 async def create_report(
     report: schemas.ReportCreate,
@@ -465,6 +514,10 @@ async def create_report(
             logger.info(f"Published ReportConfirmed event for report {confirmed_report.id}")
         except Exception as e:
             logger.error(f"Failed to publish ReportConfirmed event: {e}")
+    
+    # Forward Damascus reports to محلولة (Mahlula) government portal
+    if mahlula_client.is_damascus(float(db_report.latitude), float(db_report.longitude)):
+        asyncio.create_task(_forward_to_mahlula(db_report))
     
     return db_report
 

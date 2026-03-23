@@ -127,6 +127,7 @@ services:
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
       AUTH_SERVICE_URL: http://auth-service:8000
       INTERNAL_API_KEY: kashif-internal-secret-2026
+      MAHLULA_PROXY: socks5h://193.43.159.144:1080
     volumes:
       - reporting_uploads:/app/uploads
     depends_on:
