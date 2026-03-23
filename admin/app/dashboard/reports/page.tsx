@@ -596,19 +596,15 @@ export default function ReportsPage() {
     
     try {
       // Fetch status history for all filtered reports
-      const historyPromises = filteredReports.map(async (report) => {
-        try {
-          const response = await axios.get(`/api/reports/${report.id}/status-history`);
-          return { id: report.id, history: response.data };
-        } catch {
-          return { id: report.id, history: [] };
-        }
-      });
+      const allHistories = await Promise.all(
+        filteredReports.map(report =>
+          reportsAPI.getReportHistory(report.id).catch(() => [])
+        )
+      );
       
-      const historyResults = await Promise.all(historyPromises);
       const historyMap: { [key: number]: ReportStatusHistory[] } = {};
-      historyResults.forEach(r => {
-        historyMap[r.id] = r.history;
+      filteredReports.forEach((report, index) => {
+        historyMap[report.id] = Array.isArray(allHistories[index]) ? allHistories[index] : [];
       });
 
       // Prepare translated labels
