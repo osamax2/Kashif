@@ -652,10 +652,10 @@ export default function ReportsPage() {
       const formatHistoryHTML = (history: ReportStatusHistory[] | undefined) => {
         if (!history || history.length === 0) return '-';
         return history.map(h => {
-          const date = new Date(h.changed_at).toLocaleDateString();
-          const oldStatus = getStatusName(h.old_status_id);
+          const date = new Date(h.created_at).toLocaleDateString();
+          const oldStatus = h.old_status_id ? getStatusName(h.old_status_id) : (language === 'ar' ? 'جديد' : 'New');
           const newStatus = getStatusName(h.new_status_id);
-          const changedBy = h.changed_by_name || 'System';
+          const changedBy = h.changed_by_user_name || h.changed_by_user_email || 'System';
           const comment = h.comment ? ` - ${h.comment}` : '';
           return `${date}: ${oldStatus} → ${newStatus} (${changedBy})${comment}`;
         }).join('<br>');
