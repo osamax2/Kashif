@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useState } from 'react';
 import {
+<<<<<<< HEAD
   ActivityIndicator,
   Animated,
   Dimensions,
@@ -16,10 +17,20 @@ import {
   TouchableOpacity,
   Vibration,
   View,
+=======
+    ActivityIndicator,
+    Animated,
+    Dimensions,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    Vibration,
+    View,
+>>>>>>> feature/Ku_feature
 } from 'react-native';
 
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+// RTL layout is handled manually via effectiveRTL = isRTL in components.
+// Do NOT call I18nManager.forceRTL here.
 
 const { width, height } = Dimensions.get('window');
 const DESTRUCTIVE_RED = '#DC2626';
@@ -53,6 +64,7 @@ export default function AlertScreen() {
           title: language === 'ar' ? '⚠️ تحذير!' : language === 'ku' ? '⚠️ Hişyarî!' : '⚠️ Warning!',
           subtitle: language === 'ar' ? 'حفرة في الأمام' : language === 'ku' ? 'Çalêk li pêşiya te heye' : 'Pothole Ahead',
         };
+<<<<<<< HEAD
       case 2: // Environment
         return {
           icon: 'leaf' as const,
@@ -61,12 +73,25 @@ export default function AlertScreen() {
           subtitle: language === 'ar' ? 'خطر بيئي في الأمام' : language === 'ku' ? 'Metirsiya çevreyî li pêşiya te heye' : 'Environmental Hazard Ahead',
         };
       case 3: // Public Safety / Accident
+=======
+      case 2: // Accident (حادث)
+>>>>>>> feature/Ku_feature
         return {
           icon: 'alert-circle' as const,
           iconColor: DESTRUCTIVE_RED,
           title: language === 'ar' ? '🚨 تحذير!' : language === 'ku' ? '🚨 Hişyarî!' : '🚨 Warning!',
           subtitle: language === 'ar' ? 'حادث مروري في الأمام' : language === 'ku' ? 'Qezayek li pêşiya te heye' : 'Traffic Accident Ahead',
         };
+<<<<<<< HEAD
+=======
+      case 3: // Environment (خطر بيئي)
+        return {
+          icon: 'leaf' as const,
+          iconColor: '#4CAF50',
+          title: language === 'ar' ? '🌿 تنبيه!' : language === 'ku' ? '🌿 Hişyarî!' : '🌿 Alert!',
+          subtitle: language === 'ar' ? 'خطر بيئي في الأمام' : language === 'ku' ? 'Metirsiya çevreyî li pêşiya te heye' : 'Environmental Hazard Ahead',
+        };
+>>>>>>> feature/Ku_feature
       case 4: // Speed Camera
         return {
           icon: 'speedometer' as const,
@@ -181,8 +206,13 @@ export default function AlertScreen() {
   const getKurdishAudioFile = () => {
     switch (categoryIdNum) {
       case 1: return require('../assets/sounds/ku/warning_pothole.mp3');
+<<<<<<< HEAD
       case 2: return require('../assets/sounds/ku/warning_environment.mp3');
       case 3: return require('../assets/sounds/ku/warning_accident.mp3');
+=======
+      case 2: return require('../assets/sounds/ku/warning_accident.mp3');
+      case 3: return require('../assets/sounds/ku/warning_environment.mp3');
+>>>>>>> feature/Ku_feature
       case 4: return require('../assets/sounds/ku/warning_speed_camera.mp3');
       case 6: return require('../assets/sounds/ku/warning_mines.mp3');
       default: return require('../assets/sounds/ku/warning_generic.mp3');
@@ -250,7 +280,12 @@ export default function AlertScreen() {
               ? 'ar-SA'
               : language === 'ku'
                   ? 'ku-SY'
+<<<<<<< HEAD
                   : 'en-US'          rate: 0.9,
+=======
+                  : 'en-US',
+          rate: 0.9,
+>>>>>>> feature/Ku_feature
           pitch: 1,
         });
       }
@@ -267,7 +302,12 @@ export default function AlertScreen() {
                 ? 'ar-SA'
                 : language === 'ku'
                     ? 'ku-SY'
+<<<<<<< HEAD
                     : 'en-US'            rate: 0.9,
+=======
+                    : 'en-US',
+            rate: 0.9,
+>>>>>>> feature/Ku_feature
             pitch: 1,
           });
         }
@@ -278,7 +318,15 @@ export default function AlertScreen() {
   };
 
   const handleDismiss = () => {
-    router.back();
+    // Stop any ongoing speech/vibration
+    Speech.stop();
+    Vibration.cancel();
+    
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/home');
+    }
   };
 
   const handleConfirm = async () => {
@@ -298,7 +346,13 @@ export default function AlertScreen() {
       // Show success message briefly before closing
       // You could add a success animation here if desired
       setTimeout(() => {
-        router.back();
+        Speech.stop();
+        Vibration.cancel();
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/(tabs)/home');
+        }
       }, 500);
 
     } catch (error: any) {
@@ -327,6 +381,7 @@ export default function AlertScreen() {
     <View style={styles.container}>
       {/* Pulsing Background Overlay */}
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.pulsingBackground,
           {

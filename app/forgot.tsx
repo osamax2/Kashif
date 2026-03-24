@@ -22,7 +22,7 @@ const I18nManager = RN.I18nManager || { isRTL: false };
 const BLUE = "#0D2B66";
 
 export default function ForgotScreen() {
-    const { t, isRTL } = useLanguage();
+    const { t, isRTL, language } = useLanguage();
     const [method, setMethod] = useState<"email" | "phone" | null>(null);
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
@@ -34,11 +34,19 @@ export default function ForgotScreen() {
 
     const handleSubmit = async () => {
         if (method === "email" && !email) {
+<<<<<<< HEAD
             Alert.alert(t('common.error'), isRTL ? 'الرجاء إدخال البريد الإلكتروني' : 'Please enter your email');
             return;
         }
         if (method === "phone" && !phone) {
             Alert.alert(t('common.error'), isRTL ? 'الرجاء إدخال رقم الهاتف' : 'Please enter your phone number');
+=======
+            Alert.alert(t('common.error'), language === 'ar' ? 'الرجاء إدخال البريد الإلكتروني' : language === 'ku' ? 'Ji kerema xwe re e-nameyê binivîse' : 'Please enter your email');
+            return;
+        }
+        if (method === "phone" && !phone) {
+            Alert.alert(t('common.error'), language === 'ar' ? 'الرجاء إدخال رقم الهاتف' : language === 'ku' ? 'Ji kerema xwe re hejmara telefonê binivîse' : 'Please enter your phone number');
+>>>>>>> feature/Ku_feature
             return;
         }
 
@@ -48,7 +56,11 @@ export default function ForgotScreen() {
                 await authAPI.forgotPassword(email);
                 Alert.alert(
                     t('common.success'),
+<<<<<<< HEAD
                     isRTL ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : 'Password reset link sent to your email',
+=======
+                    language === 'ar' ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : language === 'ku' ? 'Girêdana vegerandina şîfreyê hate şandin bo e-nameya te' : 'Password reset link sent to your email',
+>>>>>>> feature/Ku_feature
                     [{ 
                         text: 'OK', 
                         onPress: () => {
@@ -62,12 +74,20 @@ export default function ForgotScreen() {
                 // Phone-based reset would need SMS service
                 Alert.alert(
                     t('common.info'),
+<<<<<<< HEAD
                     isRTL ? 'إعادة التعيين عبر الهاتف غير متاح حالياً' : 'Phone reset is not available yet'
+=======
+                    language === 'ar' ? 'إعادة التعيين عبر الهاتف غير متاح حالياً' : language === 'ku' ? 'Vegerandin bi telefonê niha neberdest e' : 'Phone reset is not available yet'
+>>>>>>> feature/Ku_feature
                 );
             }
         } catch (error: any) {
             const errorMessage = error?.response?.data?.detail || 
+<<<<<<< HEAD
                 (isRTL ? 'فشل في إرسال طلب إعادة التعيين' : 'Failed to send reset request');
+=======
+                (language === 'ar' ? 'فشل في إرسال طلب إعادة التعيين' : language === 'ku' ? 'Şandina daxwaza vegerandinê têk çû' : 'Failed to send reset request');
+>>>>>>> feature/Ku_feature
             Alert.alert(t('common.error'), errorMessage);
         } finally {
             setLoading(false);
@@ -97,9 +117,9 @@ export default function ForgotScreen() {
             </Text>
 
             {/* SELECT METHOD */}
-            <View style={styles.pillsRow}>
+            <View style={[styles.pillsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <TouchableOpacity
-                    style={[styles.pill, method === "email" && styles.pillActive]}
+                    style={[styles.pill, method === "email" && styles.pillActive, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                     onPress={() => selectMethod("email")}
                 >
                     <Ionicons
@@ -119,7 +139,7 @@ export default function ForgotScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.pill, method === "phone" && styles.pillActive]}
+                    style={[styles.pill, method === "phone" && styles.pillActive, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                     onPress={() => selectMethod("phone")}
                 >
                     <Ionicons
@@ -251,14 +271,14 @@ const styles = StyleSheet.create({
     },
 
     pillsRow: {
-        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
+        flexDirection: "row",
         justifyContent: "center",
         gap: 10,
         marginTop: 10,
     },
 
     pill: {
-        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
+        flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255,255,255,0.07)",
         paddingVertical: 10,

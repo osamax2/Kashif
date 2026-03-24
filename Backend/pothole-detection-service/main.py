@@ -414,6 +414,14 @@ async def analyze_image_only(
             ai_description_ar += f", المساحة: {avg_area:.0f}سم²"
             ai_description_ku += f", rûber: {avg_area:.0f}cm²"
         
+<<<<<<< HEAD
+=======
+        # Add YOLOv8 attribution text
+        ai_description += "\n\n⚠️ This report was automatically created by the smart detection system (YOLOv8)"
+        ai_description_ar += "\n\n⚠️ تم إنشاء هذا التقرير تلقائياً بواسطة نظام الكشف الذكي (YOLOv8)"
+        ai_description_ku += "\n\n⚠️ Ev rapor bi awayekî otomatîk ji hêla pergala vedîtina jîr (YOLOv8) ve hatiye afirandin"
+        
+>>>>>>> feature/Ku_feature
         detections = [d.to_dict() for d in result.detections]
         
         return AnalyzeResponse(
@@ -436,6 +444,194 @@ async def analyze_image_only(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+<<<<<<< HEAD
+=======
+class EnhancedAnalyzeResponse(BaseModel):
+    """Response model for enhanced analysis with depth estimation"""
+    success: bool
+    message: str
+    num_potholes: int = 0
+    max_severity: Optional[str] = None
+    ai_description: Optional[str] = None
+    ai_description_ar: Optional[str] = None
+    ai_description_ku: Optional[str] = None
+    detections: list = []
+    annotated_image_base64: Optional[str] = None
+    depth_map_base64: Optional[str] = None
+    depth_estimation: Optional[dict] = None
+    enhanced_dimensions: Optional[list] = None
+    processing_time_ms: float = 0
+
+
+@app.post("/analyze-enhanced", response_model=EnhancedAnalyzeResponse)
+async def analyze_with_depth(
+    file: UploadFile = File(...),
+    use_both_depth_models: bool = Query(False, description="Use only MiDaS depth model"),
+    detect_reference_object: bool = Query(True, description="Try to detect reference objects for calibration")
+):
+    """
+    Enhanced pothole analysis with depth estimation.
+    
+    Uses MiDaS and/or DepthAnything models to estimate depth maps,
+    then calculates real-world dimensions (width, length, depth, volume).
+    
+    Optionally detects reference objects (credit card, smartphone) for calibration.
+    
+    Requires REPLICATE_API_TOKEN environment variable for depth estimation.
+    """
+    import time
+    import base64
+    start_time = time.time()
+    
+    # Check file extension
+    filename = file.filename.lower()
+    allowed_extensions = {'.heic', '.heif', '.jpg', '.jpeg', '.png'}
+    ext = os.path.splitext(filename)[1]
+    
+    if ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {ext}. Allowed: {allowed_extensions}"
+        )
+    
+    try:
+        # Save uploaded file temporarily
+        temp_path = os.path.join(settings.IMAGES_DIR, f"enhanced_{file.filename}")
+        with open(temp_path, "wb") as f:
+            content = await file.read()
+            f.write(content)
+        
+        # Convert HEIC if needed
+        if ext in {'.heic', '.heif'}:
+            from heic_processor import process_heic_image
+            jpeg_path = temp_path.replace(ext, '.jpg')
+            process_heic_image(temp_path, jpeg_path)
+            detect_path = jpeg_path
+        else:
+            detect_path = temp_path
+        
+        # Try to use enhanced detector
+        replicate_token = os.getenv("REPLICATE_API_TOKEN")
+        
+        if replicate_token:
+            from enhanced_detector import create_enhanced_detector, DepthModel
+            
+            detector = create_enhanced_detector(
+                replicate_token=replicate_token,
+                use_both_models=use_both_depth_models
+            )
+            detector.enable_reference = detect_reference_object
+            
+            result = detector.detect(
+                detect_path,
+                save_annotated=True,
+                save_depth_map=True,
+                output_dir=settings.OUTPUT_DIR
+            )
+            
+            # Read and encode annotated image
+            annotated_base64 = None
+            if result.base_result.annotated_image_path and os.path.exists(result.base_result.annotated_image_path):
+                with open(result.base_result.annotated_image_path, 'rb') as img_file:
+                    annotated_base64 = base64.b64encode(img_file.read()).decode('utf-8')
+                os.remove(result.base_result.annotated_image_path)
+            
+            # Read and encode depth map
+            depth_map_base64 = None
+            if result.depth_map_path and os.path.exists(result.depth_map_path):
+                with open(result.depth_map_path, 'rb') as img_file:
+                    depth_map_base64 = base64.b64encode(img_file.read()).decode('utf-8')
+                os.remove(result.depth_map_path)
+            
+            # Prepare response
+            result_dict = result.to_dict()
+            processing_time = (time.time() - start_time) * 1000
+            
+            # Generate AI description with dimensions
+            num_potholes = result.base_result.num_potholes
+            max_severity = result.base_result.max_severity or "MEDIUM"
+            
+            if num_potholes > 0 and result.dimensions:
+                dims = result.dimensions[0]  # Primary pothole
+                severity_map = {"LOW": "minor", "MEDIUM": "moderate", "HIGH": "severe"}
+                severity_ar_map = {"LOW": "خفيفة", "MEDIUM": "متوسطة", "HIGH": "شديدة"}
+                severity_ku_map = {"LOW": "sivik", "MEDIUM": "navncî", "HIGH": "giran"}
+                
+                severity_text = severity_map.get(max_severity, "moderate")
+                severity_ar = severity_ar_map.get(max_severity, "متوسطة")
+                severity_ku = severity_ku_map.get(max_severity, "navncî")
+                
+                ai_description = (
+                    f"AI detected {num_potholes} {severity_text} pothole(s). "
+                    f"Dimensions: {dims.width_cm}cm × {dims.length_cm}cm, "
+                    f"depth: {dims.depth_cm}cm, volume: {dims.volume_cm3}cm³. "
+                    f"Calibration: {dims.calibration_method} ({dims.confidence:.0%} confidence)."
+                )
+                ai_description_ar = (
+                    f"الذكاء الاصطناعي اكتشف {num_potholes} حفرة {severity_ar}. "
+                    f"الأبعاد: {dims.width_cm}سم × {dims.length_cm}سم، "
+                    f"العمق: {dims.depth_cm}سم، الحجم: {dims.volume_cm3}سم³."
+                )
+                ai_description_ku = (
+                    f"Zîrekiya destkirdî {num_potholes} çalêka {severity_ku} dît. "
+                    f"Pîvan: {dims.width_cm}cm × {dims.length_cm}cm, "
+                    f"kûrahî: {dims.depth_cm}cm, qebareya: {dims.volume_cm3}cm³."
+                )
+                
+                ai_description += "\n\n⚠️ Enhanced analysis with depth estimation (MiDaS + DepthAnything)"
+                ai_description_ar += "\n\n⚠️ تحليل محسّن مع تقدير العمق (MiDaS + DepthAnything)"
+                ai_description_ku += "\n\n⚠️ Analîza pêşkeftî bi texmînkirina kûrahiyê (MiDaS + DepthAnything)"
+            else:
+                ai_description = "No potholes detected"
+                ai_description_ar = "لم يتم اكتشاف حفر"
+                ai_description_ku = "Tu çal nehatin dîtin"
+            
+            # Clean up
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            if ext in {'.heic', '.heif'} and os.path.exists(detect_path):
+                os.remove(detect_path)
+            
+            return EnhancedAnalyzeResponse(
+                success=True,
+                message=f"Enhanced analysis completed: {num_potholes} pothole(s) detected",
+                num_potholes=num_potholes,
+                max_severity=max_severity,
+                ai_description=ai_description,
+                ai_description_ar=ai_description_ar,
+                ai_description_ku=ai_description_ku,
+                detections=result_dict.get("detections", []),
+                annotated_image_base64=annotated_base64,
+                depth_map_base64=depth_map_base64,
+                depth_estimation=result_dict.get("depth_estimation"),
+                enhanced_dimensions=result_dict.get("enhanced_dimensions"),
+                processing_time_ms=processing_time
+            )
+        else:
+            # Fall back to basic analysis
+            print("⚠️ REPLICATE_API_TOKEN not set, using basic analysis")
+            
+            # Clean up temp files
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            if ext in {'.heic', '.heif'} and os.path.exists(detect_path):
+                os.remove(detect_path)
+            
+            raise HTTPException(
+                status_code=503,
+                detail="Depth estimation unavailable. Set REPLICATE_API_TOKEN environment variable."
+            )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Clean up on error
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+>>>>>>> feature/Ku_feature
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8006)

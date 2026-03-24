@@ -1,10 +1,11 @@
-// app/(tabs)/reports.tsx ✅ wie index.tsx: Arabisch = LTR | Englisch = RTL (effectiveRTL = !isRTL)
+// app/(tabs)/reports.tsx ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT) (effectiveRTL = isRTL)
 
 import DonationModal from "@/components/DonationModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
+<<<<<<< HEAD
   Category,
   lookupAPI,
   Report,
@@ -12,12 +13,22 @@ import {
   ReportStatus,
   ReportStatusHistory,
   Severity,
+=======
+    Category,
+    lookupAPI,
+    Report,
+    reportingAPI,
+    ReportStatus,
+    ReportStatusHistory,
+    Severity,
+>>>>>>> feature/Ku_feature
 } from "@/services/api";
 import { cacheUserReports, checkConnectivity, getCachedUserReports } from "@/services/offline-service";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+<<<<<<< HEAD
   ActivityIndicator,
   Alert,
   Animated,
@@ -33,6 +44,24 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+=======
+    ActivityIndicator,
+    Alert,
+    Animated,
+    BackHandler,
+    FlatList,
+    Image,
+    Linking,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+>>>>>>> feature/Ku_feature
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import MapView, { Marker } from "react-native-maps";
@@ -86,6 +115,56 @@ const getDisplayImageUrl = (report: { photo_urls?: string; ai_annotated_url?: st
       return `${API_BASE_URL}/api/reports${url}`;
     }
     return `${API_BASE_URL}/api/reports/${url}`;
+  }
+  // Fall back to original photo
+  return getPhotoUrl(report.photo_urls);
+};
+
+import { getBaseUrl } from "@/services/api-config";
+
+// Helper function to get full photo URL
+const getPhotoUrl = (photoUrls: string | undefined): string | null => {
+  if (!photoUrls) return null;
+  const API_URL = getBaseUrl();
+  const firstUrl = photoUrls.split(",")[0].trim();
+  if (!firstUrl) return null;
+
+  // If already a full URL, return as is
+  if (firstUrl.startsWith("http://") || firstUrl.startsWith("https://")) {
+    return firstUrl;
+  }
+
+  // If relative URL starting with /uploads/, convert to /api/reports/uploads/
+  if (firstUrl.startsWith("/uploads/")) {
+    return `${API_URL}/api/reports${firstUrl}`;
+  }
+
+  // If relative URL (starts with /), prepend API base with /api/reports
+  if (firstUrl.startsWith("/")) {
+    return `${API_URL}/api/reports${firstUrl}`;
+  }
+
+  // Otherwise prepend API base with /api/reports/
+  return `${API_URL}/api/reports/${firstUrl}`;
+};
+
+// Get the best image to display (annotated if available, otherwise original)
+const getDisplayImageUrl = (report: { photo_urls?: string; ai_annotated_url?: string }): string | null => {
+  const API_URL = getBaseUrl();
+  // Prefer AI annotated image if available
+  if (report.ai_annotated_url) {
+    const url = report.ai_annotated_url.trim();
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    // Handle /uploads/ prefix
+    if (url.startsWith("/uploads/")) {
+      return `${API_URL}/api/reports${url}`;
+    }
+    if (url.startsWith("/")) {
+      return `${API_URL}/api/reports${url}`;
+    }
+    return `${API_URL}/api/reports/${url}`;
   }
   // Fall back to original photo
   return getPhotoUrl(report.photo_urls);
@@ -185,6 +264,7 @@ const translateStatus = (statusName: string, language: string): string => {
 
 const getStatusMeta = (statusName: string, _language: string): { icon: string; color: string } => {
   const metaMap: { [key: string]: { icon: string; color: string } } = {
+<<<<<<< HEAD
     "new": { icon: "🔍", color: "#4DA3FF" },
     "open": { icon: "🔍", color: "#4DA3FF" },
     "جديد": { icon: "🔍", color: "#4DA3FF" },
@@ -203,6 +283,37 @@ const getStatusMeta = (statusName: string, _language: string): { icon: string; c
     "مرفوض": { icon: "✖", color: "#FF3B30" },
     "closed": { icon: "🔒", color: "#8E8E93" },
     "مغلق": { icon: "🔒", color: "#8E8E93" },
+=======
+    // English
+    "new": { icon: "🔍", color: "#4DA3FF" },
+    "open": { icon: "🔍", color: "#4DA3FF" },
+    "under review": { icon: "⏳", color: "#FFD166" },
+    "in_progress": { icon: "🔧", color: "#FF9500" },
+    "in progress": { icon: "🔧", color: "#FF9500" },
+    "being handled": { icon: "🔧", color: "#FF9500" },
+    "resolved": { icon: "✔", color: "#4CD964" },
+    "completed": { icon: "✔", color: "#4CD964" },
+    "rejected": { icon: "✖", color: "#FF3B30" },
+    "closed": { icon: "🔒", color: "#8E8E93" },
+    // Arabic
+    "جديد": { icon: "🔍", color: "#4DA3FF" },
+    "مفتوح": { icon: "🔍", color: "#4DA3FF" },
+    "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
+    "قيد المعالجة": { icon: "🔧", color: "#FF9500" },
+    "تم الإصلاح": { icon: "✔", color: "#4CD964" },
+    "مكتمل": { icon: "✔", color: "#4CD964" },
+    "مرفوض": { icon: "✖", color: "#FF3B30" },
+    "مغلق": { icon: "🔒", color: "#8E8E93" },
+    // Kurdish
+    "nû": { icon: "🔍", color: "#4DA3FF" },
+    "vekirî": { icon: "🔍", color: "#4DA3FF" },
+    "di nirxandinê de": { icon: "⏳", color: "#FFD166" },
+    "di pêş de": { icon: "🔧", color: "#FF9500" },
+    "çareserkirî": { icon: "✔", color: "#4CD964" },
+    "temam bû": { icon: "✔", color: "#4CD964" },
+    "redkirî": { icon: "✖", color: "#FF3B30" },
+    "girtî": { icon: "🔒", color: "#8E8E93" },
+>>>>>>> feature/Ku_feature
   };
   return metaMap[statusName.toLowerCase().trim()] || { icon: "📋", color: "#8E8E93" };
 };
@@ -255,7 +366,7 @@ export default function ReportsScreen() {
   const { refreshKey } = useDataSync();
 
   // ✅ wie index.tsx
-  const effectiveRTL = !isRTL;
+  const effectiveRTL = isRTL;
 
   const [reports, setReports] = useState<Report[]>([]);
   const [statuses, setStatuses] = useState<ReportStatus[]>([]);
@@ -442,6 +553,19 @@ export default function ReportsScreen() {
     setHistoryExpanded(false);
   };
 
+<<<<<<< HEAD
+=======
+  // Handle Android back button when detail modal is open
+  useEffect(() => {
+    if (!detailVisible) return;
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      closeDetails();
+      return true;
+    });
+    return () => handler.remove();
+  }, [detailVisible]);
+
+>>>>>>> feature/Ku_feature
   const getStatusName = (statusId: number): string => {
     const raw = statuses.find((s) => s.id === statusId)?.name || "غير معروف";
     return translateStatus(raw, language);
@@ -542,6 +666,7 @@ export default function ReportsScreen() {
       <View style={[styles.header, { flexDirection: "row" }]}>
         {/* LEFT */}
         <TouchableOpacity
+<<<<<<< HEAD
           onPress={isRTL ? () => router.back() : () => router.push("/notifications")}
           style={isRTL ? styles.iconBtn : styles.bellBtn}
           activeOpacity={0.85}
@@ -550,6 +675,16 @@ export default function ReportsScreen() {
             name={isRTL ? "chevron-forward" : "notifications"}
             size={isRTL ? 30 : 22}
             color={isRTL ? YELLOW : BLUE}
+=======
+          onPress={isRTL ? () => router.push("/notifications") : () => router.back()}
+          style={isRTL ? styles.bellBtn : styles.iconBtn}
+          activeOpacity={0.85}
+        >
+          <Ionicons
+            name={isRTL ? "notifications" : "chevron-back"}
+            size={isRTL ? 22 : 30}
+            color={isRTL ? BLUE : YELLOW}
+>>>>>>> feature/Ku_feature
           />
         </TouchableOpacity>
 
@@ -559,6 +694,7 @@ export default function ReportsScreen() {
 
         {/* RIGHT */}
         <TouchableOpacity
+<<<<<<< HEAD
           onPress={isRTL ? () => router.push("/notifications") : () => router.back()}
           style={isRTL ? styles.bellBtn : styles.iconBtn}
           activeOpacity={0.85}
@@ -567,6 +703,16 @@ export default function ReportsScreen() {
             name={isRTL ? "notifications" : "chevron-forward"}
             size={isRTL ? 22 : 30}
             color={isRTL ? BLUE : YELLOW}
+=======
+          onPress={isRTL ? () => router.back() : () => router.push("/notifications")}
+          style={isRTL ? styles.iconBtn : styles.bellBtn}
+          activeOpacity={0.85}
+        >
+          <Ionicons
+            name={isRTL ? "chevron-forward" : "notifications"}
+            size={isRTL ? 30 : 22}
+            color={isRTL ? YELLOW : BLUE}
+>>>>>>> feature/Ku_feature
           />
         </TouchableOpacity>
       </View>
@@ -742,7 +888,7 @@ export default function ReportsScreen() {
       )}
 
       {/* DETAILS MODAL */}
-      <Modal visible={detailVisible} transparent animationType="slide">
+      <Modal visible={detailVisible} transparent animationType="slide" onRequestClose={closeDetails}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalGlass}>
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: '90%' }}>
@@ -846,6 +992,8 @@ export default function ReportsScreen() {
                       {getConfirmationMeta(selected.confirmation_status).icon}{" "}
                       {language === "ar"
                         ? getConfirmationMeta(selected.confirmation_status).labelAr
+                        : language === "ku"
+                        ? getConfirmationMeta(selected.confirmation_status).labelKu
                         : getConfirmationMeta(selected.confirmation_status).label}
                     </Text>
                     {selected.confirmation_status === "pending" && selected.user_id === user?.id && (
@@ -1046,14 +1194,18 @@ export default function ReportsScreen() {
                       )}
                     </Pressable>
                   )}
-
-                  <Pressable style={[styles.modalButton, { flex: 1 }]} onPress={closeDetails}>
-                    <Text style={styles.modalButtonText}>{t("reports.close")}</Text>
-                  </Pressable>
                 </View>
               </>
             )}
             </ScrollView>
+<<<<<<< HEAD
+=======
+
+            {/* Close button - always visible at bottom */}
+            <Pressable style={styles.modalButton} onPress={closeDetails}>
+              <Text style={styles.modalButtonText}>{t("reports.close")}</Text>
+            </Pressable>
+>>>>>>> feature/Ku_feature
           </View>
         </View>
       </Modal>
@@ -1151,6 +1303,8 @@ const ReportCard = React.memo(function ReportCard({
                   {getConfirmationMeta(report.confirmation_status).icon}{" "}
                   {language === "ar"
                     ? getConfirmationMeta(report.confirmation_status).labelAr
+                    : language === "ku"
+                    ? getConfirmationMeta(report.confirmation_status).labelKu
                     : getConfirmationMeta(report.confirmation_status).label}
                 </Text>
               </View>

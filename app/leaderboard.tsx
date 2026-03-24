@@ -24,7 +24,11 @@ export default function LeaderboardScreen() {
   const { user } = useAuth();
   const { language, isRTL } = useLanguage();
 
+<<<<<<< HEAD
   const effectiveRTL = !isRTL;
+=======
+  const effectiveRTL = isRTL;
+>>>>>>> feature/Ku_feature
 
   const [leaderboard, setLeaderboard] = useState<FriendLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +54,7 @@ export default function LeaderboardScreen() {
   }, [fetchLeaderboard]);
 
   const isArabic = language === "ar";
+<<<<<<< HEAD
   const title = isArabic ? "ترتيب الأصدقاء" : "Friend Leaderboard";
   const noFriendsText = isArabic ? "لا يوجد أصدقاء بعد. أضف شخصاً من صفحة الملف الشخصي!" : "No friends yet. Add someone from your profile!";
   const errorText = isArabic ? "حدث خطأ أثناء تحميل الترتيب" : "Failed to load leaderboard";
@@ -57,6 +62,15 @@ export default function LeaderboardScreen() {
   const pointsLabel = isArabic ? "نقطة" : "pts";
   const youLabel = isArabic ? "(أنت)" : "(You)";
   const backLabel = isArabic ? "العودة للملف الشخصي" : "Back to Profile";
+=======
+  const title = language === 'ar' ? "ترتيب الأصدقاء" : language === 'ku' ? "Rêzbendiya hevalan" : "Friend Leaderboard";
+  const noFriendsText = language === 'ar' ? "لا يوجد أصدقاء بعد. أضف شخصاً من صفحة الملف الشخصي!" : language === 'ku' ? "Hên heval tune ne. Kesekî ji rûpela profîlê zêde bike!" : "No friends yet. Add someone from your profile!";
+  const errorText = language === 'ar' ? "حدث خطأ أثناء تحميل الترتيب" : language === 'ku' ? "Di barkirina rêzbendiyê de çewtî çêbû" : "Failed to load leaderboard";
+  const retryText = language === 'ar' ? "إعادة المحاولة" : language === 'ku' ? "Dîsa biceribîne" : "Retry";
+  const pointsLabel = language === 'ar' ? "نقطة" : language === 'ku' ? "xal" : "pts";
+  const youLabel = language === 'ar' ? "(أنت)" : language === 'ku' ? "(Tu)" : "(You)";
+  const backLabel = language === 'ar' ? "العودة للملف الشخصي" : language === 'ku' ? "Vegere bo profîlê" : "Back to Profile";
+>>>>>>> feature/Ku_feature
 
   const getMedalColor = (rank: number) => {
     if (rank === 1) return "#FFD700";

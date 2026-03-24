@@ -29,6 +29,7 @@ export const initI18n = async (): Promise<Language> => {
       currentLanguage = savedLang;
     }
 
+<<<<<<< HEAD
     // Configure RTL/LTR (safe access)
     const shouldBeRTL = currentLanguage === 'ar';
     try {
@@ -39,6 +40,11 @@ export const initI18n = async (): Promise<Language> => {
     } catch (rtlError) {
       console.warn('I18nManager not available:', rtlError);
     }
+=======
+    // RTL layout is handled manually via effectiveRTL = isRTL in components.
+    // Do NOT call I18nManager.forceRTL here — it changes native layout on restart
+    // and breaks the alignment pattern.
+>>>>>>> feature/Ku_feature
 
     return currentLanguage;
   } catch (error) {
@@ -52,6 +58,7 @@ export const setLanguage = async (lang: Language): Promise<void> => {
     currentLanguage = lang;
     await AsyncStorage.setItem('app_language', lang);
 
+<<<<<<< HEAD
     // Configure RTL/LTR (safe access)
     const shouldBeRTL = lang === 'ar';
     try {
@@ -62,6 +69,10 @@ export const setLanguage = async (lang: Language): Promise<void> => {
     } catch (rtlError) {
       console.warn('I18nManager not available:', rtlError);
     }
+=======
+    // RTL layout is handled manually via effectiveRTL = isRTL in components.
+    // Do NOT call I18nManager.forceRTL here.
+>>>>>>> feature/Ku_feature
   } catch (error) {
     console.error('Error setting language:', error);
   }

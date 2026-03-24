@@ -2,7 +2,11 @@
   "expo": {
     "name": "Kashif",
     "slug": "kashif-app",
+<<<<<<< HEAD
     "version": "1.1.4",
+=======
+    "version": "1.1.9",
+>>>>>>> feature/Ku_feature
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kashifapp",
@@ -10,9 +14,16 @@
     "newArchEnabled": true,
     "privacy": "public",
     "extra": {
+<<<<<<< HEAD
       "privacyPolicyUrl": "https://admin.kashifroad.com/privacy",
       "termsUrl": "https://admin.kashifroad.com/terms",
       "contactEmail": "contact@kashifroad.com"
+=======
+      "router": {},
+      "eas": {
+        "projectId": "ac88cf72-e55b-41a4-b6a4-d5773b59f5bd"
+      }
+>>>>>>> feature/Ku_feature
     },
     "ios": {
       "supportsTablet": true,
@@ -21,10 +32,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك للكشف عن الحفر في الطريق أثناء القيادة",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "نحتاج إلى موقعك في الخلفية لتنبيهك عند اقترابك من حفر مُبلغ عنها",
+        "NSLocationAlwaysUsageDescription": "نحتاج إلى موقعك في الخلفية لتنبيهك عند اقترابك من حفر مُبلغ عنها",
         "UIBackgroundModes": [
-          "location",
-          "fetch",
-          "remote-notification",
           "location",
           "fetch",
           "remote-notification"
@@ -39,8 +48,13 @@
     },
     "android": {
       "package": "com.kashifroad.app",
+<<<<<<< HEAD
       "versionCode": 15,
       "usesCleartextTraffic": true,
+=======
+      "versionCode": 25,
+      "usesCleartextTraffic": false,
+>>>>>>> feature/Ku_feature
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#0D2B66",
@@ -72,6 +86,18 @@
     },
     "plugins": [
       "expo-router",
+      "expo-secure-store",
+      "./plugins/withAndroidSecurity",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "We need your location in the background to alert you when approaching reported potholes.",
+          "locationWhenInUsePermission": "We need your location to detect potholes on the road while driving.",
+          "locationAlwaysPermission": "We need your location in the background to alert you when approaching reported potholes.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -101,12 +127,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "ac88cf72-e55b-41a4-b6a4-d5773b59f5bd"
-      }
     },
     "owner": "osamax2"
   }

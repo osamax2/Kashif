@@ -7,6 +7,10 @@ import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useOffline } from "@/contexts/OfflineContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, RouteReport, Severity } from "@/services/api";
+<<<<<<< HEAD
+=======
+import { getBaseUrl } from "@/services/api-config";
+>>>>>>> feature/Ku_feature
 import locationMonitoringService from "@/services/location-monitoring";
 import { getPendingReports, removePendingReport, subscribeToNetworkChanges } from "@/services/offline-reports";
 import { cacheNearbyReports, checkConnectivity, getCachedNearbyReports } from "@/services/offline-service";
@@ -23,6 +27,7 @@ import {
     Animated,
     Image,
     Keyboard,
+    Linking,
     PanResponder,
     Platform,
     Pressable,
@@ -34,7 +39,12 @@ import {
     View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+<<<<<<< HEAD
 import MapView, { Heatmap, Marker, Polyline, Region } from "react-native-maps";
+=======
+import MapView, { Circle, Heatmap, Marker, Polyline, Region } from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+>>>>>>> feature/Ku_feature
 
 
 
@@ -106,6 +116,10 @@ export default function HomeScreen() {
     const { t, language } = useLanguage();
     const { reportCreated } = useDataSync();
     const { isOnline: networkOnline } = useOffline();
+<<<<<<< HEAD
+=======
+    const insets = useSafeAreaInsets();
+>>>>>>> feature/Ku_feature
 
     /** ONBOARDING TUTORIAL */
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -309,9 +323,9 @@ export default function HomeScreen() {
                     try {
                         // Map type to category_id
                         const categoryMap: Record<string, number> = {
-                            speed: 1,
-                            pothole: 2,
-                            accident: 3,
+                            pothole: 1,
+                            accident: 2,
+                            environment: 3,
                         };
 
                         // Map severity
@@ -322,8 +336,13 @@ export default function HomeScreen() {
                         };
 
                         await reportingAPI.createReport({
+<<<<<<< HEAD
                             title: report.type === 'speed' ? 'Speed Camera' :
                                 report.type === 'pothole' ? 'Pothole' : 'Accident',
+=======
+                            title: report.type === 'pothole' ? 'Pothole' :
+                                report.type === 'accident' ? 'Accident' : 'Environmental Hazard',
+>>>>>>> feature/Ku_feature
                             description: report.notes || `${report.type} report`,
                             category_id: categoryMap[report.type || 'pothole'] || 2,
                             severity: severityMap[report.severity] || 'medium',
@@ -552,7 +571,7 @@ export default function HomeScreen() {
                     soundEnabled,
                     warnPothole,
                     warnAccident,
-                    warnSpeed,
+                    warnEnvironment: warnSpeed,
                     appVolume,
                     language,
                 });
@@ -567,7 +586,7 @@ export default function HomeScreen() {
 
     /** Dialog-Typ (welcher Meldungs-Typ wird erstellt?) */
     const [reportType, setReportType] = useState<
-        "pothole" | "accident" | "speed" | null
+        "pothole" | "accident" | "environment" | null
     >(null);
 
     /** MULTI-FILTER */
@@ -743,6 +762,31 @@ export default function HomeScreen() {
             })
             .filter(Boolean) as { latitude: number; longitude: number; weight: number }[];
     }, [heatmapEnabled, reports]);
+<<<<<<< HEAD
+=======
+
+    // iOS Circle-based heatmap: compute density color per point
+    const iosHeatmapCircles = useMemo(() => {
+        if (Platform.OS !== 'ios' || !heatmapEnabled || !heatmapPoints.length) return [];
+        // Count nearby points for each location to determine density
+        return heatmapPoints.map((point, index) => {
+            let nearby = 0;
+            for (const other of heatmapPoints) {
+                const dLat = point.latitude - other.latitude;
+                const dLng = point.longitude - other.longitude;
+                // ~500m radius check
+                if (dLat * dLat + dLng * dLng < 0.00002) nearby++;
+            }
+            // Map density to color: green(1) → yellow(2-3) → orange(4-6) → red(7+)
+            let fillColor: string;
+            if (nearby >= 7) fillColor = 'rgba(255, 0, 0, 0.25)';
+            else if (nearby >= 4) fillColor = 'rgba(255, 140, 0, 0.22)';
+            else if (nearby >= 2) fillColor = 'rgba(255, 255, 0, 0.20)';
+            else fillColor = 'rgba(0, 255, 0, 0.18)';
+            return { ...point, fillColor, key: `heatcircle-${index}` };
+        });
+    }, [heatmapEnabled, heatmapPoints]);
+>>>>>>> feature/Ku_feature
     // ─── END HEATMAP DATA ──────────────────────────────────────────────
 
     // Helper functions
@@ -756,9 +800,16 @@ export default function HomeScreen() {
 
         const name = category.name_ar || category.name_en || category.name_ku ||  category.name || "";
 
+<<<<<<< HEAD
         if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "⚠️";
         if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "🚨";
         if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "📷";
+=======
+        if (name.includes("حفرة") || name.includes("Çalêk") || name.toLowerCase().includes("pothole")) return "⚠️";
+        if (name.includes("حادث") || name.includes("Qezay") || name.toLowerCase().includes("accident")) return "🚨";
+        if (name.includes("كاشف") || name.includes("Kashif") || name.includes("سرعة") || name.includes("Lez") || name.toLowerCase().includes("speed")) return "📷";
+        if (name.includes("بيئة") || name.includes("Jîngeh") || name.toLowerCase().includes("environment")) return "🌿";
+>>>>>>> feature/Ku_feature
         return "📍";
     };
 
@@ -769,9 +820,16 @@ export default function HomeScreen() {
 
         // Fallback colors based on category name
         const name = category?.name_ar || category?.name_en || category?.name_ku ||category?.name || "";
+<<<<<<< HEAD
         if(name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza") return "#22C55E"; // Green
         if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("qezay")) return "#EF4444"; // Red
         if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("Çalêk ")) return "#F59E0B"; // Amber
+=======
+        if(name.includes("كاشف") || name.includes("Kashif") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza")) return "#22C55E"; // Green
+        if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("qezay")) return "#EF4444"; // Red
+        if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("Çalêk ")) return "#F59E0B"; // Amber
+        if (name.includes("بيئ") || name.includes("Jîngeh") || name.toLowerCase().includes("environment")) return "#10B981"; // Emerald green for environment
+>>>>>>> feature/Ku_feature
         return "#3B82F6"; // Default blue
     };
 
@@ -854,7 +912,11 @@ export default function HomeScreen() {
     };
 
     // ─── ROUTE WARNING FUNCTIONS ────────────────────────────────────────
+<<<<<<< HEAD
     const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+=======
+    const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4';
+>>>>>>> feature/Ku_feature
 
     const fetchRouteToDestination = async (destLat: number, destLng: number) => {
         if (!userLocation) {
@@ -974,8 +1036,15 @@ export default function HomeScreen() {
                     } else {
                         const msg = language === 'ar'
                             ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
+<<<<<<< HEAD
                             : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
                         Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+=======
+                            : language === 'ku'
+                            ? `Hişyarî: ${routeData.total_hazards} metirsî li ser rêya te`
+                            : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
+                        Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : language === 'ku' ? 'ku-TR' : 'en-US' });
+>>>>>>> feature/Ku_feature
                     }
                 }
             } catch (hazardErr) {
@@ -1064,7 +1133,11 @@ export default function HomeScreen() {
         console.log('🔍 Searching with Geocoding API:', query);
 
         try {
+<<<<<<< HEAD
             const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+=======
+            const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4';
+>>>>>>> feature/Ku_feature
             // Add Syria bias to the search
             const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}`;
 
@@ -1194,9 +1267,15 @@ export default function HomeScreen() {
                     shouldSpeak = true;
                 }
                 break;
+<<<<<<< HEAD
             case "speed":
                 if (warnSpeed) {
                     message = t('home.warnSpeed');
+=======
+            case "environment":
+                if (warnSpeed) {
+                    message = t('home.warnEnvironment') || (language === 'ar' ? 'تحذير! خطر بيئي قريب' : language === 'ku' ? 'Hişyarî! Metirsiya jîngehî li pêş te ye' : 'Warning! Environmental hazard ahead');
+>>>>>>> feature/Ku_feature
                     shouldSpeak = true;
                 }
                 break;
@@ -1212,7 +1291,11 @@ export default function HomeScreen() {
                     const kuAudioMap: Record<string, any> = {
                         'pothole': require('@/assets/sounds/ku/warn_pothole_short.mp3'),
                         'accident': require('@/assets/sounds/ku/warn_accident_short.mp3'),
+<<<<<<< HEAD
                         'speed': require('@/assets/sounds/ku/warn_speed_short.mp3'),
+=======
+                        'environment': require('@/assets/sounds/ku/warn_speed_short.mp3'),
+>>>>>>> feature/Ku_feature
                     };
                     const kuFile = kuAudioMap[type] || require('@/assets/sounds/ku/warning_generic.mp3');
                     const { sound: kuWarnSound } = await Audio.Sound.createAsync(
@@ -1223,9 +1306,12 @@ export default function HomeScreen() {
                         if (s.isLoaded && s.didJustFinish) kuWarnSound.unloadAsync();
                     });
                 } catch (kuErr) {
+<<<<<<< HEAD
                     console.warn('Kurdish warning audio failed, falling back to Arabic TTS:', kuErr);
                     await Speech.speak('تحذير!', { language: 'ar-SA', rate: 0.9, volume: appVolume });
                 } catch (kuErr) {
+=======
+>>>>>>> feature/Ku_feature
                     console.warn('Kurdish warning audio failed, falling back to Kurdish TTS:', kuErr);
 
                     // 🔹 Kurmancî TTS fallback
@@ -1234,8 +1320,13 @@ export default function HomeScreen() {
                             ? 'Hişyarî, çala li pêş te ye!'
                             : type === 'accident'
                                 ? 'Hişyarî, qezayek li pêş te heye!'
+<<<<<<< HEAD
                                 : type === 'speed'
                                     ? 'Hişyarî, radarê lezê li pêş te ye!'
+=======
+                                : type === 'environment'
+                                    ? 'Hişyarî, metirsiya jîngehî li pêş te ye!'
+>>>>>>> feature/Ku_feature
                                     : 'Hişyarî!';
 
                     await Speech.speak(kuMessage, {
@@ -1416,8 +1507,13 @@ export default function HomeScreen() {
                         );
                     })}
 
+<<<<<<< HEAD
                     {/* Heatmap Overlay */}
                     {heatmapEnabled && heatmapPoints.length > 0 && (
+=======
+                    {/* Heatmap Overlay - native on Android, circle-based on iOS */}
+                    {Platform.OS === 'android' && heatmapEnabled && heatmapPoints.length > 0 && (
+>>>>>>> feature/Ku_feature
                         <Heatmap
                             points={heatmapPoints}
                             radius={40}
@@ -1429,6 +1525,18 @@ export default function HomeScreen() {
                             }}
                         />
                     )}
+<<<<<<< HEAD
+=======
+                    {Platform.OS === 'ios' && iosHeatmapCircles.map((circle) => (
+                        <Circle
+                            key={circle.key}
+                            center={{ latitude: circle.latitude, longitude: circle.longitude }}
+                            radius={150}
+                            fillColor={circle.fillColor}
+                            strokeColor="transparent"
+                        />
+                    ))}
+>>>>>>> feature/Ku_feature
                 </MapView>
 
             </View>
@@ -1473,7 +1581,11 @@ export default function HomeScreen() {
                         console.error('❌ Places API Error:', error);
                     }}
                     query={{
+<<<<<<< HEAD
                         key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+=======
+                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
+>>>>>>> feature/Ku_feature
                         language: language,
                     }}
                     enablePoweredByContainer={false}
@@ -1596,7 +1708,11 @@ export default function HomeScreen() {
             <View
                 style={[
                     styles.fabBar,
+<<<<<<< HEAD
                     { right: 14 },
+=======
+                    { right: 14, bottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 80 : insets.bottom + 85 },
+>>>>>>> feature/Ku_feature
                 ]}
             >
                 {/* HEATMAP TOGGLE BUTTON (bottom) */}
@@ -1640,9 +1756,17 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.fabActionBtn}
+<<<<<<< HEAD
                             onPress={() => { setReportType("speed"); setMenuOpen(false); }}
                         >
                             <Image source={require("../../assets/icons/speed.png")} style={styles.fabActionIcon} />
+=======
+                            onPress={() => { setReportType("environment"); setMenuOpen(false); }}
+                        >
+                            <View style={[styles.fabActionIcon, { justifyContent: 'center', alignItems: 'center' }]}>
+                                <Text style={{ fontSize: 24 }}>🌿</Text>
+                            </View>
+>>>>>>> feature/Ku_feature
                         </TouchableOpacity>
                     </Animated.View>
                 )}
@@ -1791,11 +1915,19 @@ export default function HomeScreen() {
                                 getCategoryByName('qezay')?.id ||
                                 2;
 
+<<<<<<< HEAD
                         } else if (reportType === 'speed') {
                             categoryId =
                                 getCategoryByName('كاشف سرعة')?.id ||
                                 getCategoryByName('radar leza')?.id ||
                                 getCategoryByName('leza')?.id ||
+=======
+                        } else if (reportType === 'environment') {
+                            categoryId =
+                                getCategoryByName('خطر بيئي')?.id ||
+                                getCategoryByName('بيئ')?.id ||
+                                getCategoryByName('jîngehî')?.id ||
+>>>>>>> feature/Ku_feature
                                 3;
                         }
 
@@ -1855,7 +1987,11 @@ export default function HomeScreen() {
                                         );
 
                                         Alert.alert(
+<<<<<<< HEAD
                                             language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? 'Hate pistrastkirin' : '✅ Confirmed',
+=======
+                                            language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? '✅ Hate piştrastkirin' : '✅ Confirmed',
+>>>>>>> feature/Ku_feature
                                             language === 'ar'
                                                 ? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
                                                 : language === 'ku' ? `Rapor #${nearest.id} hate piştrastkirin! Tê ${confirmResult.points_awarded} xal wergirtin!!` : `Report #${nearest.id} confirmed! You earned ${confirmResult.points_awarded} points!`
@@ -1881,15 +2017,25 @@ export default function HomeScreen() {
                             // Continue with report creation even if duplicate check fails
                         }
 
+<<<<<<< HEAD
                         // Upload photo if provided - AI will analyze it
+=======
+                        // Upload photo if provided - FAST mode, AI runs in background
+>>>>>>> feature/Ku_feature
                         let photoUrl: string | undefined = undefined;
                         let aiDescription: string | undefined = undefined;
                         let aiAnnotatedUrl: string | undefined = undefined;
                         let aiDetections: string | undefined = undefined;
                         if (data.photoUri) {
                             try {
+<<<<<<< HEAD
                                 console.log('📷 Uploading photo with AI analysis...');
                                 const uploadResult = await reportingAPI.uploadImage(data.photoUri);
+=======
+                                console.log('📷 Uploading photo (fast mode, AI will run in background)...');
+                                // Use asyncAI=true for fast upload - AI will run after report creation
+                                const uploadResult = await reportingAPI.uploadImage(data.photoUri, true);
+>>>>>>> feature/Ku_feature
                                 photoUrl = uploadResult.url;
                                 console.log('✅ Photo uploaded:', photoUrl);
 
@@ -1934,17 +2080,26 @@ export default function HomeScreen() {
                             }
                         }
 
+<<<<<<< HEAD
                         // Create report - use AI description if available
                         const finalDescription = aiDescription
                             ? (data.notes ? `${data.notes}\n\n${aiDescription}` : aiDescription)
                             : (data.notes || (language === 'ar' ? 'بلاغ جديد' : language === 'ku' ? 'Rapora nû' : 'New Report'));
+=======
+                        // Create report immediately
+                        const finalDescription = data.notes || (language === 'ar' ? 'بلاغ جديد' : language === 'ku' ? 'Rapora nû' : 'New Report');
+>>>>>>> feature/Ku_feature
 
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole'
                                 ? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk  li ser rê' : 'Pothole on Road')
                                 : data.type === 'accident'
                                     ? (language === 'ar' ? 'حادث مروري' : language === 'ku' ? 'Qezaya trafîkê' : 'Traffic Accident')
+<<<<<<< HEAD
                                     : (language === 'ar' ? 'كاشف سرعة' : language === 'ku' ? 'Kameraya lezê' : 'Speed Camera'),
+=======
+                                    : (language === 'ar' ? 'خطر بيئي' : language === 'ku' ? 'Metirsiya jîngehî' : 'Environmental Hazard'),
+>>>>>>> feature/Ku_feature
                             description: finalDescription,
                             category_id: categoryId,
                             latitude: locationToUse.latitude,
@@ -1958,6 +2113,22 @@ export default function HomeScreen() {
 
                         console.log('✅ Report created:', newReport.id);
 
+<<<<<<< HEAD
+=======
+                        // Trigger AI analysis in background (will send push notification when done)
+                        if (photoUrl && data.type === 'pothole') {
+                            try {
+                                console.log('🔄 Triggering AI analysis in background...');
+                                reportingAPI.triggerAIAnalysis(newReport.id, language).catch(e => {
+                                    console.warn('⚠️ AI analysis trigger failed:', e);
+                                });
+                                console.log('✅ AI analysis triggered - notification will be sent when complete');
+                            } catch (analyzeError) {
+                                console.warn('⚠️ Could not trigger AI analysis:', analyzeError);
+                            }
+                        }
+
+>>>>>>> feature/Ku_feature
                         // Clear long press marker after successful submission
                         if (longPressMarker) {
                             setLongPressMarker(null);
@@ -1999,7 +2170,11 @@ export default function HomeScreen() {
                             { transform: [{ translateY: audioSheetY }] }
                         ]}
                     >
+<<<<<<< HEAD
                         <BlurView intensity={55} tint="light" style={styles.audioSheet}>
+=======
+                        <BlurView intensity={55} tint="light" style={[styles.audioSheet, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 80 : insets.bottom + 90 }]}>
+>>>>>>> feature/Ku_feature
                             <View {...panResponder.panHandlers} style={styles.audioSheetHandleArea}>
                                 <View style={styles.audioSheetHandle} />
                             </View>
@@ -2061,14 +2236,24 @@ export default function HomeScreen() {
                                         const newValue = !warnSpeed;
                                         setWarnSpeed(newValue);
                                         if (newValue && soundEnabled) {
+<<<<<<< HEAD
                                             await speakWarning('speed');
+=======
+                                            await speakWarning('environment');
+>>>>>>> feature/Ku_feature
                                         }
                                     }}
                                 >
                                     <View style={[styles.modeIconCircle]}>
+<<<<<<< HEAD
                                         <Ionicons name="speedometer" size={26} color="#00FF00" />
                                     </View>
                                     <Text style={styles.modeText}>{t('home.speedCamera')}</Text>
+=======
+                                        <Ionicons name="leaf" size={26} color="#10B981" />
+                                    </View>
+                                    <Text style={styles.modeText}>{t('home.environmentHazard')}</Text>
+>>>>>>> feature/Ku_feature
                                 </TouchableOpacity>
 
                             </View>
@@ -2089,7 +2274,11 @@ export default function HomeScreen() {
 
             {/* MARKER DETAIL BOTTOM SHEET */}
             {markerDetailVisible && selectedReportForDonation && (
+<<<<<<< HEAD
                 <View style={styles.markerDetailOverlay}>
+=======
+                <View style={[styles.markerDetailOverlay, { bottom: 65 + (Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 10 : 15) }]}>
+>>>>>>> feature/Ku_feature
                     <TouchableOpacity
                         style={styles.markerDetailBackdrop}
                         activeOpacity={1}
@@ -2099,6 +2288,7 @@ export default function HomeScreen() {
                         <View {...markerDetailPanResponder.panHandlers} style={styles.markerDetailHandleArea}>
                             <View style={styles.markerDetailHandle} />
                         </View>
+<<<<<<< HEAD
                         <Text style={styles.markerDetailTitle}>
                             {selectedReportForDonation.title || categories.find(c => c.id === selectedReportForDonation.category_id)?.name || (language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report')}
                         </Text>
@@ -2129,6 +2319,127 @@ export default function HomeScreen() {
                                 </Text>
                             </TouchableOpacity>
                         </View>
+=======
+
+                        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
+                        {/* Photo */}
+                        {(() => {
+                            const API_URL = getBaseUrl();
+                            let imgUrl: string | null = null;
+                            const r = selectedReportForDonation;
+                            if (r.ai_annotated_url) {
+                                const url = r.ai_annotated_url.trim();
+                                if (url.startsWith('http://') || url.startsWith('https://')) imgUrl = url;
+                                else if (url.startsWith('/uploads/')) imgUrl = `${API_URL}/api/reports${url}`;
+                                else if (url.startsWith('/')) imgUrl = `${API_URL}/api/reports${url}`;
+                                else imgUrl = `${API_URL}/api/reports/${url}`;
+                            } else if (r.photo_urls) {
+                                const firstUrl = r.photo_urls.split(',')[0].trim();
+                                if (firstUrl) {
+                                    if (firstUrl.startsWith('http://') || firstUrl.startsWith('https://')) imgUrl = firstUrl;
+                                    else if (firstUrl.startsWith('/uploads/')) imgUrl = `${API_URL}/api/reports${firstUrl}`;
+                                    else if (firstUrl.startsWith('/')) imgUrl = `${API_URL}/api/reports${firstUrl}`;
+                                    else imgUrl = `${API_URL}/api/reports/${firstUrl}`;
+                                }
+                            }
+                            return imgUrl ? (
+                                <Image
+                                    source={{ uri: imgUrl }}
+                                    style={{ width: '100%', height: 180, borderRadius: 12, marginBottom: 12 }}
+                                    resizeMode="cover"
+                                />
+                            ) : null;
+                        })()}
+
+                        {/* Title */}
+                        <Text style={styles.markerDetailTitle}>
+                            {selectedReportForDonation.title || (() => {
+                                const cat = categories.find(c => c.id === selectedReportForDonation.category_id);
+                                if (cat) {
+                                    return language === 'ar' 
+                                        ? (cat.name_ar || cat.name_en || cat.name || 'بلاغ')
+                                        : language === 'ku'
+                                        ? (cat.name_ku || cat.name_en || cat.name || 'Rapor')
+                                        : (cat.name_en || cat.name || 'Report');
+                                }
+                                return language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report';
+                            })()}
+                        </Text>
+
+                        {/* Category & Severity */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <Text style={{ color: '#ccc', fontSize: 13, fontFamily: 'Tajawal-Regular' }}>
+                                {getCategoryIcon(selectedReportForDonation.category_id)} {(() => {
+                                    const cat = categories.find(c => c.id === selectedReportForDonation.category_id);
+                                    if (!cat) return '';
+                                    return language === 'ar' ? (cat.name_ar || cat.name) : language === 'ku' ? (cat.name_ku || cat.name) : (cat.name_en || cat.name);
+                                })()}
+                            </Text>
+                            <Text style={{ color: '#ccc', fontSize: 13, fontFamily: 'Tajawal-Regular' }}>
+                                #{selectedReportForDonation.id}
+                            </Text>
+                        </View>
+
+                        {/* Address */}
+                        {selectedReportForDonation.address_text && (
+                            <Text style={{ color: '#aaa', fontSize: 13, marginBottom: 8, fontFamily: 'Tajawal-Regular' }}>
+                                📍 {selectedReportForDonation.address_text}
+                            </Text>
+                        )}
+
+                        {/* Description */}
+                        {selectedReportForDonation.description ? (
+                            <Text style={styles.markerDetailDesc}>
+                                {selectedReportForDonation.description}
+                            </Text>
+                        ) : null}
+
+                        {/* Share WhatsApp Button */}
+                        <TouchableOpacity
+                            style={{ backgroundColor: '#25D366', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 12, flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                            onPress={() => {
+                                const r = selectedReportForDonation;
+                                const title = r.title || (language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report');
+                                const desc = r.description || '';
+                                const lat = r.latitude;
+                                const lng = r.longitude;
+                                const msg = `🚨 *${language === 'ar' ? 'بلاغ كاشف' : language === 'ku' ? 'Raporek Kashif' : 'Kashif Report'}*\n\n📋 *${language === 'ar' ? 'العنوان' : language === 'ku' ? 'Sernav' : 'Title'}:* ${title}\n📝 *${language === 'ar' ? 'الوصف' : language === 'ku' ? 'Danasîn' : 'Description'}:* ${desc}\n🔢 *#${r.id}*\n\n📍 *${language === 'ar' ? 'الموقع' : language === 'ku' ? 'Cih' : 'Location'}:*\nhttps://www.google.com/maps?q=${lat},${lng}`;
+                                Linking.openURL(`whatsapp://send?text=${encodeURIComponent(msg)}`).catch(() => {
+                                    Alert.alert(language === 'ar' ? 'واتساب غير مثبت' : language === 'ku' ? 'WhatsApp tune ye' : 'WhatsApp not installed');
+                                });
+                            }}
+                        >
+                            <Ionicons name="logo-whatsapp" size={18} color="#fff" />
+                            <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Tajawal-Bold' }}>
+                                {language === 'ar' ? 'مشاركة عبر واتساب' : language === 'ku' ? 'Parvekirin bi WhatsApp' : 'Share via WhatsApp'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {/* Donate Button */}
+                        <TouchableOpacity
+                            style={styles.markerDetailDonateBtn}
+                            onPress={() => {
+                                setMarkerDetailVisible(false);
+                                setDonationModalVisible(true);
+                            }}
+                        >
+                            <Ionicons name="heart" size={18} color="#fff" />
+                            <Text style={styles.markerDetailDonateTxt}>
+                                {language === 'ar' ? 'تبرع' : language === 'ku' ? 'Bexş' : 'Donate'}
+                            </Text>
+                        </TouchableOpacity>
+                        </ScrollView>
+
+                        {/* Close - always visible */}
+                        <TouchableOpacity
+                            style={styles.markerDetailCloseBtn}
+                            onPress={() => setMarkerDetailVisible(false)}
+                        >
+                            <Text style={styles.markerDetailCloseTxt}>
+                                {language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}
+                            </Text>
+                        </TouchableOpacity>
+>>>>>>> feature/Ku_feature
                     </Animated.View>
                 </View>
             )}
@@ -2711,7 +3022,11 @@ const styles = StyleSheet.create({
 // ─── MARKER DETAIL BOTTOM SHEET ──────────────────────────────────
     markerDetailOverlay: {
         position: 'absolute',
+<<<<<<< HEAD
         top: 0, left: 0, right: 0, bottom: 0,
+=======
+        top: 0, left: 0, right: 0,
+>>>>>>> feature/Ku_feature
         zIndex: 9999,
         justifyContent: 'flex-end',
     },
@@ -2725,7 +3040,12 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20,
+<<<<<<< HEAD
         paddingBottom: 30,
+=======
+        paddingBottom: 10,
+        maxHeight: '70%',
+>>>>>>> feature/Ku_feature
     },
     markerDetailHandleArea: {
         paddingVertical: 10,
@@ -2753,7 +3073,11 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'Tajawal-Regular',
         textAlign: 'center',
+<<<<<<< HEAD
         marginBottom: 16,
+=======
+        marginBottom: 8,
+>>>>>>> feature/Ku_feature
     },
     markerDetailActions: {
         flexDirection: 'row',
@@ -2764,6 +3088,7 @@ const styles = StyleSheet.create({
     markerDetailDonateBtn: {
         flexDirection: 'row',
         alignItems: 'center',
+<<<<<<< HEAD
         backgroundColor: '#E91E63',
         paddingHorizontal: 24,
         paddingVertical: 12,
@@ -2773,14 +3098,32 @@ const styles = StyleSheet.create({
     markerDetailDonateTxt: {
         color: '#fff',
         fontSize: 16,
+=======
+        justifyContent: 'center',
+        backgroundColor: '#E91E63',
+        paddingVertical: 12,
+        borderRadius: 10,
+        gap: 8,
+        marginTop: 8,
+    },
+    markerDetailDonateTxt: {
+        color: '#fff',
+        fontSize: 15,
+>>>>>>> feature/Ku_feature
         fontFamily: 'Tajawal-Bold',
     },
     markerDetailCloseBtn: {
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
+<<<<<<< HEAD
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 12,
+=======
+        paddingVertical: 12,
+        borderRadius: 10,
+        marginTop: 12,
+>>>>>>> feature/Ku_feature
     },
     markerDetailCloseTxt: {
         color: '#fff',

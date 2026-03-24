@@ -48,7 +48,7 @@ export default function QRCodeModal({
               <Ionicons name="close" size={24} color={PRIMARY} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>
-              {isRTL ? "رمز الكوبون" : "Coupon Code"}
+              {language === 'ar' ? "رمز الكوبون" : language === 'ku' ? "Koda kuponê" : "Coupon Code"}
             </Text>
             <View style={styles.headerSpacer} />
           </View>
@@ -60,7 +60,7 @@ export default function QRCodeModal({
 
           {/* Success Message */}
           <Text style={styles.successTitle}>
-            {isRTL ? "تم تفعيل الكوبون بنجاح!" : "Coupon Activated!"}
+            {language === 'ar' ? "تم تفعيل الكوبون بنجاح!" : language === 'ku' ? "Kupon bi serkeftin hate çalakirin!" : "Coupon Activated!"}
           </Text>
           <Text style={styles.couponName}>{couponName}</Text>
 
@@ -77,7 +77,7 @@ export default function QRCodeModal({
           {/* Verification Code */}
           <View style={styles.codeContainer}>
             <Text style={styles.codeLabel}>
-              {isRTL ? "كود التحقق" : "Verification Code"}
+              {language === 'ar' ? "كود التحقق" : language === 'ku' ? "Koda piştrastkirinê" : "Verification Code"}
             </Text>
             <Text style={styles.codeText}>{verificationCode}</Text>
           </View>
@@ -86,8 +86,10 @@ export default function QRCodeModal({
           <View style={styles.pointsContainer}>
             <Ionicons name="star" size={20} color={YELLOW} />
             <Text style={styles.pointsText}>
-              {isRTL
+              {language === 'ar'
                 ? `تم خصم ${pointsSpent.toLocaleString("ar-SA")} نقطة`
+                : language === 'ku'
+                ? `${pointsSpent.toLocaleString("en-US")} xal hate kêmkirin`
                 : `${pointsSpent.toLocaleString("en-US")} points spent`}
             </Text>
           </View>
@@ -96,8 +98,10 @@ export default function QRCodeModal({
           <View style={styles.instructionsContainer}>
             <Ionicons name="information-circle-outline" size={20} color="#666" />
             <Text style={[styles.instructionsText, isRTL && styles.textRTL]}>
-              {isRTL
+              {language === 'ar'
                 ? "اعرض هذا الرمز للموظف عند استخدام الكوبون"
+                : language === 'ku'
+                ? "Ev kod nîşanî karmend bike dema ku kupon bikar tînî"
                 : "Show this code to the staff when using your coupon"}
             </Text>
           </View>
@@ -105,7 +109,7 @@ export default function QRCodeModal({
           {/* Close Button */}
           <TouchableOpacity style={styles.doneButton} onPress={onClose}>
             <Text style={styles.doneButtonText}>
-              {isRTL ? "تم" : "Done"}
+              {language === 'ar' ? "تم" : language === 'ku' ? "Temam" : "Done"}
             </Text>
           </TouchableOpacity>
         </View>

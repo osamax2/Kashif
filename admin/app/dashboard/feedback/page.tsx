@@ -4,6 +4,7 @@ import { feedbackAPI, usersAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Feedback } from '@/lib/types';
 import {
+<<<<<<< HEAD
   AlertCircle,
   Bug,
   CheckCircle2,
@@ -16,6 +17,20 @@ import {
   Search,
   Send,
   XCircle,
+=======
+    AlertCircle,
+    Bug,
+    CheckCircle2,
+    Clock,
+    Filter,
+    Lightbulb,
+    MessageSquare,
+    MessageSquareText,
+    RefreshCw,
+    Search,
+    Send,
+    XCircle,
+>>>>>>> feature/Ku_feature
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

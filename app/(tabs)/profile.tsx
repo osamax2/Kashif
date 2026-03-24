@@ -2,6 +2,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Achievement, achievementAPI, authAPI, challengeAPI, FriendInfo, friendsAPI, gamificationAPI, Level, lookupAPI, PointTransaction, reportingAPI, WeeklyChallenge } from "@/services/api";
+<<<<<<< HEAD
+=======
+import { getBaseUrl } from "@/services/api-config";
+>>>>>>> feature/Ku_feature
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
@@ -32,8 +36,8 @@ export default function ProfileScreen() {
   const { t, language, isRTL } = useLanguage();
   const { refreshKey } = useDataSync();
 
-  // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
-  const effectiveRTL = !isRTL;
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
+  const effectiveRTL = isRTL;
 
   const dir = useMemo(
     () => ({
@@ -185,7 +189,11 @@ export default function ProfileScreen() {
       if (user?.image_url) {
         const serverUrl = user.image_url.startsWith("http")
           ? user.image_url
+<<<<<<< HEAD
           : `https://api.kashifroad.com${user.image_url}`;
+=======
+          : `${getBaseUrl()}${user.image_url}`;
+>>>>>>> feature/Ku_feature
         setProfileImage(serverUrl);
         return;
       }
@@ -345,7 +353,11 @@ export default function ProfileScreen() {
                       const result = await authAPI.uploadProfilePicture(pendingImage);
                       const serverUrl = result.image_url.startsWith("http")
                         ? result.image_url
+<<<<<<< HEAD
                         : `https://api.kashifroad.com${result.image_url}`;
+=======
+                        : `${getBaseUrl()}${result.image_url}`;
+>>>>>>> feature/Ku_feature
                       setProfileImage(serverUrl);
                       // Clear old local storage
                       await AsyncStorage.removeItem("profileImage");
@@ -423,7 +435,11 @@ export default function ProfileScreen() {
           style={styles.iconBtn}
         >
           <Ionicons
+<<<<<<< HEAD
             name={isRTL ? "settings-sharp" : "chevron-forward"}
+=======
+            name={isRTL ? "settings-sharp" : "chevron-back"}
+>>>>>>> feature/Ku_feature
             size={isRTL ? 28 : 30}
             color={YELLOW}
           />
@@ -448,7 +464,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* USER */}
-      <Text style={styles.userName}>{user?.full_name || "مستخدم"}</Text>
+      <Text style={styles.userName}>{user?.full_name || (language === 'ar' ? "مستخدم" : language === 'ku' ? "Bikarhêner" : "User")}</Text>
       <Text style={styles.userEmail}>{user?.email || ""}</Text>
 
       {/* PROGRESS */}

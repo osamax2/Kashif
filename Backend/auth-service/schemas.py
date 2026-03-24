@@ -123,6 +123,12 @@ class VerifyAccountRequest(BaseModel):
     token: str
 
 
+class SelfUpdateRequest(BaseModel):
+    """Schema for user updating their own profile (limited fields)"""
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+
 class ChangePasswordRequest(BaseModel):
     """Schema for changing password"""
     current_password: str

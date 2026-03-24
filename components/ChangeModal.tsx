@@ -1,13 +1,15 @@
 // components/ChangeModal.tsx
 import React from "react";
 import {
-    View,
+    ActivityIndicator,
+    Modal,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    Modal,
-    StyleSheet,
+    View,
 } from "react-native";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
@@ -20,7 +22,22 @@ export default function ChangeModal({
                                         value,
                                         setValue,
                                         onSave,
-                                    }) {
+                                        error = null,
+                                        loading = false,
+                                        keyboardType = "default",
+                                    }: {
+    visible: boolean;
+    onClose: () => void;
+    title: string;
+    placeholder: string;
+    value: string;
+    setValue: (v: string) => void;
+    onSave: () => void;
+    error?: string | null;
+    loading?: boolean;
+    keyboardType?: string;
+}) {
+    const { language } = useLanguage();
     return (
         <Modal visible={visible} transparent animationType="fade">
             <View style={styles.overlay}>
@@ -34,15 +51,23 @@ export default function ChangeModal({
                         value={value}
                         onChangeText={setValue}
                         textAlign="right"
+                        keyboardType={keyboardType || "default"}
+                        autoCapitalize={keyboardType === "email-address" ? "none" : "sentences"}
                     />
 
+                    {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
                     <View style={styles.buttonsRow}>
-                        <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                            <Text style={styles.cancelText}>إلغاء</Text>
+                        <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={loading}>
+                            <Text style={styles.cancelText}>{language === "ar" ? "إلغاء" : language === "ku" ? "Betal bike" : "Cancel"}</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.saveBtn} onPress={onSave}>
-                            <Text style={styles.saveText}>حفظ</Text>
+                        <TouchableOpacity style={styles.saveBtn} onPress={onSave} disabled={loading}>
+                            {loading ? (
+                                <ActivityIndicator size="small" color={BLUE} />
+                            ) : (
+                                <Text style={styles.saveText}>{language === "ar" ? "حفظ" : language === "ku" ? "Parastin" : "Save"}</Text>
+                            )}
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -83,7 +108,15 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 12,
         fontFamily: "Tajawal-Regular",
-        marginBottom: 20,
+        marginBottom: 12,
+    },
+
+    errorText: {
+        color: "#ff6b6b",
+        fontSize: 13,
+        fontFamily: "Tajawal-Regular",
+        textAlign: "center",
+        marginBottom: 10,
     },
 
     buttonsRow: {
@@ -96,6 +129,8 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 10,
+        minWidth: 80,
+        alignItems: "center",
     },
 
     saveText: {

@@ -2,13 +2,13 @@
 import React from "react";
 import {
     Modal,
-    View,
+    StyleSheet,
     Text,
     TouchableOpacity,
-    StyleSheet,
     TouchableWithoutFeedback,
-    Animated,
+    View
 } from "react-native";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const BLUE = "#0D2B66";
 const YELLOW = "#F4B400";
@@ -19,6 +19,7 @@ export default function IOSActionSheet({
                                            options,
                                            onSelect,
                                        }) {
+    const { language } = useLanguage();
     return (
         <Modal transparent visible={visible} animationType="fade">
             {/* DARK BACKDROP */}
@@ -45,7 +46,7 @@ export default function IOSActionSheet({
 
                 {/* CANCEL BUTTON */}
                 <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                    <Text style={styles.cancelText}>إلغاء</Text>
+                    <Text style={styles.cancelText}>{language === "ar" ? "إلغاء" : language === "ku" ? "Betal bike" : "Cancel"}</Text>
                 </TouchableOpacity>
             </View>
         </Modal>

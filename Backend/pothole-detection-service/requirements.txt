@@ -26,3 +26,10 @@ scipy>=1.11.0
 
 # Scheduling
 apscheduler>=3.10.0
+<<<<<<< HEAD
+=======
+
+# Depth Estimation (Cloud API)
+# Uses Replicate API for MiDaS and DepthAnything models
+# Set REPLICATE_API_TOKEN environment variable
+>>>>>>> feature/Ku_feature

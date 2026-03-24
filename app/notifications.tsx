@@ -29,8 +29,8 @@ export default function ModernNotifications() {
   const { notifications, loading, refreshNotifications, markAsRead, markAllAsRead } =
     useNotifications();
 
-  // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
-  const effectiveRTL = !isRTL;
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
+  const effectiveRTL = isRTL;
 
   const dir = useMemo(
     () => ({
@@ -119,10 +119,21 @@ export default function ModernNotifications() {
 
           <View style={{ flex: 1 }}>
             <Text style={[styles.msg, dir.textAlign, !item.is_read && styles.unreadText]}>
+<<<<<<< HEAD
               {language === 'ku' && item.title_ku ? item.title_ku : (!effectiveRTL && item.title_en) ? item.title_en : item.title}
             </Text>
             {item.body && <Text style={[styles.body, dir.textAlign]}>
               {language === 'ku' && item.body_ku ? item.body_ku : (!effectiveRTL && item.body_en) ? item.body_en : item.body}
+=======
+              {language === 'ku' ? (item.title_ku || item.title_en || item.title)
+                : language === 'en' ? (item.title_en || item.title)
+                : item.title}
+            </Text>
+            {item.body && <Text style={[styles.body, dir.textAlign]}>
+              {language === 'ku' ? (item.body_ku || item.body_en || item.body)
+                : language === 'en' ? (item.body_en || item.body)
+                : item.body}
+>>>>>>> feature/Ku_feature
             </Text>}
             <Text style={[styles.time, dir.textAlign]}>{formatTime(item.created_at)}</Text>
           </View>
@@ -148,9 +159,10 @@ export default function ModernNotifications() {
       <View style={styles.root}>
         <Header
           title={t("notifications.title")}
-          // ✅ WIE index: Richtung invertiert
-          leftIcon={effectiveRTL ? "chevron-forward" : "chevron-back"}
+          leftIcon={!isRTL ? "chevron-back" : undefined}
+          rightIcon={isRTL ? "chevron-forward" : undefined}
           onLeftPress={() => router.back()}
+          onRightPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={YELLOW} />

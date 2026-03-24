@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 SMTP_HOST = os.getenv("SMTP_HOST", "mail.kashifroad.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "noreply@kashifroad.com")
+<<<<<<< HEAD
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "SecurePass123!")
+=======
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+>>>>>>> feature/Ku_feature
 SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@kashifroad.com")
 SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Kashif Road")
 SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"

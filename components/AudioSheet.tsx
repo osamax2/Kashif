@@ -1,3 +1,4 @@
+import { useLanguage } from "@/contexts/LanguageContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
 import React from "react";
@@ -19,6 +20,8 @@ export default function AudioSheet({
     onToggleWarnings,
     onClose,
 }) {
+    const { language } = useLanguage();
+    
     if (!visible) return null;
 
     return (
@@ -30,10 +33,10 @@ export default function AudioSheet({
                 <View style={styles.handle} />
 
                 {/* Title */}
-                <Text style={styles.title}>إعدادات الصوت</Text>
+                <Text style={styles.title}>{language === 'ar' ? 'إعدادات الصوت' : language === 'ku' ? 'Mihêngên dengê' : 'Sound Settings'}</Text>
 
                 {/* VOLUME SLIDER */}
-                <Text style={styles.label}>مستوى صوت التطبيق</Text>
+                <Text style={styles.label}>{language === 'ar' ? 'مستوى صوت التطبيق' : language === 'ku' ? 'Asta dengê sepanê' : 'App Volume'}</Text>
 
                 <View style={styles.slider}>
                     <View style={[styles.sliderFill, { width: `${volume * 100}%` }]} />
@@ -70,7 +73,7 @@ export default function AudioSheet({
                                 size={32}
                                 color="#fff"
                             />
-                            <Text style={styles.modeText}>النظام</Text>
+                            <Text style={styles.modeText}>{language === 'ar' ? 'النظام' : language === 'ku' ? 'Pergal' : 'System'}</Text>
                         </TouchableOpacity>
                     </BlurView>
 
@@ -88,7 +91,7 @@ export default function AudioSheet({
                                 size={32}
                                 color="#fff"
                             />
-                            <Text style={styles.modeText}>تحذيرات + الملاحة</Text>
+                            <Text style={styles.modeText}>{language === 'ar' ? 'تحذيرات + الملاحة' : language === 'ku' ? 'Hişyarî + Rêberî' : 'Warnings + Navigation'}</Text>
                         </TouchableOpacity>
                     </BlurView>
 
@@ -107,7 +110,9 @@ export default function AudioSheet({
                                 color="#fff"
                             />
                             <Text style={styles.modeText}>
-                                {soundEnabled ? "الصوت مُفعل" : "الصوت مُغلق"}
+                                {soundEnabled 
+                                    ? (language === 'ar' ? 'الصوت مُفعل' : language === 'ku' ? 'Deng çalak e' : 'Sound On') 
+                                    : (language === 'ar' ? 'الصوت مُغلق' : language === 'ku' ? 'Deng girtî ye' : 'Sound Off')}
                             </Text>
                         </TouchableOpacity>
                     </BlurView>
@@ -116,7 +121,7 @@ export default function AudioSheet({
 
                 {/* CLOSE */}
                 <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                    <Text style={styles.closeText}>إغلاق</Text>
+                    <Text style={styles.closeText}>{language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}</Text>
                 </TouchableOpacity>
             </View>
         </View>

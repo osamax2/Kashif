@@ -4,7 +4,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
     Alert,
+<<<<<<< HEAD
     I18nManager,
+=======
+>>>>>>> feature/Ku_feature
     Platform,
     StyleSheet,
     Text,
@@ -32,7 +35,11 @@ export default function ResetPasswordScreen() {
         if (!password || password.length < 6) {
             Alert.alert(
                 t('common.error'),
+<<<<<<< HEAD
                 isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters'
+=======
+                language === 'ar' ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : language === 'ku' ? 'Şîfre divê herî kêm 6 tîp be' : 'Password must be at least 6 characters'
+>>>>>>> feature/Ku_feature
             );
             return;
         }
@@ -40,7 +47,11 @@ export default function ResetPasswordScreen() {
         if (password !== confirm) {
             Alert.alert(
                 t('common.error'),
+<<<<<<< HEAD
                 isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match'
+=======
+                language === 'ar' ? 'كلمات المرور غير متطابقة' : language === 'ku' ? 'Şîfre hev nagirin' : 'Passwords do not match'
+>>>>>>> feature/Ku_feature
             );
             return;
         }
@@ -48,7 +59,11 @@ export default function ResetPasswordScreen() {
         if (!token) {
             Alert.alert(
                 t('common.error'),
+<<<<<<< HEAD
                 isRTL ? 'رمز إعادة التعيين مفقود' : 'Reset token is missing'
+=======
+                language === 'ar' ? 'رمز إعادة التعيين مفقود' : language === 'ku' ? 'Koda vegerandinê winda ye' : 'Reset token is missing'
+>>>>>>> feature/Ku_feature
             );
             return;
         }
@@ -58,12 +73,20 @@ export default function ResetPasswordScreen() {
             await authAPI.resetPassword(token, password);
             Alert.alert(
                 t('common.success'),
+<<<<<<< HEAD
                 isRTL ? 'تم تغيير كلمة المرور بنجاح' : 'Password changed successfully',
+=======
+                language === 'ar' ? 'تم تغيير كلمة المرور بنجاح' : language === 'ku' ? 'Şîfre bi serkeftin hate guherandin' : 'Password changed successfully',
+>>>>>>> feature/Ku_feature
                 [{ text: 'OK', onPress: () => router.replace("/index") }]
             );
         } catch (error: any) {
             const errorMessage = error?.response?.data?.detail || 
+<<<<<<< HEAD
                 (isRTL ? 'فشل في تغيير كلمة المرور' : 'Failed to reset password');
+=======
+                (language === 'ar' ? 'فشل في تغيير كلمة المرور' : language === 'ku' ? 'Guherandina şîfreyê têk çû' : 'Failed to reset password');
+>>>>>>> feature/Ku_feature
             Alert.alert(t('common.error'), errorMessage);
         } finally {
             setLoading(false);
@@ -76,13 +99,13 @@ export default function ResetPasswordScreen() {
             <Text style={styles.title}>{t('auth.resetPassword.title')}</Text>
 
             {/* Erklärungstext */}
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { textAlign: isRTL ? 'right' : 'left' }]}>
                 {t('auth.resetPassword.subtitle')}
             </Text>
 
             {/* Neues Passwort */}
-            <Text style={styles.label}>{t('auth.resetPassword.newPassword')}</Text>
-            <View style={styles.inputRow}>
+            <Text style={[styles.label, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.resetPassword.newPassword')}</Text>
+            <View style={[styles.inputRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 {/* Schloss-Icon links (optisch rechts wegen RTL) */}
                 <Ionicons
                     name="lock-closed-outline"
@@ -115,8 +138,8 @@ export default function ResetPasswordScreen() {
             </View>
 
             {/* Passwort bestätigen */}
-            <Text style={styles.label}>{t('auth.resetPassword.confirmPassword')}</Text>
-            <View style={styles.inputRow}>
+            <Text style={[styles.label, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.resetPassword.confirmPassword')}</Text>
+            <View style={[styles.inputRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <Ionicons
                     name="lock-closed-outline"
                     size={20}
@@ -182,7 +205,7 @@ const styles = StyleSheet.create({
         color: "#FFD166",
         fontSize: 14,
         fontFamily: "Tajawal-Regular",
-        textAlign: I18nManager.isRTL ? "right" : "left",
+        textAlign: "left",
         lineHeight: 22,
         marginBottom: 32,
     },
@@ -191,12 +214,12 @@ const styles = StyleSheet.create({
         color: "#FFD166",
         fontSize: 14,
         fontFamily: "Tajawal-Medium",
-        textAlign: I18nManager.isRTL ? "right" : "left",
+        textAlign: "left",
         marginBottom: 8,
     },
 
     inputRow: {
-        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
+        flexDirection: "row",
         alignItems: "center",
         backgroundColor: "#5B82D9",
         borderRadius: 10,

@@ -51,8 +51,13 @@ export default function TermsModal({ visible, onClose, onAccept, showAcceptButto
     }
   };
 
+<<<<<<< HEAD
   const title = tos ? (language === 'ku' && tos.title_ku ? tos.title_ku : effectiveRTL ? tos.title_ar : tos.title_en) : "";
   const content = tos ? (language === 'ku' && tos.content_ku ? tos.content_ku : effectiveRTL ? tos.content_ar : tos.content_en) : "";
+=======
+  const title = tos ? (language === 'ku' && tos.title_ku ? tos.title_ku : isRTL ? tos.title_ar : tos.title_en) : "";
+  const content = tos ? (language === 'ku' && tos.content_ku ? tos.content_ku : isRTL ? tos.content_ar : tos.content_en) : "";
+>>>>>>> feature/Ku_feature
 
   const dir: { textAlign: "right" | "left"; writingDirection: "rtl" | "ltr" } = {
     textAlign: effectiveRTL ? "right" : "left",

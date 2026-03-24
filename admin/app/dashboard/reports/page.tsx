@@ -3,7 +3,11 @@
 import { donationsAPI, reportsAPI } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
+<<<<<<< HEAD
 import { Calendar, CheckSquare, DollarSign, Download, History, MapPin, RotateCcw, Search, Settings, Share2, Square, Trash2 } from 'lucide-react';
+=======
+import { Calendar, CheckSquare, DollarSign, Download, FileText, History, MapPin, RotateCcw, Search, Settings, Share2, Square, Trash2 } from 'lucide-react';
+>>>>>>> feature/Ku_feature
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -306,6 +310,10 @@ export default function ReportsPage() {
     if (search) {
       filtered = filtered.filter(
           (r) =>
+<<<<<<< HEAD
+=======
+              r.id.toString().includes(search) ||
+>>>>>>> feature/Ku_feature
               r.title.toLowerCase().includes(search.toLowerCase()) ||
               r.description.toLowerCase().includes(search.toLowerCase())
       );
@@ -492,6 +500,7 @@ export default function ReportsPage() {
   };
 
   const [exporting, setExporting] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
 
   const exportToCSV = async () => {
     try {
@@ -587,6 +596,380 @@ export default function ReportsPage() {
     }
   };
 
+  // Export PDF report for government (anonymized - no user info)
+  const exportToPDF = async () => {
+    if (filteredReports.length === 0) return;
+    
+    setPdfExporting(true);
+    
+    try {
+      // Fetch status history for all filtered reports
+      const allHistories = await Promise.all(
+        filteredReports.map(report =>
+          reportsAPI.getReportHistory(report.id).catch(() => [])
+        )
+      );
+      
+      const historyMap: { [key: number]: ReportStatusHistory[] } = {};
+      filteredReports.forEach((report, index) => {
+        historyMap[report.id] = Array.isArray(allHistories[index]) ? allHistories[index] : [];
+      });
+
+      // Prepare translated labels
+      const labels = {
+        title: language === 'ar' ? 'تقرير البنية التحتية للطرق' : language === 'ku' ? 'Rapora Binesaziya Rêyan' : 'Road Infrastructure Report',
+        subtitle: language === 'ar' ? 'تقرير حكومي - بيانات مجهولة' : language === 'ku' ? 'Rapora Hukûmetê - Daneyên Anonîm' : 'Government Report - Anonymized Data',
+        generatedOn: language === 'ar' ? 'تم الإنشاء في' : language === 'ku' ? 'Hatiye afirandin di' : 'Generated on',
+        totalReports: language === 'ar' ? 'إجمالي البلاغات' : language === 'ku' ? 'Giştî Rapor' : 'Total Reports',
+        summary: language === 'ar' ? 'ملخص' : language === 'ku' ? 'Kurteya' : 'Summary',
+        byStatus: language === 'ar' ? 'حسب الحالة' : language === 'ku' ? 'Li gorî Rewşê' : 'By Status',
+        byCategory: language === 'ar' ? 'حسب الفئة' : language === 'ku' ? 'Li gorî Kategoriyê' : 'By Category',
+        bySeverity: language === 'ar' ? 'حسب الشدة' : language === 'ku' ? 'Li gorî Giraniyê' : 'By Severity',
+        reportDetails: language === 'ar' ? 'تفاصيل البلاغات' : language === 'ku' ? 'Hûrguliyên Raporan' : 'Report Details',
+        id: language === 'ar' ? 'الرقم' : language === 'ku' ? 'ID' : 'ID',
+        titleCol: language === 'ar' ? 'العنوان' : language === 'ku' ? 'Sernav' : 'Title',
+        description: language === 'ar' ? 'الوصف' : language === 'ku' ? 'Danasîn' : 'Description',
+        category: language === 'ar' ? 'الفئة' : language === 'ku' ? 'Kategorî' : 'Category',
+        severity: language === 'ar' ? 'الشدة' : language === 'ku' ? 'Giranî' : 'Severity',
+        status: language === 'ar' ? 'الحالة' : language === 'ku' ? 'Rewş' : 'Status',
+        address: language === 'ar' ? 'العنوان' : language === 'ku' ? 'Navnîşan' : 'Address',
+        coordinates: language === 'ar' ? 'الإحداثيات' : language === 'ku' ? 'Koordînat' : 'Coordinates',
+        date: language === 'ar' ? 'التاريخ' : language === 'ku' ? 'Dîrok' : 'Date',
+        history: language === 'ar' ? 'السجل' : language === 'ku' ? 'Mêjû' : 'History',
+        repairCost: language === 'ar' ? 'تكلفة الإصلاح' : language === 'ku' ? 'Lêçûna Tamîrkirinê' : 'Repair Cost',
+        donations: language === 'ar' ? 'التبرعات' : language === 'ku' ? 'Bexşandin' : 'Donations',
+        page: language === 'ar' ? 'صفحة' : language === 'ku' ? 'Rûpel' : 'Page',
+      };
+
+      // Calculate statistics
+      const statusCounts: { [key: string]: number } = {};
+      const categoryCounts: { [key: string]: number } = {};
+      const severityCounts: { [key: string]: number } = {};
+      
+      filteredReports.forEach(report => {
+        const statusName = getStatusName(report.status_id);
+        const categoryName = getCategoryName(report.category_id);
+        const severityName = getSeverityLabel(report.severity_id);
+        
+        statusCounts[statusName] = (statusCounts[statusName] || 0) + 1;
+        categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
+        severityCounts[severityName] = (severityCounts[severityName] || 0) + 1;
+      });
+
+      // Format history for display
+      const formatHistoryHTML = (history: ReportStatusHistory[] | undefined) => {
+        if (!history || history.length === 0) return '-';
+        return history.map(h => {
+          const date = new Date(h.created_at).toLocaleDateString();
+          const oldStatus = h.old_status_id ? getStatusName(h.old_status_id) : (language === 'ar' ? 'جديد' : 'New');
+          const newStatus = getStatusName(h.new_status_id);
+          const changedBy = h.changed_by_user_name || h.changed_by_user_email || 'System';
+          const comment = h.comment ? ` - ${h.comment}` : '';
+          return `${date}: ${oldStatus} → ${newStatus} (${changedBy})${comment}`;
+        }).join('<br>');
+      };
+
+      // Generate HTML content
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="${language}" dir="${isRTL ? 'rtl' : 'ltr'}">
+<head>
+  <meta charset="UTF-8">
+  <title>${labels.title}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 10pt;
+      line-height: 1.4;
+      color: #333;
+      direction: ${isRTL ? 'rtl' : 'ltr'};
+      padding: 0;
+      margin: 0;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #b9a87b;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    .logo {
+      height: 60px;
+      width: auto;
+    }
+    .header-center {
+      text-align: center;
+      flex: 1;
+    }
+    .header-center h1 {
+      margin: 0;
+      font-size: 20pt;
+      color: #1a1a1a;
+    }
+    .header-center p {
+      margin: 5px 0 0;
+      color: #666;
+      font-size: 10pt;
+    }
+    .meta {
+      text-align: center;
+      color: #666;
+      margin-bottom: 20px;
+      font-size: 9pt;
+    }
+    .summary-section {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .summary-section h2 {
+      margin: 0 0 15px;
+      font-size: 14pt;
+      color: #1a1a1a;
+      border-bottom: 2px solid #b9a87b;
+      padding-bottom: 8px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+    .summary-box {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .summary-box h3 {
+      margin: 0 0 8px;
+      font-size: 11pt;
+      color: #495057;
+    }
+    .summary-box ul {
+      margin: 0;
+      padding: ${isRTL ? '0 15px 0 0' : '0 0 0 15px'};
+      font-size: 9pt;
+    }
+    .summary-box li {
+      margin: 3px 0;
+    }
+    .total-badge {
+      background: #b9a87b;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14pt;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 15px;
+    }
+    .reports-section h2 {
+      font-size: 14pt;
+      color: #1a1a1a;
+      border-bottom: 2px solid #b9a87b;
+      padding-bottom: 8px;
+      margin: 0 0 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8pt;
+      margin-bottom: 20px;
+    }
+    th {
+      background: #1a1a1a;
+      color: white;
+      padding: 8px 5px;
+      text-align: ${isRTL ? 'right' : 'left'};
+      font-weight: 600;
+    }
+    td {
+      padding: 6px 5px;
+      border-bottom: 1px solid #dee2e6;
+      vertical-align: top;
+    }
+    tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+    .status-pending { color: #f59e0b; font-weight: 600; }
+    .status-approved { color: #3b82f6; font-weight: 600; }
+    .status-inprogress { color: #8b5cf6; font-weight: 600; }
+    .status-completed { color: #10b981; font-weight: 600; }
+    .status-rejected { color: #ef4444; font-weight: 600; }
+    .severity-low { color: #10b981; }
+    .severity-medium { color: #f59e0b; }
+    .severity-high { color: #ef4444; }
+    .severity-critical { color: #7c2d12; font-weight: bold; }
+    .footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 2px solid #b9a87b;
+      text-align: center;
+      font-size: 8pt;
+      color: #666;
+    }
+    .report-card {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+    .report-card-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+    .report-card-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 9pt;
+    }
+    .report-field {
+      margin: 2px 0;
+    }
+    .report-field strong {
+      color: #495057;
+    }
+    .description-full {
+      grid-column: 1 / -1;
+      background: #f8f9fa;
+      padding: 8px;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .report-card { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="/preloader-logo-black.svg" class="logo" alt="Kashif Logo">
+    <div class="header-center">
+      <h1>${labels.title}</h1>
+      <p>${labels.subtitle}</p>
+    </div>
+    <img src="/preloader-logo-black.svg" class="logo" alt="Government Logo">
+  </div>
+  
+  <div class="meta">
+    ${labels.generatedOn}: ${new Date().toLocaleDateString(language === 'ar' ? 'ar-IQ' : language === 'ku' ? 'ku' : 'en-US', { 
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    })}
+  </div>
+  
+  <div class="summary-section">
+    <h2>${labels.summary}</h2>
+    <div style="text-align: center;">
+      <div class="total-badge">${labels.totalReports}: ${filteredReports.length}</div>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-box">
+        <h3>${labels.byStatus}</h3>
+        <ul>
+          ${Object.entries(statusCounts).map(([name, count]) => `<li>${name}: ${count}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="summary-box">
+        <h3>${labels.byCategory}</h3>
+        <ul>
+          ${Object.entries(categoryCounts).map(([name, count]) => `<li>${name}: ${count}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="summary-box">
+        <h3>${labels.bySeverity}</h3>
+        <ul>
+          ${Object.entries(severityCounts).map(([name, count]) => `<li>${name}: ${count}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="reports-section">
+    <h2>${labels.reportDetails}</h2>
+    ${filteredReports.map(report => {
+      const severityClass = report.severity_id === 1 ? 'severity-low' : 
+                           report.severity_id === 2 ? 'severity-medium' : 
+                           report.severity_id === 3 ? 'severity-high' : 'severity-critical';
+      const statusClass = report.status_id === 1 ? 'status-pending' : 
+                         report.status_id === 2 ? 'status-approved' : 
+                         report.status_id === 3 ? 'status-inprogress' : 
+                         report.status_id === 4 ? 'status-completed' : 'status-rejected';
+      return `
+      <div class="report-card">
+        <div class="report-card-header">
+          <strong>#${report.id} - ${report.title}</strong>
+          <span class="${statusClass}">${getStatusName(report.status_id)}</span>
+        </div>
+        <div class="report-card-body">
+          <div class="report-field"><strong>${labels.category}:</strong> ${getCategoryName(report.category_id)}</div>
+          <div class="report-field"><strong>${labels.severity}:</strong> <span class="${severityClass}">${getSeverityLabel(report.severity_id)}</span></div>
+          <div class="report-field"><strong>${labels.address}:</strong> ${report.address_text || '-'}</div>
+          <div class="report-field"><strong>${labels.coordinates}:</strong> <a href="https://www.google.com/maps?q=${report.latitude},${report.longitude}" target="_blank" style="color: #2563eb; text-decoration: underline;">${report.latitude}, ${report.longitude}</a></div>
+          <div class="report-field"><strong>${labels.date}:</strong> ${new Date(report.created_at).toLocaleDateString()}</div>
+          <div class="report-field"><strong>${labels.repairCost}:</strong> ${report.repair_cost ? `$${report.repair_cost}` : '-'}</div>
+          <div class="description-full">
+            <strong>${labels.description}:</strong><br>
+            ${report.description}
+          </div>
+          ${historyMap[report.id]?.length > 0 ? `
+          <div class="description-full">
+            <strong>${labels.history}:</strong><br>
+            ${formatHistoryHTML(historyMap[report.id])}
+          </div>
+          ` : ''}
+        </div>
+      </div>
+      `;
+    }).join('')}
+  </div>
+  
+  <div class="footer">
+    <p>Kashif Road Infrastructure Monitoring System</p>
+    <p>${labels.page} 1</p>
+  </div>
+</body>
+</html>
+      `;
+
+      // Open print window
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for images to load then print
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+          }, 500);
+        };
+      } else {
+        alert(language === 'ar' ? 'يرجى السماح بالنوافذ المنبثقة' : language === 'ku' ? 'Destûra pop-up bide' : 'Please allow popups');
+      }
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+      alert(language === 'ar' ? 'فشل في تصدير التقرير' : language === 'ku' ? 'Têkçûna derxistina raporê' : 'Failed to export report');
+    } finally {
+      setPdfExporting(false);
+    }
+  };
+
   if (loading) {
     return (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -628,6 +1011,21 @@ export default function ReportsPage() {
                   <Download className="w-5 h-5" />
               )}
               <span>{exporting ? (language === 'ar' ? 'جاري التصدير...' : language === 'ku' ? 'Te derxistin...' : 'Exporting...') : (language === 'ar' ? 'تصدير CSV' : language === 'ku' ? 'CSV Derxe' : 'Export CSV')}</span>
+<<<<<<< HEAD
+=======
+            </button>
+            <button
+                onClick={exportToPDF}
+                disabled={filteredReports.length === 0 || pdfExporting}
+                className={`flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              {pdfExporting ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+              ) : (
+                  <FileText className="w-5 h-5" />
+              )}
+              <span>{pdfExporting ? (language === 'ar' ? 'جاري التصدير...' : language === 'ku' ? 'Te derxistin...' : 'Exporting...') : (language === 'ar' ? 'تقرير حكومي' : language === 'ku' ? 'Rapora Hukûmetê' : 'Gov Report')}</span>
+>>>>>>> feature/Ku_feature
             </button>
           </div>
         </div>

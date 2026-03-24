@@ -1,7 +1,11 @@
-// components/ReportDialog.tsx ✅ wie index.tsx: Arabisch = LTR, Englisch = RTL (effectiveRTL = !isRTL)
+// components/ReportDialog.tsx ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT) (effectiveRTL = isRTL)
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { isOnline, savePendingReport } from "@/services/offline-reports";
+<<<<<<< HEAD
+=======
+import * as Crypto from "expo-crypto";
+>>>>>>> feature/Ku_feature
 import * as FileSystem from "expo-file-system";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
@@ -10,6 +14,7 @@ import {
     ActivityIndicator,
     Alert,
     Animated,
+    BackHandler,
     Image,
     Keyboard,
     KeyboardAvoidingView,
@@ -55,10 +60,10 @@ export default function ReportDialog({
   onClose,
   onSubmit,
 }: Props) {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
-  // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
-  const effectiveRTL = !isRTL;
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
+  const effectiveRTL = isRTL;
 
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("low");
   const [address, setAddress] = useState("");
@@ -77,6 +82,21 @@ export default function ReportDialog({
 
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+<<<<<<< HEAD
+=======
+  // ──── Handle Android Back Button ────
+  useEffect(() => {
+    if (!visible) return;
+    
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true; // Prevent default back behavior
+    });
+    
+    return () => backHandler.remove();
+  }, [visible, onClose]);
+
+>>>>>>> feature/Ku_feature
   // ──── Image Quality Check ────
   const MIN_WIDTH = 640;
   const MIN_HEIGHT = 480;
@@ -191,7 +211,7 @@ export default function ReportDialog({
   }, [visible, initialAddress]);
 
   const handleSend = async () => {
-    const id = Math.floor(1000 + Math.random() * 9000).toString();
+    const id = Crypto.randomUUID();
 
     // Sprache bleibt nach "isRTL" (arabisch vs englisch)
     const time = new Date().toLocaleString(isRTL ? "ar-SY" : "en-US", {
@@ -229,11 +249,13 @@ export default function ReportDialog({
       });
 
       Alert.alert(
-        isRTL ? "لا يوجد اتصال بالإنترنت" : "No Internet Connection",
-        isRTL
+        language === 'ar' ? "لا يوجد اتصال بالإنترنت" : language === 'ku' ? "Têkilî bi Internetê tune ye" : "No Internet Connection",
+        language === 'ar'
           ? "تم حفظ البلاغ وسيتم إرساله تلقائياً عند الاتصال بالإنترنت"
+          : language === 'ku'
+          ? "Rapor hate parastin û dê bi xweber bi Internetê re were şandin"
           : "Report saved and will be sent automatically when connected to the internet",
-        [{ text: isRTL ? "حسناً" : "OK" }]
+        [{ text: language === 'ar' ? "حسناً" : language === 'ku' ? "Baş e" : "OK" }]
       );
 
       setTimeout(() => {
@@ -356,11 +378,16 @@ export default function ReportDialog({
                     ]}
                   >
                     {type === "environment"
+<<<<<<< HEAD
                       ? t("reportDialog.typeLabel")
+=======
+                      ? t("reportDialog.severityLabel")
+>>>>>>> feature/Ku_feature
                       : t("reportDialog.severityLabel")}
                   </Text>
                 </View>
 
+<<<<<<< HEAD
                 {type === "environment" ? (
                   <View
                     style={[
@@ -388,6 +415,8 @@ export default function ReportDialog({
                     />
                   </View>
                 ) : (
+=======
+>>>>>>> feature/Ku_feature
                   <View
                     style={[
                       styles.chipRow,
@@ -413,7 +442,6 @@ export default function ReportDialog({
                       onPress={() => setSeverity("high")}
                     />
                   </View>
-                )}
 
                 {/* Adresse */}
                 <View style={styles.sectionRow}>
@@ -474,7 +502,11 @@ export default function ReportDialog({
                         }
                       }}
                       query={{
+<<<<<<< HEAD
                         key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+=======
+                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
+>>>>>>> feature/Ku_feature
                         language: isRTL ? "ar" : "en", // ✅ Sprache bleibt echte Sprache
                       }}
                       textInputProps={{
@@ -567,15 +599,19 @@ export default function ReportDialog({
                     new Date().getMinutes()
                   ).padStart(2, "0")} ${
                     new Date().getHours() >= 12
-                      ? isRTL
+                      ? language === 'ar'
                         ? "م"
+                        : language === 'ku'
+                        ? "PM"
                         : "PM"
-                      : isRTL
+                      : language === 'ar'
                       ? "ص"
+                      : language === 'ku'
+                      ? "AM"
                       : "AM"
                   }`}
                   {" • "}
-                  {new Date().toLocaleDateString(isRTL ? "ar-SY" : "en-US", {
+                  {new Date().toLocaleDateString(language === 'ar' ? "ar-SY" : language === 'ku' ? "ku" : "en-US", {
                     year: "numeric",
                     month: "2-digit",
                     day: "2-digit",

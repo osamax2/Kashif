@@ -1,8 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError, AxiosInstance } from 'axios';
+import { resetBaseUrl, resolveApiBaseUrl } from './api-config';
+import { migrateTokensToSecureStore, secureGet, secureMultiDelete, secureSet } from './secure-storage';
 
+<<<<<<< HEAD
 // API Base URL - Production API endpoint with HTTPS
 const API_BASE_URL = 'https://api.kashifroad.com';
+=======
+// API Base URL - resolved dynamically at startup, can be updated via remote config
+let API_BASE_URL = 'https://api.kashifroad.com';
+>>>>>>> feature/Ku_feature
 
 // Storage keys
 const TOKEN_KEY = '@kashif_access_token';
@@ -18,10 +25,17 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+// One-time migration from AsyncStorage to SecureStore
+migrateTokensToSecureStore([TOKEN_KEY, REFRESH_TOKEN_KEY]).catch(() => {});
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
     async (config) => {
+<<<<<<< HEAD
       const token = await AsyncStorage.getItem(TOKEN_KEY);
+=======
+      const token = await secureGet(TOKEN_KEY);
+>>>>>>> feature/Ku_feature
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -43,15 +57,24 @@ api.interceptors.response.use(
         originalRequest._retry = true;
 
         try {
+<<<<<<< HEAD
           const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+=======
+          const refreshToken = await secureGet(REFRESH_TOKEN_KEY);
+>>>>>>> feature/Ku_feature
           if (refreshToken) {
             const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
               refresh_token: refreshToken,
             });
 
             const { access_token, refresh_token } = response.data;
+<<<<<<< HEAD
             await AsyncStorage.setItem(TOKEN_KEY, access_token);
             await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
+=======
+            await secureSet(TOKEN_KEY, access_token);
+            await secureSet(REFRESH_TOKEN_KEY, refresh_token);
+>>>>>>> feature/Ku_feature
 
             // Retry original request with new token
             originalRequest.headers.Authorization = `Bearer ${access_token}`;
@@ -64,9 +87,33 @@ api.interceptors.response.use(
         }
       }
 
+<<<<<<< HEAD
+=======
+      // On network/connection errors, try re-resolving the API URL
+      if (!error.response && (error.code === 'ECONNABORTED' || error.message?.includes('Network Error'))) {
+        resetBaseUrl();
+      }
+
+>>>>>>> feature/Ku_feature
       return Promise.reject(error);
     }
 );
+
+/**
+ * Initialize API with the best available server URL.
+ * Call this once at app startup. If the primary domain is down,
+ * it will automatically switch to a fallback URL.
+ * Can be updated remotely via api-config.json on GitHub without a new app release.
+ */
+export async function initApi(): Promise<void> {
+  try {
+    const baseUrl = await resolveApiBaseUrl();
+    API_BASE_URL = baseUrl;
+    api.defaults.baseURL = baseUrl;
+  } catch {
+    // Keep default URL if resolution fails
+  }
+}
 
 // Auth API
 export interface RegisterData {
@@ -83,6 +130,7 @@ export interface LoginData {
 
 export interface User {
   id: number;
+  uuid?: string;
   email: string;
   full_name: string;
   phone?: string;
@@ -167,9 +215,9 @@ export const authAPI = {
         }
     );
 
-    // Save tokens
-    await AsyncStorage.setItem(TOKEN_KEY, response.data.access_token);
-    await AsyncStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
+    // Save tokens securely
+    await secureSet(TOKEN_KEY, response.data.access_token);
+    await secureSet(REFRESH_TOKEN_KEY, response.data.refresh_token);
 
     return response.data;
   },
@@ -183,7 +231,44 @@ export const authAPI = {
 
   // Logout
   logout: async (): Promise<void> => {
-    await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
+    await secureMultiDelete([TOKEN_KEY, REFRESH_TOKEN_KEY]);
+    await AsyncStorage.removeItem(USER_KEY);
+  },
+
+  // Forgot password - request reset code
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+        `${API_BASE_URL}/api/auth/forgot-password`,
+        { email }
+    );
+    return response.data;
+  },
+
+  // Reset password with token
+  resetPassword: async (token: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+        `${API_BASE_URL}/api/auth/reset-password`,
+        { token, new_password: newPassword }
+    );
+    return response.data;
+  },
+
+  // Verify email code (for registration verification)
+  verifyCode: async (email: string, code: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+        `${API_BASE_URL}/api/auth/verify-code`,
+        { email, code }
+    );
+    return response.data;
+  },
+
+  // Resend verification code
+  resendVerificationCode: async (email: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+        `${API_BASE_URL}/api/auth/resend-verification`,
+        { email }
+    );
+    return response.data;
   },
 
   // Forgot password - request reset code
@@ -234,6 +319,18 @@ export const authAPI = {
     return response.data;
   },
 
+<<<<<<< HEAD
+=======
+  // Change password
+  changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/api/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
+    return response.data;
+  },
+
+>>>>>>> feature/Ku_feature
   // Upload profile picture
   uploadProfilePicture: async (imageUri: string): Promise<{ image_url: string }> => {
     const formData = new FormData();
@@ -248,7 +345,11 @@ export const authAPI = {
 
     formData.append('file', file);
 
+<<<<<<< HEAD
     const token = await AsyncStorage.getItem(TOKEN_KEY);
+=======
+    const token = await secureGet(TOKEN_KEY);
+>>>>>>> feature/Ku_feature
 
     const response = await fetch(`${API_BASE_URL}/api/auth/me/profile-picture`, {
       method: 'POST',
@@ -353,7 +454,7 @@ export const lookupAPI = {
 
 // Helper function to check if user is logged in
 export const isLoggedIn = async (): Promise<boolean> => {
-  const token = await AsyncStorage.getItem(TOKEN_KEY);
+  const token = await secureGet(TOKEN_KEY);
   return !!token;
 };
 
@@ -687,15 +788,26 @@ export const reportingAPI = {
   },
 
   // Upload image for report - now includes AI analysis
+<<<<<<< HEAD
   uploadImage: async (imageUri: string): Promise<{
     url: string;
     filename: string;
+=======
+  uploadImage: async (imageUri: string, asyncAI: boolean = false): Promise<{
+    url: string;
+    filename: string;
+    ai_processing?: string;
+>>>>>>> feature/Ku_feature
     ai_analysis?: {
       num_potholes: number;
       max_severity: string | null;
       ai_description: string | null;
       ai_description_ar: string | null;
       ai_description_ku: string | null;
+<<<<<<< HEAD
+=======
+      annotated_url?: string;
+>>>>>>> feature/Ku_feature
       detections: any[];
     };
   }> => {
@@ -714,9 +826,20 @@ export const reportingAPI = {
 
     formData.append('file', file);
 
+<<<<<<< HEAD
     const token = await AsyncStorage.getItem(TOKEN_KEY);
 
     const response = await fetch(`${API_BASE_URL}/api/reports/upload`, {
+=======
+    const token = await secureGet(TOKEN_KEY);
+
+    // Add async_ai parameter if requested
+    const url = asyncAI 
+      ? `${API_BASE_URL}/api/reports/upload?async_ai=true`
+      : `${API_BASE_URL}/api/reports/upload`;
+
+    const response = await fetch(url, {
+>>>>>>> feature/Ku_feature
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -736,9 +859,30 @@ export const reportingAPI = {
     return {
       url: data.url, // Keep relative URL like /uploads/xxx.jpg
       filename: data.filename,
+<<<<<<< HEAD
       ai_analysis: data.ai_analysis,
       annotated_url: data.ai_analysis?.annotated_url, // URL to AI annotated image
+=======
+      ai_processing: data.ai_processing,
+      ai_analysis: data.ai_analysis,
+>>>>>>> feature/Ku_feature
     };
+  },
+
+  // Trigger AI analysis on a report (runs in background, sends push notification when done)
+  triggerAIAnalysis: async (reportId: number, language: string = 'en'): Promise<{
+    success: boolean;
+    message: string;
+    report_id: number;
+  }> => {
+    const response = await api.post<{
+      success: boolean;
+      message: string;
+      report_id: number;
+    }>(`/api/reports/${reportId}/analyze`, null, {
+      params: { language }
+    });
+    return response.data;
   },
 
   // Get user's reports (includes pending)

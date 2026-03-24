@@ -14,6 +14,10 @@ import cv2
 import numpy as np
 
 from config import settings
+<<<<<<< HEAD
+=======
+from detection_filter import DetectionFilter
+>>>>>>> feature/Ku_feature
 
 
 # Roboflow API Configuration
@@ -61,6 +65,7 @@ class PotholeDetection:
     severity: Optional[str] = None
     
     def to_dict(self):
+<<<<<<< HEAD
         return {
             "bbox": {
                 "x1": self.bbox.x1,
@@ -78,6 +83,32 @@ class PotholeDetection:
             "estimated_height_cm": self.estimated_height_cm,
             "estimated_depth_cm": self.estimated_depth_cm,
             "estimated_area_cm2": self.estimated_area_cm2,
+=======
+        def _float(v):
+            if v is None:
+                return None
+            if hasattr(v, 'item'):
+                return float(v.item())
+            return float(v)
+        
+        return {
+            "bbox": {
+                "x1": int(self.bbox.x1),
+                "y1": int(self.bbox.y1),
+                "x2": int(self.bbox.x2),
+                "y2": int(self.bbox.y2),
+                "width": int(self.bbox.width),
+                "height": int(self.bbox.height),
+                "area_pixels": int(self.bbox.area)
+            },
+            "confidence": round(_float(self.confidence), 4),
+            "class_id": int(self.class_id),
+            "class_name": self.class_name,
+            "estimated_width_cm": round(_float(self.estimated_width_cm), 1) if self.estimated_width_cm else None,
+            "estimated_height_cm": round(_float(self.estimated_height_cm), 1) if self.estimated_height_cm else None,
+            "estimated_depth_cm": round(_float(self.estimated_depth_cm), 1) if self.estimated_depth_cm else None,
+            "estimated_area_cm2": round(_float(self.estimated_area_cm2), 1) if self.estimated_area_cm2 else None,
+>>>>>>> feature/Ku_feature
             "severity": self.severity
         }
 
@@ -190,9 +221,16 @@ class RoboflowPotholeDetector:
     Falls back to local image analysis if API is unavailable.
     """
     
+<<<<<<< HEAD
     def __init__(self, api_key: str = None, confidence: float = 0.25):
         self.api_key = api_key or ROBOFLOW_API_KEY
         self.confidence = confidence
+=======
+    def __init__(self, api_key: str = None, confidence: float = 0.40):
+        self.api_key = api_key or ROBOFLOW_API_KEY
+        self.confidence = confidence
+        self.detection_filter = DetectionFilter(min_confidence=confidence)
+>>>>>>> feature/Ku_feature
         self.model_id = ROBOFLOW_MODEL_ID
         self.api_url = ROBOFLOW_API_URL
         self.use_roboflow = bool(self.api_key)
@@ -208,7 +246,11 @@ class RoboflowPotholeDetector:
         save_annotated: bool = True,
         output_dir: Optional[str] = None
     ) -> DetectionResult:
+<<<<<<< HEAD
         """Detect potholes in an image"""
+=======
+        """Detect potholes in an image using Roboflow + texture analysis"""
+>>>>>>> feature/Ku_feature
         import time
         start_time = time.time()
         
@@ -219,6 +261,7 @@ class RoboflowPotholeDetector:
         
         img_height, img_width = img.shape[:2]
         
+<<<<<<< HEAD
         # Try Roboflow API first
         if self.use_roboflow:
             detections = self._detect_with_roboflow(image_path, img_width, img_height)
@@ -236,6 +279,55 @@ class RoboflowPotholeDetector:
         processing_time = (time.time() - start_time) * 1000
         
         # Save annotated image
+=======
+        # Step 1: Try Roboflow API
+        roboflow_detections = []
+        if self.use_roboflow:
+            roboflow_detections = self._detect_with_roboflow(image_path, img_width, img_height)
+            method = "roboflow"
+        else:
+            method = "local"
+        
+        # Step 2: Always run texture-based analysis as supplementary source
+        texture_detections = self._detect_texture_anomalies(img)
+        if texture_detections:
+            print(f"🔎 Texture analysis found {len(texture_detections)} candidate region(s)")
+        
+        # Step 3: Merge detections (Roboflow first, add non-overlapping texture detections)
+        detections = list(roboflow_detections)
+        for tex_det in texture_detections:
+            overlaps = False
+            for existing in detections:
+                if self._detection_iou(tex_det.bbox, existing.bbox) > 0.15:
+                    overlaps = True
+                    break
+            if not overlaps:
+                detections.append(tex_det)
+                if method == "roboflow":
+                    method = "roboflow+texture"
+        
+        if detections:
+            print(f"📊 Merged detections: {len(roboflow_detections)} Roboflow + "
+                  f"{len(detections) - len(roboflow_detections)} texture = {len(detections)} total")
+        
+        # Step 4: Fallback to basic local analysis if nothing found
+        if not detections:
+            print(f"🔍 Using basic local image analysis fallback")
+            detections = self._analyze_image_locally(img)
+            method = "local_analysis"
+        
+        # Step 5: Apply smart filtering to remove false positives
+        if detections:
+            print(f"🧠 Running smart filter on {len(detections)} detection(s)...")
+            valid, rejected = self.detection_filter.filter_detections(img, detections)
+            if rejected:
+                print(f"🚫 Filtered out {len(rejected)} false positive(s)")
+            detections = valid
+        
+        processing_time = (time.time() - start_time) * 1000
+        
+        # Step 6: Save annotated image with ONLY valid detections
+>>>>>>> feature/Ku_feature
         annotated_path = None
         if save_annotated and detections:
             annotated_path = self._save_annotated_image(
@@ -371,8 +463,13 @@ class RoboflowPotholeDetector:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
         
+<<<<<<< HEAD
         # Threshold for dark regions
         _, thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV)
+=======
+        # Threshold for dark regions (raised from 60 to avoid shadow false positives)
+        _, thresh = cv2.threshold(blurred, 80, 255, cv2.THRESH_BINARY_INV)
+>>>>>>> feature/Ku_feature
         
         # Find contours
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -408,6 +505,7 @@ class RoboflowPotholeDetector:
                     )
                     detections.append(detection)
         
+<<<<<<< HEAD
         # Fallback: assume center of image is a pothole
         if not detections:
             center_x = img_width // 2
@@ -441,6 +539,156 @@ class RoboflowPotholeDetector:
         
         return detections[:5]
     
+=======
+        # No fallback - if nothing detected locally, return empty
+        # (Removed: fake center-of-image pothole assumption)
+        
+        return detections[:5]
+    
+    def _detect_texture_anomalies(self, img: np.ndarray) -> List[PotholeDetection]:
+        """
+        Supplementary detection: find potholes via texture/color anomalies.
+        
+        Detects potholes that Roboflow may miss, especially:
+        - Debris-filled potholes (not dark holes)
+        - Shallow potholes with exposed aggregate
+        - Potholes with different texture than surrounding pavement
+        
+        Uses: local texture variance, edge density, Lab color difference from pavement.
+        """
+        h, w = img.shape[:2]
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Adaptive block size (roughly 1/25 of image size)
+        block_size = max(max(h, w) // 25, 15)
+        
+        # 1. Local texture map (standard deviation in sliding window)
+        gray_f = gray.astype(np.float64)
+        local_mean = cv2.blur(gray_f, (block_size, block_size))
+        local_sqr_mean = cv2.blur(gray_f ** 2, (block_size, block_size))
+        texture_map = np.sqrt(np.maximum(local_sqr_mean - local_mean ** 2, 0))
+        
+        # 2. Edge density map
+        edges_canny = cv2.Canny(gray, 30, 100)
+        edge_density = cv2.blur(edges_canny.astype(np.float32) / 255.0, (block_size, block_size))
+        
+        # 3. Color difference from estimated pavement (using Lab color space)
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
+        border_h = max(int(h * 0.12), 10)
+        border_w = max(int(w * 0.12), 10)
+        border_pixels = np.concatenate([
+            lab[:border_h, :].reshape(-1, 3),
+            lab[-border_h:, :].reshape(-1, 3),
+            lab[:, :border_w].reshape(-1, 3),
+            lab[:, -border_w:].reshape(-1, 3),
+        ])
+        pavement_lab = np.median(border_pixels.astype(np.float64), axis=0)
+        color_diff = np.sqrt(np.sum((lab.astype(np.float64) - pavement_lab) ** 2, axis=2))
+        color_diff_smooth = cv2.blur(color_diff, (block_size, block_size))
+        
+        # 4. Normalize each feature to [0, 1]
+        def _normalize(arr):
+            mn, mx = float(arr.min()), float(arr.max())
+            if mx - mn < 1e-6:
+                return np.zeros_like(arr)
+            return (arr - mn) / (mx - mn)
+        
+        texture_norm = _normalize(texture_map)
+        edge_norm = _normalize(edge_density)
+        color_norm = _normalize(color_diff_smooth)
+        
+        # 5. Combine into damage probability map
+        damage_map = texture_norm * 0.35 + edge_norm * 0.30 + color_norm * 0.35
+        
+        # 6. Adaptive threshold (only highly anomalous areas)
+        mean_d = float(np.mean(damage_map))
+        std_d = float(np.std(damage_map))
+        threshold = mean_d + 1.8 * std_d  # Strict: only clearly damaged areas
+        
+        binary = (damage_map > threshold).astype(np.uint8) * 255
+        
+        # 7. Morphological cleanup
+        morph_k = max(block_size // 3, 5)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (morph_k, morph_k))
+        binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+        # Extra erosion to tighten boundaries around actual damage
+        erode_k = max(morph_k // 2, 3)
+        erode_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (erode_k, erode_k))
+        binary = cv2.erode(binary, erode_kernel, iterations=1)
+        
+        # 8. Find contours
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        min_area = (w * h) * 0.003  # At least 0.3% of image
+        max_area = (w * h) * 0.10   # At most 10% of image
+        margin = min(w, h) * 0.03
+        
+        detections = []
+        estimator = PotholeEstimator()
+        
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if min_area < area < max_area:
+                x, y, cw, ch = cv2.boundingRect(contour)
+                
+                # Skip edge artifacts (must not touch image borders)
+                if x < margin or y < margin or x + cw > w - margin or y + ch > h - margin:
+                    continue
+                
+                aspect = max(cw, ch) / max(min(cw, ch), 1)
+                if aspect > 3.5:  # Too elongated
+                    continue
+                
+                # Skip regions with high color saturation (reference objects like colored cards)
+                roi_hsv = cv2.cvtColor(img[y:y+ch, x:x+cw], cv2.COLOR_BGR2HSV)
+                high_sat_frac = float(np.mean(roi_hsv[:, :, 1] > 100))
+                if high_sat_frac > 0.10:  # >10% highly saturated pixels → likely a colored object
+                    continue
+                
+                # Confidence from region damage score
+                region_damage = float(np.mean(damage_map[y:y+ch, x:x+cw]))
+                conf = min(0.70, max(0.30, region_damage * 2.0))
+                
+                bbox = BoundingBox(x1=x, y1=y, x2=x+cw, y2=y+ch)
+                width_cm, height_cm, depth_cm, area_cm2 = estimator.estimate_physical_size(
+                    bbox, w, h
+                )
+                severity = estimator.classify_severity(width_cm, depth_cm, area_cm2)
+                
+                detection = PotholeDetection(
+                    bbox=bbox,
+                    confidence=conf,
+                    class_id=0,
+                    class_name="pothole",
+                    estimated_width_cm=width_cm,
+                    estimated_height_cm=height_cm,
+                    estimated_depth_cm=depth_cm,
+                    estimated_area_cm2=area_cm2,
+                    severity=severity
+                )
+                detections.append(detection)
+        
+        # Sort by confidence descending, return top 3
+        detections.sort(key=lambda d: d.confidence, reverse=True)
+        return detections[:3]
+    
+    @staticmethod
+    def _detection_iou(bbox1: 'BoundingBox', bbox2: 'BoundingBox') -> float:
+        """Calculate Intersection over Union between two bounding boxes."""
+        x1 = max(bbox1.x1, bbox2.x1)
+        y1 = max(bbox1.y1, bbox2.y1)
+        x2 = min(bbox1.x2, bbox2.x2)
+        y2 = min(bbox1.y2, bbox2.y2)
+        
+        if x2 <= x1 or y2 <= y1:
+            return 0.0
+        
+        intersection = (x2 - x1) * (y2 - y1)
+        union = bbox1.area + bbox2.area - intersection
+        return intersection / max(union, 1)
+    
+>>>>>>> feature/Ku_feature
     def _save_annotated_image(
         self,
         img: np.ndarray,

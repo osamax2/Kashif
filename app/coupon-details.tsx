@@ -5,13 +5,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const PRIMARY = "#0D2B66";
@@ -22,7 +22,7 @@ export default function CouponDetails() {
   const { t, language } = useLanguage();
 
   // 🔁 UMGEKEHRT:
-  // Englisch = RTL | Arabisch = LTR
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
   const effectiveRTL = language === "en";
 
   const [coupon, setCoupon] = useState<Coupon | null>(null);
@@ -117,7 +117,7 @@ export default function CouponDetails() {
         {coupon.address && (
           <>
             <Text style={styles.sectionTitle}>
-              {language === "ar" ? "العنوان" : "Address"}
+              {language === "ar" ? "العنوان" : language === "ku" ? "Sernav" : "Address"}
             </Text>
 
             <TouchableOpacity

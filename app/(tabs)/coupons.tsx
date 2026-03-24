@@ -1,4 +1,4 @@
-// app/(tabs)/coupons.tsx ✅ wie index.tsx: Arabisch = LTR | Englisch = RTL (effectiveRTL = !isRTL)
+// app/(tabs)/coupons.tsx ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT) (effectiveRTL = isRTL)
 
 import CouponCard from "@/components/CouponCard";
 import QRCodeModal from "@/components/QRCodeModal";
@@ -28,8 +28,8 @@ const YELLOW = "#F4B400";
 export default function CouponsScreen() {
   const { t, locale, isRTL } = useLanguage();
 
-  // ✅ WIE index.tsx: Arabisch=LTR | Englisch=RTL
-  const effectiveRTL = !isRTL;
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
+  const effectiveRTL = isRTL;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { user, refreshUser } = useAuth();
@@ -168,24 +168,22 @@ export default function CouponsScreen() {
       {/* HEADER */}
       
       <View style={styles.header}>
-
-  {/* Back Icon – Englisch */}
-  {!isRTL && (
+ {/* Back Icon – Arabisch (right side) */}
+ {isRTL && (
     <TouchableOpacity
       onPress={() => router.back()}
       style={styles.backBtnRight}
     >
-      <Ionicons name="chevron-back" size={30} color={YELLOW} />
+      <Ionicons name="chevron-forward" size={30} color={YELLOW} />
     </TouchableOpacity>
   )}
-
-  {/* Titel bleibt in der Mitte */}
+   {/* Titel bleibt in der Mitte */}
   <Text style={styles.headerTitle}>
     {t("coupons.screenTitle")}
   </Text>
 
-  {/* Back Icon – Arabisch */}
-  {isRTL && (
+  {/* Back Icon – English & Kurdish (left side) */}
+  {!isRTL && (
     <TouchableOpacity
       onPress={() => router.back()}
       style={styles.backBtnLeft}
@@ -193,6 +191,11 @@ export default function CouponsScreen() {
       <Ionicons name="chevron-forward" size={30} color={YELLOW} />
     </TouchableOpacity>
   )}
+
+ 
+
+  
+ 
 </View>
 
       {/* Tabs */}
@@ -408,13 +411,13 @@ const styles = StyleSheet.create({
   },
   backBtnLeft: {
   position: "absolute",
-  left: 0,
+  right: 0,
   padding: 6,
 },
 
 backBtnRight: {
   position: "absolute",
-  right: 0,
+  left: 0,
   padding: 6,
 },
 });

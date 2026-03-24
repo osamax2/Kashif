@@ -3,15 +3,18 @@ import os
 import shutil
 import threading
 import uuid
+import asyncio
 from typing import Annotated, List, Optional
 
 import ai_client
 import auth_client
 import crud
+import mahlula_client
 import models
+import notification_client
 import schemas
 from database import engine, get_db
-from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, status
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from json_logger import setup_logging
@@ -142,10 +145,121 @@ def health_check_detailed():
     )
 
 
+<<<<<<< HEAD
+=======
+async def process_ai_background(
+    file_path: str,
+    unique_filename: str,
+    user_id: int,
+    report_id: int,
+    language: str = "en"
+):
+    """
+    Background task for AI processing.
+    Runs AI analysis, updates report, and sends push notification.
+    """
+    import base64
+    
+    try:
+        logger.info(f"🔄 Background AI processing started for {unique_filename} (report {report_id})")
+        
+        ai_result = await ai_client.analyze_image(file_path, UPLOAD_DIR)
+        
+        if ai_result and ai_result.get("success"):
+            num_potholes = ai_result.get("num_potholes", 0)
+            logger.info(f"✅ Background AI detected {num_potholes} potholes in {unique_filename}")
+            
+            # Save annotated image if available
+            annotated_url = None
+            annotated_base64 = ai_result.get("annotated_image_base64")
+            if annotated_base64:
+                annotated_filename = f"annotated_{unique_filename}"
+                annotated_path = os.path.join(UPLOAD_DIR, annotated_filename)
+                with open(annotated_path, "wb") as f:
+                    f.write(base64.b64decode(annotated_base64))
+                annotated_url = f"/uploads/{annotated_filename}"
+            
+            # Save depth map if available
+            depth_map_base64 = ai_result.get("depth_map_base64")
+            if depth_map_base64:
+                depth_map_filename = f"depth_{unique_filename}"
+                depth_map_path = os.path.join(UPLOAD_DIR, depth_map_filename)
+                with open(depth_map_path, "wb") as f:
+                    f.write(base64.b64decode(depth_map_base64))
+            
+            # Update report with AI results
+            from database import SessionLocal
+            db = SessionLocal()
+            try:
+                report = db.query(models.Report).filter(models.Report.id == report_id).first()
+                if report:
+                    # Update AI fields
+                    if annotated_url:
+                        report.ai_annotated_url = annotated_url
+                    
+                    # Update AI description
+                    ai_desc = (
+                        ai_result.get("ai_description_ar") if language == "ar"
+                        else ai_result.get("ai_description_ku") if language == "ku"
+                        else ai_result.get("ai_description")
+                    )
+                    if ai_desc:
+                        report.description = f"{report.description}\n\n{ai_desc}" if report.description else ai_desc
+                    
+                    # Store detections JSON
+                    if ai_result.get("detections"):
+                        import json
+                        report.ai_detections = json.dumps(ai_result.get("detections"))
+                    
+                    # Update severity based on AI
+                    max_severity = ai_result.get("max_severity")
+                    if max_severity == "HIGH":
+                        report.severity_id = 3
+                    elif max_severity == "MEDIUM":
+                        report.severity_id = 2
+                    elif max_severity == "LOW":
+                        report.severity_id = 1
+                    
+                    db.commit()
+                    logger.info(f"✅ Report {report_id} updated with AI results")
+            finally:
+                db.close()
+            
+            # Send push notification
+            await notification_client.notify_report_ai_complete(
+                user_id=user_id,
+                report_id=report_id,
+                success=True,
+                num_potholes=num_potholes,
+                language=language
+            )
+        else:
+            logger.warning(f"⚠️ Background AI analysis returned no results for {unique_filename}")
+            await notification_client.notify_report_ai_complete(
+                user_id=user_id,
+                report_id=report_id,
+                success=False,
+                language=language
+            )
+            
+    except Exception as e:
+        logger.error(f"❌ Background AI processing failed for {unique_filename}: {e}")
+        await notification_client.notify_report_ai_complete(
+            user_id=user_id,
+            report_id=report_id,
+            success=False,
+            language=language
+        )
+
+
+>>>>>>> feature/Ku_feature
 @app.post("/upload")
 async def upload_image(
     file: UploadFile = File(...),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    async_ai: bool = Query(False, description="If true, run AI in background and return immediately"),
+    report_id: Optional[int] = Query(None, description="Report ID to update with AI results"),
+    language: str = Query("en", description="User's language for notifications")
 ):
     """Upload an image file, run AI analysis, and return URL with AI description"""
     # Validate file type
@@ -176,7 +290,34 @@ async def upload_image(
     
     logger.info(f"File uploaded: {unique_filename} by user {user_id}")
     
+<<<<<<< HEAD
     # Run AI analysis on the uploaded image
+=======
+    # Check if async AI processing is requested
+    if async_ai:
+        # Return immediately, process AI in background
+        logger.info(f"🔄 Async AI requested for {unique_filename}, will process in background")
+        
+        # Schedule background processing
+        asyncio.create_task(process_ai_background(
+            file_path=file_path,
+            unique_filename=unique_filename,
+            user_id=user_id,
+            report_id=report_id or 0,
+            language=language
+        ))
+        
+        return {
+            "filename": unique_filename,
+            "url": f"/uploads/{unique_filename}",
+            "size": len(content),
+            "content_type": file.content_type,
+            "ai_processing": "background",
+            "message": "Photo uploaded. AI analysis running in background."
+        }
+    
+    # Synchronous AI processing (original behavior)
+>>>>>>> feature/Ku_feature
     ai_result = None
     annotated_filename = None
     try:
@@ -211,11 +352,32 @@ async def upload_image(
             "max_severity": ai_result.get("max_severity"),
             "ai_description": ai_result.get("ai_description"),
             "ai_description_ar": ai_result.get("ai_description_ar"),
+<<<<<<< HEAD
             "detections": ai_result.get("detections", [])
+=======
+            "ai_description_ku": ai_result.get("ai_description_ku"),
+            "detections": ai_result.get("detections", []),
+            "enhanced_dimensions": ai_result.get("enhanced_dimensions"),
+            "depth_estimation": ai_result.get("depth_estimation")
+>>>>>>> feature/Ku_feature
         }
         # Add annotated image URL if available
         if annotated_filename:
             response["ai_analysis"]["annotated_url"] = f"/uploads/{annotated_filename}"
+<<<<<<< HEAD
+=======
+        
+        # Save depth map if available
+        depth_map_base64 = ai_result.get("depth_map_base64")
+        if depth_map_base64:
+            import base64
+            depth_map_filename = f"depth_{unique_filename}"
+            depth_map_path = os.path.join(UPLOAD_DIR, depth_map_filename)
+            with open(depth_map_path, "wb") as f:
+                f.write(base64.b64decode(depth_map_base64))
+            response["ai_analysis"]["depth_map_url"] = f"/uploads/{depth_map_filename}"
+            logger.info(f"Saved depth map: {depth_map_filename}")
+>>>>>>> feature/Ku_feature
     
     return response
 
@@ -278,6 +440,54 @@ def get_severities(category_id: Optional[int] = None, db: Session = Depends(get_
     return crud.get_severities(db=db, category_id=category_id)
 
 
+async def _forward_to_mahlula(report):
+    """Background task: forward a Damascus report to the Mahlula portal."""
+    try:
+        # Get user phone number and name from auth service
+        user_phone = "0000000000"
+        user_full_name = ""
+        try:
+            user_info = auth_client.get_user_by_id(report.user_id)
+            if user_info:
+                if user_info.get("phone"):
+                    user_phone = user_info["phone"]
+                if user_info.get("full_name"):
+                    user_full_name = user_info["full_name"]
+        except Exception as e:
+            logger.warning(f"Mahlula: could not fetch user {report.user_id} info: {e}")
+
+        # Resolve image path from photo_urls
+        image_path = None
+        if report.photo_urls:
+            import json as _json
+            try:
+                urls = _json.loads(report.photo_urls)
+            except (ValueError, TypeError):
+                urls = [u.strip() for u in report.photo_urls.split(",") if u.strip()]
+            if urls:
+                first_url = urls[0]
+                # Convert /uploads/xxx.jpg to local path
+                if first_url.startswith("/uploads/"):
+                    image_path = os.path.join(UPLOAD_DIR, os.path.basename(first_url))
+
+        result = await mahlula_client.forward_to_mahlula(
+            latitude=float(report.latitude),
+            longitude=float(report.longitude),
+            description=report.description or report.title or "",
+            category_id=report.category_id,
+            image_path=image_path,
+            address=report.address_text or "",
+            phone=user_phone,
+            full_name=user_full_name,
+        )
+        if result:
+            logger.info(f"📋 Report {report.id} forwarded to Mahlula: complaint #{result}")
+        else:
+            logger.warning(f"📋 Report {report.id} Mahlula forwarding failed")
+    except Exception as e:
+        logger.error(f"📋 Mahlula forwarding error for report {report.id}: {e}")
+
+
 @app.post("/", response_model=schemas.Report)
 async def create_report(
     report: schemas.ReportCreate,
@@ -318,6 +528,11 @@ async def create_report(
             logger.info(f"Published ReportConfirmed event for report {confirmed_report.id}")
         except Exception as e:
             logger.error(f"Failed to publish ReportConfirmed event: {e}")
+    
+    # Forward Damascus reports to محلولة (Mahlula) government portal (DISABLED - no stable proxy)
+    # TODO: Re-enable when stable Syrian proxy is available
+    #if mahlula_client.is_damascus(float(db_report.latitude), float(db_report.longitude)):
+    #    asyncio.create_task(_forward_to_mahlula(db_report))
     
     return db_report
 
@@ -585,6 +800,108 @@ async def confirm_report(
         report_confirmed=True,
         points_awarded=points_awarded
     )
+
+
+@app.post("/{report_id}/analyze")
+async def trigger_ai_analysis(
+    report_id: int,
+    user_id: int = Depends(get_current_user_id),
+    language: str = Query("en", description="User's language for notifications"),
+    db: Session = Depends(get_db)
+):
+    """
+    Trigger AI analysis on a report's photo in the background.
+    Returns immediately - user will receive push notification when complete.
+    """
+    report = crud.get_report(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    # Check if user owns the report
+    if report.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to analyze this report")
+    
+    # Get photo URL
+    photo_url = report.photo_urls
+    if not photo_url:
+        raise HTTPException(status_code=400, detail="Report has no photo to analyze")
+    
+    # Build file path from URL
+    if photo_url.startswith("/uploads/"):
+        filename = os.path.basename(photo_url)
+        file_path = os.path.join(UPLOAD_DIR, filename)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid photo URL")
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Photo file not found")
+    
+    # Schedule background processing
+    logger.info(f"🔄 Triggering AI analysis for report {report_id}")
+    asyncio.create_task(process_ai_background(
+        file_path=file_path,
+        unique_filename=filename,
+        user_id=user_id,
+        report_id=report_id,
+        language=language
+    ))
+    
+    return {
+        "success": True,
+        "message": "AI analysis started. You will receive a notification when complete.",
+        "report_id": report_id
+    }
+
+
+@app.post("/internal/{report_id}/analyze")
+async def trigger_ai_analysis_internal(
+    report_id: int,
+    x_internal_key: str = Header(None, alias="X-Internal-Key"),
+    language: str = Query("en", description="User's language for notifications"),
+    db: Session = Depends(get_db)
+):
+    """
+    Internal endpoint to trigger AI analysis without user auth.
+    Used by admin panel or automated systems.
+    """
+    # Verify internal API key
+    if x_internal_key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid internal API key")
+    
+    report = crud.get_report(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    # Get photo URL
+    photo_url = report.photo_urls
+    if not photo_url:
+        raise HTTPException(status_code=400, detail="Report has no photo to analyze")
+    
+    # Build file path from URL
+    if photo_url.startswith("/uploads/"):
+        filename = os.path.basename(photo_url)
+        file_path = os.path.join(UPLOAD_DIR, filename)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid photo URL")
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Photo file not found")
+    
+    # Schedule background processing
+    logger.info(f"🔄 [Internal] Triggering AI analysis for report {report_id}")
+    asyncio.create_task(process_ai_background(
+        file_path=file_path,
+        unique_filename=filename,
+        user_id=report.user_id,
+        report_id=report_id,
+        language=language
+    ))
+    
+    return {
+        "success": True,
+        "message": "AI analysis started (internal trigger)",
+        "report_id": report_id
+    }
 
 
 @app.get("/my-reports", response_model=List[schemas.Report])

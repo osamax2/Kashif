@@ -1,0 +1,380 @@
+services:
+  # Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: kashif-rabbitmq
+    restart: unless-stopped
+    # No ports exposed - only accessible internally via Docker network
+    environment:
+      RABBITMQ_DEFAULT_USER: kashif
+      RABBITMQ_DEFAULT_PASS: kashif123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - kashif-network
+
+  # API Gateway (nginx)
+  api-gateway:
+    image: nginx:alpine
+    container_name: kashif-gateway
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth-service
+      - reporting-service
+      - gamification-service
+      - coupons-service
+      - notification-service
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - kashif-network
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: kashif-auth
+    restart: unless-stopped
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2"
+    environment:
+      DATABASE_URL: postgresql://kashif_auth:auth123@auth-db:5432/kashif_auth
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REPORTING_SERVICE_URL: http://reporting-service:8000
+      GAMIFICATION_SERVICE_URL: http://gamification-service:8000
+      COUPONS_SERVICE_URL: http://coupons-service:8000
+      NOTIFICATION_SERVICE_URL: http://notification-service:8000
+      INTERNAL_API_KEY: kashif-internal-secret-2026
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - auth-db
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - kashif-network
+
+  auth-db:
+    image: postgres:15-alpine
+    container_name: kashif-auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kashif_auth
+      POSTGRES_USER: kashif_auth
+      POSTGRES_PASSWORD: auth123
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - kashif-network
+
+  # Reporting Service
+  reporting-service:
+    build:
+      context: ./reporting-service
+      dockerfile: Dockerfile
+    container_name: kashif-reporting
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+    environment:
+      DATABASE_URL: postgresql://kashif_reports:report123@reporting-db:5432/kashif_reports
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      AUTH_SERVICE_URL: http://auth-service:8000
+      INTERNAL_API_KEY: kashif-internal-secret-2026
+    volumes:
+      - reporting_uploads:/app/uploads
+    depends_on:
+      - reporting-db
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - kashif-network
+
+  reporting-db:
+    image: postgres:15-alpine
+    container_name: kashif-reporting-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kashif_reports
+      POSTGRES_USER: kashif_reports
+      POSTGRES_PASSWORD: report123
+    volumes:
+      - reporting_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - kashif-network
+
+  # Gamification Service
+  gamification-service:
+    build:
+      context: ./gamification-service
+      dockerfile: Dockerfile
+    container_name: kashif-gamification
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+    environment:
+      DATABASE_URL: postgresql://kashif_gamif:gamif123@gamification-db:5432/kashif_gamification
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      AUTH_SERVICE_URL: http://auth-service:8000
+      INTERNAL_API_KEY: kashif-internal-secret-2026
+    depends_on:
+      - gamification-db
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - kashif-network
+
+  gamification-db:
+    image: postgres:15-alpine
+    container_name: kashif-gamification-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kashif_gamification
+      POSTGRES_USER: kashif_gamif
+      POSTGRES_PASSWORD: gamif123
+    volumes:
+      - gamification_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - kashif-network
+
+  # Coupons Service
+  coupons-service:
+    build:
+      context: ./coupons-service
+      dockerfile: Dockerfile
+    container_name: kashif-coupons
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+    environment:
+      DATABASE_URL: postgresql://kashif_coupons:coupon123@coupons-db:5432/kashif_coupons
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      AUTH_SERVICE_URL: http://auth-service:8000
+      INTERNAL_API_KEY: kashif-internal-secret-2026
+    depends_on:
+      - coupons-db
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - kashif-network
+
+  coupons-db:
+    image: postgres:15-alpine
+    container_name: kashif-coupons-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kashif_coupons
+      POSTGRES_USER: kashif_coupons
+      POSTGRES_PASSWORD: coupon123
+    volumes:
+      - coupons_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - kashif-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: kashif-notification
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+    environment:
+      DATABASE_URL: postgresql://kashif_notif:notif123@notification-db:5432/kashif_notifications
+      RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
+      FIREBASE_CREDENTIALS_PATH: /app/firebase-credentials.json
+      SMTP_HOST: mail.kashifroad.com
+      SMTP_PORT: 587
+      SMTP_USER: noreply@kashifroad.com
+      SMTP_PASSWORD: SecurePass123!
+      SMTP_FROM_EMAIL: noreply@kashifroad.com
+      SMTP_FROM_NAME: Kashif Road
+      SMTP_USE_TLS: "true"
+      FRONTEND_URL: https://api.kashifroad.com/api/auth
+      INTERNAL_API_KEY: kashif-internal-secret-2026
+    depends_on:
+      - notification-db
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - kashif-network
+
+  notification-db:
+    image: postgres:15-alpine
+    container_name: kashif-notification-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kashif_notifications
+      POSTGRES_USER: kashif_notif
+      POSTGRES_PASSWORD: notif123
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - kashif-network
+
+  # Pothole Detection Service (Roboflow YOLOv8)
+  pothole-detection:
+    build:
+      context: ./pothole-detection-service
+      dockerfile: Dockerfile
+    container_name: kashif-pothole-detection
+    environment:
+      REPORTING_SERVICE_URL: http://kashif-reporting:8000
+      AUTH_SERVICE_URL: http://kashif-auth:8000
+      IMAGES_DIR: /app/images
+      PROCESSED_DIR: /app/processed
+      OUTPUT_DIR: /app/output
+      MODEL_PATH: /app/models/pothole_model.pt
+      CONFIDENCE_THRESHOLD: "0.25"
+      ADMIN_USER_ID: "2"
+      # Roboflow API for pretrained pothole detection model
+      # Get free API key at https://roboflow.com
+      ROBOFLOW_API_KEY: "${ROBOFLOW_API_KEY:-}"
+      ADMIN_EMAIL: "admin@kashif.com"
+      ADMIN_PASSWORD: "Admin123!"
+    volumes:
+      - ./images:/app/images
+      - pothole_processed:/app/processed
+      - pothole_output:/app/output
+      - pothole_models:/app/models
+    depends_on:
+      - reporting-service
+    networks:
+      - kashif-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+volumes:
+  rabbitmq_data:
+  auth_db_data:
+  reporting_db_data:
+  gamification_db_data:
+  coupons_db_data:
+  notification_db_data:
+  uploads_data:
+  reporting_uploads:
+  pothole_processed:
+  pothole_output:
+  pothole_models:
+
+networks:
+  kashif-network:
+    driver: bridge
