@@ -136,9 +136,7 @@ def health_check_detailed():
     )
 
 
-# ============================================================
 # Role-Based Permissions
-# ============================================================
 
 # Role hierarchy: ADMIN > MODERATOR > VIEWER > (COMPANY, GOVERNMENT, USER)
 ADMIN_ROLES = ["ADMIN"]
@@ -186,9 +184,7 @@ def log_action(db: Session, action: str, user, target_type: str = None,
         logger.error(f"Failed to create audit log: {e}")
 
 
-# ============================================================
 # Audit Log Endpoints
-# ============================================================
 
 @app.get("/audit-logs", response_model=list[schemas.AuditLogEntry])
 def get_audit_logs(
@@ -205,9 +201,7 @@ def get_audit_logs(
     return crud.get_audit_logs(db, skip=skip, limit=limit, action=action, user_id=user_id)
 
 
-# ============================================================
 # Terms of Service Endpoints
-# ============================================================
 
 @app.get("/tos/current", response_model=schemas.TermsOfService)
 def get_current_tos(db: Session = Depends(get_db)):
@@ -526,6 +520,7 @@ def get_current_user_info(
     return user
 
 
+
 @app.patch("/me", response_model=schemas.User)
 def update_my_profile(
     request: schemas.SelfUpdateRequest,
@@ -533,6 +528,7 @@ def update_my_profile(
     db: Session = Depends(get_db)
 ):
     """Update current user's own profile (name and email only)"""
+    """Update current user own profile (name and email only)"""
     user = auth.get_current_user(token, db)
     user_update = schemas.UserUpdate(
         full_name=request.full_name,
@@ -1680,7 +1676,6 @@ async def upload_file(
     }
 
 
-# ============ Internal Service-to-Service Endpoints ============
 # These endpoints are for internal microservice communication only
 # They should be protected by network isolation in production
 
@@ -1704,9 +1699,7 @@ def get_user_internal(
     return user
 
 
-# ============================================================
 # DSGVO / GDPR — User Self-Service Endpoints
-# ============================================================
 
 def _call_service_delete(service_url: str, user_id: int) -> dict:
     """Call a service's internal delete endpoint"""
