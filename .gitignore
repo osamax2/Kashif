@@ -44,6 +44,19 @@ app-example
 .android/
 .cache/
 
+# Video files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.wmv
+*.flv
+*.3gp
+*.m4v
+*.TS
+videos/
+
 # APK / AAB files
 *.apk
 *.aab
@@ -64,3 +77,6 @@ Backend/*/uploads/
 # Firebase / Google Services (contains API keys)
 # google-services.json  # needed for EAS Build
 GoogleService-Info.plist
+
+# Server backup (contains secrets)
+server-backup/
