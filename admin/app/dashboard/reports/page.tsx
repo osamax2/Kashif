@@ -306,6 +306,7 @@ export default function ReportsPage() {
     if (search) {
       filtered = filtered.filter(
           (r) =>
+              r.id.toString().includes(search) ||
               r.title.toLowerCase().includes(search.toLowerCase()) ||
               r.description.toLowerCase().includes(search.toLowerCase())
       );
