@@ -10,7 +10,6 @@ import {
     ActivityIndicator,
     Animated,
     Dimensions,
-    I18nManager,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -18,8 +17,8 @@ import {
     View,
 } from 'react-native';
 
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+// RTL layout is handled manually via effectiveRTL = isRTL in components.
+// Do NOT call I18nManager.forceRTL here.
 
 const { width, height } = Dimensions.get('window');
 const DESTRUCTIVE_RED = '#DC2626';

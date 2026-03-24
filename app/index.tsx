@@ -1,5 +1,5 @@
 // app/index.tsx ✅ VOLLSTÄNDIG – UMGEKEHRT wie du willst:
-// Arabisch = LTR  |  Englisch = RTL
+// Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
 
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -29,7 +29,7 @@ export default function Index() {
   // ✅ UMGEKEHRT:
   // Wenn LanguageContext isRTL=true (normal Arabisch), machen wir effektiv LTR.
   // Wenn LanguageContext isRTL=false (normal Englisch), machen wir effektiv RTL.
-  const effectiveRTL = !isRTL;
+  const effectiveRTL = isRTL;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

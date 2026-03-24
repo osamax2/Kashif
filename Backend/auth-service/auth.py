@@ -109,10 +109,15 @@ def get_current_user(token: str, db: Session):
         raise credentials_exception
     
     email: str = payload.get("sub")
-    if email is None:
+    user_id: int = payload.get("user_id")
+    if email is None and user_id is None:
         raise credentials_exception
-    
-    user = crud.get_user_by_email(db, email=email)
+
+    user = None
+    if user_id:
+        user = crud.get_user(db, user_id)
+    if user is None and email:
+        user = crud.get_user_by_email(db, email=email)
     if user is None:
         raise credentials_exception
     

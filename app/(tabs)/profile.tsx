@@ -33,8 +33,8 @@ export default function ProfileScreen() {
   const { t, language, isRTL } = useLanguage();
   const { refreshKey } = useDataSync();
 
-  // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
-  const effectiveRTL = !isRTL;
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
+  const effectiveRTL = isRTL;
 
   const dir = useMemo(
     () => ({

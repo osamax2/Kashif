@@ -1,4 +1,4 @@
-// app/(tabs)/reports.tsx ✅ wie index.tsx: Arabisch = LTR | Englisch = RTL (effectiveRTL = !isRTL)
+// app/(tabs)/reports.tsx ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT) (effectiveRTL = isRTL)
 
 import DonationModal from "@/components/DonationModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -270,7 +270,7 @@ export default function ReportsScreen() {
   const { refreshKey } = useDataSync();
 
   // ✅ wie index.tsx
-  const effectiveRTL = !isRTL;
+  const effectiveRTL = isRTL;
 
   const [reports, setReports] = useState<Report[]>([]);
   const [statuses, setStatuses] = useState<ReportStatus[]>([]);
@@ -571,14 +571,14 @@ export default function ReportsScreen() {
       <View style={[styles.header, { flexDirection: "row" }]}>
         {/* LEFT */}
         <TouchableOpacity
-          onPress={isRTL ? () => router.back() : () => router.push("/notifications")}
-          style={isRTL ? styles.iconBtn : styles.bellBtn}
+          onPress={isRTL ? () => router.push("/notifications") : () => router.back()}
+          style={isRTL ? styles.bellBtn : styles.iconBtn}
           activeOpacity={0.85}
         >
           <Ionicons
-            name={isRTL ? "chevron-forward" : "notifications"}
-            size={isRTL ? 30 : 22}
-            color={isRTL ? YELLOW : BLUE}
+            name={isRTL ? "notifications" : "chevron-back"}
+            size={isRTL ? 22 : 30}
+            color={isRTL ? BLUE : YELLOW}
           />
         </TouchableOpacity>
 
@@ -588,14 +588,14 @@ export default function ReportsScreen() {
 
         {/* RIGHT */}
         <TouchableOpacity
-          onPress={isRTL ? () => router.push("/notifications") : () => router.back()}
-          style={isRTL ? styles.bellBtn : styles.iconBtn}
+          onPress={isRTL ? () => router.back() : () => router.push("/notifications")}
+          style={isRTL ? styles.iconBtn : styles.bellBtn}
           activeOpacity={0.85}
         >
           <Ionicons
-            name={isRTL ? "notifications" : "chevron-back"}
-            size={isRTL ? 22 : 30}
-            color={isRTL ? BLUE : YELLOW}
+            name={isRTL ? "chevron-forward" : "notifications"}
+            size={isRTL ? 30 : 22}
+            color={isRTL ? YELLOW : BLUE}
           />
         </TouchableOpacity>
       </View>

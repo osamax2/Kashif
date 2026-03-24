@@ -1,4 +1,4 @@
-// app/register.tsx ✅ wie index.tsx: Arabisch = LTR, Englisch = RTL (effectiveRTL = !isRTL)
+// app/register.tsx ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT) (effectiveRTL = isRTL)
 
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -27,7 +27,7 @@ export default function Register() {
   // ✅ GENAU WIE BEI LOGIN:
   // Arabisch (isRTL=true) => effectiveRTL=false => LTR
   // Englisch (isRTL=false) => effectiveRTL=true => RTL
-  const effectiveRTL = !isRTL;
+  const effectiveRTL = isRTL;
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");

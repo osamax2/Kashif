@@ -1,15 +1,18 @@
 import ChangeModal from "@/components/ChangeModal";
 import IOSActionSheet from "@/components/IOSActionSheet";
 import { resetOnboarding } from "@/components/OnboardingTutorial";
+import PasswordChangeModal from "@/components/PasswordChangeModal";
 import SuccessModal from "@/components/SuccessModal";
 import TermsModal from "@/components/TermsModal";
 import { FontAwesome } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { authAPI } from "@/services/api";
 import NotificationService from "@/services/notifications";
 import {
     ActivityIndicator,
@@ -29,10 +32,10 @@ const YELLOW = "#F4B400";
 const CARD = "#133B7A";
 
 export default function SettingsScreen() {
-    const { user, logout } = useAuth();
+    const { user, logout, refreshUser } = useAuth();
     const { language, setLanguage, t, isRTL } = useLanguage();
-    // Arabic = text LEFT, English/Kurdish = text RIGHT (inverted layout)
-    const effectiveRTL = !isRTL;
+    // Arabic = text RIGHT, English/Kurdish = text LEFT
+    const effectiveRTL = isRTL;
     const insets = useSafeAreaInsets();
     const bottomPadding = Platform.OS === 'android'
         ? Math.max(insets.bottom, 16) + 140
@@ -52,6 +55,8 @@ export default function SettingsScreen() {
     const [successVisible, setSuccessVisible] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [nameModal, setNameModal] = useState(false);
+    const [nameError, setNameError] = useState<string | null>(null);
+    const [nameSaving, setNameSaving] = useState(false);
     const [name, setName] = useState(user?.full_name || "");
     const [hideNameMessage, setHideNameMessage] = useState<string | null>(null);
 
@@ -64,13 +69,11 @@ export default function SettingsScreen() {
                 : t("settings.languages.en");
 
     const [emailModal, setEmailModal] = useState(false);
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [emailSaving, setEmailSaving] = useState(false);
     const [passwordModal, setPasswordModal] = useState(false);
-    const [phoneModal, setPhoneModal] = useState(false);
     const [showTerms, setShowTerms] = useState(false);
-
     const [email, setEmail] = useState(user?.email || "");
-    const [password, setPassword] = useState("");
-    const [phone, setPhone] = useState((user as any)?.phone || "");
 
     const router = useRouter();
 
@@ -94,6 +97,13 @@ export default function SettingsScreen() {
             }
         };
         loadPrefs();
+    }, []);
+
+    // Load hide name preference
+    useEffect(() => {
+        AsyncStorage.getItem("hideNamePref").then((val) => {
+            if (val === "true") setHideName(true);
+        });
     }, []);
 
     const showToast = (message: string) => {
@@ -149,23 +159,8 @@ export default function SettingsScreen() {
             showsVerticalScrollIndicator={false}
         >
             {/* Header */}
-            {/* Header ✅ UMGEKEHRT */}
             <View style={[styles.header, { flexDirection: "row" }]}>
                 {/* LEFT */}
-                <TouchableOpacity
-                    onPress={isRTL ? () => router.back() : handleLogout}
-                    style={styles.iconBtn}
-                >
-                    <Ionicons
-                        name={isRTL ? "chevron-forward" : "log-out-outline"}
-                        size={isRTL ? 30 : 28}
-                        color={YELLOW}
-                    />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>{t("settings.title")}</Text>
-
-                {/* RIGHT */}
                 <TouchableOpacity
                     onPress={isRTL ? handleLogout : () => router.back()}
                     style={styles.iconBtn}
@@ -176,12 +171,26 @@ export default function SettingsScreen() {
                         color={YELLOW}
                     />
                 </TouchableOpacity>
+
+                <Text style={styles.headerTitle}>{t("settings.title")}</Text>
+
+                {/* RIGHT */}
+                <TouchableOpacity
+                    onPress={isRTL ? () => router.back() : handleLogout}
+                    style={styles.iconBtn}
+                >
+                    <Ionicons
+                        name={isRTL ? "chevron-forward" : "log-out-outline"}
+                        size={isRTL ? 30 : 28}
+                        color={YELLOW}
+                    />
+                </TouchableOpacity>
             </View>
 
             {/* USER */}
             <Text style={[styles.userId, { textAlign: effectiveRTL ? "right" : "left" }]}>
                 <Text style={{ color: "#ccc" }}>   {t("profile.userId")} </Text>
-                {user?.id ? `U-${user.id}` : "U-2025-143"}
+                {user?.uuid ? user.uuid.slice(0, 8).toUpperCase() : (user?.id ? `U-${user.id}` : "---")}
             </Text>
 
             <Text
@@ -220,16 +229,11 @@ export default function SettingsScreen() {
                     </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                    onPress={() => {
-                        setPhone((user as any)?.phone || "");
-                        setPhoneModal(true);
-                    }}
-                >
+                <View style={{ opacity: 0.5 }}>
                     <Text style={[styles.textItem, { textAlign: effectiveRTL ? "right" : "left" }]}>
-                        {t("settings.changePhone")}
+                        {t("settings.changePhone")}: {user?.phone || ""}
                     </Text>
-                </TouchableOpacity>
+                </View>
 
                 {/* Language */}
                 <TouchableOpacity
@@ -289,6 +293,7 @@ export default function SettingsScreen() {
                         value={hideName}
                         onValueChange={(value) => {
                             setHideName(value);
+                            AsyncStorage.setItem("hideNamePref", value ? "true" : "false");
                             const message = value
                                 ? language === "ku"
                                     ? "Nav ji lîsteya raporan ve hat veşartin"
@@ -534,53 +539,76 @@ export default function SettingsScreen() {
             {/* MODALS */}
             <ChangeModal
                 visible={emailModal}
-                onClose={() => setEmailModal(false)}
+                onClose={() => { setEmailModal(false); setEmailError(null); }}
                 title={t("settings.changeEmail")}
                 placeholder={t("settings.placeholders.newEmail")}
                 value={email}
-                setValue={setEmail}
-                onSave={() => {
-                    showToast(t("common.success") + " 👍");
-                    setEmailModal(false);
+                setValue={(v: string) => { setEmail(v); setEmailError(null); }}
+                error={emailError}
+                loading={emailSaving}
+                keyboardType="email-address"
+                onSave={async () => {
+                    const trimmed = email.trim();
+                    if (!trimmed) return;
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(trimmed)) {
+                        setEmailError(language === "ar" ? "صيغة البريد الإلكتروني غير صالحة" : language === "ku" ? "Forma e-nameyê ne derbasdar e" : "Invalid email format");
+                        return;
+                    }
+                    setEmailError(null);
+                    setEmailSaving(true);
+                    try {
+                        await authAPI.updateProfile({ email: email.trim() });
+                        await refreshUser();
+                        setEmailModal(false);
+                        showToast(t("common.success") + " 👍");
+                    } catch (e: any) {
+                        const detail = e?.response?.data?.detail;
+                        if (detail === "Email already in use by another user") {
+                            setEmailError(language === "ar" ? "البريد الإلكتروني مستخدم بالفعل" : language === "ku" ? "Ev e-name jixwe tê bikaranîn" : "Email already in use");
+                        } else {
+                            setEmailError(detail || (language === "ar" ? "فشل في تحديث البريد" : language === "ku" ? "Nûkirina e-nameyê serneket" : "Failed to update email"));
+                        }
+                    } finally {
+                        setEmailSaving(false);
+                    }
                 }}
             />
 
             <ChangeModal
                 visible={nameModal}
-                onClose={() => setNameModal(false)}
+                onClose={() => { setNameModal(false); setNameError(null); }}
                 title={t("settings.changeName")}
                 placeholder={t("settings.placeholders.newName")}
                 value={name}
-                setValue={setName}
-                onSave={() => {
-                    showToast(t("common.success") + " 👍");
-                    setNameModal(false);
+                setValue={(v: string) => { setName(v); setNameError(null); }}
+                error={nameError}
+                loading={nameSaving}
+                onSave={async () => {
+                    if (!name.trim()) return;
+                    setNameError(null);
+                    setNameSaving(true);
+                    try {
+                        await authAPI.updateProfile({ full_name: name.trim() });
+                        await refreshUser();
+                        setNameModal(false);
+                        showToast(t("common.success") + " 👍");
+                    } catch (e: any) {
+                        const detail = e?.response?.data?.detail;
+                        setNameError(detail || (language === "ar" ? "فشل في تحديث الاسم" : language === "ku" ? "Nûkirina navê serneket" : "Failed to update name"));
+                    } finally {
+                        setNameSaving(false);
+                    }
                 }}
             />
 
-            <ChangeModal
+            <PasswordChangeModal
                 visible={passwordModal}
                 onClose={() => setPasswordModal(false)}
-                title={t("settings.changePassword")}
-                placeholder={t("settings.placeholders.newPassword")}
-                value={password}
-                setValue={setPassword}
-                onSave={() => {
+                onSave={async (currentPassword, newPassword) => {
+                    await authAPI.changePassword(currentPassword, newPassword);
                     showToast(t("common.success") + " 👍");
                     setPasswordModal(false);
-                }}
-            />
-
-            <ChangeModal
-                visible={phoneModal}
-                onClose={() => setPhoneModal(false)}
-                title={t("settings.changePhone")}
-                placeholder={t("settings.placeholders.newPhone")}
-                value={phone}
-                setValue={setPhone}
-                onSave={() => {
-                    showToast(t("common.success") + " 👍");
-                    setPhoneModal(false);
                 }}
             />
 

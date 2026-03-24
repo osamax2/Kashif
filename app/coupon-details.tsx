@@ -22,7 +22,7 @@ export default function CouponDetails() {
   const { t, language } = useLanguage();
 
   // 🔁 UMGEKEHRT:
-  // Englisch = RTL | Arabisch = LTR
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
   const effectiveRTL = language === "en";
 
   const [coupon, setCoupon] = useState<Coupon | null>(null);

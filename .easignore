@@ -1,0 +1,27 @@
+# Admin panel (separate project)
+admin/
+
+# Backend (separate project)
+Backend/
+
+# Videos
+videos/
+
+# Build artifacts
+*.aab
+*.ipa
+
+# Documentation
+*.md
+docs/
+
+# Server scripts
+server-backup/
+*.sh
+
+# Unused folders
+new_images/
+playstore-assets/
+
+# Python files
+*.py
