@@ -1,6 +1,7 @@
 // contexts/LanguageContext.tsx
 import { getLocale, initI18n, isRTL, Language, setLanguage as setI18nLanguage, t } from '@/i18n';
 import { userAPI } from '@/services/api';
+import * as Updates from 'expo-updates';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
@@ -60,22 +61,24 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       setRtl(isRTL());
       setLocale(getLocale());
 
-      // Show simple alert that language changed
+      // Show alert and auto-reload on OK
       Alert.alert(
         newLang === 'ar' ? 'تم تغيير اللغة' : newLang === 'ku' ? 'Ziman hat guhertin' : 'Language Changed',
         newLang === 'ar' 
-          ? 'الرجاء إغلاق التطبيق وإعادة فتحه لتطبيق التغييرات بالكامل'
+          ? 'سيتم إعادة تشغيل التطبيق لتطبيق التغييرات'
           : newLang === 'ku'
-          ? 'Ji kerema xwe sepanê bigire û ji nû ve veke da ku hemû guhertin werin sepandin'
-          : 'Please close and reopen the app to apply all changes',
+          ? 'Sepan dê ji nû ve dest pê bike da ku guhertin werin sepandin'
+          : 'The app will restart to apply changes',
         [
           {
             text: newLang === 'ar' ? 'حسناً' : newLang === 'ku' ? 'Baş e' : 'OK',
             onPress: () => {
-              // Force state update
-              setLanguageState(newLang);
-              setRtl(isRTL());
-              setLocale(getLocale());
+              Updates.reloadAsync().catch(() => {
+                // Fallback: just update state if reload isn't available
+                setLanguageState(newLang);
+                setRtl(isRTL());
+                setLocale(getLocale());
+              });
             },
           },
         ]

@@ -1,4 +1,4 @@
-// app/(tabs)/coupons.tsx ✅ wie index.tsx: Arabisch = LTR | Englisch = RTL (effectiveRTL = !isRTL)
+// app/(tabs)/coupons.tsx ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT) (effectiveRTL = isRTL)
 
 import CouponCard from "@/components/CouponCard";
 import QRCodeModal from "@/components/QRCodeModal";
@@ -28,8 +28,8 @@ const YELLOW = "#F4B400";
 export default function CouponsScreen() {
   const { t, locale, isRTL } = useLanguage();
 
-  // ✅ WIE index.tsx: Arabisch=LTR | Englisch=RTL
-  const effectiveRTL = !isRTL;
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
+  const effectiveRTL = isRTL;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { user, refreshUser } = useAuth();

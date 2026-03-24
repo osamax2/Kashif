@@ -29,8 +29,8 @@ export default function ModernNotifications() {
   const { notifications, loading, refreshNotifications, markAsRead, markAllAsRead } =
     useNotifications();
 
-  // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
-  const effectiveRTL = !isRTL;
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
+  const effectiveRTL = isRTL;
 
   const dir = useMemo(
     () => ({
@@ -152,9 +152,10 @@ export default function ModernNotifications() {
       <View style={styles.root}>
         <Header
           title={t("notifications.title")}
-          // ✅ WIE index: Richtung invertiert
-          leftIcon={effectiveRTL ? "chevron-forward" : "chevron-back"}
+          leftIcon={!isRTL ? "chevron-back" : undefined}
+          rightIcon={isRTL ? "chevron-forward" : undefined}
           onLeftPress={() => router.back()}
+          onRightPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={YELLOW} />

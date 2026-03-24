@@ -18,7 +18,7 @@ export default function VerifyPending() {
   const params = useLocalSearchParams<{ email?: string }>();
   const email = params.email || "";
 
-  const effectiveRTL = !isRTL;
+  const effectiveRTL = isRTL;
 
   const handleContinue = () => {
     router.replace("/");

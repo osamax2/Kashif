@@ -30,7 +30,7 @@ const CATEGORIES = [
 export default function FeedbackScreen() {
   const { t, isRTL } = useLanguage();
   const router = useRouter();
-  const effectiveRTL = !isRTL;
+  const effectiveRTL = isRTL;
 
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");

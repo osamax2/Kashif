@@ -515,9 +515,10 @@ async def create_report(
         except Exception as e:
             logger.error(f"Failed to publish ReportConfirmed event: {e}")
     
-    # Forward Damascus reports to محلولة (Mahlula) government portal
-    if mahlula_client.is_damascus(float(db_report.latitude), float(db_report.longitude)):
-        asyncio.create_task(_forward_to_mahlula(db_report))
+    # Forward Damascus reports to محلولة (Mahlula) government portal (DISABLED - no stable proxy)
+    # TODO: Re-enable when stable Syrian proxy is available
+    #if mahlula_client.is_damascus(float(db_report.latitude), float(db_report.longitude)):
+    #    asyncio.create_task(_forward_to_mahlula(db_report))
     
     return db_report
 

@@ -1,4 +1,4 @@
-// components/ReportDialog.tsx ✅ wie index.tsx: Arabisch = LTR, Englisch = RTL (effectiveRTL = !isRTL)
+// components/ReportDialog.tsx ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT) (effectiveRTL = isRTL)
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { isOnline, savePendingReport } from "@/services/offline-reports";
@@ -59,8 +59,8 @@ export default function ReportDialog({
 }: Props) {
   const { t, isRTL, language } = useLanguage();
 
-  // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
-  const effectiveRTL = !isRTL;
+  // ✅ Arabisch = RTL (text RIGHT) | Englisch = LTR (text LEFT)
+  const effectiveRTL = isRTL;
 
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("low");
   const [address, setAddress] = useState("");

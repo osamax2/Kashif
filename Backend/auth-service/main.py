@@ -526,6 +526,27 @@ def get_current_user_info(
     return user
 
 
+@app.patch("/me", response_model=schemas.User)
+def update_my_profile(
+    request: schemas.SelfUpdateRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Update current user's own profile (name and email only)"""
+    user = auth.get_current_user(token, db)
+    user_update = schemas.UserUpdate(
+        full_name=request.full_name,
+        email=request.email,
+    )
+    updated = crud.update_user(db, user.id, user_update)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update profile"
+        )
+    return updated
+
+
 @app.get("/verify", response_class=HTMLResponse)
 def verify_email_link(
     token: str,

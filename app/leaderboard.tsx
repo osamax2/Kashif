@@ -24,7 +24,7 @@ export default function LeaderboardScreen() {
   const { user } = useAuth();
   const { language, isRTL } = useLanguage();
 
-  const effectiveRTL = !isRTL;
+  const effectiveRTL = isRTL;
 
   const [leaderboard, setLeaderboard] = useState<FriendLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);

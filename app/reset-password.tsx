@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
     Alert,
-    I18nManager,
     Platform,
     StyleSheet,
     Text,
@@ -76,13 +75,13 @@ export default function ResetPasswordScreen() {
             <Text style={styles.title}>{t('auth.resetPassword.title')}</Text>
 
             {/* Erklärungstext */}
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { textAlign: isRTL ? 'right' : 'left' }]}>
                 {t('auth.resetPassword.subtitle')}
             </Text>
 
             {/* Neues Passwort */}
-            <Text style={styles.label}>{t('auth.resetPassword.newPassword')}</Text>
-            <View style={styles.inputRow}>
+            <Text style={[styles.label, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.resetPassword.newPassword')}</Text>
+            <View style={[styles.inputRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 {/* Schloss-Icon links (optisch rechts wegen RTL) */}
                 <Ionicons
                     name="lock-closed-outline"
@@ -115,8 +114,8 @@ export default function ResetPasswordScreen() {
             </View>
 
             {/* Passwort bestätigen */}
-            <Text style={styles.label}>{t('auth.resetPassword.confirmPassword')}</Text>
-            <View style={styles.inputRow}>
+            <Text style={[styles.label, { textAlign: isRTL ? 'right' : 'left' }]}>{t('auth.resetPassword.confirmPassword')}</Text>
+            <View style={[styles.inputRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <Ionicons
                     name="lock-closed-outline"
                     size={20}
@@ -182,7 +181,7 @@ const styles = StyleSheet.create({
         color: "#FFD166",
         fontSize: 14,
         fontFamily: "Tajawal-Regular",
-        textAlign: I18nManager.isRTL ? "right" : "left",
+        textAlign: "left",
         lineHeight: 22,
         marginBottom: 32,
     },
@@ -191,12 +190,12 @@ const styles = StyleSheet.create({
         color: "#FFD166",
         fontSize: 14,
         fontFamily: "Tajawal-Medium",
-        textAlign: I18nManager.isRTL ? "right" : "left",
+        textAlign: "left",
         marginBottom: 8,
     },
 
     inputRow: {
-        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
+        flexDirection: "row",
         alignItems: "center",
         backgroundColor: "#5B82D9",
         borderRadius: 10,

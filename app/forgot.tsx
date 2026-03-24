@@ -97,9 +97,9 @@ export default function ForgotScreen() {
             </Text>
 
             {/* SELECT METHOD */}
-            <View style={styles.pillsRow}>
+            <View style={[styles.pillsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <TouchableOpacity
-                    style={[styles.pill, method === "email" && styles.pillActive]}
+                    style={[styles.pill, method === "email" && styles.pillActive, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                     onPress={() => selectMethod("email")}
                 >
                     <Ionicons
@@ -119,7 +119,7 @@ export default function ForgotScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.pill, method === "phone" && styles.pillActive]}
+                    style={[styles.pill, method === "phone" && styles.pillActive, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                     onPress={() => selectMethod("phone")}
                 >
                     <Ionicons
@@ -251,14 +251,14 @@ const styles = StyleSheet.create({
     },
 
     pillsRow: {
-        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
+        flexDirection: "row",
         justifyContent: "center",
         gap: 10,
         marginTop: 10,
     },
 
     pill: {
-        flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
+        flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255,255,255,0.07)",
         paddingVertical: 10,

@@ -109,6 +109,7 @@ export interface LoginData {
 
 export interface User {
   id: number;
+  uuid?: string;
   email: string;
   full_name: string;
   phone?: string;
@@ -258,6 +259,15 @@ export const authAPI = {
   updateProfile: async (data: Partial<User>): Promise<User> => {
     const response = await api.patch<User>('/api/auth/me', data);
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(response.data));
+    return response.data;
+  },
+
+  // Change password
+  changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/api/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
     return response.data;
   },
 
