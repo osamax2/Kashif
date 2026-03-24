@@ -10,9 +10,10 @@
     "newArchEnabled": true,
     "privacy": "public",
     "extra": {
-      "privacyPolicyUrl": "https://admin.kashifroad.com/privacy",
-      "termsUrl": "https://admin.kashifroad.com/terms",
-      "contactEmail": "contact@kashifroad.com"
+      "router": {},
+      "eas": {
+        "projectId": "ac88cf72-e55b-41a4-b6a4-d5773b59f5bd"
+      }
     },
     "ios": {
       "supportsTablet": true,
@@ -37,7 +38,7 @@
     },
     "android": {
       "package": "com.kashifroad.app",
-      "versionCode": 20,
+      "versionCode": 25,
       "usesCleartextTraffic": false,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
@@ -111,12 +112,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "ac88cf72-e55b-41a4-b6a4-d5773b59f5bd"
-      }
     },
     "owner": "osamax2"
   }
