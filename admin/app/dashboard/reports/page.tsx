@@ -5,7 +5,18 @@ import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
 import { Calendar, CheckSquare, DollarSign, Download, FileText, History, MapPin, RotateCcw, Search, Settings, Share2, Square, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+// Haversine distance in km between two lat/lng points
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 // Helper function to extract photo URL from photo_urls field
 // Prefers AI annotated image if available
@@ -111,6 +122,8 @@ export default function ReportsPage() {
   const [timeTo, setTimeTo] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [locationMatchIds, setLocationMatchIds] = useState<Set<number>>(new Set());
+  const geocodeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -245,6 +258,56 @@ export default function ReportsPage() {
     loadData();
   }, []);
 
+  // Geocode search term to find reports by city/location coordinates
+  useEffect(() => {
+    if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
+
+    if (!search || search.trim().length < 3) {
+      setLocationMatchIds(new Set());
+      return;
+    }
+
+    geocodeTimerRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search.trim())}&limit=3`
+        );
+        const locations = await response.json();
+
+        if (locations && locations.length > 0) {
+          const matchIds = new Set<number>();
+          const CITY_RADIUS_KM = 15;
+
+          for (const loc of locations) {
+            const locLat = parseFloat(loc.lat);
+            const locLon = parseFloat(loc.lon);
+            if (isNaN(locLat) || isNaN(locLon)) continue;
+
+            for (const report of reports) {
+              const rLat = parseFloat(report.latitude);
+              const rLng = parseFloat(report.longitude);
+              if (isNaN(rLat) || isNaN(rLng)) continue;
+
+              if (haversineDistance(locLat, locLon, rLat, rLng) <= CITY_RADIUS_KM) {
+                matchIds.add(report.id);
+              }
+            }
+          }
+          setLocationMatchIds(matchIds);
+        } else {
+          setLocationMatchIds(new Set());
+        }
+      } catch (error) {
+        console.error('Geocoding failed:', error);
+        setLocationMatchIds(new Set());
+      }
+    }, 500);
+
+    return () => {
+      if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
+    };
+  }, [search, reports]);
+
   useEffect(() => {
     let filtered = reports;
 
@@ -306,6 +369,7 @@ export default function ReportsPage() {
     if (search) {
       filtered = filtered.filter(
           (r) =>
+              locationMatchIds.has(r.id) ||
               r.id.toString().includes(search) ||
               r.title.toLowerCase().includes(search.toLowerCase()) ||
               r.description.toLowerCase().includes(search.toLowerCase()) ||
@@ -314,7 +378,7 @@ export default function ReportsPage() {
     }
 
     setFilteredReports(filtered);
-  }, [search, statusFilter, categoryFilter, severityFilter, dateFrom, dateTo, timeFrom, timeTo, reports, statuses]);
+  }, [search, statusFilter, categoryFilter, severityFilter, dateFrom, dateTo, timeFrom, timeTo, reports, statuses, locationMatchIds]);
 
   const loadData = async () => {
     try {
