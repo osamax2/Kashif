@@ -308,7 +308,8 @@ export default function ReportsPage() {
           (r) =>
               r.id.toString().includes(search) ||
               r.title.toLowerCase().includes(search.toLowerCase()) ||
-              r.description.toLowerCase().includes(search.toLowerCase())
+              r.description.toLowerCase().includes(search.toLowerCase()) ||
+              (r.address_text && r.address_text.toLowerCase().includes(search.toLowerCase()))
       );
     }
 
