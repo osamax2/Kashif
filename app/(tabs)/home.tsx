@@ -1033,33 +1033,89 @@ export default function HomeScreen() {
             console.log('Routes API response status:', res.status);
 
             if (!res.ok || !data.routes?.length) {
-                console.warn('No route found:', data.error?.message || 'unknown error');
-                // Fallback: direct line from user to destination
-                const directLine = [
-                    { latitude: userLocation.latitude, longitude: userLocation.longitude },
-                    { latitude: destLat, longitude: destLng },
-                ];
-                setRouteCoords(directLine);
-
-                if (mapRef.current) {
-                    mapRef.current.fitToCoordinates(directLine, {
-                        edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
-                        animated: true,
-                    });
+                console.warn('Routes API v2 failed, trying Directions API...', data.error?.message || res.status);
+                // Fallback to Directions API (legacy)
+                try {
+                    const dirUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${userLocation.latitude},${userLocation.longitude}&destination=${destLat},${destLng}&alternatives=true&mode=driving&key=${GOOGLE_API_KEY}`;
+                    const dirRes = await fetch(dirUrl);
+                    const dirData = await dirRes.json();
+                    if (dirData.status === 'OK' && dirData.routes?.length > 0) {
+                        console.log(`Directions API fallback returned ${dirData.routes.length} route(s)`);
+                        const fallbackRoutePoints = dirData.routes.map((route: any) => {
+                            const coords = decodePolyline(route.overview_polyline.points);
+                            const leg = route.legs?.[0];
+                            return {
+                                coords,
+                                distanceMeters: leg?.distance?.value || 0,
+                                duration: leg?.duration?.value ? `${leg.duration.value}s` : '',
+                                description: route.summary || '',
+                            };
+                        });
+                        // Continue with normal flow using fallback data
+                        data.routes = fallbackRoutePoints.map((rp: any) => ({
+                            polyline: { encodedPolyline: '__fallback__' },
+                            distanceMeters: rp.distanceMeters,
+                            duration: rp.duration,
+                            description: rp.description,
+                            _decodedCoords: rp.coords,
+                        }));
+                    }
+                } catch (dirErr) {
+                    console.warn('Directions API fallback also failed:', dirErr);
                 }
-                setRouteLoading(false);
-                return;
+
+                // If still no routes, show direct line
+                if (!data.routes?.length) {
+                    const directLine = [
+                        { latitude: userLocation.latitude, longitude: userLocation.longitude },
+                        { latitude: destLat, longitude: destLng },
+                    ];
+                    setRouteCoords(directLine);
+                    if (mapRef.current) {
+                        mapRef.current.fitToCoordinates(directLine, {
+                            edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
+                            animated: true,
+                        });
+                    }
+                    setRouteLoading(false);
+                    return;
+                }
             }
 
-            console.log(`Google returned ${data.routes.length} route(s)`);
+            console.log(`Processing ${data.routes.length} route(s)`);
 
-            // 2. Decode all route polylines
-            const allRoutePoints = data.routes.map((route: any) => ({
-                coords: decodePolyline(route.polyline.encodedPolyline),
+            // 2. Decode all route polylines (handle both Routes API v2 and Directions API fallback formats)
+            let allRoutePoints = data.routes.map((route: any) => ({
+                coords: route._decodedCoords || decodePolyline(route.polyline.encodedPolyline),
                 distanceMeters: route.distanceMeters || 0,
                 duration: route.duration || '',
                 description: route.description || '',
             }));
+
+            // 2b. If only 1 route, try Google Directions API (legacy) for alternatives
+            if (allRoutePoints.length === 1) {
+                console.log('Only 1 route from Routes API v2, trying Directions API for alternatives...');
+                try {
+                    const dirUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${userLocation.latitude},${userLocation.longitude}&destination=${destLat},${destLng}&alternatives=true&mode=driving&key=${GOOGLE_API_KEY}`;
+                    const dirRes = await fetch(dirUrl);
+                    const dirData = await dirRes.json();
+                    if (dirData.status === 'OK' && dirData.routes?.length > 1) {
+                        console.log(`Directions API returned ${dirData.routes.length} route(s)`);
+                        allRoutePoints = dirData.routes.map((route: any) => {
+                            const coords = decodePolyline(route.overview_polyline.points);
+                            const leg = route.legs?.[0];
+                            return {
+                                coords,
+                                distanceMeters: leg?.distance?.value || 0,
+                                duration: leg?.duration?.value ? `${leg.duration.value}s` : '',
+                                description: route.summary || '',
+                            };
+                        });
+                    }
+                } catch (dirErr) {
+                    console.warn('Directions API fallback failed:', dirErr);
+                }
+            }
 
             // Set first route as default display
             const firstRouteCoords = allRoutePoints[0].coords;
