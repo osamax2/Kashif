@@ -264,6 +264,12 @@ export default function HomeScreen() {
     // Location monitoring state
     const [isMonitoringActive, setIsMonitoringActive] = useState(false);
 
+    // ─── DRIVING MODE STATE ────────────────────────────────────────────
+    const [drivingMode, setDrivingMode] = useState(false);
+    const [drivingModeReporting, setDrivingModeReporting] = useState(false);
+    const drivingModeCooldown = useRef(false);
+    // ────────────────────────────────────────────────────────────────────
+
     // PanResponder for swipe-to-dismiss audio sheet
     const panResponder = useRef(
         PanResponder.create({
@@ -905,6 +911,68 @@ export default function HomeScreen() {
             setReportLocation(userLocation);
         }
     };
+
+    // ─── DRIVING MODE: ONE-TAP POTHOLE REPORT ──────────────────────────
+    const handleDrivingModeReport = async () => {
+        if (drivingModeReporting || drivingModeCooldown.current) return;
+        if (!userLocation) {
+            Alert.alert(
+                language === 'ar' ? 'خطأ' : language === 'ku' ? 'Şaşî' : 'Error',
+                language === 'ar' ? 'يرجى تفعيل تحديد الموقع' : language === 'ku' ? 'Ji kerema xwe cîhê xwe çalak bike' : 'Please enable location'
+            );
+            return;
+        }
+
+        setDrivingModeReporting(true);
+        drivingModeCooldown.current = true;
+
+        // Haptic feedback
+        try {
+            const Haptics = require('expo-haptics');
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        } catch (e) {}
+
+        try {
+            const categoryId = getCategoryByName('حفرة')?.id || getCategoryByName('çalak')?.id || 1;
+
+            const newReport = await reportingAPI.createReport({
+                title: language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk li ser rê' : 'Pothole on Road',
+                description: language === 'ar' ? 'بلاغ سريع من وضع القيادة' : language === 'ku' ? 'Rapora bilez ji moda ajotinê' : 'Quick report from driving mode',
+                category_id: categoryId,
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+                severity_id: 2, // Medium severity by default
+            });
+
+            console.log('🚗 Driving mode report created:', newReport.id);
+
+            // Voice confirmation
+            if (soundEnabled) {
+                const msg = language === 'ar'
+                    ? 'تم تسجيل الحفرة بنجاح'
+                    : language === 'ku'
+                    ? 'Çal bi serkeftî hat tomarkirin'
+                    : 'Pothole reported successfully';
+                Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : language === 'ku' ? 'ku-TR' : 'en-US' });
+            }
+
+            // Refresh data
+            await loadData(userLocation);
+            reportCreated();
+            await refreshUser();
+        } catch (err) {
+            console.error('Driving mode report failed:', err);
+            Alert.alert(
+                language === 'ar' ? 'خطأ' : language === 'ku' ? 'Şaşî' : 'Error',
+                language === 'ar' ? 'فشل إرسال البلاغ' : language === 'ku' ? 'Şandina raporê têkçûn' : 'Failed to submit report'
+            );
+        } finally {
+            setDrivingModeReporting(false);
+            // 3-second cooldown to prevent double-taps
+            setTimeout(() => { drivingModeCooldown.current = false; }, 3000);
+        }
+    };
+    // ────────────────────────────────────────────────────────────────────
 
     // ─── ROUTE WARNING FUNCTIONS ────────────────────────────────────────
     const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4';
@@ -1798,7 +1866,15 @@ export default function HomeScreen() {
                     { right: 14, bottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 80 : insets.bottom + 85 },
                 ]}
             >
-                {/* HEATMAP TOGGLE BUTTON (bottom) */}
+                {/* DRIVING MODE BUTTON (bottommost) */}
+                <TouchableOpacity
+                    style={styles.drivingModeButton}
+                    onPress={() => setDrivingMode(true)}
+                >
+                    <Ionicons name="car-sport" size={22} color="#0D2B66" />
+                </TouchableOpacity>
+
+                {/* HEATMAP TOGGLE BUTTON */}
                 <TouchableOpacity
                     style={[
                         styles.heatmapButton,
@@ -2466,6 +2542,74 @@ export default function HomeScreen() {
                             </Text>
                         </TouchableOpacity>
                     </Animated.View>
+                </View>
+            )}
+
+            {/* DRIVING MODE OVERLAY */}
+            {drivingMode && (
+                <View style={styles.drivingModeOverlay}>
+                    {/* Map still visible underneath, but controls are simplified */}
+
+                    {/* Exit button - small, top corner */}
+                    <TouchableOpacity
+                        style={[styles.drivingModeExit, { top: insets.top + 10 }]}
+                        onPress={() => setDrivingMode(false)}
+                    >
+                        <Ionicons name="close" size={24} color="#fff" />
+                        <Text style={styles.drivingModeExitText}>
+                            {language === 'ar' ? 'خروج' : language === 'ku' ? 'Derketin' : 'Exit'}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Mode label */}
+                    <View style={[styles.drivingModeLabel, { top: insets.top + 10 }]}>
+                        <Ionicons name="car-sport" size={20} color="#fff" />
+                        <Text style={styles.drivingModeLabelText}>
+                            {language === 'ar' ? 'وضع القيادة' : language === 'ku' ? 'Moda Ajotinê' : 'Driving Mode'}
+                        </Text>
+                    </View>
+
+                    {/* Speed / location info */}
+                    {userLocation && (
+                        <View style={styles.drivingModeLocationBar}>
+                            <Ionicons name="location" size={16} color="#22C55E" />
+                            <Text style={styles.drivingModeLocationText}>
+                                {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* THE ONE BIG BUTTON */}
+                    <TouchableOpacity
+                        style={[
+                            styles.drivingModeMainButton,
+                            drivingModeReporting && styles.drivingModeMainButtonDisabled,
+                        ]}
+                        onPress={handleDrivingModeReport}
+                        disabled={drivingModeReporting}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.drivingModeButtonInner}>
+                            {drivingModeReporting ? (
+                                <>
+                                    <Text style={styles.drivingModeButtonIcon}>✅</Text>
+                                    <Text style={styles.drivingModeButtonText}>
+                                        {language === 'ar' ? 'تم التسجيل!' : language === 'ku' ? 'Hat tomarkirin!' : 'Reported!'}
+                                    </Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={styles.drivingModeButtonIcon}>⚠️</Text>
+                                    <Text style={styles.drivingModeButtonText}>
+                                        {language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk li ser rê' : 'Pothole!'}
+                                    </Text>
+                                    <Text style={styles.drivingModeButtonSubtext}>
+                                        {language === 'ar' ? 'اضغط للإبلاغ الفوري' : language === 'ku' ? 'Pêl bike ji bo raporkirinê' : 'Tap to report instantly'}
+                                    </Text>
+                                </>
+                            )}
+                        </View>
+                    </TouchableOpacity>
                 </View>
             )}
 
@@ -3161,5 +3305,125 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'Tajawal-Medium',
     },
+
+    // ─── DRIVING MODE STYLES ───────────────────────────────────────────
+    drivingModeButton: {
+        width: 46,
+        height: 46,
+        backgroundColor: '#fff',
+        borderRadius: 23,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+    },
+    drivingModeOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        zIndex: 99999,
+        elevation: 99999,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    drivingModeExit: {
+        position: 'absolute',
+        left: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+        zIndex: 10,
+    },
+    drivingModeExitText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    drivingModeLabel: {
+        position: 'absolute',
+        right: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#0D2B66',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    drivingModeLabelText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    drivingModeLocationBar: {
+        position: 'absolute',
+        top: 70,
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        borderRadius: 16,
+    },
+    drivingModeLocationText: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 13,
+        fontFamily: 'Tajawal-Regular',
+    },
+    drivingModeMainButton: {
+        width: 220,
+        height: 220,
+        borderRadius: 110,
+        backgroundColor: '#EF4444',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#EF4444',
+        shadowOpacity: 0.5,
+        shadowOffset: { width: 0, height: 0 },
+        shadowRadius: 30,
+        elevation: 20,
+        borderWidth: 4,
+        borderColor: 'rgba(255,255,255,0.3)',
+    },
+    drivingModeMainButtonDisabled: {
+        backgroundColor: '#22C55E',
+        shadowColor: '#22C55E',
+    },
+    drivingModeButtonInner: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    drivingModeButtonIcon: {
+        fontSize: 48,
+        marginBottom: 4,
+    },
+    drivingModeButtonText: {
+        color: '#fff',
+        fontSize: 22,
+        fontWeight: '800',
+        textAlign: 'center',
+        fontFamily: 'Tajawal-Bold',
+    },
+    drivingModeButtonSubtext: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 13,
+        fontWeight: '500',
+        textAlign: 'center',
+        marginTop: 4,
+        fontFamily: 'Tajawal-Regular',
+    },
+    // ────────────────────────────────────────────────────────────────────
 
 });
