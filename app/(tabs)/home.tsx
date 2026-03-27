@@ -993,114 +993,39 @@ export default function HomeScreen() {
         }
         setRouteLoading(true);
         try {
-            // 1. Get routes from Google Routes API (with alternatives)
-            const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
-            const requestBody = {
-                origin: {
-                    location: {
-                        latLng: {
-                            latitude: userLocation.latitude,
-                            longitude: userLocation.longitude,
-                        },
-                    },
-                },
-                destination: {
-                    location: {
-                        latLng: {
-                            latitude: destLat,
-                            longitude: destLng,
-                        },
-                    },
-                },
-                travelMode: 'DRIVE',
-                routingPreference: 'TRAFFIC_AWARE',
-                computeAlternativeRoutes: true,
-                languageCode: language === 'ar' ? 'ar' : language === 'ku' ? 'ku' : 'en',
-            };
+            // ─── OSRM Routing (works worldwide including Syria/Iraq/Middle East) ───
+            // OSRM uses OpenStreetMap data = excellent coverage for Syria
+            let allRoutePoints: {coords: {latitude: number; longitude: number}[]; distanceMeters: number; duration: string; description: string}[] = [];
 
-            console.log('Fetching routes from Google Routes API (with alternatives)...');
-            const res = await fetch(routesUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Goog-Api-Key': GOOGLE_API_KEY,
-                    'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.description',
-                },
-                body: JSON.stringify(requestBody),
-            });
-            const data = await res.json();
+            // 1. Try OSRM first (free, real road-following routes, alternatives supported)
+            try {
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLocation.longitude},${userLocation.latitude};${destLng},${destLat}?overview=full&geometries=polyline&alternatives=true&steps=false`;
+                console.log('Fetching routes from OSRM...');
+                const osrmRes = await fetch(osrmUrl);
+                const osrmData = await osrmRes.json();
 
-            console.log('Routes API response status:', res.status);
+                if (osrmData.code === 'Ok' && osrmData.routes?.length > 0) {
+                    console.log(`OSRM returned ${osrmData.routes.length} route(s)`);
+                    allRoutePoints = osrmData.routes.map((route: any) => ({
+                        coords: decodePolyline(route.geometry),
+                        distanceMeters: route.distance || 0,
+                        duration: `${Math.round(route.duration)}s`,
+                        description: route.legs?.[0]?.summary || '',
+                    }));
+                }
+            } catch (osrmErr) {
+                console.warn('OSRM failed:', osrmErr);
+            }
 
-            if (!res.ok || !data.routes?.length) {
-                console.warn('Routes API v2 failed, trying Directions API...', data.error?.message || res.status);
-                // Fallback to Directions API (legacy)
+            // 2. If OSRM failed or returned nothing, try Google Directions API
+            if (allRoutePoints.length === 0) {
+                console.log('OSRM returned no routes, trying Google Directions API...');
                 try {
                     const dirUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${userLocation.latitude},${userLocation.longitude}&destination=${destLat},${destLng}&alternatives=true&mode=driving&key=${GOOGLE_API_KEY}`;
                     const dirRes = await fetch(dirUrl);
                     const dirData = await dirRes.json();
                     if (dirData.status === 'OK' && dirData.routes?.length > 0) {
-                        console.log(`Directions API fallback returned ${dirData.routes.length} route(s)`);
-                        const fallbackRoutePoints = dirData.routes.map((route: any) => {
-                            const coords = decodePolyline(route.overview_polyline.points);
-                            const leg = route.legs?.[0];
-                            return {
-                                coords,
-                                distanceMeters: leg?.distance?.value || 0,
-                                duration: leg?.duration?.value ? `${leg.duration.value}s` : '',
-                                description: route.summary || '',
-                            };
-                        });
-                        // Continue with normal flow using fallback data
-                        data.routes = fallbackRoutePoints.map((rp: any) => ({
-                            polyline: { encodedPolyline: '__fallback__' },
-                            distanceMeters: rp.distanceMeters,
-                            duration: rp.duration,
-                            description: rp.description,
-                            _decodedCoords: rp.coords,
-                        }));
-                    }
-                } catch (dirErr) {
-                    console.warn('Directions API fallback also failed:', dirErr);
-                }
-
-                // If still no routes, show direct line
-                if (!data.routes?.length) {
-                    const directLine = [
-                        { latitude: userLocation.latitude, longitude: userLocation.longitude },
-                        { latitude: destLat, longitude: destLng },
-                    ];
-                    setRouteCoords(directLine);
-                    if (mapRef.current) {
-                        mapRef.current.fitToCoordinates(directLine, {
-                            edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
-                            animated: true,
-                        });
-                    }
-                    setRouteLoading(false);
-                    return;
-                }
-            }
-
-            console.log(`Processing ${data.routes.length} route(s)`);
-
-            // 2. Decode all route polylines (handle both Routes API v2 and Directions API fallback formats)
-            let allRoutePoints = data.routes.map((route: any) => ({
-                coords: route._decodedCoords || decodePolyline(route.polyline.encodedPolyline),
-                distanceMeters: route.distanceMeters || 0,
-                duration: route.duration || '',
-                description: route.description || '',
-            }));
-
-            // 2b. If only 1 route, try Google Directions API (legacy) for alternatives
-            if (allRoutePoints.length === 1) {
-                console.log('Only 1 route from Routes API v2, trying Directions API for alternatives...');
-                try {
-                    const dirUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${userLocation.latitude},${userLocation.longitude}&destination=${destLat},${destLng}&alternatives=true&mode=driving&key=${GOOGLE_API_KEY}`;
-                    const dirRes = await fetch(dirUrl);
-                    const dirData = await dirRes.json();
-                    if (dirData.status === 'OK' && dirData.routes?.length > 1) {
-                        console.log(`Directions API returned ${dirData.routes.length} route(s)`);
+                        console.log(`Google Directions API returned ${dirData.routes.length} route(s)`);
                         allRoutePoints = dirData.routes.map((route: any) => {
                             const coords = decodePolyline(route.overview_polyline.points);
                             const leg = route.legs?.[0];
@@ -1113,9 +1038,64 @@ export default function HomeScreen() {
                         });
                     }
                 } catch (dirErr) {
-                    console.warn('Directions API fallback failed:', dirErr);
+                    console.warn('Google Directions API also failed:', dirErr);
                 }
             }
+
+            // 3. If still no routes, try Google Routes API v2
+            if (allRoutePoints.length === 0) {
+                console.log('Trying Google Routes API v2...');
+                try {
+                    const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+                    const requestBody = {
+                        origin: { location: { latLng: { latitude: userLocation.latitude, longitude: userLocation.longitude } } },
+                        destination: { location: { latLng: { latitude: destLat, longitude: destLng } } },
+                        travelMode: 'DRIVE',
+                        computeAlternativeRoutes: true,
+                    };
+                    const res = await fetch(routesUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Goog-Api-Key': GOOGLE_API_KEY,
+                            'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.description',
+                        },
+                        body: JSON.stringify(requestBody),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.routes?.length > 0) {
+                        console.log(`Google Routes API v2 returned ${data.routes.length} route(s)`);
+                        allRoutePoints = data.routes.map((route: any) => ({
+                            coords: decodePolyline(route.polyline.encodedPolyline),
+                            distanceMeters: route.distanceMeters || 0,
+                            duration: route.duration || '',
+                            description: route.description || '',
+                        }));
+                    }
+                } catch (v2Err) {
+                    console.warn('Google Routes API v2 also failed:', v2Err);
+                }
+            }
+
+            // 4. Last resort: show direct line
+            if (allRoutePoints.length === 0) {
+                console.warn('All routing APIs failed, showing direct line');
+                const directLine = [
+                    { latitude: userLocation.latitude, longitude: userLocation.longitude },
+                    { latitude: destLat, longitude: destLng },
+                ];
+                setRouteCoords(directLine);
+                if (mapRef.current) {
+                    mapRef.current.fitToCoordinates(directLine, {
+                        edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
+                        animated: true,
+                    });
+                }
+                setRouteLoading(false);
+                return;
+            }
+
+            console.log(`Processing ${allRoutePoints.length} route(s)`);
 
             // Set first route as default display
             const firstRouteCoords = allRoutePoints[0].coords;
