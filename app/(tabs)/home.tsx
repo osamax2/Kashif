@@ -1012,6 +1012,64 @@ export default function HomeScreen() {
                         duration: `${Math.round(route.duration)}s`,
                         description: route.legs?.[0]?.summary || '',
                     }));
+
+                    // If OSRM returned only 1 route, generate synthetic alternatives
+                    // by routing via perpendicular offset waypoints (forces different streets)
+                    if (allRoutePoints.length < 2) {
+                        console.log('Generating synthetic alternatives via offset waypoints...');
+                        const startLat = userLocation.latitude;
+                        const startLng = userLocation.longitude;
+                        const midLat = (startLat + destLat) / 2;
+                        const midLng = (startLng + destLng) / 2;
+                        const dLat = destLat - startLat;
+                        const dLng = destLng - startLng;
+                        const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+                        if (dist > 0.001) { // Only if meaningful distance (>~100m)
+                            const perpLat = -dLng / dist;
+                            const perpLng = dLat / dist;
+                            // Offset ~800m perpendicular to the route direction
+                            const offset = Math.min(0.008, dist * 0.3);
+                            const offsets = [
+                                { lat: midLat + perpLat * offset, lng: midLng + perpLng * offset },
+                                { lat: midLat - perpLat * offset, lng: midLng - perpLng * offset },
+                            ];
+
+                            const viaPromises = offsets.map(async (wp) => {
+                                try {
+                                    const viaUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${wp.lng},${wp.lat};${destLng},${destLat}?overview=full&geometries=polyline&steps=false`;
+                                    const viaRes = await fetch(viaUrl);
+                                    const viaData = await viaRes.json();
+                                    if (viaData.code === 'Ok' && viaData.routes?.[0]) {
+                                        const r = viaData.routes[0];
+                                        return {
+                                            coords: decodePolyline(r.geometry),
+                                            distanceMeters: r.distance || 0,
+                                            duration: `${Math.round(r.duration)}s`,
+                                            description: 'via alternative',
+                                        };
+                                    }
+                                } catch (e) {
+                                    console.warn('Via-waypoint route failed:', e);
+                                }
+                                return null;
+                            });
+
+                            const viaResults = await Promise.all(viaPromises);
+
+                            // Add via-routes that are meaningfully different from the primary route
+                            const primaryDist = allRoutePoints[0].distanceMeters;
+                            for (const vr of viaResults) {
+                                if (vr && vr.coords.length > 2) {
+                                    // Only add if route differs by at least 10% in distance
+                                    const distDiff = Math.abs(vr.distanceMeters - primaryDist) / primaryDist;
+                                    if (distDiff > 0.1) {
+                                        allRoutePoints.push(vr);
+                                    }
+                                }
+                            }
+                            console.log(`After synthetic alternatives: ${allRoutePoints.length} total route(s)`);
+                        }
+                    }
                 }
             } catch (osrmErr) {
                 console.warn('OSRM failed:', osrmErr);
