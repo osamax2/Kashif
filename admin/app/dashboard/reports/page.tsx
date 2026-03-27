@@ -5,7 +5,7 @@ import { useLanguage } from '@/lib/i18n';
 import { Report, ReportStatusHistory } from '@/lib/types';
 import { Calendar, CheckSquare, DollarSign, Download, FileText, History, MapPin, RotateCcw, Search, Settings, Share2, Square, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // Haversine distance in km between two lat/lng points
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -556,6 +556,84 @@ export default function ReportsPage() {
     if (!category) return 'Unknown';
     return isRTL ? (category.name_ar || category.name) : category.name;
   };
+
+  // Street-level analytics: group reports by street, calculate quality & danger
+  const streetAnalytics = useMemo(() => {
+    const streetMap: Record<string, { reports: Report[]; streetName: string }> = {};
+
+    for (const report of reports) {
+      let streetName = '';
+      if (report.address_text) {
+        // Extract street from address (first meaningful segment)
+        const parts = report.address_text.split(',').map(p => p.trim());
+        streetName = parts[0] || '';
+      }
+      if (!streetName) {
+        // Group by approximate location (round to ~100m grid)
+        const lat = Math.round(parseFloat(report.latitude) * 1000) / 1000;
+        const lng = Math.round(parseFloat(report.longitude) * 1000) / 1000;
+        streetName = `${lat},${lng}`;
+      }
+
+      if (!streetMap[streetName]) {
+        streetMap[streetName] = { reports: [], streetName };
+      }
+      streetMap[streetName].reports.push(report);
+    }
+
+    // Calculate ratings per report
+    const reportRatings: Record<number, { quality: number; danger: string; dangerLevel: number; streetName: string; reportCount: number }> = {};
+
+    for (const street of Object.values(streetMap)) {
+      const reps = street.reports;
+      const count = reps.length;
+      const avgSeverity = reps.reduce((sum, r) => sum + (r.severity_id || 1), 0) / count;
+      const resolvedCount = reps.filter(r => {
+        const statusName = statuses.find(s => s.id === r.status_id)?.name;
+        return statusName === 'RESOLVED';
+      }).length;
+      const resolvedRatio = count > 0 ? resolvedCount / count : 0;
+      const highSeverityCount = reps.filter(r => r.severity_id === 3).length;
+
+      // Road Quality: 5 stars = perfect, 1 star = worst
+      // Factors: inverse of severity, resolved ratio, report density
+      let quality = 5;
+      quality -= (avgSeverity - 1) * 1.2; // severity 1->0, 2->-1.2, 3->-2.4
+      quality -= Math.min(count - 1, 3) * 0.4; // more reports = worse (max -1.2)
+      quality += resolvedRatio * 1.0; // resolved reports improve score
+      quality = Math.max(1, Math.min(5, Math.round(quality * 2) / 2)); // clamp 1-5, round to 0.5
+
+      // Danger Level
+      let dangerLevel = 0;
+      if (highSeverityCount >= 3 || (avgSeverity >= 2.5 && count >= 3)) {
+        dangerLevel = 3; // Critical
+      } else if (highSeverityCount >= 1 || avgSeverity >= 2) {
+        dangerLevel = 2; // High
+      } else if (count >= 2 || avgSeverity >= 1.5) {
+        dangerLevel = 1; // Medium
+      }
+      // Reduce danger if most are resolved
+      if (resolvedRatio > 0.7) dangerLevel = Math.max(0, dangerLevel - 1);
+
+      const dangerLabels = language === 'ar'
+          ? ['منخفض', 'متوسط', 'عالي', 'حرج']
+          : language === 'ku'
+              ? ['Nizm', 'Navîn', 'Bilind', 'Krîtîk']
+              : ['Low', 'Medium', 'High', 'Critical'];
+
+      for (const r of reps) {
+        reportRatings[r.id] = {
+          quality,
+          danger: dangerLabels[dangerLevel],
+          dangerLevel,
+          streetName: street.streetName,
+          reportCount: count,
+        };
+      }
+    }
+
+    return reportRatings;
+  }, [reports, statuses, language]);
 
   const [exporting, setExporting] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
@@ -1324,6 +1402,41 @@ export default function ReportsPage() {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(report.severity_id)}`}>
                   {getSeverityIcon(report.severity_id)} {getSeverityLabel(report.severity_id)}
                 </span>
+                      </div>
+                  )}
+
+                  {/* Street Rating */}
+                  {streetAnalytics[report.id] && (
+                      <div className={`mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg ${isRTL ? 'text-right' : ''}`}>
+                        <div className={`flex items-center justify-between gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <span className="text-xs font-medium text-slate-600">
+                              ⭐ {language === 'ar' ? 'جودة الطريق' : language === 'ku' ? 'Kalîteya rê' : 'Road Quality'}
+                            </span>
+                            <span className="text-xs font-bold text-amber-600">
+                              {'★'.repeat(Math.floor(streetAnalytics[report.id].quality))}
+                              {streetAnalytics[report.id].quality % 1 !== 0 ? '½' : ''}
+                              {'☆'.repeat(5 - Math.ceil(streetAnalytics[report.id].quality))}
+                            </span>
+                            <span className="text-[10px] text-slate-400">({streetAnalytics[report.id].quality}/5)</span>
+                          </div>
+                          <div className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <span className="text-xs font-medium text-slate-600">
+                              ⚠️ {language === 'ar' ? 'الخطورة' : language === 'ku' ? 'Metirsî' : 'Danger'}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                streetAnalytics[report.id].dangerLevel === 3 ? 'bg-red-100 text-red-700' :
+                                    streetAnalytics[report.id].dangerLevel === 2 ? 'bg-orange-100 text-orange-700' :
+                                        streetAnalytics[report.id].dangerLevel === 1 ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-green-100 text-green-700'
+                            }`}>
+                              {streetAnalytics[report.id].danger}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`mt-1 text-[10px] text-slate-400 ${isRTL ? 'text-right' : ''}`}>
+                          📍 {streetAnalytics[report.id].streetName} • {streetAnalytics[report.id].reportCount} {language === 'ar' ? 'بلاغ' : language === 'ku' ? 'rapor' : 'reports'}
+                        </div>
                       </div>
                   )}
 
