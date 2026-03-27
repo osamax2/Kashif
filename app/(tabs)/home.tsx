@@ -172,6 +172,24 @@ export default function HomeScreen() {
     const [routeDestination, setRouteDestination] = useState<string>('');
     // ────────────────────────────────────────────────────────────────────
 
+    // ─── SAFE ROUTE PLANNING STATE ─────────────────────────────────────
+    interface RouteOption {
+        coords: {latitude: number; longitude: number}[];
+        distanceMeters: number;
+        duration: string;
+        hazards: RouteReport[];
+        summary: Record<number, number>;
+        totalHazards: number;
+        potholeCount: number;
+        safetyScore: number;
+        label: { ar: string; ku: string; en: string };
+        icon: string;
+        color: string;
+    }
+    const [alternativeRoutes, setAlternativeRoutes] = useState<RouteOption[]>([]);
+    const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+    // ────────────────────────────────────────────────────────────────────
+
     // ─── HEATMAP STATE ─────────────────────────────────────────────────
     const [heatmapEnabled, setHeatmapEnabled] = useState(false);
     // ────────────────────────────────────────────────────────────────────
@@ -776,6 +794,13 @@ export default function HomeScreen() {
         return categories.find(c => c.name === name);
     };
 
+    const isPotholeCategory = (categoryId: number): boolean => {
+        const category = categories.find(c => c.id === categoryId);
+        if (!category) return false;
+        const name = category.name_ar || category.name_en || category.name_ku || category.name || "";
+        return name.includes("حفرة") || name.includes("Çalêk") || name.toLowerCase().includes("pothole");
+    };
+
     const getCategoryIcon = (categoryId: number): string => {
         const category = categories.find(c => c.id === categoryId);
         if (!category) return "📍";
@@ -900,7 +925,7 @@ export default function HomeScreen() {
         }
         setRouteLoading(true);
         try {
-            // 1. Get route from Google Routes API (new)
+            // 1. Get routes from Google Routes API (with alternatives)
             const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
             const requestBody = {
                 origin: {
@@ -921,17 +946,17 @@ export default function HomeScreen() {
                 },
                 travelMode: 'DRIVE',
                 routingPreference: 'TRAFFIC_AWARE',
-                computeAlternativeRoutes: false,
+                computeAlternativeRoutes: true,
                 languageCode: language === 'ar' ? 'ar' : language === 'ku' ? 'ku' : 'en',
             };
 
-            console.log('Fetching route from Google Routes API...');
+            console.log('Fetching routes from Google Routes API (with alternatives)...');
             const res = await fetch(routesUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Goog-Api-Key': GOOGLE_API_KEY,
-                    'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+                    'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.description',
                 },
                 body: JSON.stringify(requestBody),
             });
@@ -958,58 +983,159 @@ export default function HomeScreen() {
                 return;
             }
 
-            // 2. Decode polyline from Google Routes API response
-            const encodedPolyline = data.routes[0].polyline.encodedPolyline;
-            const points = decodePolyline(encodedPolyline);
-            setRouteCoords(points);
-            console.log(`Route decoded: ${points.length} points, distance: ${data.routes[0].distanceMeters}m, duration: ${data.routes[0].duration}`);
+            console.log(`Google returned ${data.routes.length} route(s)`);
 
-            // 3. Fit map to show entire route
-            if (mapRef.current && points.length > 1) {
-                mapRef.current.fitToCoordinates(points, {
-                    edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
+            // 2. Decode all route polylines
+            const allRoutePoints = data.routes.map((route: any) => ({
+                coords: decodePolyline(route.polyline.encodedPolyline),
+                distanceMeters: route.distanceMeters || 0,
+                duration: route.duration || '',
+                description: route.description || '',
+            }));
+
+            // Set first route as default display
+            const firstRouteCoords = allRoutePoints[0].coords;
+            setRouteCoords(firstRouteCoords);
+
+            // 3. Fit map to show all routes
+            const allCoordsCombined = allRoutePoints.flatMap((r: any) => r.coords);
+            if (mapRef.current && allCoordsCombined.length > 1) {
+                mapRef.current.fitToCoordinates(allCoordsCombined, {
+                    edgePadding: { top: 80, right: 40, bottom: 280, left: 40 },
                     animated: true,
                 });
             }
 
-            // 4. Sample waypoints for the backend query (every ~500m, max 100 points)
-            const sampled = sampleWaypoints(points, 100);
+            // 4. Fetch hazards for ALL routes in parallel
+            const ROUTE_COLORS = ['#4A90D9', '#F59E0B', '#22C55E'];
+            const hazardPromises = allRoutePoints.map((rp: any) => {
+                const sampled = sampleWaypoints(rp.coords, 100);
+                return reportingAPI.getReportsAlongRoute(sampled, 200).catch(() => ({
+                    total_hazards: 0,
+                    reports: [] as RouteReport[],
+                    summary: {} as Record<number, number>,
+                }));
+            });
 
-            // 5. Fetch hazards along route (non-blocking - route shows even if this fails)
-            try {
-                const routeData = await reportingAPI.getReportsAlongRoute(sampled, 200);
-                setRouteHazards(routeData.reports);
-                setRouteSummary(routeData.summary);
+            const hazardResults = await Promise.all(hazardPromises);
 
-                // 6. Speak summary
-                if (routeData.total_hazards > 0 && soundEnabled) {
-                    if (language === 'ku') {
-                        // Play pre-generated Kurdish route warning audio
-                        try {
-                            const { sound: kuRouteSound } = await Audio.Sound.createAsync(
-                                require('@/assets/sounds/ku/warning_route.mp3'),
-                                { shouldPlay: true, volume: appVolume }
-                            );
-                            kuRouteSound.setOnPlaybackStatusUpdate((s) => {
-                                if (s.isLoaded && s.didJustFinish) kuRouteSound.unloadAsync();
-                            });
-                        } catch (kuErr) {
-                            console.warn('Kurdish route audio failed:', kuErr);
-                        // 🔹 Fallback Kurdish TTS (nur falls Audio fehlschlägt)
-                        const msg = `Hişyarî: ${routeData.total_hazards} xeter li ser rêya te heye`;
-                        Speech.speak(msg, { language: 'ku-TR' });
+            // 5. Build RouteOption[] with safety scores
+            const routeOptions: RouteOption[] = allRoutePoints.map((rp: any, idx: number) => {
+                const hazardData = hazardResults[idx];
+                const potholeCount = hazardData.reports.filter((h: RouteReport) => isPotholeCategory(h.category_id)).length;
+                // Safety score: 100 = safest, 0 = most dangerous
+                // Formula: penalize per hazard (-5), per pothole (-8 extra), bonus for short distance
+                const hazardPenalty = hazardData.total_hazards * 5;
+                const potholePenalty = potholeCount * 8;
+                const safetyScore = Math.max(0, Math.min(100, 100 - hazardPenalty - potholePenalty));
+
+                return {
+                    coords: rp.coords,
+                    distanceMeters: rp.distanceMeters,
+                    duration: rp.duration,
+                    hazards: hazardData.reports,
+                    summary: hazardData.summary,
+                    totalHazards: hazardData.total_hazards,
+                    potholeCount,
+                    safetyScore,
+                    label: { ar: '', ku: '', en: '' }, // Will be assigned below
+                    icon: '',
+                    color: ROUTE_COLORS[idx % ROUTE_COLORS.length],
+                };
+            });
+
+            // 6. Label routes based on characteristics
+            if (routeOptions.length === 1) {
+                routeOptions[0].label = { ar: 'المسار', ku: 'Rê', en: 'Route' };
+                routeOptions[0].icon = '🛣️';
+            } else {
+                // First route = fastest (Google default)
+                routeOptions[0].label = { ar: 'أسرع طريق', ku: 'Rêya herî bilez', en: 'Fastest Route' };
+                routeOptions[0].icon = '⚡';
+                routeOptions[0].color = '#4A90D9';
+
+                // Find safest route (highest safety score, excluding first)
+                let safestIdx = 1;
+                let fewestPotholesIdx = 1;
+                for (let i = 1; i < routeOptions.length; i++) {
+                    if (routeOptions[i].safetyScore > routeOptions[safestIdx].safetyScore) safestIdx = i;
+                    if (routeOptions[i].potholeCount < routeOptions[fewestPotholesIdx].potholeCount) fewestPotholesIdx = i;
+                }
+
+                // If safest and fewest potholes are same route
+                if (safestIdx === fewestPotholesIdx) {
+                    routeOptions[safestIdx].label = { ar: '⚠️ طريق آمن أكثر', ku: '⚠️ Rêya ewletir', en: '⚠️ Safer Route' };
+                    routeOptions[safestIdx].icon = '🛡️';
+                    routeOptions[safestIdx].color = '#22C55E';
+                    // Label remaining routes
+                    for (let i = 1; i < routeOptions.length; i++) {
+                        if (i !== safestIdx) {
+                            routeOptions[i].label = { ar: 'طريق بديل', ku: 'Rêya alternatîf', en: 'Alternative' };
+                            routeOptions[i].icon = '🔄';
+                            routeOptions[i].color = '#F59E0B';
                         }
-                    } else {
-                        const msg = language === 'ar'
-                            ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
-                            : language === 'ku'
-                            ? `Hişyarî: ${routeData.total_hazards} metirsî li ser rêya te`
-                            : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
-                        Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : language === 'ku' ? 'ku-TR' : 'en-US' });
+                    }
+                } else {
+                    routeOptions[safestIdx].label = { ar: '⚠️ طريق آمن أكثر', ku: '⚠️ Rêya ewletir', en: '⚠️ Safer Route' };
+                    routeOptions[safestIdx].icon = '🛡️';
+                    routeOptions[safestIdx].color = '#22C55E';
+                    routeOptions[fewestPotholesIdx].label = { ar: '🚗 أقل حفر', ku: '🚗 Kêmtir çal', en: '🚗 Fewer Potholes' };
+                    routeOptions[fewestPotholesIdx].icon = '🚗';
+                    routeOptions[fewestPotholesIdx].color = '#F59E0B';
+                    // Label any remaining
+                    for (let i = 1; i < routeOptions.length; i++) {
+                        if (i !== safestIdx && i !== fewestPotholesIdx) {
+                            routeOptions[i].label = { ar: 'طريق بديل', ku: 'Rêya alternatîf', en: 'Alternative' };
+                            routeOptions[i].icon = '🔄';
+                            routeOptions[i].color = '#9CA3AF';
+                        }
                     }
                 }
-            } catch (hazardErr) {
-                console.warn('Failed to fetch route hazards (route still shown):', hazardErr);
+
+                // Check if first route is actually also the safest
+                if (routeOptions[0].safetyScore >= routeOptions[safestIdx].safetyScore) {
+                    routeOptions[0].label = { ar: '⚡ أسرع وأكثر أماناً', ku: '⚡ Herî bilez û ewle', en: '⚡ Fastest & Safest' };
+                    routeOptions[0].icon = '⭐';
+                    routeOptions[0].color = '#22C55E';
+                }
+            }
+
+            setAlternativeRoutes(routeOptions);
+            setSelectedRouteIndex(0);
+
+            // Set the first route's hazards as active display
+            setRouteHazards(routeOptions[0].hazards);
+            setRouteSummary(routeOptions[0].summary);
+
+            console.log(`Safe Route Planning: ${routeOptions.length} routes analyzed`);
+            routeOptions.forEach((ro, i) => {
+                console.log(`  Route ${i}: ${ro.label.en} | Hazards: ${ro.totalHazards} | Potholes: ${ro.potholeCount} | Safety: ${ro.safetyScore}`);
+            });
+
+            // 7. Speak summary for selected route
+            const selectedRoute = routeOptions[0];
+            if (selectedRoute.totalHazards > 0 && soundEnabled) {
+                const altCount = routeOptions.length - 1;
+                if (language === 'ku') {
+                    try {
+                        const { sound: kuRouteSound } = await Audio.Sound.createAsync(
+                            require('@/assets/sounds/ku/warning_route.mp3'),
+                            { shouldPlay: true, volume: appVolume }
+                        );
+                        kuRouteSound.setOnPlaybackStatusUpdate((s) => {
+                            if (s.isLoaded && s.didJustFinish) kuRouteSound.unloadAsync();
+                        });
+                    } catch (kuErr) {
+                        console.warn('Kurdish route audio failed:', kuErr);
+                        const msg = `Hişyarî: ${selectedRoute.totalHazards} xeter li ser rêya te heye`;
+                        Speech.speak(msg, { language: 'ku-TR' });
+                    }
+                } else {
+                    const msg = language === 'ar'
+                        ? `تحذير: ${selectedRoute.totalHazards} خطر على طريقك${altCount > 0 ? `. يوجد ${altCount} طريق بديل أكثر أماناً` : ''}`
+                        : `Warning: ${selectedRoute.totalHazards} hazard${selectedRoute.totalHazards > 1 ? 's' : ''} on your route${altCount > 0 ? `. ${altCount} safer alternative${altCount > 1 ? 's' : ''} available` : ''}`;
+                    Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+                }
             }
         } catch (err) {
             console.error('Route error:', err);
@@ -1032,6 +1158,24 @@ export default function HomeScreen() {
         }
     };
 
+    // Select a different route option
+    const selectRoute = (index: number) => {
+        if (index < 0 || index >= alternativeRoutes.length) return;
+        setSelectedRouteIndex(index);
+        const selected = alternativeRoutes[index];
+        setRouteCoords(selected.coords);
+        setRouteHazards(selected.hazards);
+        setRouteSummary(selected.summary);
+
+        // Fit map to the selected route
+        if (mapRef.current && selected.coords.length > 1) {
+            mapRef.current.fitToCoordinates(selected.coords, {
+                edgePadding: { top: 80, right: 40, bottom: 280, left: 40 },
+                animated: true,
+            });
+        }
+    };
+
     const clearRoute = () => {
         setRouteMode(false);
         setRouteCoords([]);
@@ -1039,6 +1183,8 @@ export default function HomeScreen() {
         setRouteSummary({});
         setRouteDestination('');
         setSearchMarker(null);
+        setAlternativeRoutes([]);
+        setSelectedRouteIndex(0);
     };
 
     // Decode Google encoded polyline
@@ -1413,12 +1559,29 @@ export default function HomeScreen() {
                         }
                     })}
 
-                    {/* Route Polyline */}
+                    {/* Alternative Route Polylines (dimmed, behind selected) */}
+                    {alternativeRoutes.map((route, idx) => {
+                        if (idx === selectedRouteIndex) return null;
+                        if (route.coords.length < 2) return null;
+                        return (
+                            <Polyline
+                                key={`alt-route-${idx}`}
+                                coordinates={route.coords}
+                                strokeColor={route.color + '60'}
+                                strokeWidth={4}
+                                lineDashPattern={[10, 6]}
+                                tappable={true}
+                                onPress={() => selectRoute(idx)}
+                            />
+                        );
+                    })}
+
+                    {/* Selected Route Polyline */}
                     {routeCoords.length > 1 && (
                         <Polyline
                             coordinates={routeCoords}
-                            strokeColor="#4A90D9"
-                            strokeWidth={5}
+                            strokeColor={alternativeRoutes[selectedRouteIndex]?.color || "#4A90D9"}
+                            strokeWidth={6}
                             lineDashPattern={[0]}
                         />
                     )}
@@ -1697,25 +1860,100 @@ export default function HomeScreen() {
                 </View>
             )}
 
-            {/* ROUTE HAZARD SUMMARY PANEL */}
+            {/* ROUTE HAZARD SUMMARY PANEL WITH SAFE ROUTE SELECTOR */}
             {routeMode && routeCoords.length > 0 && (
                 <View style={[styles.routeSummaryPanel, language === 'ar' ? { direction: 'rtl' } : {}]}>
+                    {/* Header with close button */}
                     <View style={styles.routeSummaryHeader}>
-                        <Ionicons name={routeHazards.length > 0 ? "warning" : "checkmark-circle"} size={20} color={routeHazards.length > 0 ? "#F59E0B" : "#22C55E"} />
+                        <Ionicons name="navigate" size={18} color="#0D2B66" />
                         <Text style={styles.routeSummaryTitle}>
-                            {routeHazards.length > 0
-                                ? (language === 'ar'
-                                    ? `${routeHazards.length} تحذير على الطريق`
-                                    : language === 'ku' ? `Li ser rê ${routeHazards.length} Hişyarî li ser rê` : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`)
-                                : (language === 'ar' ? 'لا توجد مخاطر على الطريق ✓' : language === 'ku' ? 'Li ser rê tu Metirsi tune ye' : 'No hazards on route ✓')
-                            }
+                            {language === 'ar' ? 'تخطيط الطريق الآمن' : language === 'ku' ? 'Plana Rêya Ewle' : 'Safe Route Planning'}
                         </Text>
                         <TouchableOpacity onPress={clearRoute} style={{ marginLeft: 'auto' }}>
                             <Ionicons name="close-circle" size={22} color="#666" />
                         </TouchableOpacity>
                     </View>
+
+                    {/* Route Options Selector */}
+                    {alternativeRoutes.length > 1 && (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+                            {alternativeRoutes.map((route, idx) => {
+                                const isSelected = idx === selectedRouteIndex;
+                                const routeLabel = language === 'ar' ? route.label.ar : language === 'ku' ? route.label.ku : route.label.en;
+                                const durationMin = route.duration ? Math.round(parseInt(route.duration.replace('s', '')) / 60) : 0;
+                                const distanceKm = route.distanceMeters ? (route.distanceMeters / 1000).toFixed(1) : '?';
+                                return (
+                                    <TouchableOpacity
+                                        key={`route-opt-${idx}`}
+                                        style={[
+                                            styles.routeOptionCard,
+                                            { borderColor: route.color, borderWidth: isSelected ? 2.5 : 1 },
+                                            isSelected && { backgroundColor: route.color + '15' },
+                                        ]}
+                                        onPress={() => selectRoute(idx)}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                                            <Text style={{ fontSize: 16 }}>{route.icon}</Text>
+                                            <Text style={[styles.routeOptionLabel, { color: route.color }]} numberOfLines={1}>
+                                                {routeLabel}
+                                            </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                            <Text style={styles.routeOptionDetail}>
+                                                {distanceKm} km  •  {durationMin} {language === 'ar' ? 'د' : 'min'}
+                                            </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                            {route.totalHazards > 0 ? (
+                                                <>
+                                                    <Ionicons name="warning" size={13} color="#F59E0B" />
+                                                    <Text style={{ fontSize: 12, color: '#F59E0B', fontWeight: '600' }}>
+                                                        {route.totalHazards} {language === 'ar' ? 'خطر' : language === 'ku' ? 'xeter' : 'hazard' + (route.totalHazards > 1 ? 's' : '')}
+                                                    </Text>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Ionicons name="checkmark-circle" size={13} color="#22C55E" />
+                                                    <Text style={{ fontSize: 12, color: '#22C55E', fontWeight: '600' }}>
+                                                        {language === 'ar' ? 'آمن' : language === 'ku' ? 'Ewle' : 'Safe'}
+                                                    </Text>
+                                                </>
+                                            )}
+                                            {route.potholeCount > 0 && (
+                                                <Text style={{ fontSize: 12, color: '#6B7280' }}>
+                                                    • 🚗 {route.potholeCount} {language === 'ar' ? 'حفرة' : language === 'ku' ? 'çal' : 'pothole' + (route.potholeCount > 1 ? 's' : '')}
+                                                </Text>
+                                            )}
+                                        </View>
+                                        {/* Safety score bar */}
+                                        <View style={styles.safetyBarBg}>
+                                            <View style={[styles.safetyBarFill, {
+                                                width: `${route.safetyScore}%`,
+                                                backgroundColor: route.safetyScore >= 70 ? '#22C55E' : route.safetyScore >= 40 ? '#F59E0B' : '#EF4444',
+                                            }]} />
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    )}
+
+                    {/* Hazard details for selected route */}
+                    <View style={{ marginTop: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Ionicons name={routeHazards.length > 0 ? "warning" : "checkmark-circle"} size={16} color={routeHazards.length > 0 ? "#F59E0B" : "#22C55E"} />
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: '#0D2B66' }}>
+                                {routeHazards.length > 0
+                                    ? (language === 'ar'
+                                        ? `${routeHazards.length} تحذير على هذا الطريق`
+                                        : language === 'ku' ? `${routeHazards.length} hişyarî li ser vê rêyê` : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on this route`)
+                                    : (language === 'ar' ? 'طريق آمن ✓' : language === 'ku' ? 'Rêya ewle ✓' : 'Safe route ✓')
+                                }
+                            </Text>
+                        </View>
+                    </View>
                     {routeHazards.length > 0 && (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
                             {Object.entries(routeSummary).map(([catId, count]) => {
                                 const catColor = getCategoryColor(Number(catId));
                                 const catIcon = getCategoryIcon(Number(catId));
@@ -2573,6 +2811,42 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "600",
     },
+    // ─── SAFE ROUTE PLANNING STYLES ─────────────────────────────────
+    routeOptionCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 10,
+        marginRight: 10,
+        minWidth: 155,
+        maxWidth: 180,
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowOffset: { width: 0, height: 1 },
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    routeOptionLabel: {
+        fontSize: 13,
+        fontWeight: '700',
+        flexShrink: 1,
+    },
+    routeOptionDetail: {
+        fontSize: 11,
+        color: '#6B7280',
+        fontWeight: '500',
+    },
+    safetyBarBg: {
+        height: 4,
+        backgroundColor: '#E5E7EB',
+        borderRadius: 2,
+        marginTop: 6,
+        overflow: 'hidden',
+    },
+    safetyBarFill: {
+        height: '100%',
+        borderRadius: 2,
+    },
+    // ────────────────────────────────────────────────────────────────
     routeHazardMarker: {
         backgroundColor: "#FFFFFF",
         padding: 4,
