@@ -187,7 +187,7 @@
       "waitingConfirmation": "في انتظار تأكيد من مستخدم آخر"
     },
     "confirmSuccess": "تم التأكيد!",
-    "confirmSuccessMessage": "تم تأكيد البلاغ! حصلت على {points} نقاط",
+    "confirmSuccessMessage": "تم تأكيد البلاغ! حصلت على {{points}} نقاط",
     "confirmError": "خطأ",
     "confirmErrorMessage": "حدث خطأ أثناء تأكيد البلاغ",
     "noReports": "لا توجد بلاغات حتى الآن",
@@ -243,10 +243,10 @@
     "pullToRefresh": "اسحب للتحديث",
     "timeAgo": {
       "justNow": "منذ لحظات",
-      "minutesAgo": "قبل {minutes} دقيقة",
-      "hoursAgo": "قبل {hours} ساعة",
+      "minutesAgo": "قبل {{minutes}} دقيقة",
+      "hoursAgo": "قبل {{hours}} ساعة",
       "yesterday": "أمس",
-      "daysAgo": "قبل {days} أيام"
+      "daysAgo": "قبل {{days}} أيام"
     }
   },
   "settings": {
