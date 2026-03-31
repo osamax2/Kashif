@@ -2,8 +2,8 @@
   "expo": {
     "name": "Kashif",
     "slug": "kashif-app",
-    "version": "1.2.0",
-    "orientation": "portrait",
+    "version": "1.2.1",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "kashifapp",
     "userInterfaceStyle": "automatic",
@@ -38,7 +38,7 @@
     },
     "android": {
       "package": "com.kashifroad.app",
-      "versionCode": 26,
+      "versionCode": 27,
       "usesCleartextTraffic": false,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
