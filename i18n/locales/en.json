@@ -190,7 +190,7 @@
       "waitingConfirmation": "Waiting for confirmation from another user"
     },
     "confirmSuccess": "Confirmed!",
-    "confirmSuccessMessage": "Report confirmed! You earned {points} points",
+    "confirmSuccessMessage": "Report confirmed! You earned {{points}} points",
     "confirmError": "Error",
     "confirmErrorMessage": "Error confirming report",
     "noReports": "No reports yet",
@@ -245,10 +245,10 @@
     "pullToRefresh": "Pull to refresh",
     "timeAgo": {
       "justNow": "Just now",
-      "minutesAgo": "{minutes}m ago",
-      "hoursAgo": "{hours}h ago",
+      "minutesAgo": "{{minutes}}m ago",
+      "hoursAgo": "{{hours}}h ago",
       "yesterday": "Yesterday",
-      "daysAgo": "{days}d ago"
+      "daysAgo": "{{days}}d ago"
     }
   },
   "settings": {

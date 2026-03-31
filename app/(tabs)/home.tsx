@@ -7,10 +7,7 @@ import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useOffline } from "@/contexts/OfflineContext";
 import { Category, lookupAPI, Report, reportingAPI, ReportStatus, RouteReport, Severity } from "@/services/api";
-<<<<<<< HEAD
-=======
 import { getBaseUrl } from "@/services/api-config";
->>>>>>> feature/Ku_feature
 import locationMonitoringService from "@/services/location-monitoring";
 import { getPendingReports, removePendingReport, subscribeToNetworkChanges } from "@/services/offline-reports";
 import { cacheNearbyReports, checkConnectivity, getCachedNearbyReports } from "@/services/offline-service";
@@ -39,12 +36,8 @@ import {
     View
 } from "react-native";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-<<<<<<< HEAD
-import MapView, { Heatmap, Marker, Polyline, Region } from "react-native-maps";
-=======
 import MapView, { Circle, Heatmap, Marker, Polyline, Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
->>>>>>> feature/Ku_feature
 
 
 
@@ -116,10 +109,7 @@ export default function HomeScreen() {
     const { t, language } = useLanguage();
     const { reportCreated } = useDataSync();
     const { isOnline: networkOnline } = useOffline();
-<<<<<<< HEAD
-=======
     const insets = useSafeAreaInsets();
->>>>>>> feature/Ku_feature
 
     /** ONBOARDING TUTORIAL */
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -180,6 +170,24 @@ export default function HomeScreen() {
     const [routeSummary, setRouteSummary] = useState<Record<number, number>>({});
     const [routeLoading, setRouteLoading] = useState(false);
     const [routeDestination, setRouteDestination] = useState<string>('');
+    // ────────────────────────────────────────────────────────────────────
+
+    // ─── SAFE ROUTE PLANNING STATE ─────────────────────────────────────
+    interface RouteOption {
+        coords: {latitude: number; longitude: number}[];
+        distanceMeters: number;
+        duration: string;
+        hazards: RouteReport[];
+        summary: Record<number, number>;
+        totalHazards: number;
+        potholeCount: number;
+        safetyScore: number;
+        label: { ar: string; ku: string; en: string };
+        icon: string;
+        color: string;
+    }
+    const [alternativeRoutes, setAlternativeRoutes] = useState<RouteOption[]>([]);
+    const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
     // ────────────────────────────────────────────────────────────────────
 
     // ─── HEATMAP STATE ─────────────────────────────────────────────────
@@ -255,6 +263,12 @@ export default function HomeScreen() {
 
     // Location monitoring state
     const [isMonitoringActive, setIsMonitoringActive] = useState(false);
+
+    // ─── DRIVING MODE STATE ────────────────────────────────────────────
+    const [drivingMode, setDrivingMode] = useState(false);
+    const [drivingModeReporting, setDrivingModeReporting] = useState(false);
+    const drivingModeCooldown = useRef(false);
+    // ────────────────────────────────────────────────────────────────────
 
     // PanResponder for swipe-to-dismiss audio sheet
     const panResponder = useRef(
@@ -336,13 +350,8 @@ export default function HomeScreen() {
                         };
 
                         await reportingAPI.createReport({
-<<<<<<< HEAD
-                            title: report.type === 'speed' ? 'Speed Camera' :
-                                report.type === 'pothole' ? 'Pothole' : 'Accident',
-=======
                             title: report.type === 'pothole' ? 'Pothole' :
                                 report.type === 'accident' ? 'Accident' : 'Environmental Hazard',
->>>>>>> feature/Ku_feature
                             description: report.notes || `${report.type} report`,
                             category_id: categoryMap[report.type || 'pothole'] || 2,
                             severity: severityMap[report.severity] || 'medium',
@@ -762,8 +771,6 @@ export default function HomeScreen() {
             })
             .filter(Boolean) as { latitude: number; longitude: number; weight: number }[];
     }, [heatmapEnabled, reports]);
-<<<<<<< HEAD
-=======
 
     // iOS Circle-based heatmap: compute density color per point
     const iosHeatmapCircles = useMemo(() => {
@@ -786,12 +793,18 @@ export default function HomeScreen() {
             return { ...point, fillColor, key: `heatcircle-${index}` };
         });
     }, [heatmapEnabled, heatmapPoints]);
->>>>>>> feature/Ku_feature
     // ─── END HEATMAP DATA ──────────────────────────────────────────────
 
     // Helper functions
     const getCategoryByName = (name: string): Category | undefined => {
         return categories.find(c => c.name === name);
+    };
+
+    const isPotholeCategory = (categoryId: number): boolean => {
+        const category = categories.find(c => c.id === categoryId);
+        if (!category) return false;
+        const name = category.name_ar || category.name_en || category.name_ku || category.name || "";
+        return name.includes("حفرة") || name.includes("Çalêk") || name.toLowerCase().includes("pothole");
     };
 
     const getCategoryIcon = (categoryId: number): string => {
@@ -800,16 +813,10 @@ export default function HomeScreen() {
 
         const name = category.name_ar || category.name_en || category.name_ku ||  category.name || "";
 
-<<<<<<< HEAD
-        if (name.includes("حفرة") || name.toLowerCase().includes("pothole")) return "⚠️";
-        if (name.includes("حادث") || name.toLowerCase().includes("accident")) return "🚨";
-        if (name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed")) return "📷";
-=======
         if (name.includes("حفرة") || name.includes("Çalêk") || name.toLowerCase().includes("pothole")) return "⚠️";
         if (name.includes("حادث") || name.includes("Qezay") || name.toLowerCase().includes("accident")) return "🚨";
         if (name.includes("كاشف") || name.includes("Kashif") || name.includes("سرعة") || name.includes("Lez") || name.toLowerCase().includes("speed")) return "📷";
         if (name.includes("بيئة") || name.includes("Jîngeh") || name.toLowerCase().includes("environment")) return "🌿";
->>>>>>> feature/Ku_feature
         return "📍";
     };
 
@@ -820,16 +827,10 @@ export default function HomeScreen() {
 
         // Fallback colors based on category name
         const name = category?.name_ar || category?.name_en || category?.name_ku ||category?.name || "";
-<<<<<<< HEAD
-        if(name.includes("كاشف") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza") return "#22C55E"; // Green
-        if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("qezay")) return "#EF4444"; // Red
-        if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("Çalêk ")) return "#F59E0B"; // Amber
-=======
         if(name.includes("كاشف") || name.includes("Kashif") || name.includes("سرعة") || name.toLowerCase().includes("speed") || name.toLowerCase().includes("radar") || name.toLowerCase().includes("Radarê ")|| name.toLowerCase().includes("leza")) return "#22C55E"; // Green
         if (name.includes("حادث") || name.toLowerCase().includes("accident") || name.toLowerCase().includes("qezay")) return "#EF4444"; // Red
         if (name.includes("حفرة") || name.toLowerCase().includes("pothole") || name.toLowerCase().includes("Çalêk ")) return "#F59E0B"; // Amber
         if (name.includes("بيئ") || name.includes("Jîngeh") || name.toLowerCase().includes("environment")) return "#10B981"; // Emerald green for environment
->>>>>>> feature/Ku_feature
         return "#3B82F6"; // Default blue
     };
 
@@ -911,12 +912,70 @@ export default function HomeScreen() {
         }
     };
 
+    // ─── DRIVING MODE: ONE-TAP POTHOLE REPORT ──────────────────────────
+    const handleDrivingModeReport = async () => {
+        if (drivingModeReporting || drivingModeCooldown.current) return;
+        if (!userLocation) {
+            Alert.alert(
+                language === 'ar' ? 'خطأ' : language === 'ku' ? 'Şaşî' : 'Error',
+                language === 'ar' ? 'يرجى تفعيل تحديد الموقع' : language === 'ku' ? 'Ji kerema xwe cîhê xwe çalak bike' : 'Please enable location'
+            );
+            return;
+        }
+
+        setDrivingModeReporting(true);
+        drivingModeCooldown.current = true;
+
+        // Haptic feedback
+        try {
+            const Haptics = require('expo-haptics');
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        } catch (e) {}
+
+        try {
+            const categoryId = getCategoryByName('حفرة')?.id || getCategoryByName('çalak')?.id || 1;
+
+            const newReport = await reportingAPI.createReport({
+                title: language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk li ser rê' : 'Pothole on Road',
+                description: language === 'ar' ? 'بلاغ سريع من وضع القيادة' : language === 'ku' ? 'Rapora bilez ji moda ajotinê' : 'Quick report from driving mode',
+                category_id: categoryId,
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+                severity_id: 2, // Medium severity by default
+            });
+
+            console.log('🚗 Driving mode report created:', newReport.id);
+
+            // Voice confirmation
+            if (soundEnabled) {
+                const msg = language === 'ar'
+                    ? 'تم تسجيل الحفرة بنجاح'
+                    : language === 'ku'
+                    ? 'Çal bi serkeftî hat tomarkirin'
+                    : 'Pothole reported successfully';
+                Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : language === 'ku' ? 'ku-TR' : 'en-US' });
+            }
+
+            // Refresh data
+            await loadData(userLocation);
+            reportCreated();
+            await refreshUser();
+        } catch (err) {
+            console.error('Driving mode report failed:', err);
+            Alert.alert(
+                language === 'ar' ? 'خطأ' : language === 'ku' ? 'Şaşî' : 'Error',
+                language === 'ar' ? 'فشل إرسال البلاغ' : language === 'ku' ? 'Şandina raporê têkçûn' : 'Failed to submit report'
+            );
+        } finally {
+            setDrivingModeReporting(false);
+            // 3-second cooldown to prevent double-taps
+            setTimeout(() => { drivingModeCooldown.current = false; }, 3000);
+        }
+    };
+    // ────────────────────────────────────────────────────────────────────
+
     // ─── ROUTE WARNING FUNCTIONS ────────────────────────────────────────
-<<<<<<< HEAD
-    const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-=======
     const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4';
->>>>>>> feature/Ku_feature
 
     const fetchRouteToDestination = async (destLat: number, destLng: number) => {
         if (!userLocation) {
@@ -934,54 +993,156 @@ export default function HomeScreen() {
         }
         setRouteLoading(true);
         try {
-            // 1. Get route from Google Routes API (new)
-            const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
-            const requestBody = {
-                origin: {
-                    location: {
-                        latLng: {
-                            latitude: userLocation.latitude,
-                            longitude: userLocation.longitude,
+            // ─── OSRM Routing (works worldwide including Syria/Iraq/Middle East) ───
+            // OSRM uses OpenStreetMap data = excellent coverage for Syria
+            let allRoutePoints: {coords: {latitude: number; longitude: number}[]; distanceMeters: number; duration: string; description: string}[] = [];
+
+            // 1. Try OSRM first (free, real road-following routes, alternatives supported)
+            try {
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLocation.longitude},${userLocation.latitude};${destLng},${destLat}?overview=full&geometries=polyline&alternatives=true&steps=false`;
+                console.log('Fetching routes from OSRM...');
+                const osrmRes = await fetch(osrmUrl);
+                const osrmData = await osrmRes.json();
+
+                if (osrmData.code === 'Ok' && osrmData.routes?.length > 0) {
+                    console.log(`OSRM returned ${osrmData.routes.length} route(s)`);
+                    allRoutePoints = osrmData.routes.map((route: any) => ({
+                        coords: decodePolyline(route.geometry),
+                        distanceMeters: route.distance || 0,
+                        duration: `${Math.round(route.duration)}s`,
+                        description: route.legs?.[0]?.summary || '',
+                    }));
+
+                    // If OSRM returned only 1 route, generate synthetic alternatives
+                    // by routing via perpendicular offset waypoints (forces different streets)
+                    if (allRoutePoints.length < 2) {
+                        console.log('Generating synthetic alternatives via offset waypoints...');
+                        const startLat = userLocation.latitude;
+                        const startLng = userLocation.longitude;
+                        const midLat = (startLat + destLat) / 2;
+                        const midLng = (startLng + destLng) / 2;
+                        const dLat = destLat - startLat;
+                        const dLng = destLng - startLng;
+                        const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+                        if (dist > 0.001) { // Only if meaningful distance (>~100m)
+                            const perpLat = -dLng / dist;
+                            const perpLng = dLat / dist;
+                            // Offset ~800m perpendicular to the route direction
+                            const offset = Math.min(0.008, dist * 0.3);
+                            const offsets = [
+                                { lat: midLat + perpLat * offset, lng: midLng + perpLng * offset },
+                                { lat: midLat - perpLat * offset, lng: midLng - perpLng * offset },
+                            ];
+
+                            const viaPromises = offsets.map(async (wp) => {
+                                try {
+                                    const viaUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${wp.lng},${wp.lat};${destLng},${destLat}?overview=full&geometries=polyline&steps=false`;
+                                    const viaRes = await fetch(viaUrl);
+                                    const viaData = await viaRes.json();
+                                    if (viaData.code === 'Ok' && viaData.routes?.[0]) {
+                                        const r = viaData.routes[0];
+                                        return {
+                                            coords: decodePolyline(r.geometry),
+                                            distanceMeters: r.distance || 0,
+                                            duration: `${Math.round(r.duration)}s`,
+                                            description: 'via alternative',
+                                        };
+                                    }
+                                } catch (e) {
+                                    console.warn('Via-waypoint route failed:', e);
+                                }
+                                return null;
+                            });
+
+                            const viaResults = await Promise.all(viaPromises);
+
+                            // Add via-routes that are meaningfully different from the primary route
+                            const primaryDist = allRoutePoints[0].distanceMeters;
+                            for (const vr of viaResults) {
+                                if (vr && vr.coords.length > 2) {
+                                    // Only add if route differs by at least 10% in distance
+                                    const distDiff = Math.abs(vr.distanceMeters - primaryDist) / primaryDist;
+                                    if (distDiff > 0.1) {
+                                        allRoutePoints.push(vr);
+                                    }
+                                }
+                            }
+                            console.log(`After synthetic alternatives: ${allRoutePoints.length} total route(s)`);
+                        }
+                    }
+                }
+            } catch (osrmErr) {
+                console.warn('OSRM failed:', osrmErr);
+            }
+
+            // 2. If OSRM failed or returned nothing, try Google Directions API
+            if (allRoutePoints.length === 0) {
+                console.log('OSRM returned no routes, trying Google Directions API...');
+                try {
+                    const dirUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${userLocation.latitude},${userLocation.longitude}&destination=${destLat},${destLng}&alternatives=true&mode=driving&key=${GOOGLE_API_KEY}`;
+                    const dirRes = await fetch(dirUrl);
+                    const dirData = await dirRes.json();
+                    if (dirData.status === 'OK' && dirData.routes?.length > 0) {
+                        console.log(`Google Directions API returned ${dirData.routes.length} route(s)`);
+                        allRoutePoints = dirData.routes.map((route: any) => {
+                            const coords = decodePolyline(route.overview_polyline.points);
+                            const leg = route.legs?.[0];
+                            return {
+                                coords,
+                                distanceMeters: leg?.distance?.value || 0,
+                                duration: leg?.duration?.value ? `${leg.duration.value}s` : '',
+                                description: route.summary || '',
+                            };
+                        });
+                    }
+                } catch (dirErr) {
+                    console.warn('Google Directions API also failed:', dirErr);
+                }
+            }
+
+            // 3. If still no routes, try Google Routes API v2
+            if (allRoutePoints.length === 0) {
+                console.log('Trying Google Routes API v2...');
+                try {
+                    const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+                    const requestBody = {
+                        origin: { location: { latLng: { latitude: userLocation.latitude, longitude: userLocation.longitude } } },
+                        destination: { location: { latLng: { latitude: destLat, longitude: destLng } } },
+                        travelMode: 'DRIVE',
+                        computeAlternativeRoutes: true,
+                    };
+                    const res = await fetch(routesUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Goog-Api-Key': GOOGLE_API_KEY,
+                            'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.description',
                         },
-                    },
-                },
-                destination: {
-                    location: {
-                        latLng: {
-                            latitude: destLat,
-                            longitude: destLng,
-                        },
-                    },
-                },
-                travelMode: 'DRIVE',
-                routingPreference: 'TRAFFIC_AWARE',
-                computeAlternativeRoutes: false,
-                languageCode: language === 'ar' ? 'ar' : language === 'ku' ? 'ku' : 'en',
-            };
+                        body: JSON.stringify(requestBody),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.routes?.length > 0) {
+                        console.log(`Google Routes API v2 returned ${data.routes.length} route(s)`);
+                        allRoutePoints = data.routes.map((route: any) => ({
+                            coords: decodePolyline(route.polyline.encodedPolyline),
+                            distanceMeters: route.distanceMeters || 0,
+                            duration: route.duration || '',
+                            description: route.description || '',
+                        }));
+                    }
+                } catch (v2Err) {
+                    console.warn('Google Routes API v2 also failed:', v2Err);
+                }
+            }
 
-            console.log('Fetching route from Google Routes API...');
-            const res = await fetch(routesUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Goog-Api-Key': GOOGLE_API_KEY,
-                    'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
-                },
-                body: JSON.stringify(requestBody),
-            });
-            const data = await res.json();
-
-            console.log('Routes API response status:', res.status);
-
-            if (!res.ok || !data.routes?.length) {
-                console.warn('No route found:', data.error?.message || 'unknown error');
-                // Fallback: direct line from user to destination
+            // 4. Last resort: show direct line
+            if (allRoutePoints.length === 0) {
+                console.warn('All routing APIs failed, showing direct line');
                 const directLine = [
                     { latitude: userLocation.latitude, longitude: userLocation.longitude },
                     { latitude: destLat, longitude: destLng },
                 ];
                 setRouteCoords(directLine);
-
                 if (mapRef.current) {
                     mapRef.current.fitToCoordinates(directLine, {
                         edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
@@ -992,63 +1153,151 @@ export default function HomeScreen() {
                 return;
             }
 
-            // 2. Decode polyline from Google Routes API response
-            const encodedPolyline = data.routes[0].polyline.encodedPolyline;
-            const points = decodePolyline(encodedPolyline);
-            setRouteCoords(points);
-            console.log(`Route decoded: ${points.length} points, distance: ${data.routes[0].distanceMeters}m, duration: ${data.routes[0].duration}`);
+            console.log(`Processing ${allRoutePoints.length} route(s)`);
 
-            // 3. Fit map to show entire route
-            if (mapRef.current && points.length > 1) {
-                mapRef.current.fitToCoordinates(points, {
-                    edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
+            // Set first route as default display
+            const firstRouteCoords = allRoutePoints[0].coords;
+            setRouteCoords(firstRouteCoords);
+
+            // 3. Fit map to show all routes
+            const allCoordsCombined = allRoutePoints.flatMap((r: any) => r.coords);
+            if (mapRef.current && allCoordsCombined.length > 1) {
+                mapRef.current.fitToCoordinates(allCoordsCombined, {
+                    edgePadding: { top: 80, right: 40, bottom: 280, left: 40 },
                     animated: true,
                 });
             }
 
-            // 4. Sample waypoints for the backend query (every ~500m, max 100 points)
-            const sampled = sampleWaypoints(points, 100);
+            // 4. Fetch hazards for ALL routes in parallel
+            const ROUTE_COLORS = ['#4A90D9', '#F59E0B', '#22C55E'];
+            const hazardPromises = allRoutePoints.map((rp: any) => {
+                const sampled = sampleWaypoints(rp.coords, 100);
+                return reportingAPI.getReportsAlongRoute(sampled, 200).catch(() => ({
+                    total_hazards: 0,
+                    reports: [] as RouteReport[],
+                    summary: {} as Record<number, number>,
+                }));
+            });
 
-            // 5. Fetch hazards along route (non-blocking - route shows even if this fails)
-            try {
-                const routeData = await reportingAPI.getReportsAlongRoute(sampled, 200);
-                setRouteHazards(routeData.reports);
-                setRouteSummary(routeData.summary);
+            const hazardResults = await Promise.all(hazardPromises);
 
-                // 6. Speak summary
-                if (routeData.total_hazards > 0 && soundEnabled) {
-                    if (language === 'ku') {
-                        // Play pre-generated Kurdish route warning audio
-                        try {
-                            const { sound: kuRouteSound } = await Audio.Sound.createAsync(
-                                require('@/assets/sounds/ku/warning_route.mp3'),
-                                { shouldPlay: true, volume: appVolume }
-                            );
-                            kuRouteSound.setOnPlaybackStatusUpdate((s) => {
-                                if (s.isLoaded && s.didJustFinish) kuRouteSound.unloadAsync();
-                            });
-                        } catch (kuErr) {
-                            console.warn('Kurdish route audio failed:', kuErr);
-                        // 🔹 Fallback Kurdish TTS (nur falls Audio fehlschlägt)
-                        const msg = `Hişyarî: ${routeData.total_hazards} xeter li ser rêya te heye`;
-                        Speech.speak(msg, { language: 'ku-TR' });
+            // 5. Build RouteOption[] with safety scores
+            const routeOptions: RouteOption[] = allRoutePoints.map((rp: any, idx: number) => {
+                const hazardData = hazardResults[idx];
+                const potholeCount = hazardData.reports.filter((h: RouteReport) => isPotholeCategory(h.category_id)).length;
+                // Safety score: 100 = safest, 0 = most dangerous
+                // Formula: penalize per hazard (-5), per pothole (-8 extra), bonus for short distance
+                const hazardPenalty = hazardData.total_hazards * 5;
+                const potholePenalty = potholeCount * 8;
+                const safetyScore = Math.max(0, Math.min(100, 100 - hazardPenalty - potholePenalty));
+
+                return {
+                    coords: rp.coords,
+                    distanceMeters: rp.distanceMeters,
+                    duration: rp.duration,
+                    hazards: hazardData.reports,
+                    summary: hazardData.summary,
+                    totalHazards: hazardData.total_hazards,
+                    potholeCount,
+                    safetyScore,
+                    label: { ar: '', ku: '', en: '' }, // Will be assigned below
+                    icon: '',
+                    color: ROUTE_COLORS[idx % ROUTE_COLORS.length],
+                };
+            });
+
+            // 6. Label routes based on characteristics
+            if (routeOptions.length === 1) {
+                routeOptions[0].label = { ar: 'المسار', ku: 'Rê', en: 'Route' };
+                routeOptions[0].icon = '🛣️';
+            } else {
+                // First route = fastest (Google default)
+                routeOptions[0].label = { ar: 'أسرع طريق', ku: 'Rêya herî bilez', en: 'Fastest Route' };
+                routeOptions[0].icon = '⚡';
+                routeOptions[0].color = '#4A90D9';
+
+                // Find safest route (highest safety score, excluding first)
+                let safestIdx = 1;
+                let fewestPotholesIdx = 1;
+                for (let i = 1; i < routeOptions.length; i++) {
+                    if (routeOptions[i].safetyScore > routeOptions[safestIdx].safetyScore) safestIdx = i;
+                    if (routeOptions[i].potholeCount < routeOptions[fewestPotholesIdx].potholeCount) fewestPotholesIdx = i;
+                }
+
+                // If safest and fewest potholes are same route
+                if (safestIdx === fewestPotholesIdx) {
+                    routeOptions[safestIdx].label = { ar: '⚠️ طريق آمن أكثر', ku: '⚠️ Rêya ewletir', en: '⚠️ Safer Route' };
+                    routeOptions[safestIdx].icon = '🛡️';
+                    routeOptions[safestIdx].color = '#22C55E';
+                    // Label remaining routes
+                    for (let i = 1; i < routeOptions.length; i++) {
+                        if (i !== safestIdx) {
+                            routeOptions[i].label = { ar: 'طريق بديل', ku: 'Rêya alternatîf', en: 'Alternative' };
+                            routeOptions[i].icon = '🔄';
+                            routeOptions[i].color = '#F59E0B';
                         }
-                    } else {
-                        const msg = language === 'ar'
-                            ? `تحذير: ${routeData.total_hazards} خطر على طريقك`
-<<<<<<< HEAD
-                            : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
-                        Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
-=======
-                            : language === 'ku'
-                            ? `Hişyarî: ${routeData.total_hazards} metirsî li ser rêya te`
-                            : `Warning: ${routeData.total_hazards} hazard${routeData.total_hazards > 1 ? 's' : ''} on your route`;
-                        Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : language === 'ku' ? 'ku-TR' : 'en-US' });
->>>>>>> feature/Ku_feature
+                    }
+                } else {
+                    routeOptions[safestIdx].label = { ar: '⚠️ طريق آمن أكثر', ku: '⚠️ Rêya ewletir', en: '⚠️ Safer Route' };
+                    routeOptions[safestIdx].icon = '🛡️';
+                    routeOptions[safestIdx].color = '#22C55E';
+                    routeOptions[fewestPotholesIdx].label = { ar: '🚗 أقل حفر', ku: '🚗 Kêmtir çal', en: '🚗 Fewer Potholes' };
+                    routeOptions[fewestPotholesIdx].icon = '🚗';
+                    routeOptions[fewestPotholesIdx].color = '#F59E0B';
+                    // Label any remaining
+                    for (let i = 1; i < routeOptions.length; i++) {
+                        if (i !== safestIdx && i !== fewestPotholesIdx) {
+                            routeOptions[i].label = { ar: 'طريق بديل', ku: 'Rêya alternatîf', en: 'Alternative' };
+                            routeOptions[i].icon = '🔄';
+                            routeOptions[i].color = '#9CA3AF';
+                        }
                     }
                 }
-            } catch (hazardErr) {
-                console.warn('Failed to fetch route hazards (route still shown):', hazardErr);
+
+                // Check if first route is actually also the safest
+                if (routeOptions[0].safetyScore >= routeOptions[safestIdx].safetyScore) {
+                    routeOptions[0].label = { ar: '⚡ أسرع وأكثر أماناً', ku: '⚡ Herî bilez û ewle', en: '⚡ Fastest & Safest' };
+                    routeOptions[0].icon = '⭐';
+                    routeOptions[0].color = '#22C55E';
+                }
+            }
+
+            setAlternativeRoutes(routeOptions);
+            setSelectedRouteIndex(0);
+
+            // Set the first route's hazards as active display
+            setRouteHazards(routeOptions[0].hazards);
+            setRouteSummary(routeOptions[0].summary);
+
+            console.log(`Safe Route Planning: ${routeOptions.length} routes analyzed`);
+            routeOptions.forEach((ro, i) => {
+                console.log(`  Route ${i}: ${ro.label.en} | Hazards: ${ro.totalHazards} | Potholes: ${ro.potholeCount} | Safety: ${ro.safetyScore}`);
+            });
+
+            // 7. Speak summary for selected route
+            const selectedRoute = routeOptions[0];
+            if (selectedRoute.totalHazards > 0 && soundEnabled) {
+                const altCount = routeOptions.length - 1;
+                if (language === 'ku') {
+                    try {
+                        const { sound: kuRouteSound } = await Audio.Sound.createAsync(
+                            require('@/assets/sounds/ku/warning_route.mp3'),
+                            { shouldPlay: true, volume: appVolume }
+                        );
+                        kuRouteSound.setOnPlaybackStatusUpdate((s) => {
+                            if (s.isLoaded && s.didJustFinish) kuRouteSound.unloadAsync();
+                        });
+                    } catch (kuErr) {
+                        console.warn('Kurdish route audio failed:', kuErr);
+                        const msg = `Hişyarî: ${selectedRoute.totalHazards} xeter li ser rêya te heye`;
+                        Speech.speak(msg, { language: 'ku-TR' });
+                    }
+                } else {
+                    const msg = language === 'ar'
+                        ? `تحذير: ${selectedRoute.totalHazards} خطر على طريقك${altCount > 0 ? `. يوجد ${altCount} طريق بديل أكثر أماناً` : ''}`
+                        : `Warning: ${selectedRoute.totalHazards} hazard${selectedRoute.totalHazards > 1 ? 's' : ''} on your route${altCount > 0 ? `. ${altCount} safer alternative${altCount > 1 ? 's' : ''} available` : ''}`;
+                    Speech.speak(msg, { language: language === 'ar' ? 'ar-SA' : 'en-US' });
+                }
             }
         } catch (err) {
             console.error('Route error:', err);
@@ -1071,6 +1320,24 @@ export default function HomeScreen() {
         }
     };
 
+    // Select a different route option
+    const selectRoute = (index: number) => {
+        if (index < 0 || index >= alternativeRoutes.length) return;
+        setSelectedRouteIndex(index);
+        const selected = alternativeRoutes[index];
+        setRouteCoords(selected.coords);
+        setRouteHazards(selected.hazards);
+        setRouteSummary(selected.summary);
+
+        // Fit map to the selected route
+        if (mapRef.current && selected.coords.length > 1) {
+            mapRef.current.fitToCoordinates(selected.coords, {
+                edgePadding: { top: 80, right: 40, bottom: 280, left: 40 },
+                animated: true,
+            });
+        }
+    };
+
     const clearRoute = () => {
         setRouteMode(false);
         setRouteCoords([]);
@@ -1078,6 +1345,8 @@ export default function HomeScreen() {
         setRouteSummary({});
         setRouteDestination('');
         setSearchMarker(null);
+        setAlternativeRoutes([]);
+        setSelectedRouteIndex(0);
     };
 
     // Decode Google encoded polyline
@@ -1133,11 +1402,7 @@ export default function HomeScreen() {
         console.log('🔍 Searching with Geocoding API:', query);
 
         try {
-<<<<<<< HEAD
-            const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-=======
             const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4';
->>>>>>> feature/Ku_feature
             // Add Syria bias to the search
             const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=${language}`;
 
@@ -1267,15 +1532,9 @@ export default function HomeScreen() {
                     shouldSpeak = true;
                 }
                 break;
-<<<<<<< HEAD
-            case "speed":
-                if (warnSpeed) {
-                    message = t('home.warnSpeed');
-=======
             case "environment":
                 if (warnSpeed) {
                     message = t('home.warnEnvironment') || (language === 'ar' ? 'تحذير! خطر بيئي قريب' : language === 'ku' ? 'Hişyarî! Metirsiya jîngehî li pêş te ye' : 'Warning! Environmental hazard ahead');
->>>>>>> feature/Ku_feature
                     shouldSpeak = true;
                 }
                 break;
@@ -1291,11 +1550,7 @@ export default function HomeScreen() {
                     const kuAudioMap: Record<string, any> = {
                         'pothole': require('@/assets/sounds/ku/warn_pothole_short.mp3'),
                         'accident': require('@/assets/sounds/ku/warn_accident_short.mp3'),
-<<<<<<< HEAD
-                        'speed': require('@/assets/sounds/ku/warn_speed_short.mp3'),
-=======
                         'environment': require('@/assets/sounds/ku/warn_speed_short.mp3'),
->>>>>>> feature/Ku_feature
                     };
                     const kuFile = kuAudioMap[type] || require('@/assets/sounds/ku/warning_generic.mp3');
                     const { sound: kuWarnSound } = await Audio.Sound.createAsync(
@@ -1306,12 +1561,6 @@ export default function HomeScreen() {
                         if (s.isLoaded && s.didJustFinish) kuWarnSound.unloadAsync();
                     });
                 } catch (kuErr) {
-<<<<<<< HEAD
-                    console.warn('Kurdish warning audio failed, falling back to Arabic TTS:', kuErr);
-                    await Speech.speak('تحذير!', { language: 'ar-SA', rate: 0.9, volume: appVolume });
-                } catch (kuErr) {
-=======
->>>>>>> feature/Ku_feature
                     console.warn('Kurdish warning audio failed, falling back to Kurdish TTS:', kuErr);
 
                     // 🔹 Kurmancî TTS fallback
@@ -1320,13 +1569,8 @@ export default function HomeScreen() {
                             ? 'Hişyarî, çala li pêş te ye!'
                             : type === 'accident'
                                 ? 'Hişyarî, qezayek li pêş te heye!'
-<<<<<<< HEAD
-                                : type === 'speed'
-                                    ? 'Hişyarî, radarê lezê li pêş te ye!'
-=======
                                 : type === 'environment'
                                     ? 'Hişyarî, metirsiya jîngehî li pêş te ye!'
->>>>>>> feature/Ku_feature
                                     : 'Hişyarî!';
 
                     await Speech.speak(kuMessage, {
@@ -1477,12 +1721,29 @@ export default function HomeScreen() {
                         }
                     })}
 
-                    {/* Route Polyline */}
+                    {/* Alternative Route Polylines (dimmed, behind selected) */}
+                    {alternativeRoutes.map((route, idx) => {
+                        if (idx === selectedRouteIndex) return null;
+                        if (route.coords.length < 2) return null;
+                        return (
+                            <Polyline
+                                key={`alt-route-${idx}`}
+                                coordinates={route.coords}
+                                strokeColor={route.color + '60'}
+                                strokeWidth={4}
+                                lineDashPattern={[10, 6]}
+                                tappable={true}
+                                onPress={() => selectRoute(idx)}
+                            />
+                        );
+                    })}
+
+                    {/* Selected Route Polyline */}
                     {routeCoords.length > 1 && (
                         <Polyline
                             coordinates={routeCoords}
-                            strokeColor="#4A90D9"
-                            strokeWidth={5}
+                            strokeColor={alternativeRoutes[selectedRouteIndex]?.color || "#4A90D9"}
+                            strokeWidth={6}
                             lineDashPattern={[0]}
                         />
                     )}
@@ -1507,13 +1768,8 @@ export default function HomeScreen() {
                         );
                     })}
 
-<<<<<<< HEAD
-                    {/* Heatmap Overlay */}
-                    {heatmapEnabled && heatmapPoints.length > 0 && (
-=======
                     {/* Heatmap Overlay - native on Android, circle-based on iOS */}
                     {Platform.OS === 'android' && heatmapEnabled && heatmapPoints.length > 0 && (
->>>>>>> feature/Ku_feature
                         <Heatmap
                             points={heatmapPoints}
                             radius={40}
@@ -1525,8 +1781,6 @@ export default function HomeScreen() {
                             }}
                         />
                     )}
-<<<<<<< HEAD
-=======
                     {Platform.OS === 'ios' && iosHeatmapCircles.map((circle) => (
                         <Circle
                             key={circle.key}
@@ -1536,7 +1790,6 @@ export default function HomeScreen() {
                             strokeColor="transparent"
                         />
                     ))}
->>>>>>> feature/Ku_feature
                 </MapView>
 
             </View>
@@ -1581,11 +1834,7 @@ export default function HomeScreen() {
                         console.error('❌ Places API Error:', error);
                     }}
                     query={{
-<<<<<<< HEAD
-                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-=======
                         key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
->>>>>>> feature/Ku_feature
                         language: language,
                     }}
                     enablePoweredByContainer={false}
@@ -1708,14 +1957,18 @@ export default function HomeScreen() {
             <View
                 style={[
                     styles.fabBar,
-<<<<<<< HEAD
-                    { right: 14 },
-=======
                     { right: 14, bottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 80 : insets.bottom + 85 },
->>>>>>> feature/Ku_feature
                 ]}
             >
-                {/* HEATMAP TOGGLE BUTTON (bottom) */}
+                {/* DRIVING MODE BUTTON (bottommost) */}
+                <TouchableOpacity
+                    style={styles.drivingModeButton}
+                    onPress={() => setDrivingMode(true)}
+                >
+                    <Ionicons name="car-sport" size={22} color="#0D2B66" />
+                </TouchableOpacity>
+
+                {/* HEATMAP TOGGLE BUTTON */}
                 <TouchableOpacity
                     style={[
                         styles.heatmapButton,
@@ -1756,17 +2009,11 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.fabActionBtn}
-<<<<<<< HEAD
-                            onPress={() => { setReportType("speed"); setMenuOpen(false); }}
-                        >
-                            <Image source={require("../../assets/icons/speed.png")} style={styles.fabActionIcon} />
-=======
                             onPress={() => { setReportType("environment"); setMenuOpen(false); }}
                         >
                             <View style={[styles.fabActionIcon, { justifyContent: 'center', alignItems: 'center' }]}>
                                 <Text style={{ fontSize: 24 }}>🌿</Text>
                             </View>
->>>>>>> feature/Ku_feature
                         </TouchableOpacity>
                     </Animated.View>
                 )}
@@ -1783,25 +2030,100 @@ export default function HomeScreen() {
                 </View>
             )}
 
-            {/* ROUTE HAZARD SUMMARY PANEL */}
+            {/* ROUTE HAZARD SUMMARY PANEL WITH SAFE ROUTE SELECTOR */}
             {routeMode && routeCoords.length > 0 && (
                 <View style={[styles.routeSummaryPanel, language === 'ar' ? { direction: 'rtl' } : {}]}>
+                    {/* Header with close button */}
                     <View style={styles.routeSummaryHeader}>
-                        <Ionicons name={routeHazards.length > 0 ? "warning" : "checkmark-circle"} size={20} color={routeHazards.length > 0 ? "#F59E0B" : "#22C55E"} />
+                        <Ionicons name="navigate" size={18} color="#0D2B66" />
                         <Text style={styles.routeSummaryTitle}>
-                            {routeHazards.length > 0
-                                ? (language === 'ar'
-                                    ? `${routeHazards.length} تحذير على الطريق`
-                                    : language === 'ku' ? `Li ser rê ${routeHazards.length} Hişyarî li ser rê` : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on route`)
-                                : (language === 'ar' ? 'لا توجد مخاطر على الطريق ✓' : language === 'ku' ? 'Li ser rê tu Metirsi tune ye' : 'No hazards on route ✓')
-                            }
+                            {language === 'ar' ? 'تخطيط الطريق الآمن' : language === 'ku' ? 'Plana Rêya Ewle' : 'Safe Route Planning'}
                         </Text>
                         <TouchableOpacity onPress={clearRoute} style={{ marginLeft: 'auto' }}>
                             <Ionicons name="close-circle" size={22} color="#666" />
                         </TouchableOpacity>
                     </View>
+
+                    {/* Route Options Selector */}
+                    {alternativeRoutes.length > 1 && (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+                            {alternativeRoutes.map((route, idx) => {
+                                const isSelected = idx === selectedRouteIndex;
+                                const routeLabel = language === 'ar' ? route.label.ar : language === 'ku' ? route.label.ku : route.label.en;
+                                const durationMin = route.duration ? Math.round(parseInt(route.duration.replace('s', '')) / 60) : 0;
+                                const distanceKm = route.distanceMeters ? (route.distanceMeters / 1000).toFixed(1) : '?';
+                                return (
+                                    <TouchableOpacity
+                                        key={`route-opt-${idx}`}
+                                        style={[
+                                            styles.routeOptionCard,
+                                            { borderColor: route.color, borderWidth: isSelected ? 2.5 : 1 },
+                                            isSelected && { backgroundColor: route.color + '15' },
+                                        ]}
+                                        onPress={() => selectRoute(idx)}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                                            <Text style={{ fontSize: 16 }}>{route.icon}</Text>
+                                            <Text style={[styles.routeOptionLabel, { color: route.color }]} numberOfLines={1}>
+                                                {routeLabel}
+                                            </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                            <Text style={styles.routeOptionDetail}>
+                                                {distanceKm} km  •  {durationMin} {language === 'ar' ? 'د' : 'min'}
+                                            </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                            {route.totalHazards > 0 ? (
+                                                <>
+                                                    <Ionicons name="warning" size={13} color="#F59E0B" />
+                                                    <Text style={{ fontSize: 12, color: '#F59E0B', fontWeight: '600' }}>
+                                                        {route.totalHazards} {language === 'ar' ? 'خطر' : language === 'ku' ? 'xeter' : 'hazard' + (route.totalHazards > 1 ? 's' : '')}
+                                                    </Text>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Ionicons name="checkmark-circle" size={13} color="#22C55E" />
+                                                    <Text style={{ fontSize: 12, color: '#22C55E', fontWeight: '600' }}>
+                                                        {language === 'ar' ? 'آمن' : language === 'ku' ? 'Ewle' : 'Safe'}
+                                                    </Text>
+                                                </>
+                                            )}
+                                            {route.potholeCount > 0 && (
+                                                <Text style={{ fontSize: 12, color: '#6B7280' }}>
+                                                    • 🚗 {route.potholeCount} {language === 'ar' ? 'حفرة' : language === 'ku' ? 'çal' : 'pothole' + (route.potholeCount > 1 ? 's' : '')}
+                                                </Text>
+                                            )}
+                                        </View>
+                                        {/* Safety score bar */}
+                                        <View style={styles.safetyBarBg}>
+                                            <View style={[styles.safetyBarFill, {
+                                                width: `${route.safetyScore}%`,
+                                                backgroundColor: route.safetyScore >= 70 ? '#22C55E' : route.safetyScore >= 40 ? '#F59E0B' : '#EF4444',
+                                            }]} />
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    )}
+
+                    {/* Hazard details for selected route */}
+                    <View style={{ marginTop: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Ionicons name={routeHazards.length > 0 ? "warning" : "checkmark-circle"} size={16} color={routeHazards.length > 0 ? "#F59E0B" : "#22C55E"} />
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: '#0D2B66' }}>
+                                {routeHazards.length > 0
+                                    ? (language === 'ar'
+                                        ? `${routeHazards.length} تحذير على هذا الطريق`
+                                        : language === 'ku' ? `${routeHazards.length} hişyarî li ser vê rêyê` : `${routeHazards.length} warning${routeHazards.length > 1 ? 's' : ''} on this route`)
+                                    : (language === 'ar' ? 'طريق آمن ✓' : language === 'ku' ? 'Rêya ewle ✓' : 'Safe route ✓')
+                                }
+                            </Text>
+                        </View>
+                    </View>
                     {routeHazards.length > 0 && (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
                             {Object.entries(routeSummary).map(([catId, count]) => {
                                 const catColor = getCategoryColor(Number(catId));
                                 const catIcon = getCategoryIcon(Number(catId));
@@ -1915,19 +2237,11 @@ export default function HomeScreen() {
                                 getCategoryByName('qezay')?.id ||
                                 2;
 
-<<<<<<< HEAD
-                        } else if (reportType === 'speed') {
-                            categoryId =
-                                getCategoryByName('كاشف سرعة')?.id ||
-                                getCategoryByName('radar leza')?.id ||
-                                getCategoryByName('leza')?.id ||
-=======
                         } else if (reportType === 'environment') {
                             categoryId =
                                 getCategoryByName('خطر بيئي')?.id ||
                                 getCategoryByName('بيئ')?.id ||
                                 getCategoryByName('jîngehî')?.id ||
->>>>>>> feature/Ku_feature
                                 3;
                         }
 
@@ -1987,11 +2301,7 @@ export default function HomeScreen() {
                                         );
 
                                         Alert.alert(
-<<<<<<< HEAD
-                                            language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? 'Hate pistrastkirin' : '✅ Confirmed',
-=======
                                             language === 'ar' ? '✅ تم التأكيد' : language === 'ku' ? '✅ Hate piştrastkirin' : '✅ Confirmed',
->>>>>>> feature/Ku_feature
                                             language === 'ar'
                                                 ? `تم تأكيد البلاغ #${nearest.id}. حصلت على ${confirmResult.points_awarded} نقاط!`
                                                 : language === 'ku' ? `Rapor #${nearest.id} hate piştrastkirin! Tê ${confirmResult.points_awarded} xal wergirtin!!` : `Report #${nearest.id} confirmed! You earned ${confirmResult.points_awarded} points!`
@@ -2017,89 +2327,30 @@ export default function HomeScreen() {
                             // Continue with report creation even if duplicate check fails
                         }
 
-<<<<<<< HEAD
-                        // Upload photo if provided - AI will analyze it
-=======
                         // Upload photo if provided - FAST mode, AI runs in background
->>>>>>> feature/Ku_feature
                         let photoUrl: string | undefined = undefined;
-                        let aiDescription: string | undefined = undefined;
-                        let aiAnnotatedUrl: string | undefined = undefined;
-                        let aiDetections: string | undefined = undefined;
                         if (data.photoUri) {
                             try {
-<<<<<<< HEAD
-                                console.log('📷 Uploading photo with AI analysis...');
-                                const uploadResult = await reportingAPI.uploadImage(data.photoUri);
-=======
                                 console.log('📷 Uploading photo (fast mode, AI will run in background)...');
                                 // Use asyncAI=true for fast upload - AI will run after report creation
                                 const uploadResult = await reportingAPI.uploadImage(data.photoUri, true);
->>>>>>> feature/Ku_feature
                                 photoUrl = uploadResult.url;
                                 console.log('✅ Photo uploaded:', photoUrl);
-
-                                // Use AI analysis if available
-                                if (uploadResult.ai_analysis && uploadResult.ai_analysis.num_potholes > 0) {
-                                    console.log('🤖 AI detected', uploadResult.ai_analysis.num_potholes, 'pothole(s)');
-
-                                    // Use AI description based on language
-                                    aiDescription = (language === 'ar'
-                                        ? uploadResult.ai_analysis.ai_description_ar
-                                        : language === 'ku'
-                                        ? uploadResult.ai_analysis.ai_description_ku
-                                        : uploadResult.ai_analysis.ai_description) || undefined;
-
-                                    // Get annotated image URL if available
-                                    if (uploadResult.ai_analysis.annotated_url) {
-                                        aiAnnotatedUrl = uploadResult.ai_analysis.annotated_url;
-                                        console.log('🎨 AI annotated image:', aiAnnotatedUrl);
-                                    }
-
-                                    // Store detections as JSON string
-                                    if (uploadResult.ai_analysis.detections && uploadResult.ai_analysis.detections.length > 0) {
-                                        aiDetections = JSON.stringify(uploadResult.ai_analysis.detections);
-                                        console.log('📦 AI detections stored:', uploadResult.ai_analysis.detections.length);
-                                    }
-
-                                    // AI determines severity from photo analysis
-                                    if (uploadResult.ai_analysis.max_severity === 'HIGH') {
-                                        severityId = 3;
-                                        console.log('🤖 AI set severity to HIGH from photo');
-                                    } else if (uploadResult.ai_analysis.max_severity === 'MEDIUM') {
-                                        severityId = 2;
-                                        console.log('🤖 AI set severity to MEDIUM from photo');
-                                    } else if (uploadResult.ai_analysis.max_severity === 'LOW') {
-                                        severityId = 1;
-                                        console.log('🤖 AI set severity to LOW from photo');
-                                    }
-                                }
                             } catch (uploadError) {
                                 console.warn('⚠️ Photo upload failed, continuing without photo:', uploadError);
                                 // Continue without photo if upload fails
                             }
                         }
 
-<<<<<<< HEAD
-                        // Create report - use AI description if available
-                        const finalDescription = aiDescription
-                            ? (data.notes ? `${data.notes}\n\n${aiDescription}` : aiDescription)
-                            : (data.notes || (language === 'ar' ? 'بلاغ جديد' : language === 'ku' ? 'Rapora nû' : 'New Report'));
-=======
                         // Create report immediately
                         const finalDescription = data.notes || (language === 'ar' ? 'بلاغ جديد' : language === 'ku' ? 'Rapora nû' : 'New Report');
->>>>>>> feature/Ku_feature
 
                         const newReport = await reportingAPI.createReport({
                             title: data.type === 'pothole'
                                 ? (language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk  li ser rê' : 'Pothole on Road')
                                 : data.type === 'accident'
                                     ? (language === 'ar' ? 'حادث مروري' : language === 'ku' ? 'Qezaya trafîkê' : 'Traffic Accident')
-<<<<<<< HEAD
-                                    : (language === 'ar' ? 'كاشف سرعة' : language === 'ku' ? 'Kameraya lezê' : 'Speed Camera'),
-=======
                                     : (language === 'ar' ? 'خطر بيئي' : language === 'ku' ? 'Metirsiya jîngehî' : 'Environmental Hazard'),
->>>>>>> feature/Ku_feature
                             description: finalDescription,
                             category_id: categoryId,
                             latitude: locationToUse.latitude,
@@ -2107,14 +2358,10 @@ export default function HomeScreen() {
                             address_text: data.address,
                             severity_id: severityId,
                             photo_urls: photoUrl,
-                            ai_annotated_url: aiAnnotatedUrl,
-                            ai_detections: aiDetections,
                         });
 
                         console.log('✅ Report created:', newReport.id);
 
-<<<<<<< HEAD
-=======
                         // Trigger AI analysis in background (will send push notification when done)
                         if (photoUrl && data.type === 'pothole') {
                             try {
@@ -2128,7 +2375,6 @@ export default function HomeScreen() {
                             }
                         }
 
->>>>>>> feature/Ku_feature
                         // Clear long press marker after successful submission
                         if (longPressMarker) {
                             setLongPressMarker(null);
@@ -2170,11 +2416,7 @@ export default function HomeScreen() {
                             { transform: [{ translateY: audioSheetY }] }
                         ]}
                     >
-<<<<<<< HEAD
-                        <BlurView intensity={55} tint="light" style={styles.audioSheet}>
-=======
                         <BlurView intensity={55} tint="light" style={[styles.audioSheet, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 80 : insets.bottom + 90 }]}>
->>>>>>> feature/Ku_feature
                             <View {...panResponder.panHandlers} style={styles.audioSheetHandleArea}>
                                 <View style={styles.audioSheetHandle} />
                             </View>
@@ -2236,24 +2478,14 @@ export default function HomeScreen() {
                                         const newValue = !warnSpeed;
                                         setWarnSpeed(newValue);
                                         if (newValue && soundEnabled) {
-<<<<<<< HEAD
-                                            await speakWarning('speed');
-=======
                                             await speakWarning('environment');
->>>>>>> feature/Ku_feature
                                         }
                                     }}
                                 >
                                     <View style={[styles.modeIconCircle]}>
-<<<<<<< HEAD
-                                        <Ionicons name="speedometer" size={26} color="#00FF00" />
-                                    </View>
-                                    <Text style={styles.modeText}>{t('home.speedCamera')}</Text>
-=======
                                         <Ionicons name="leaf" size={26} color="#10B981" />
                                     </View>
                                     <Text style={styles.modeText}>{t('home.environmentHazard')}</Text>
->>>>>>> feature/Ku_feature
                                 </TouchableOpacity>
 
                             </View>
@@ -2274,11 +2506,7 @@ export default function HomeScreen() {
 
             {/* MARKER DETAIL BOTTOM SHEET */}
             {markerDetailVisible && selectedReportForDonation && (
-<<<<<<< HEAD
-                <View style={styles.markerDetailOverlay}>
-=======
                 <View style={[styles.markerDetailOverlay, { bottom: 65 + (Platform.OS === 'android' ? Math.max(insets.bottom, 16) + 10 : 15) }]}>
->>>>>>> feature/Ku_feature
                     <TouchableOpacity
                         style={styles.markerDetailBackdrop}
                         activeOpacity={1}
@@ -2288,38 +2516,6 @@ export default function HomeScreen() {
                         <View {...markerDetailPanResponder.panHandlers} style={styles.markerDetailHandleArea}>
                             <View style={styles.markerDetailHandle} />
                         </View>
-<<<<<<< HEAD
-                        <Text style={styles.markerDetailTitle}>
-                            {selectedReportForDonation.title || categories.find(c => c.id === selectedReportForDonation.category_id)?.name || (language === 'ar' ? 'بلاغ' : language === 'ku' ? 'Rapor' : 'Report')}
-                        </Text>
-                        {selectedReportForDonation.description ? (
-                            <Text style={styles.markerDetailDesc} numberOfLines={3}>
-                                {selectedReportForDonation.description}
-                            </Text>
-                        ) : null}
-                        <View style={styles.markerDetailActions}>
-                            <TouchableOpacity
-                                style={styles.markerDetailDonateBtn}
-                                onPress={() => {
-                                    setMarkerDetailVisible(false);
-                                    setDonationModalVisible(true);
-                                }}
-                            >
-                                <Ionicons name="heart" size={18} color="#fff" />
-                                <Text style={styles.markerDetailDonateTxt}>
-                                    {language === 'ar' ? 'تبرع' : language === 'ku' ? 'Beşdarî kirin' : 'Donate'}
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.markerDetailCloseBtn}
-                                onPress={() => setMarkerDetailVisible(false)}
-                            >
-                                <Text style={styles.markerDetailCloseTxt}>
-                                    {language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-=======
 
                         <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
                         {/* Photo */}
@@ -2439,8 +2635,75 @@ export default function HomeScreen() {
                                 {language === 'ar' ? 'إغلاق' : language === 'ku' ? 'Bigire' : 'Close'}
                             </Text>
                         </TouchableOpacity>
->>>>>>> feature/Ku_feature
                     </Animated.View>
+                </View>
+            )}
+
+            {/* DRIVING MODE OVERLAY */}
+            {drivingMode && (
+                <View style={styles.drivingModeOverlay}>
+                    {/* Map still visible underneath, but controls are simplified */}
+
+                    {/* Exit button - small, top corner */}
+                    <TouchableOpacity
+                        style={[styles.drivingModeExit, { top: insets.top + 10 }]}
+                        onPress={() => setDrivingMode(false)}
+                    >
+                        <Ionicons name="close" size={24} color="#fff" />
+                        <Text style={styles.drivingModeExitText}>
+                            {language === 'ar' ? 'خروج' : language === 'ku' ? 'Derketin' : 'Exit'}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Mode label */}
+                    <View style={[styles.drivingModeLabel, { top: insets.top + 10 }]}>
+                        <Ionicons name="car-sport" size={20} color="#fff" />
+                        <Text style={styles.drivingModeLabelText}>
+                            {language === 'ar' ? 'وضع القيادة' : language === 'ku' ? 'Moda Ajotinê' : 'Driving Mode'}
+                        </Text>
+                    </View>
+
+                    {/* Speed / location info */}
+                    {userLocation && (
+                        <View style={styles.drivingModeLocationBar}>
+                            <Ionicons name="location" size={16} color="#22C55E" />
+                            <Text style={styles.drivingModeLocationText}>
+                                {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* THE ONE BIG BUTTON */}
+                    <TouchableOpacity
+                        style={[
+                            styles.drivingModeMainButton,
+                            drivingModeReporting && styles.drivingModeMainButtonDisabled,
+                        ]}
+                        onPress={handleDrivingModeReport}
+                        disabled={drivingModeReporting}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.drivingModeButtonInner}>
+                            {drivingModeReporting ? (
+                                <>
+                                    <Text style={styles.drivingModeButtonIcon}>✅</Text>
+                                    <Text style={styles.drivingModeButtonText}>
+                                        {language === 'ar' ? 'تم التسجيل!' : language === 'ku' ? 'Hat tomarkirin!' : 'Reported!'}
+                                    </Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={styles.drivingModeButtonIcon}>⚠️</Text>
+                                    <Text style={styles.drivingModeButtonText}>
+                                        {language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk li ser rê' : 'Pothole!'}
+                                    </Text>
+                                    <Text style={styles.drivingModeButtonSubtext}>
+                                        {language === 'ar' ? 'اضغط للإبلاغ الفوري' : language === 'ku' ? 'Pêl bike ji bo raporkirinê' : 'Tap to report instantly'}
+                                    </Text>
+                                </>
+                            )}
+                        </View>
+                    </TouchableOpacity>
                 </View>
             )}
 
@@ -2786,6 +3049,42 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "600",
     },
+    // ─── SAFE ROUTE PLANNING STYLES ─────────────────────────────────
+    routeOptionCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 10,
+        marginRight: 10,
+        minWidth: 155,
+        maxWidth: 180,
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowOffset: { width: 0, height: 1 },
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    routeOptionLabel: {
+        fontSize: 13,
+        fontWeight: '700',
+        flexShrink: 1,
+    },
+    routeOptionDetail: {
+        fontSize: 11,
+        color: '#6B7280',
+        fontWeight: '500',
+    },
+    safetyBarBg: {
+        height: 4,
+        backgroundColor: '#E5E7EB',
+        borderRadius: 2,
+        marginTop: 6,
+        overflow: 'hidden',
+    },
+    safetyBarFill: {
+        height: '100%',
+        borderRadius: 2,
+    },
+    // ────────────────────────────────────────────────────────────────
     routeHazardMarker: {
         backgroundColor: "#FFFFFF",
         padding: 4,
@@ -3022,11 +3321,7 @@ const styles = StyleSheet.create({
 // ─── MARKER DETAIL BOTTOM SHEET ──────────────────────────────────
     markerDetailOverlay: {
         position: 'absolute',
-<<<<<<< HEAD
-        top: 0, left: 0, right: 0, bottom: 0,
-=======
         top: 0, left: 0, right: 0,
->>>>>>> feature/Ku_feature
         zIndex: 9999,
         justifyContent: 'flex-end',
     },
@@ -3040,12 +3335,8 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20,
-<<<<<<< HEAD
-        paddingBottom: 30,
-=======
         paddingBottom: 10,
         maxHeight: '70%',
->>>>>>> feature/Ku_feature
     },
     markerDetailHandleArea: {
         paddingVertical: 10,
@@ -3073,11 +3364,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'Tajawal-Regular',
         textAlign: 'center',
-<<<<<<< HEAD
-        marginBottom: 16,
-=======
         marginBottom: 8,
->>>>>>> feature/Ku_feature
     },
     markerDetailActions: {
         flexDirection: 'row',
@@ -3088,17 +3375,6 @@ const styles = StyleSheet.create({
     markerDetailDonateBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-<<<<<<< HEAD
-        backgroundColor: '#E91E63',
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 12,
-        gap: 8,
-    },
-    markerDetailDonateTxt: {
-        color: '#fff',
-        fontSize: 16,
-=======
         justifyContent: 'center',
         backgroundColor: '#E91E63',
         paddingVertical: 12,
@@ -3109,26 +3385,139 @@ const styles = StyleSheet.create({
     markerDetailDonateTxt: {
         color: '#fff',
         fontSize: 15,
->>>>>>> feature/Ku_feature
         fontFamily: 'Tajawal-Bold',
     },
     markerDetailCloseBtn: {
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
-<<<<<<< HEAD
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 12,
-=======
         paddingVertical: 12,
         borderRadius: 10,
         marginTop: 12,
->>>>>>> feature/Ku_feature
     },
     markerDetailCloseTxt: {
         color: '#fff',
         fontSize: 16,
         fontFamily: 'Tajawal-Medium',
     },
+
+    // ─── DRIVING MODE STYLES ───────────────────────────────────────────
+    drivingModeButton: {
+        width: 46,
+        height: 46,
+        backgroundColor: '#fff',
+        borderRadius: 23,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+    },
+    drivingModeOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        zIndex: 99999,
+        elevation: 99999,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    drivingModeExit: {
+        position: 'absolute',
+        left: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+        zIndex: 10,
+    },
+    drivingModeExitText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    drivingModeLabel: {
+        position: 'absolute',
+        right: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#0D2B66',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    drivingModeLabelText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    drivingModeLocationBar: {
+        position: 'absolute',
+        top: 70,
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        borderRadius: 16,
+    },
+    drivingModeLocationText: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 13,
+        fontFamily: 'Tajawal-Regular',
+    },
+    drivingModeMainButton: {
+        width: 220,
+        height: 220,
+        borderRadius: 110,
+        backgroundColor: '#EF4444',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#EF4444',
+        shadowOpacity: 0.5,
+        shadowOffset: { width: 0, height: 0 },
+        shadowRadius: 30,
+        elevation: 20,
+        borderWidth: 4,
+        borderColor: 'rgba(255,255,255,0.3)',
+    },
+    drivingModeMainButtonDisabled: {
+        backgroundColor: '#22C55E',
+        shadowColor: '#22C55E',
+    },
+    drivingModeButtonInner: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    drivingModeButtonIcon: {
+        fontSize: 48,
+        marginBottom: 4,
+    },
+    drivingModeButtonText: {
+        color: '#fff',
+        fontSize: 22,
+        fontWeight: '800',
+        textAlign: 'center',
+        fontFamily: 'Tajawal-Bold',
+    },
+    drivingModeButtonSubtext: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 13,
+        fontWeight: '500',
+        textAlign: 'center',
+        marginTop: 4,
+        fontFamily: 'Tajawal-Regular',
+    },
+    // ────────────────────────────────────────────────────────────────────
 
 });

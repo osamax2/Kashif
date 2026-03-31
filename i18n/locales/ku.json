@@ -190,7 +190,7 @@
       "waitingConfirmation": "Li bendê piştrastkirina bikarhênerekî din"
     },
     "confirmSuccess": "Piştrast bû!",
-    "confirmSuccessMessage": "Rapor piştrast bû! {points} xal stand",
+    "confirmSuccessMessage": "Rapor piştrast bû! {{points}} xal stand",
     "confirmError": "Şaşî",
     "confirmErrorMessage": "Di piştrastkirinê de şaşîk çêbû",
     "noReports": "Hên tu Raporên tune ye",
@@ -246,10 +246,10 @@
     "pullToRefresh": "Ji bo nûkirinê bikişîne",
     "timeAgo": {
       "justNow": "Niha",
-      "minutesAgo": "berê {minutes} deqîqe",
-      "hoursAgo": "berê {hours} saet",
+      "minutesAgo": "berê {{minutes}} deqîqe",
+      "hoursAgo": "berê {{hours}} saet",
       "yesterday": "Duh",
-      "daysAgo": "berê {days} roja"
+      "daysAgo": "berê {{days}} roja"
     }
   },
   "settings": {

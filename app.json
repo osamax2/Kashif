@@ -2,11 +2,7 @@
   "expo": {
     "name": "Kashif",
     "slug": "kashif-app",
-<<<<<<< HEAD
-    "version": "1.1.4",
-=======
-    "version": "1.1.9",
->>>>>>> feature/Ku_feature
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kashifapp",
@@ -14,16 +10,10 @@
     "newArchEnabled": true,
     "privacy": "public",
     "extra": {
-<<<<<<< HEAD
-      "privacyPolicyUrl": "https://admin.kashifroad.com/privacy",
-      "termsUrl": "https://admin.kashifroad.com/terms",
-      "contactEmail": "contact@kashifroad.com"
-=======
       "router": {},
       "eas": {
         "projectId": "ac88cf72-e55b-41a4-b6a4-d5773b59f5bd"
       }
->>>>>>> feature/Ku_feature
     },
     "ios": {
       "supportsTablet": true,
@@ -48,13 +38,8 @@
     },
     "android": {
       "package": "com.kashifroad.app",
-<<<<<<< HEAD
-      "versionCode": 15,
-      "usesCleartextTraffic": true,
-=======
-      "versionCode": 25,
+      "versionCode": 26,
       "usesCleartextTraffic": false,
->>>>>>> feature/Ku_feature
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#0D2B66",
