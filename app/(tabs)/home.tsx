@@ -268,6 +268,39 @@ export default function HomeScreen() {
     const [drivingMode, setDrivingMode] = useState(false);
     const [drivingModeReporting, setDrivingModeReporting] = useState(false);
     const drivingModeCooldown = useRef(false);
+    const drivingLocationSub = useRef<Location.LocationSubscription | null>(null);
+    // ────────────────────────────────────────────────────────────────────
+
+    // ─── DRIVING MODE LOCATION WATCHER ─────────────────────────────────
+    useEffect(() => {
+        let sub: Location.LocationSubscription | null = null;
+        if (drivingMode) {
+            (async () => {
+                sub = await Location.watchPositionAsync(
+                    {
+                        accuracy: Location.Accuracy.High,
+                        distanceInterval: 10, // update every 10 meters
+                        timeInterval: 3000,    // or every 3 seconds
+                    },
+                    (loc) => {
+                        const coords = {
+                            latitude: loc.coords.latitude,
+                            longitude: loc.coords.longitude,
+                        };
+                        setUserLocation(coords);
+                    }
+                );
+                drivingLocationSub.current = sub;
+            })();
+        }
+        return () => {
+            if (sub) sub.remove();
+            if (drivingLocationSub.current) {
+                drivingLocationSub.current.remove();
+                drivingLocationSub.current = null;
+            }
+        };
+    }, [drivingMode]);
     // ────────────────────────────────────────────────────────────────────
 
     // PanResponder for swipe-to-dismiss audio sheet
@@ -933,14 +966,29 @@ export default function HomeScreen() {
         } catch (e) {}
 
         try {
+            // Always get fresh GPS position for each report
+            let reportLat = userLocation.latitude;
+            let reportLng = userLocation.longitude;
+            try {
+                const freshLoc = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.High,
+                });
+                reportLat = freshLoc.coords.latitude;
+                reportLng = freshLoc.coords.longitude;
+                // Update state so map also reflects new position
+                setUserLocation({ latitude: reportLat, longitude: reportLng });
+            } catch (locErr) {
+                console.warn('⚠️ Could not get fresh GPS, using last known:', locErr);
+            }
+
             const categoryId = getCategoryByName('حفرة')?.id || getCategoryByName('çalak')?.id || 1;
 
             const newReport = await reportingAPI.createReport({
                 title: language === 'ar' ? 'حفرة في الطريق' : language === 'ku' ? 'Çalêk li ser rê' : 'Pothole on Road',
                 description: language === 'ar' ? 'بلاغ سريع من وضع القيادة' : language === 'ku' ? 'Rapora bilez ji moda ajotinê' : 'Quick report from driving mode',
                 category_id: categoryId,
-                latitude: userLocation.latitude,
-                longitude: userLocation.longitude,
+                latitude: reportLat,
+                longitude: reportLng,
                 severity_id: 2, // Medium severity by default
             });
 
