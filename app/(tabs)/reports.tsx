@@ -5,15 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDataSync } from "@/contexts/DataSyncContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
-<<<<<<< HEAD
-  Category,
-  lookupAPI,
-  Report,
-  reportingAPI,
-  ReportStatus,
-  ReportStatusHistory,
-  Severity,
-=======
     Category,
     lookupAPI,
     Report,
@@ -21,30 +12,12 @@ import {
     ReportStatus,
     ReportStatusHistory,
     Severity,
->>>>>>> feature/Ku_feature
 } from "@/services/api";
 import { cacheUserReports, checkConnectivity, getCachedUserReports } from "@/services/offline-service";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-<<<<<<< HEAD
-  ActivityIndicator,
-  Alert,
-  Animated,
-  FlatList,
-  Image,
-  Linking,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-=======
     ActivityIndicator,
     Alert,
     Animated,
@@ -61,7 +34,6 @@ import {
     TextInput,
     TouchableOpacity,
     View,
->>>>>>> feature/Ku_feature
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import MapView, { Marker } from "react-native-maps";
@@ -72,54 +44,6 @@ const CARD_BORDER = "rgba(255,255,255,0.18)";
 const YELLOW = "#F4B400";
 const PENDING_COLOR = "#FF9500";
 const CONFIRMED_COLOR = "#4CD964";
-const API_BASE_URL = "https://api.kashifroad.com";
-
-// Helper function to get full photo URL
-const getPhotoUrl = (photoUrls: string | undefined): string | null => {
-  if (!photoUrls) return null;
-  const firstUrl = photoUrls.split(",")[0].trim();
-  if (!firstUrl) return null;
-
-  // If already a full URL, return as is
-  if (firstUrl.startsWith("http://") || firstUrl.startsWith("https://")) {
-    return firstUrl;
-  }
-
-  // If relative URL starting with /uploads/, convert to /api/reports/uploads/
-  if (firstUrl.startsWith("/uploads/")) {
-    return `${API_BASE_URL}/api/reports${firstUrl}`;
-  }
-
-  // If relative URL (starts with /), prepend API base with /api/reports
-  if (firstUrl.startsWith("/")) {
-    return `${API_BASE_URL}/api/reports${firstUrl}`;
-  }
-
-  // Otherwise prepend API base with /api/reports/
-  return `${API_BASE_URL}/api/reports/${firstUrl}`;
-};
-
-// Get the best image to display (annotated if available, otherwise original)
-const getDisplayImageUrl = (report: { photo_urls?: string; ai_annotated_url?: string }): string | null => {
-  // Prefer AI annotated image if available
-  if (report.ai_annotated_url) {
-    const url = report.ai_annotated_url.trim();
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-    // Handle /uploads/ prefix
-    if (url.startsWith("/uploads/")) {
-      return `${API_BASE_URL}/api/reports${url}`;
-    }
-    if (url.startsWith("/")) {
-      return `${API_BASE_URL}/api/reports${url}`;
-    }
-    return `${API_BASE_URL}/api/reports/${url}`;
-  }
-  // Fall back to original photo
-  return getPhotoUrl(report.photo_urls);
-};
-
 import { getBaseUrl } from "@/services/api-config";
 
 // Helper function to get full photo URL
@@ -264,26 +188,6 @@ const translateStatus = (statusName: string, language: string): string => {
 
 const getStatusMeta = (statusName: string, _language: string): { icon: string; color: string } => {
   const metaMap: { [key: string]: { icon: string; color: string } } = {
-<<<<<<< HEAD
-    "new": { icon: "🔍", color: "#4DA3FF" },
-    "open": { icon: "🔍", color: "#4DA3FF" },
-    "جديد": { icon: "🔍", color: "#4DA3FF" },
-    "مفتوح": { icon: "🔍", color: "#4DA3FF" },
-    "under review": { icon: "⏳", color: "#FFD166" },
-    "قيد المراجعة": { icon: "⏳", color: "#FFD166" },
-    "in_progress": { icon: "🔧", color: "#FF9500" },
-    "in progress": { icon: "🔧", color: "#FF9500" },
-    "being handled": { icon: "🔧", color: "#FF9500" },
-    "قيد المعالجة": { icon: "🔧", color: "#FF9500" },
-    "resolved": { icon: "✔", color: "#4CD964" },
-    "completed": { icon: "✔", color: "#4CD964" },
-    "تم الإصلاح": { icon: "✔", color: "#4CD964" },
-    "مكتمل": { icon: "✔", color: "#4CD964" },
-    "rejected": { icon: "✖", color: "#FF3B30" },
-    "مرفوض": { icon: "✖", color: "#FF3B30" },
-    "closed": { icon: "🔒", color: "#8E8E93" },
-    "مغلق": { icon: "🔒", color: "#8E8E93" },
-=======
     // English
     "new": { icon: "🔍", color: "#4DA3FF" },
     "open": { icon: "🔍", color: "#4DA3FF" },
@@ -313,7 +217,6 @@ const getStatusMeta = (statusName: string, _language: string): { icon: string; c
     "temam bû": { icon: "✔", color: "#4CD964" },
     "redkirî": { icon: "✖", color: "#FF3B30" },
     "girtî": { icon: "🔒", color: "#8E8E93" },
->>>>>>> feature/Ku_feature
   };
   return metaMap[statusName.toLowerCase().trim()] || { icon: "📋", color: "#8E8E93" };
 };
@@ -486,6 +389,8 @@ export default function ReportsScreen() {
       ) {
         resolved++;
       }
+    });
+
     const total = reportsData.length || 1;
 
     setStats({
@@ -553,8 +458,6 @@ export default function ReportsScreen() {
     setHistoryExpanded(false);
   };
 
-<<<<<<< HEAD
-=======
   // Handle Android back button when detail modal is open
   useEffect(() => {
     if (!detailVisible) return;
@@ -565,7 +468,6 @@ export default function ReportsScreen() {
     return () => handler.remove();
   }, [detailVisible]);
 
->>>>>>> feature/Ku_feature
   const getStatusName = (statusId: number): string => {
     const raw = statuses.find((s) => s.id === statusId)?.name || "غير معروف";
     return translateStatus(raw, language);
@@ -585,7 +487,8 @@ export default function ReportsScreen() {
           ? "غير معروف"
           : language === "ku"
               ? "Nenas"
-              : "Unknown";    return translateSeverity(sev.name, language);
+              : "Unknown";
+    return translateSeverity(sev.name, language);
   };
 
   // Filtered reports based on search + filters
@@ -666,16 +569,6 @@ export default function ReportsScreen() {
       <View style={[styles.header, { flexDirection: "row" }]}>
         {/* LEFT */}
         <TouchableOpacity
-<<<<<<< HEAD
-          onPress={isRTL ? () => router.back() : () => router.push("/notifications")}
-          style={isRTL ? styles.iconBtn : styles.bellBtn}
-          activeOpacity={0.85}
-        >
-          <Ionicons
-            name={isRTL ? "chevron-forward" : "notifications"}
-            size={isRTL ? 30 : 22}
-            color={isRTL ? YELLOW : BLUE}
-=======
           onPress={isRTL ? () => router.push("/notifications") : () => router.back()}
           style={isRTL ? styles.bellBtn : styles.iconBtn}
           activeOpacity={0.85}
@@ -684,7 +577,6 @@ export default function ReportsScreen() {
             name={isRTL ? "notifications" : "chevron-back"}
             size={isRTL ? 22 : 30}
             color={isRTL ? BLUE : YELLOW}
->>>>>>> feature/Ku_feature
           />
         </TouchableOpacity>
 
@@ -694,16 +586,6 @@ export default function ReportsScreen() {
 
         {/* RIGHT */}
         <TouchableOpacity
-<<<<<<< HEAD
-          onPress={isRTL ? () => router.push("/notifications") : () => router.back()}
-          style={isRTL ? styles.bellBtn : styles.iconBtn}
-          activeOpacity={0.85}
-        >
-          <Ionicons
-            name={isRTL ? "notifications" : "chevron-forward"}
-            size={isRTL ? 22 : 30}
-            color={isRTL ? BLUE : YELLOW}
-=======
           onPress={isRTL ? () => router.back() : () => router.push("/notifications")}
           style={isRTL ? styles.iconBtn : styles.bellBtn}
           activeOpacity={0.85}
@@ -712,7 +594,6 @@ export default function ReportsScreen() {
             name={isRTL ? "chevron-forward" : "notifications"}
             size={isRTL ? 30 : 22}
             color={isRTL ? YELLOW : BLUE}
->>>>>>> feature/Ku_feature
           />
         </TouchableOpacity>
       </View>
@@ -772,73 +653,78 @@ export default function ReportsScreen() {
         </View>
       </View>
 
-      {/* CATEGORY FILTER */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-        style={{ maxHeight: 38, marginBottom: 4 }}
-      >
-        <TouchableOpacity
-          style={[styles.filterChip, activeCategoryFilter === null && styles.filterChipActive]}
-          onPress={() => setActiveCategoryFilter(null)}
+      {/* FILTERS CONTAINER — elevated zIndex so they stay visible above the list */}
+      <View style={{ zIndex: 2, elevation: 2 }}>
+        {/* CATEGORY FILTER */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+          style={{ maxHeight: 38, marginBottom: 4 }}
+          nestedScrollEnabled
         >
-          <Text style={[styles.filterChipText, activeCategoryFilter === null && styles.filterChipTextActive]}>
-            {language === 'ar'
-                ? 'الكل'
-                : language === 'ku'
-                    ? 'Hemû'
-                    : 'All'}
-          </Text>
-        </TouchableOpacity>
-        {categories.map((cat) => (
           <TouchableOpacity
-            key={cat.id}
-            style={[styles.filterChip, activeCategoryFilter === cat.id && styles.filterChipActive]}
-            onPress={() => setActiveCategoryFilter(activeCategoryFilter === cat.id ? null : cat.id)}
+            style={[styles.filterChip, activeCategoryFilter === null && styles.filterChipActive]}
+            onPress={() => setActiveCategoryFilter(null)}
           >
-            <Text style={[styles.filterChipText, activeCategoryFilter === cat.id && styles.filterChipTextActive]}>
-              {language === 'ku' ? (cat.name_ku || cat.name) : language === 'ar' ? (cat.name_ar || cat.name) : (cat.name_en || cat.name)}
+            <Text style={[styles.filterChipText, activeCategoryFilter === null && styles.filterChipTextActive]}>
+              {language === 'ar'
+                  ? 'الكل'
+                  : language === 'ku'
+                      ? 'Hemû'
+                      : 'All'}
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* STATUS FILTER */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-        style={{ maxHeight: 38, marginBottom: 6 }}
-      >
-        <TouchableOpacity
-          style={[styles.filterChip, activeStatusFilter === null && styles.filterChipActive]}
-          onPress={() => setActiveStatusFilter(null)}
-        >
-          <Text style={[styles.filterChipText, activeStatusFilter === null && styles.filterChipTextActive]}>
-            {language === 'ar'
-                ? 'كل الحالات'
-                : language === 'ku'
-                    ? 'Hemû rewş'
-                    : 'All Statuses'}
-          </Text>
-        </TouchableOpacity>
-        {statuses.map((st) => {
-          const meta = getStatusMeta(st.name, language);
-          return (
+          {categories.map((cat) => (
             <TouchableOpacity
-              key={st.id}
-              style={[styles.filterChip, activeStatusFilter === st.id && styles.filterChipActive]}
-              onPress={() => setActiveStatusFilter(activeStatusFilter === st.id ? null : st.id)}
+              key={cat.id}
+              style={[styles.filterChip, activeCategoryFilter === cat.id && styles.filterChipActive]}
+              onPress={() => setActiveCategoryFilter(activeCategoryFilter === cat.id ? null : cat.id)}
             >
-              <Text style={{ fontSize: 12, marginRight: 3 }}>{meta.icon}</Text>
-              <Text style={[styles.filterChipText, activeStatusFilter === st.id && styles.filterChipTextActive]}>
-                {translateStatus(st.name, language)}
+              <Text style={[styles.filterChipText, activeCategoryFilter === cat.id && styles.filterChipTextActive]}>
+                {language === 'ku' ? (cat.name_ku || cat.name) : language === 'ar' ? (cat.name_ar || cat.name) : (cat.name_en || cat.name)}
               </Text>
             </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+          ))}
+        </ScrollView>
+
+        {/* STATUS FILTER */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+          style={{ maxHeight: 38, marginBottom: 6 }}
+          nestedScrollEnabled
+        >
+          <TouchableOpacity
+            style={[styles.filterChip, activeStatusFilter === null && styles.filterChipActive]}
+            onPress={() => setActiveStatusFilter(null)}
+          >
+            <Text style={[styles.filterChipText, activeStatusFilter === null && styles.filterChipTextActive]}>
+              {language === 'ar'
+                  ? 'كل الحالات'
+                  : language === 'ku'
+                      ? 'Hemû rewş'
+                      : 'All Statuses'}
+            </Text>
+          </TouchableOpacity>
+          {statuses.map((st) => {
+            const meta = getStatusMeta(st.name, language);
+            return (
+              <TouchableOpacity
+                key={st.id}
+                style={[styles.filterChip, activeStatusFilter === st.id && styles.filterChipActive]}
+                onPress={() => setActiveStatusFilter(activeStatusFilter === st.id ? null : st.id)}
+              >
+                <Text style={{ fontSize: 12, marginRight: 3 }}>{meta.icon}</Text>
+                <Text style={[styles.filterChipText, activeStatusFilter === st.id && styles.filterChipTextActive]}>
+                  {translateStatus(st.name, language)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* LIST HEADER */}
       <View
@@ -868,7 +754,8 @@ export default function ReportsScreen() {
           initialNumToRender={10}
           maxToRenderPerBatch={8}
           windowSize={5}
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={false}
+          style={{ flex: 1, zIndex: 1 }}
           getItemLayout={(_, index) => ({
             length: 88, // approximate card height
             offset: 88 * index,
@@ -1198,14 +1085,11 @@ export default function ReportsScreen() {
               </>
             )}
             </ScrollView>
-<<<<<<< HEAD
-=======
 
             {/* Close button - always visible at bottom */}
             <Pressable style={styles.modalButton} onPress={closeDetails}>
               <Text style={styles.modalButtonText}>{t("reports.close")}</Text>
             </Pressable>
->>>>>>> feature/Ku_feature
           </View>
         </View>
       </Modal>
