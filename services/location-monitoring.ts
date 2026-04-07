@@ -1,8 +1,10 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import * as TaskManager from 'expo-task-manager';
+import { Platform } from 'react-native';
 import api from './api';
 
 const LOCATION_TASK_NAME = 'background-location-task';
@@ -53,6 +55,8 @@ class LocationMonitoringService {
   private audioInitialized = false;
   private isCheckingProximity = false;
   private isAlertShowing = false;
+  private monitoringStartTime: number = 0;
+  private static readonly STARTUP_GRACE_PERIOD_MS = 10000; // 10 seconds grace period after starting
   private alertSettings: AlertSettings = {
     soundEnabled: true,
     warnPothole: true,
@@ -171,8 +175,15 @@ class LocationMonitoringService {
       }
     }
 
-    // If we can't determine heading (user is stationary), alert anyway for safety
+    // If we can't determine heading (user is stationary):
+    // During startup grace period, don't alert (avoids false alerts when app opens)
+    // After grace period, alert for safety
     if (userHeading === null) {
+      const elapsed = Date.now() - this.monitoringStartTime;
+      if (elapsed < LocationMonitoringService.STARTUP_GRACE_PERIOD_MS) {
+        console.log('⏳ Stationary during grace period — skipping alert');
+        return false;
+      }
       return true;
     }
 
@@ -226,11 +237,19 @@ class LocationMonitoringService {
         params: {
           limit: 1000,
           skip: 0,
+          status_filter: 'active',
         },
       });
 
-      // Filter by distance manually since backend may not support radius param
+      // Filter by distance and exclude resolved/closed reports
       return response.data.filter((report) => {
+        // Skip resolved/closed reports (status names vary by language)
+        const status = (report.status || '').toLowerCase();
+        if (status.includes('resolved') || status.includes('closed') ||
+            status.includes('completed') || status.includes('تم الإصلاح') ||
+            status.includes('مغلق') || status.includes('çareserkirî')) {
+          return false;
+        }
         const rLat = typeof report.latitude === 'string' ? parseFloat(report.latitude) : report.latitude;
         const rLng = typeof report.longitude === 'string' ? parseFloat(report.longitude) : report.longitude;
         if (isNaN(rLat) || isNaN(rLng)) return false;
@@ -634,6 +653,10 @@ class LocationMonitoringService {
         return false;
       }
 
+      // Record start time for grace period
+      this.monitoringStartTime = Date.now();
+      this.alertedReportIds.clear();
+
       // Start foreground location tracking
       await Location.watchPositionAsync(
         {
@@ -650,16 +673,20 @@ class LocationMonitoringService {
       );
 
       // Start background location tracking
+      const lang = this.alertSettings.language;
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.Balanced,
         distanceInterval: 20,
         timeInterval: 10000,
         foregroundService: {
-          notificationTitle: 'كاشف - مراقبة الطريق',
-          notificationBody: 'جاري مراقبة الطريق للكشف عن الحفر',
+          notificationTitle: lang === 'ar' ? 'كاشف - مراقبة الطريق' : lang === 'ku' ? 'Kashif - Çavdêriya rê' : 'Kashif - Road Monitoring',
+          notificationBody: lang === 'ar' ? 'جاري مراقبة الطريق للكشف عن الحفر' : lang === 'ku' ? 'Rê tê çavdêrîkirin' : 'Monitoring road for hazards',
           notificationColor: '#F4B400',
         },
       });
+
+      // Show persistent notification with stop action (Android)
+      await this.showStopNotification();
 
       this.isMonitoring = true;
       console.log('Location monitoring started');
@@ -667,6 +694,53 @@ class LocationMonitoringService {
     } catch (error) {
       console.error('Failed to start location monitoring:', error);
       return false;
+    }
+  }
+
+  /**
+   * Show persistent notification with "Stop Monitoring" action button
+   */
+  private async showStopNotification() {
+    try {
+      if (Platform.OS !== 'android') return;
+
+      const lang = this.alertSettings.language;
+
+      // Set up notification category with stop action
+      await Notifications.setNotificationCategoryAsync('monitoring', [
+        {
+          identifier: 'STOP_MONITORING',
+          buttonTitle: lang === 'ar' ? '⏹ إيقاف المراقبة' : lang === 'ku' ? '⏹ Rawestîne' : '⏹ Stop Monitoring',
+          options: { opensAppToForeground: false },
+        },
+      ]);
+
+      // Show the notification
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: lang === 'ar' ? '🛡️ كاشف نشط' : lang === 'ku' ? '🛡️ Kashif çalak e' : '🛡️ Kashif Active',
+          body: lang === 'ar' ? 'اضغط لإيقاف مراقبة الطريق' : lang === 'ku' ? 'Pêl bike bo rawestandina çavdêriyê' : 'Tap to stop road monitoring',
+          categoryIdentifier: 'monitoring',
+          sticky: true,
+          data: { type: 'monitoring_control' },
+        },
+        trigger: null,
+      });
+
+      console.log('📢 Stop monitoring notification shown');
+    } catch (error) {
+      console.warn('Could not show stop notification:', error);
+    }
+  }
+
+  /**
+   * Dismiss the stop monitoring notification
+   */
+  private async dismissStopNotification() {
+    try {
+      await Notifications.dismissAllNotificationsAsync();
+    } catch (error) {
+      // Ignore
     }
   }
 
@@ -686,6 +760,7 @@ class LocationMonitoringService {
 
       this.isMonitoring = false;
       this.alertedReportIds.clear();
+      await this.dismissStopNotification();
       console.log('Location monitoring stopped');
     } catch (error) {
       console.error('Failed to stop location monitoring:', error);
@@ -730,6 +805,17 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
       console.log('📍 Background location update:', location.coords);
       await locationMonitoringService.checkProximityToReports(location);
     }
+  }
+});
+
+// Handle "Stop Monitoring" notification action
+Notifications.addNotificationResponseReceivedListener(async (response) => {
+  const actionId = response.actionIdentifier;
+  const data = response.notification.request.content.data;
+
+  if (actionId === 'STOP_MONITORING' || (data?.type === 'monitoring_control' && actionId === Notifications.DEFAULT_ACTION_IDENTIFIER)) {
+    console.log('⏹ Stop monitoring triggered from notification');
+    await locationMonitoringService.stopMonitoring();
   }
 });
 
