@@ -6,7 +6,22 @@ import * as TaskManager from 'expo-task-manager';
 import api from './api';
 
 const LOCATION_TASK_NAME = 'background-location-task';
-const ALERT_DISTANCE_THRESHOLD = 200; // 200 meters
+const AHEAD_ANGLE_THRESHOLD = 90; // Hazard must be within ±90° of travel direction
+
+/**
+ * Get alert distance threshold based on current speed.
+ * Speed from GPS is in m/s — convert to km/h.
+ *   < 40 km/h → 300m
+ *  40-80 km/h → 400m
+ *   > 80 km/h → 600m
+ */
+function getAlertDistanceThreshold(speedMs: number | null): number {
+  if (speedMs === null || speedMs < 0) return 300; // default / stationary
+  const speedKmh = speedMs * 3.6;
+  if (speedKmh < 40) return 300;
+  if (speedKmh <= 80) return 400;
+  return 600;
+}
 
 interface Report {
   id: number;
@@ -32,6 +47,7 @@ interface AlertSettings {
 class LocationMonitoringService {
   private isMonitoring = false;
   private currentLocation: Location.LocationObject | null = null;
+  private previousLocation: Location.LocationObject | null = null;
   private nearbyReports: Report[] = [];
   private alertedReportIds: Set<number> = new Set();
   private audioInitialized = false;
@@ -103,6 +119,77 @@ class LocationMonitoringService {
   }
 
   /**
+   * Calculate bearing from point A to point B in degrees (0-360)
+   */
+  private calculateBearing(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number {
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x =
+      Math.cos(φ1) * Math.sin(φ2) -
+      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+
+    const θ = Math.atan2(y, x);
+    return ((θ * 180) / Math.PI + 360) % 360; // Normalize to 0-360
+  }
+
+  /**
+   * Check if a hazard is ahead of the user based on travel direction.
+   * Uses GPS heading if available, otherwise calculates from previous position.
+   * Returns true if hazard is within ±AHEAD_ANGLE_THRESHOLD of travel direction,
+   * or if heading cannot be determined (stationary user — alert anyway for safety).
+   */
+  private isHazardAhead(
+    location: Location.LocationObject,
+    hazardLat: number,
+    hazardLon: number
+  ): boolean {
+    const { latitude, longitude, heading } = location.coords;
+
+    // Determine user's travel direction
+    let userHeading: number | null = null;
+
+    // 1. Use GPS heading if available and valid (heading is in degrees, -1 means unavailable)
+    if (heading !== null && heading !== undefined && heading >= 0) {
+      userHeading = heading;
+    }
+    // 2. Fall back to calculating from previous location
+    else if (this.previousLocation) {
+      const prevLat = this.previousLocation.coords.latitude;
+      const prevLon = this.previousLocation.coords.longitude;
+      const moved = this.calculateDistance(prevLat, prevLon, latitude, longitude);
+      // Only use if user moved at least 3 meters (avoid noise)
+      if (moved >= 3) {
+        userHeading = this.calculateBearing(prevLat, prevLon, latitude, longitude);
+      }
+    }
+
+    // If we can't determine heading (user is stationary), alert anyway for safety
+    if (userHeading === null) {
+      return true;
+    }
+
+    // Calculate bearing from user to hazard
+    const bearingToHazard = this.calculateBearing(latitude, longitude, hazardLat, hazardLon);
+
+    // Calculate the angle difference (shortest arc)
+    let angleDiff = Math.abs(bearingToHazard - userHeading);
+    if (angleDiff > 180) {
+      angleDiff = 360 - angleDiff;
+    }
+
+    // Hazard is ahead if within the cone
+    return angleDiff <= AHEAD_ANGLE_THRESHOLD;
+  }
+
+  /**
    * Request location permissions
    */
   async requestPermissions(): Promise<boolean> {
@@ -168,7 +255,7 @@ class LocationMonitoringService {
   }
 
   /**
-   * Check if user is approaching any reports
+   * Check if user is approaching any reports (direction-aware)
    */
   async checkProximityToReports(location: Location.LocationObject) {
     // Prevent concurrent checks
@@ -176,7 +263,8 @@ class LocationMonitoringService {
     this.isCheckingProximity = true;
     
     try {
-    const { latitude, longitude } = location.coords;
+    const { latitude, longitude, speed } = location.coords;
+    const alertThreshold = getAlertDistanceThreshold(speed);
 
     // Fetch nearby reports
     this.nearbyReports = await this.fetchNearbyReports(latitude, longitude);
@@ -194,8 +282,12 @@ class LocationMonitoringService {
         rLng
       );
 
-      // If within alert threshold and not already alerted
-      if (distance <= ALERT_DISTANCE_THRESHOLD && !this.alertedReportIds.has(report.id)) {
+      // If within speed-based alert threshold, not already alerted, AND hazard is ahead
+      if (
+        distance <= alertThreshold &&
+        !this.alertedReportIds.has(report.id) &&
+        this.isHazardAhead(location, rLat, rLng)
+      ) {
         // Check if alerts are enabled for this category
         const shouldAlert = this.shouldShowAlertForCategory(report.category_id);
         
@@ -205,11 +297,14 @@ class LocationMonitoringService {
         }
       }
 
-      // Reset alert if user moves away
-      if (distance > ALERT_DISTANCE_THRESHOLD + 100) {
+      // Reset alert if user moves away (use threshold + buffer)
+      if (distance > alertThreshold + 100) {
         this.alertedReportIds.delete(report.id);
       }
     }
+
+    // Track previous location for heading calculation
+    this.previousLocation = location;
     } catch (error) {
       console.error('Error checking proximity:', error);
     } finally {
@@ -221,26 +316,15 @@ class LocationMonitoringService {
    * Check if alert should be shown for this category
    * Category IDs from backend:
    * 1 = Infrastructure / Pothole (حفرة)
-<<<<<<< HEAD
-   * 2 = Environment (خطر بيئي)
-   * 3 = Public Safety / Accident (حادث)
-=======
    * 2 = Accident (حادث)
    * 3 = Environment (خطر بيئي)
->>>>>>> feature/Ku_feature
    * 6 = Mines (ألغام)
    */
   private shouldShowAlertForCategory(categoryId: number): boolean {
     switch (categoryId) {
       case 1: // Infrastructure / Pothole
         return this.alertSettings.warnPothole;
-<<<<<<< HEAD
-      case 2: // Environment
-        return this.alertSettings.warnEnvironment;
-      case 3: // Public Safety / Accident
-=======
       case 2: // Accident (حادث)
->>>>>>> feature/Ku_feature
         return this.alertSettings.warnAccident;
       case 3: // Environment (خطر بيئي)
         return this.alertSettings.warnEnvironment;
@@ -265,22 +349,8 @@ class LocationMonitoringService {
             ? `Çalêk ${distance} metre li pêş te heye. Hay ji xwe hebin!`
             : `There is a pothole ${distance} meters ahead. Be careful!`,
         };
-<<<<<<< HEAD
-      case 2: // Environment (خطر بيئي)
-        return {
-          title: lang === 'ar' ? '🌿 تنبيه: خطر بيئي' : lang === 'ku' ? '🌿 Hişyarî: Metirsiya jîngehê' : '🌿 Alert: Environmental Hazard',
-          message: lang === 'ar'
-            ? `يوجد خطر بيئي على بعد ${distance} متر أمامك. كن حذراً!`
-            : lang === 'ku'
-            ? `Metirsiya jîngehê ${distance} metre li pêş te heye. Hay ji xwe hebin!`
-            : `There is an environmental hazard ${distance} meters ahead. Be careful!`,
-        };
-      case 3: // Public Safety / Accident (حادث)
-        return {
-=======
       case 2: // Accident (حادث)
         return {
->>>>>>> feature/Ku_feature
           title: lang === 'ar' ? '🚨 تحذير: حادث مروري' : lang === 'ku' ? '🚨 Hişyarî: Qezaya trafîkê' : '🚨 Warning: Traffic Accident',
           message: lang === 'ar'
             ? `يوجد حادث مروري على بعد ${distance} متر أمامك. خفف السرعة!`
@@ -288,12 +358,6 @@ class LocationMonitoringService {
             ? `Qezayek ${distance} metre li pêş te heye. Hêdî biçin!`
             : `There is a traffic accident ${distance} meters ahead. Slow down!`,
         };
-<<<<<<< HEAD
-      case 6: // Mines (ألغام)
-        return {
-          title: lang === 'ar' ? '💣 تحذير: منطقة ألغام' : lang === 'ku' ? '💣 Hişyarî: Devera mînan' : '💣 Warning: Mine Area',
-          message: lang === 'ar'
-=======
       case 3: // Environment (خطر بيئي)
         return {
           title: lang === 'ar' ? '🌿 تنبيه: خطر بيئي' : lang === 'ku' ? '🌿 Hişyarî: Metirsiya jîngehê' : '🌿 Alert: Environmental Hazard',
@@ -307,7 +371,6 @@ class LocationMonitoringService {
         return {
           title: lang === 'ar' ? '💣 تحذير: منطقة ألغام' : lang === 'ku' ? '💣 Hişyarî: Devera mînan' : '💣 Warning: Mine Area',
           message: lang === 'ar'
->>>>>>> feature/Ku_feature
             ? `يوجد تحذير ألغام على بعد ${distance} متر أمامك. ابتعد عن المنطقة!`
             : lang === 'ku'
             ? `Hişyariya mînan ${distance} metre li pêş te heye. Ji deverê dûr kevin!`
@@ -344,13 +407,8 @@ class LocationMonitoringService {
 
     // Category IDs from backend:
     // 1 = Infrastructure / Pothole (حفرة)
-<<<<<<< HEAD
-    // 2 = Environment (خطر بيئي)
-    // 3 = Public Safety / Accident (حادث)
-=======
     // 2 = Accident (حادث)
     // 3 = Environment (خطر بيئي)
->>>>>>> feature/Ku_feature
     // 6 = Mines (ألغام)
     
     // For Kurdish users, play pre-generated Kurdish audio files
@@ -395,13 +453,8 @@ class LocationMonitoringService {
         // Step 2: Play Kurdish voice warning AFTER beep is done
         const kuAudioMap: Record<number, any> = {
           1: require('../assets/sounds/ku/warning_pothole.mp3'),
-<<<<<<< HEAD
-          2: require('../assets/sounds/ku/warning_environment.mp3'),
-          3: require('../assets/sounds/ku/warning_accident.mp3'),
-=======
           2: require('../assets/sounds/ku/warning_accident.mp3'),
           3: require('../assets/sounds/ku/warning_environment.mp3'),
->>>>>>> feature/Ku_feature
           4: require('../assets/sounds/ku/warning_speed_camera.mp3'),
           6: require('../assets/sounds/ku/warning_mines.mp3'),
         };
@@ -425,28 +478,16 @@ class LocationMonitoringService {
           ? `تحذير! حفرة في الطريق على بعد ${distance} متر`
           : `Warning! Pothole ahead at ${distance} meters`;
         break;
-<<<<<<< HEAD
-      case 2: // Environment
-        message = speechLang === 'ar'
-          ? `تنبيه! خطر بيئي على بعد ${distance} متر`
-          : `Alert! Environmental hazard ahead at ${distance} meters`;
-        break;
-      case 3: // Public Safety / Accident
-=======
       case 2: // Accident (حادث)
->>>>>>> feature/Ku_feature
         message = speechLang === 'ar'
           ? `تحذير! حادث مروري على بعد ${distance} متر`
           : `Warning! Traffic accident ahead at ${distance} meters`;
         break;
-<<<<<<< HEAD
-=======
       case 3: // Environment (خطر بيئي)
         message = speechLang === 'ar'
           ? `تنبيه! خطر بيئي على بعد ${distance} متر`
           : `Alert! Environmental hazard ahead at ${distance} meters`;
         break;
->>>>>>> feature/Ku_feature
       case 6: // Mines
         message = speechLang === 'ar'
           ? `تحذير! منطقة ألغام على بعد ${distance} متر`
@@ -596,9 +637,9 @@ class LocationMonitoringService {
       // Start foreground location tracking
       await Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.High,
-          distanceInterval: 10, // Update every 10 meters
-          timeInterval: 5000, // Update every 5 seconds
+          accuracy: Location.Accuracy.BestForNavigation,
+          distanceInterval: 5, // Update every 5 meters for precise alerting
+          timeInterval: 2000, // Update every 2 seconds
         },
         (location) => {
           this.currentLocation = location;
