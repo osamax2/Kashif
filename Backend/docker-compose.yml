@@ -127,10 +127,7 @@ services:
       RABBITMQ_URL: amqp://kashif:kashif123@rabbitmq:5672/
       AUTH_SERVICE_URL: http://auth-service:8000
       INTERNAL_API_KEY: kashif-internal-secret-2026
-<<<<<<< HEAD
-=======
       MAHLULA_PROXY: socks5h://193.43.159.144:1080
->>>>>>> feature/Ku_feature
     volumes:
       - reporting_uploads:/app/uploads
     depends_on:
@@ -349,14 +346,10 @@ services:
       ADMIN_USER_ID: "2"
       # Roboflow API for pretrained pothole detection model
       # Get free API key at https://roboflow.com
-<<<<<<< HEAD
-      ROBOFLOW_API_KEY: "${ROBOFLOW_API_KEY:-}"
-=======
       ROBOFLOW_API_KEY: "${ROBOFLOW_API_KEY:-Pb3G6QRYMasm5Ax5e10S}"
       # Replicate API for depth estimation (MiDaS + DepthAnything)
       # Get API token at https://replicate.com
       REPLICATE_API_TOKEN: "${REPLICATE_API_TOKEN:-}"
->>>>>>> feature/Ku_feature
       ADMIN_EMAIL: "admin@kashif.com"
       ADMIN_PASSWORD: "Admin123!"
     volumes:
