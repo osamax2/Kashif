@@ -158,7 +158,9 @@
     "completed": "Qediya",
     "friends": "Heval",
     "friendIdPlaceholder": "Hejmara heval binivîse",
+    "friendPhonePlaceholder": "Hejmara têlefona heval binivîse",
     "friendRequestSent": "Daxwaza hevaltiyê hat şandin!",
+    "friendNotFound": "Bikarhênerek bi vê hejmarê nehat dîtin",
     "noFriends": "Hê tu heval tune ye. Kesek zêde bike!",
     "friendLeaderboard": "Rêza hevalan"
   },

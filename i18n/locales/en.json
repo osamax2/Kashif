@@ -158,7 +158,9 @@
     "completed": "Completed",
     "friends": "Friends",
     "friendIdPlaceholder": "Enter Friend ID",
+    "friendPhonePlaceholder": "Enter friend's phone number",
     "friendRequestSent": "Friend request sent!",
+    "friendNotFound": "No user found with this phone number",
     "noFriends": "No friends yet. Add someone!",
     "friendLeaderboard": "Friend Leaderboard"
   },

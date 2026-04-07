@@ -606,6 +606,11 @@ export const friendsAPI = {
     return response.data;
   },
 
+  lookupByPhone: async (phone: string): Promise<{ id: number; full_name: string }> => {
+    const response = await api.get<{ id: number; full_name: string }>(`/api/auth/users/by-phone/${encodeURIComponent(phone)}`);
+    return response.data;
+  },
+
   getPendingRequests: async (): Promise<FriendshipRequest[]> => {
     const response = await api.get<FriendshipRequest[]>('/api/gamification/friends/requests');
     return response.data;

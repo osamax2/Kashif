@@ -587,25 +587,31 @@ export default function ProfileScreen() {
         <View style={[styles.friendInputRow, { flexDirection: effectiveRTL ? "row-reverse" : "row" }]}>
           <TextInput
             style={[styles.friendInput, { textAlign: effectiveRTL ? "right" : "left" }]}
-            placeholder={t("profile.friendIdPlaceholder")}
+            placeholder={t("profile.friendPhonePlaceholder")}
             placeholderTextColor="rgba(255,255,255,0.4)"
             value={friendIdInput}
             onChangeText={setFriendIdInput}
-            keyboardType="number-pad"
+            keyboardType="phone-pad"
           />
           <TouchableOpacity
             style={styles.friendAddBtn}
             onPress={async () => {
-              const fid = parseInt(friendIdInput);
-              if (!fid || isNaN(fid)) return;
+              const phone = friendIdInput.trim();
+              if (!phone) return;
               try {
-                await friendsAPI.sendRequest(fid);
+                const user = await friendsAPI.lookupByPhone(phone);
+                await friendsAPI.sendRequest(user.id);
                 Alert.alert("✅", t("profile.friendRequestSent"));
                 setFriendIdInput("");
                 const updated = await friendsAPI.getFriends().catch(() => []);
                 setFriends(updated);
               } catch (e: any) {
-                Alert.alert("❌", e?.response?.data?.detail || "Error");
+                const detail = e?.response?.data?.detail;
+                if (detail === "User not found") {
+                  Alert.alert("❌", t("profile.friendNotFound"));
+                } else {
+                  Alert.alert("❌", detail || "Error");
+                }
               }
             }}
           >

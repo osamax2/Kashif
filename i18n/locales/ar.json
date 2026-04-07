@@ -158,7 +158,9 @@
     "completed": "مكتمل",
     "friends": "الأصدقاء",
     "friendIdPlaceholder": "أدخل رقم الصديق",
+    "friendPhonePlaceholder": "أدخل رقم هاتف الصديق",
     "friendRequestSent": "تم إرسال طلب الصداقة!",
+    "friendNotFound": "لا يوجد مستخدم بهذا الرقم",
     "noFriends": "لا يوجد أصدقاء بعد. أضف شخصاً!",
     "friendLeaderboard": "ترتيب الأصدقاء"
   },

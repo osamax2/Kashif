@@ -1127,6 +1127,24 @@ def permanent_delete_user(
     return {"message": "User permanently deleted", "user_id": user_id}
 
 
+@app.get("/users/by-phone/{phone}")
+def get_user_by_phone(
+    phone: str,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
+):
+    """Look up a user by phone number. Returns minimal info (id, full_name) for friend requests."""
+    current_user = auth.get_current_user(token, db)
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+    user = db.query(models.User).filter(models.User.phone == phone, models.User.deleted_at == None).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return {"id": user.id, "full_name": user.full_name}
+
+
 @app.get("/users/{user_id}", response_model=schemas.User)
 def get_user(
     user_id: int,
