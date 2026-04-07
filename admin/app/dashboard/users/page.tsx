@@ -677,6 +677,9 @@ export default function UsersPage() {
                         {t.users.userEmail}
                       </th>
                       <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {t.users.userPhone}
+                      </th>
+                      <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                         {t.users.userPoints}
                       </th>
                       <th className={`px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -717,6 +720,9 @@ export default function UsersPage() {
                           </td>
                           <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-600 ${isRTL ? 'text-right' : ''}`}>
                             {user.email}
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-600 ${isRTL ? 'text-right' : ''}`}>
+                            {user.phone || '—'}
                           </td>
                           <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-right' : ''}`}>
                             <span className="text-yellow font-semibold">{user.total_points}</span>
