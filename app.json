@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kashif",
     "slug": "kashif-app",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "kashifapp",
@@ -18,7 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kashifroad.app",
-      "buildNumber": "13",
+      "buildNumber": "14",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك للكشف عن الحفر في الطريق أثناء القيادة",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "نحتاج إلى موقعك في الخلفية لتنبيهك عند اقترابك من حفر مُبلغ عنها",
@@ -38,7 +38,7 @@
     },
     "android": {
       "package": "com.kashifroad.app",
-      "versionCode": 28,
+      "versionCode": 29,
       "usesCleartextTraffic": false,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {

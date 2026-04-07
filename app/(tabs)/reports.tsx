@@ -13,6 +13,7 @@ import {
     ReportStatusHistory,
     Severity,
 } from "@/services/api";
+import { getBaseUrl } from "@/services/api-config";
 import { cacheUserReports, checkConnectivity, getCachedUserReports } from "@/services/offline-service";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -44,7 +45,6 @@ const CARD_BORDER = "rgba(255,255,255,0.18)";
 const YELLOW = "#F4B400";
 const PENDING_COLOR = "#FF9500";
 const CONFIRMED_COLOR = "#4CD964";
-import { getBaseUrl } from "@/services/api-config";
 
 // Helper function to get full photo URL
 const getPhotoUrl = (photoUrls: string | undefined): string | null => {
