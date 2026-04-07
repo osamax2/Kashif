@@ -7,6 +7,15 @@ import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
 import api from './api';
 
+// Configure notification handler so notifications show while app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
 const LOCATION_TASK_NAME = 'background-location-task';
 const AHEAD_ANGLE_THRESHOLD = 90; // Hazard must be within ±90° of travel direction
 
@@ -237,7 +246,6 @@ class LocationMonitoringService {
         params: {
           limit: 1000,
           skip: 0,
-          status_filter: 'active',
         },
       });
 
@@ -702,9 +710,17 @@ class LocationMonitoringService {
    */
   private async showStopNotification() {
     try {
-      if (Platform.OS !== 'android') return;
-
       const lang = this.alertSettings.language;
+
+      // Set up Android notification channel
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('monitoring', {
+          name: 'Road Monitoring',
+          importance: Notifications.AndroidImportance.HIGH,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+          sound: null,
+        });
+      }
 
       // Set up notification category with stop action
       await Notifications.setNotificationCategoryAsync('monitoring', [
@@ -722,6 +738,7 @@ class LocationMonitoringService {
           body: lang === 'ar' ? 'اضغط لإيقاف مراقبة الطريق' : lang === 'ku' ? 'Pêl bike bo rawestandina çavdêriyê' : 'Tap to stop road monitoring',
           categoryIdentifier: 'monitoring',
           sticky: true,
+          autoDismiss: false,
           data: { type: 'monitoring_control' },
         },
         trigger: null,
