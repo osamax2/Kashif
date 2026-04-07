@@ -22,11 +22,8 @@ import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { OfflineProvider } from '@/contexts/OfflineContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-<<<<<<< HEAD
-=======
 import { initApi } from '@/services/api';
 import { checkDeviceIntegrity } from '@/services/root-detection';
->>>>>>> feature/Ku_feature
 import { checkAndPromptForUpdate, clearUpdateCache } from '@/services/updateChecker';
 
 export const unstable_settings = {
@@ -40,15 +37,12 @@ function RootLayoutNav() {
 
     // Check for app updates on startup
     React.useEffect(() => {
-<<<<<<< HEAD
-=======
         // Resolve best API URL (supports remote config + fallback)
         initApi().catch(() => {});
 
         // Check for rooted/jailbroken device
         checkDeviceIntegrity(language).catch(() => {});
 
->>>>>>> feature/Ku_feature
         const checkUpdate = async () => {
             try {
                 // Clear cache on each app start to ensure update dialog shows

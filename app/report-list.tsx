@@ -178,11 +178,7 @@ export default function ReportsScreen() {
         <View style={styles.root}>
             {/* HEADER */}
             <Header
-<<<<<<< HEAD
-                title="البلاغات المفتوحة"
-=======
                 title={language === 'ar' ? 'البلاغات المفتوحة' : language === 'ku' ? 'Raporên vekirî' : 'Open Reports'}
->>>>>>> feature/Ku_feature
                 leftIcon={!isRTL ? "chevron-back" : undefined}
                 rightIcon={isRTL ? "chevron-forward" : undefined}
                 onLeftPress={() => router.back()}
@@ -287,16 +283,6 @@ export default function ReportsScreen() {
                                 <Pressable
                                     style={styles.whatsappButton}
                                     onPress={() => {
-<<<<<<< HEAD
-                                        const msg = `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`;
-                                        const url = `whatsapp://send?text=${encodeURIComponent(msg)}`;
-                                        Linking.openURL(url).catch(() => {
-                                            alert('WhatsApp غير مثبت على هذا الجهاز');
-                                        });
-                                    }}
-                                >
-                                    <Text style={styles.whatsappButtonText}>مشاركة عبر واتساب</Text>
-=======
                                         const msg = language === 'ar' 
                                             ? `🚨 *بلاغ كاشف*\n\n📋 *العنوان:* ${selected.title}\n📝 *الوصف:* ${selected.description}\n🔢 *رقم البلاغ:* ${selected.id}\n📅 *التاريخ:* ${selected.date}\n📌 *الحالة:* ${selected.status}\n\n📍 *الموقع:*\nhttps://www.google.com/maps?q=33.5138,36.2765`
                                             : language === 'ku'
@@ -309,7 +295,6 @@ export default function ReportsScreen() {
                                     }}
                                 >
                                     <Text style={styles.whatsappButtonText}>{language === 'ar' ? 'مشاركة عبر واتساب' : language === 'ku' ? 'Parvekirina bi WhatsApp' : 'Share via WhatsApp'}</Text>
->>>>>>> feature/Ku_feature
                                 </Pressable>
 
                                 {/* Donate Button */}
@@ -320,11 +305,7 @@ export default function ReportsScreen() {
                                         setDonationModalVisible(true);
                                     }}
                                 >
-<<<<<<< HEAD
-                                    <Text style={styles.donateButtonText}>❤️ تبرع</Text>
-=======
                                     <Text style={styles.donateButtonText}>{language === 'ar' ? '❤️ تبرع' : language === 'ku' ? '❤️ Bexş' : '❤️ Donate'}</Text>
->>>>>>> feature/Ku_feature
                                 </Pressable>
 
                                 {/* Close Button */}

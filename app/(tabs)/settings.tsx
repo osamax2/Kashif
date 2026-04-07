@@ -1,10 +1,7 @@
 import ChangeModal from "@/components/ChangeModal";
 import IOSActionSheet from "@/components/IOSActionSheet";
 import { resetOnboarding } from "@/components/OnboardingTutorial";
-<<<<<<< HEAD
-=======
 import PasswordChangeModal from "@/components/PasswordChangeModal";
->>>>>>> feature/Ku_feature
 import SuccessModal from "@/components/SuccessModal";
 import TermsModal from "@/components/TermsModal";
 import { FontAwesome } from "@expo/vector-icons";
@@ -15,10 +12,7 @@ import React, { useEffect, useState } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-<<<<<<< HEAD
-=======
 import { authAPI } from "@/services/api";
->>>>>>> feature/Ku_feature
 import NotificationService from "@/services/notifications";
 import {
     ActivityIndicator,
@@ -38,72 +32,6 @@ const YELLOW = "#F4B400";
 const CARD = "#133B7A";
 
 export default function SettingsScreen() {
-<<<<<<< HEAD
-    const { user, logout } = useAuth();
-    const { language, setLanguage, t, isRTL } = useLanguage();
-
-    // ✅ WIE index.tsx: Arabisch = LTR | Englisch = RTL
-    const effectiveRTL = !isRTL;
-
-    const [hideName, setHideName] = useState(false);
-    const [notifReports, setNotifReports] = useState(true);
-    const [notifStatusUpdates, setNotifStatusUpdates] = useState(true);
-    const [notifPoints, setNotifPoints] = useState(true);
-    const [notifCoupons, setNotifCoupons] = useState(true);
-    const [notifGeneral, setNotifGeneral] = useState(true);
-    const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
-    const [quietHoursStart, setQuietHoursStart] = useState(22);
-    const [quietHoursEnd, setQuietHoursEnd] = useState(7);
-    const [prefsLoading, setPrefsLoading] = useState(true);
-    const [prefsSaving, setPrefsSaving] = useState(false);
-    const [successVisible, setSuccessVisible] = useState(false);
-    const [toastMessage, setToastMessage] = useState<string | null>(null);
-    const [nameModal, setNameModal] = useState(false);
-    const [name, setName] = useState(user?.full_name || "");
-    const [hideNameMessage, setHideNameMessage] = useState<string | null>(null);
-
-    const [languageSheet, setLanguageSheet] = useState(false);
-    const selectedLanguage =
-        language === "ar"
-            ? t("settings.languages.ar")
-            : language === "ku"
-                ? t("settings.languages.ku")
-                : t("settings.languages.en");
-
-    const [emailModal, setEmailModal] = useState(false);
-    const [passwordModal, setPasswordModal] = useState(false);
-    const [phoneModal, setPhoneModal] = useState(false);
-    const [showTerms, setShowTerms] = useState(false);
-
-    const [email, setEmail] = useState(user?.email || "");
-    const [password, setPassword] = useState("");
-    const [phone, setPhone] = useState((user as any)?.phone || "");
-
-    const router = useRouter();
-
-    // Load notification preferences from backend
-    useEffect(() => {
-        const loadPrefs = async () => {
-            try {
-                const prefs = await NotificationService.getPreferences();
-                setNotifReports(prefs.report_notifications);
-                setNotifStatusUpdates(prefs.status_updates);
-                setNotifPoints(prefs.points_notifications);
-                setNotifCoupons(prefs.coupon_notifications);
-                setNotifGeneral(prefs.general_notifications);
-                setQuietHoursEnabled(prefs.quiet_hours_enabled);
-                setQuietHoursStart(prefs.quiet_hours_start);
-                setQuietHoursEnd(prefs.quiet_hours_end);
-            } catch (e) {
-                console.error("Failed to load notification prefs:", e);
-            } finally {
-                setPrefsLoading(false);
-            }
-        };
-        loadPrefs();
-    }, []);
-
-=======
     const { user, logout, refreshUser } = useAuth();
     const { language, setLanguage, t, isRTL } = useLanguage();
     // Arabic = text RIGHT, English/Kurdish = text LEFT
@@ -178,7 +106,6 @@ export default function SettingsScreen() {
         });
     }, []);
 
->>>>>>> feature/Ku_feature
     const showToast = (message: string) => {
         setToastMessage(message);
         setTimeout(() => setToastMessage(null), 2500);
@@ -216,15 +143,9 @@ export default function SettingsScreen() {
             showToast(
                 language === "ku"
                     ? "Tomarkirin serneket"
-<<<<<<< HEAD
-                    : effectiveRTL
-                        ? "Save failed"
-                        : "فشل الحفظ"
-=======
                     : language === "ar"
                         ? "فشل الحفظ"
                         : "Save failed"
->>>>>>> feature/Ku_feature
             );
         } finally {
             setPrefsSaving(false);
@@ -234,22 +155,6 @@ export default function SettingsScreen() {
     return (
         <ScrollView
             style={styles.root}
-<<<<<<< HEAD
-            contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
-            showsVerticalScrollIndicator={false}
-        >
-            {/* Header */}
-            {/* Header ✅ UMGEKEHRT */}
-            <View style={[styles.header, { flexDirection: "row" }]}>
-                {/* LEFT */}
-                <TouchableOpacity
-                    onPress={isRTL ? () => router.back() : handleLogout}
-                    style={styles.iconBtn}
-                >
-                    <Ionicons
-                        name={isRTL ? "chevron-forward" : "log-out-outline"}
-                        size={isRTL ? 30 : 28}
-=======
             contentContainerStyle={{ paddingBottom: bottomPadding, flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
         >
@@ -263,7 +168,6 @@ export default function SettingsScreen() {
                     <Ionicons
                         name={isRTL ? "log-out-outline" : "chevron-back"}
                         size={isRTL ? 28 : 30}
->>>>>>> feature/Ku_feature
                         color={YELLOW}
                     />
                 </TouchableOpacity>
@@ -272,21 +176,12 @@ export default function SettingsScreen() {
 
                 {/* RIGHT */}
                 <TouchableOpacity
-<<<<<<< HEAD
-                    onPress={isRTL ? handleLogout : () => router.back()}
-                    style={styles.iconBtn}
-                >
-                    <Ionicons
-                        name={isRTL ? "log-out-outline" : "chevron-forward"}
-                        size={isRTL ? 28 : 30}
-=======
                     onPress={isRTL ? () => router.back() : handleLogout}
                     style={styles.iconBtn}
                 >
                     <Ionicons
                         name={isRTL ? "chevron-forward" : "log-out-outline"}
                         size={isRTL ? 30 : 28}
->>>>>>> feature/Ku_feature
                         color={YELLOW}
                     />
                 </TouchableOpacity>
@@ -295,21 +190,13 @@ export default function SettingsScreen() {
             {/* USER */}
             <Text style={[styles.userId, { textAlign: effectiveRTL ? "right" : "left" }]}>
                 <Text style={{ color: "#ccc" }}>   {t("profile.userId")} </Text>
-<<<<<<< HEAD
-                {user?.id ? `U-${user.id}` : "U-2025-143"}
-=======
                 {user?.uuid ? user.uuid.slice(0, 8).toUpperCase() : (user?.id ? `U-${user.id}` : "---")}
->>>>>>> feature/Ku_feature
             </Text>
 
             <Text
                 style={[styles.userName, { textAlign: effectiveRTL ? "right" : "left" }]}
             >
-<<<<<<< HEAD
-                {user?.full_name || "مستخدم"}
-=======
                 {user?.full_name || (language === 'ar' ? "مستخدم" : language === 'ku' ? "Bikarhener" : "User")}
->>>>>>> feature/Ku_feature
             </Text>
 
             {/* ACTIONS */}
@@ -342,24 +229,11 @@ export default function SettingsScreen() {
                     </Text>
                 </TouchableOpacity>
 
-<<<<<<< HEAD
-                <TouchableOpacity
-                    onPress={() => {
-                        setPhone((user as any)?.phone || "");
-                        setPhoneModal(true);
-                    }}
-                >
-                    <Text style={[styles.textItem, { textAlign: effectiveRTL ? "right" : "left" }]}>
-                        {t("settings.changePhone")}
-                    </Text>
-                </TouchableOpacity>
-=======
                 <View style={{ opacity: 0.5 }}>
                     <Text style={[styles.textItem, { textAlign: effectiveRTL ? "right" : "left" }]}>
                         {t("settings.changePhone")}: {user?.phone || ""}
                     </Text>
                 </View>
->>>>>>> feature/Ku_feature
 
                 {/* Language */}
                 <TouchableOpacity
@@ -419,19 +293,6 @@ export default function SettingsScreen() {
                         value={hideName}
                         onValueChange={(value) => {
                             setHideName(value);
-<<<<<<< HEAD
-                            const message = value
-                                ? language === "ku"
-                                    ? "Nav ji lîsteya raporan ve hat veşartin"
-                                    : effectiveRTL
-                                        ? "The name has been hidden from the list of reports"
-                                        : "تم إخفاء الاسم من قائمة البلاغات"
-                                : language === "ku"
-                                    ? "Nav di lîsteya raporan de dîsa çalak bû"
-                                    : effectiveRTL
-                                        ? "The name has been activated in the list of reports"
-                                        : "تم تفعيل الاسم في قائمة البلاغات";
-=======
                             AsyncStorage.setItem("hideNamePref", value ? "true" : "false");
                             const message = value
                                 ? language === "ku"
@@ -444,7 +305,6 @@ export default function SettingsScreen() {
                                     : language === "ar"
                                         ? "تم تفعيل الاسم في قائمة البلاغات"
                                         : "The name has been activated in the list of reports";
->>>>>>> feature/Ku_feature
 
                             setHideNameMessage(message);
                             setTimeout(() => setHideNameMessage(null), 3000);
@@ -549,11 +409,7 @@ export default function SettingsScreen() {
                                 <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", justifyContent: "space-between" }}>
                                     <View style={{ alignItems: "center" }}>
                                         <Text style={{ color: "#ccc", fontSize: 12, marginBottom: 4 }}>{t("settings.quietHoursStart")}</Text>
-<<<<<<< HEAD
-                                        <View style={{ flexDirection: "row", alignItems: "center" }}>
-=======
                                         <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", alignItems: "center" }}>
->>>>>>> feature/Ku_feature
                                             <TouchableOpacity
                                                 onPress={() => setQuietHoursStart((prev) => (prev === 0 ? 23 : prev - 1))}
                                                 style={{ padding: 8 }}
@@ -573,11 +429,7 @@ export default function SettingsScreen() {
                                     </View>
                                     <View style={{ alignItems: "center" }}>
                                         <Text style={{ color: "#ccc", fontSize: 12, marginBottom: 4 }}>{t("settings.quietHoursEnd")}</Text>
-<<<<<<< HEAD
-                                        <View style={{ flexDirection: "row", alignItems: "center" }}>
-=======
                                         <View style={{ flexDirection: effectiveRTL ? "row-reverse" : "row", alignItems: "center" }}>
->>>>>>> feature/Ku_feature
                                             <TouchableOpacity
                                                 onPress={() => setQuietHoursEnd((prev) => (prev === 0 ? 23 : prev - 1))}
                                                 style={{ padding: 8 }}
@@ -687,16 +539,6 @@ export default function SettingsScreen() {
             {/* MODALS */}
             <ChangeModal
                 visible={emailModal}
-<<<<<<< HEAD
-                onClose={() => setEmailModal(false)}
-                title={t("settings.changeEmail")}
-                placeholder={t("settings.placeholders.newEmail")}
-                value={email}
-                setValue={setEmail}
-                onSave={() => {
-                    showToast(t("common.success") + " 👍");
-                    setEmailModal(false);
-=======
                 onClose={() => { setEmailModal(false); setEmailError(null); }}
                 title={t("settings.changeEmail")}
                 placeholder={t("settings.placeholders.newEmail")}
@@ -730,33 +572,11 @@ export default function SettingsScreen() {
                     } finally {
                         setEmailSaving(false);
                     }
->>>>>>> feature/Ku_feature
                 }}
             />
 
             <ChangeModal
                 visible={nameModal}
-<<<<<<< HEAD
-                onClose={() => setNameModal(false)}
-                title={t("settings.changeName")}
-                placeholder={t("settings.placeholders.newName")}
-                value={name}
-                setValue={setName}
-                onSave={() => {
-                    showToast(t("common.success") + " 👍");
-                    setNameModal(false);
-                }}
-            />
-
-            <ChangeModal
-                visible={passwordModal}
-                onClose={() => setPasswordModal(false)}
-                title={t("settings.changePassword")}
-                placeholder={t("settings.placeholders.newPassword")}
-                value={password}
-                setValue={setPassword}
-                onSave={() => {
-=======
                 onClose={() => { setNameModal(false); setNameError(null); }}
                 title={t("settings.changeName")}
                 placeholder={t("settings.placeholders.newName")}
@@ -787,28 +607,11 @@ export default function SettingsScreen() {
                 onClose={() => setPasswordModal(false)}
                 onSave={async (currentPassword, newPassword) => {
                     await authAPI.changePassword(currentPassword, newPassword);
->>>>>>> feature/Ku_feature
                     showToast(t("common.success") + " 👍");
                     setPasswordModal(false);
                 }}
             />
 
-<<<<<<< HEAD
-            <ChangeModal
-                visible={phoneModal}
-                onClose={() => setPhoneModal(false)}
-                title={t("settings.changePhone")}
-                placeholder={t("settings.placeholders.newPhone")}
-                value={phone}
-                setValue={setPhone}
-                onSave={() => {
-                    showToast(t("common.success") + " 👍");
-                    setPhoneModal(false);
-                }}
-            />
-
-=======
->>>>>>> feature/Ku_feature
             {toastMessage && (
                 <View style={styles.toastContainer}>
                     <Text style={styles.toastText}>{toastMessage}</Text>

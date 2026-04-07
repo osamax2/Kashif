@@ -54,11 +54,7 @@ export default function VerifyCodeScreen() {
         if (fullCode.length !== 6) {
             Alert.alert(
                 t('common.error'),
-<<<<<<< HEAD
-                isRTL ? 'الرجاء إدخال الرمز الكامل' : 'Please enter the full code'
-=======
                 language === 'ar' ? 'الرجاء إدخال الرمز الكامل' : language === 'ku' ? 'Ji kerema xwe re kodê tevahî binivîse' : 'Please enter the full code'
->>>>>>> feature/Ku_feature
             );
             return;
         }
@@ -66,11 +62,7 @@ export default function VerifyCodeScreen() {
         if (!email) {
             Alert.alert(
                 t('common.error'),
-<<<<<<< HEAD
-                isRTL ? 'البريد الإلكتروني مفقود' : 'Email is missing'
-=======
                 language === 'ar' ? 'البريد الإلكتروني مفقود' : language === 'ku' ? 'E-name winda ye' : 'Email is missing'
->>>>>>> feature/Ku_feature
             );
             return;
         }
@@ -80,20 +72,12 @@ export default function VerifyCodeScreen() {
             await authAPI.verifyCode(email, fullCode);
             Alert.alert(
                 t('common.success'),
-<<<<<<< HEAD
-                isRTL ? 'تم التحقق بنجاح' : 'Verification successful',
-=======
                 language === 'ar' ? 'تم التحقق بنجاح' : language === 'ku' ? 'Bi serkeftin hate piştrastkirin' : 'Verification successful',
->>>>>>> feature/Ku_feature
                 [{ text: 'OK', onPress: () => router.replace("/index") }]
             );
         } catch (error: any) {
             const errorMessage = error?.response?.data?.detail || 
-<<<<<<< HEAD
-                (isRTL ? 'رمز التحقق غير صالح' : 'Invalid verification code');
-=======
                 (language === 'ar' ? 'رمز التحقق غير صالح' : language === 'ku' ? 'Koda piştrastkirinê nederbasdar e' : 'Invalid verification code');
->>>>>>> feature/Ku_feature
             Alert.alert(t('common.error'), errorMessage);
         } finally {
             setLoading(false);
@@ -108,19 +92,11 @@ export default function VerifyCodeScreen() {
             await authAPI.resendVerificationCode(email);
             Alert.alert(
                 t('common.success'),
-<<<<<<< HEAD
-                isRTL ? 'تم إرسال رمز جديد' : 'New code sent successfully'
-            );
-        } catch (error: any) {
-            const errorMessage = error?.response?.data?.detail || 
-                (isRTL ? 'فشل في إرسال الرمز' : 'Failed to send code');
-=======
                 language === 'ar' ? 'تم إرسال رمز جديد' : language === 'ku' ? 'Kodek nû hate şandin' : 'New code sent successfully'
             );
         } catch (error: any) {
             const errorMessage = error?.response?.data?.detail || 
                 (language === 'ar' ? 'فشل في إرسال الرمز' : language === 'ku' ? 'Şandina kodê têk çû' : 'Failed to send code');
->>>>>>> feature/Ku_feature
             Alert.alert(t('common.error'), errorMessage);
         } finally {
             setResending(false);

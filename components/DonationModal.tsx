@@ -74,13 +74,6 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
 
     const handleDonate = () => {
         Alert.alert(
-<<<<<<< HEAD
-            isRTL ? "قريباً" : "Coming Soon",
-            isRTL
-                ? "خدمة الدفع غير متوفرة حالياً. سيتم تفعيلها قريباً."
-                : "Payment service is not available yet. It will be activated soon.",
-            [{ text: isRTL ? "حسناً" : "OK" }]
-=======
             language === 'ar' ? "قريباً" : language === 'ku' ? "Nêzîkê" : "Coming Soon",
             language === 'ar'
                 ? "خدمة الدفع غير متوفرة حالياً. سيتم تفعيلها قريباً."
@@ -88,7 +81,6 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                 ? "Xizmeta dayînê niha neberdest e. Di nêzîkê de dê were aktivkirin."
                 : "Payment service is not available yet. It will be activated soon.",
             [{ text: language === 'ar' ? "حسناً" : language === 'ku' ? "Baş e" : "OK" }]
->>>>>>> feature/Ku_feature
         );
     };
 
@@ -105,11 +97,7 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                         {/* Header */}
                         <View style={styles.header}>
                             <Text style={styles.headerTitle}>
-<<<<<<< HEAD
-                                {isRTL ? "تبرع لإصلاح الحفرة" : "Donate to Repair"}
-=======
                                 {language === 'ar' ? "تبرع لإصلاح الحفرة" : language === 'ku' ? "Ji bo çareserkirina çalayê bexş bike" : "Donate to Repair"}
->>>>>>> feature/Ku_feature
                             </Text>
                             <Pressable onPress={onClose} style={styles.closeBtn}>
                                 <Ionicons name="close" size={24} color="#fff" />
@@ -120,11 +108,7 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                         {report && (
                             <View style={styles.reportInfo}>
                                 <Text style={styles.reportTitle}>
-<<<<<<< HEAD
-                                    {report.title || (isRTL ? "بلاغ" : "Report")} #{report.id}
-=======
                                     {report.title || (language === 'ar' ? "بلاغ" : language === 'ku' ? "Rapor" : "Report")} #{report.id}
->>>>>>> feature/Ku_feature
                                 </Text>
 
                                 {/* Cost & Progress */}
@@ -132,21 +116,13 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                                     <View style={styles.costSection}>
                                         <View style={styles.costRow}>
                                             <Text style={styles.costLabel}>
-<<<<<<< HEAD
-                                                {isRTL ? "تكلفة الإصلاح:" : "Repair cost:"}
-=======
                                                 {language === 'ar' ? "تكلفة الإصلاح:" : language === 'ku' ? "Mesrefa çareserkinê:" : "Repair cost:"}
->>>>>>> feature/Ku_feature
                                             </Text>
                                             <Text style={styles.costValue}>${repairCost}</Text>
                                         </View>
                                         <View style={styles.costRow}>
                                             <Text style={styles.costLabel}>
-<<<<<<< HEAD
-                                                {isRTL ? "تم جمع:" : "Collected:"}
-=======
                                                 {language === 'ar' ? "تم جمع:" : language === 'ku' ? "Hat berhevkirin:" : "Collected:"}
->>>>>>> feature/Ku_feature
                                             </Text>
                                             <Text style={[styles.costValue, { color: "#4CD964" }]}>
                                                 ${totalDonated}
@@ -154,11 +130,7 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                                         </View>
                                         <View style={styles.costRow}>
                                             <Text style={styles.costLabel}>
-<<<<<<< HEAD
-                                                {isRTL ? "المتبقي:" : "Remaining:"}
-=======
                                                 {language === 'ar' ? "المتبقي:" : language === 'ku' ? "Mayî:" : "Remaining:"}
->>>>>>> feature/Ku_feature
                                             </Text>
                                             <Text style={[styles.costValue, { color: "#FF6B6B" }]}>
                                                 ${remaining}
@@ -182,15 +154,10 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                                     <View style={styles.noCostBadge}>
                                         <Ionicons name="information-circle" size={18} color="#FFD166" />
                                         <Text style={styles.noCostText}>
-<<<<<<< HEAD
-                                            {isRTL
-                                                ? "لم يتم تحديد تكلفة الإصلاح بعد"
-=======
                                             {language === 'ar'
                                                 ? "لم يتم تحديد تكلفة الإصلاح بعد"
                                                 : language === 'ku'
                                                 ? "Mesrefa çareserkinê hên nehatî diyarkirin"
->>>>>>> feature/Ku_feature
                                                 : "Repair cost not set yet"}
                                         </Text>
                                     </View>
@@ -200,11 +167,7 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
 
                         {/* Amount Input */}
                         <Text style={styles.sectionTitle}>
-<<<<<<< HEAD
-                            {isRTL ? "مبلغ التبرع ($)" : "Donation Amount ($)"}
-=======
                             {language === 'ar' ? "مبلغ التبرع ($)" : language === 'ku' ? "Miqdara bexşê ($)" : "Donation Amount ($)"}
->>>>>>> feature/Ku_feature
                         </Text>
                         <View style={styles.amountRow}>
                             {presetAmounts.map((preset) => (
@@ -229,11 +192,7 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                         </View>
                         <TextInput
                             style={styles.amountInput}
-<<<<<<< HEAD
-                            placeholder={isRTL ? "أو أدخل مبلغ آخر..." : "Or enter custom amount..."}
-=======
                             placeholder={language === 'ar' ? "أو أدخل مبلغ آخر..." : language === 'ku' ? "An jî miqdarek din binivîse..." : "Or enter custom amount..."}
->>>>>>> feature/Ku_feature
                             placeholderTextColor="#888"
                             keyboardType="numeric"
                             value={amount}
@@ -242,11 +201,7 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
 
                         {/* Payment Methods */}
                         <Text style={styles.sectionTitle}>
-<<<<<<< HEAD
-                            {isRTL ? "طريقة الدفع" : "Payment Method"}
-=======
                             {language === 'ar' ? "طريقة الدفع" : language === 'ku' ? "Rêya dayînê" : "Payment Method"}
->>>>>>> feature/Ku_feature
                         </Text>
                         <View style={styles.methodsGrid}>
                             {PAYMENT_METHODS.map((method) => (
@@ -260,17 +215,11 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                                     onPress={() => {
                                         if (method.disabled) {
                                             Alert.alert(
-<<<<<<< HEAD
-                                                isRTL ? "قريباً" : "Coming Soon",
-                                                isRTL
-                                                    ? `${method.name} غير متوفر حالياً`
-=======
                                                 language === 'ar' ? "قريباً" : language === 'ku' ? "Nêzîkê" : "Coming Soon",
                                                 language === 'ar'
                                                     ? `${method.name} غير متوفر حالياً`
                                                     : language === 'ku'
                                                     ? `${method.name} niha neberdest e`
->>>>>>> feature/Ku_feature
                                                     : `${method.name} is not available yet`
                                             );
                                             return;
@@ -294,11 +243,7 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                                     {method.disabled && (
                                         <View style={styles.comingSoonBadge}>
                                             <Text style={styles.comingSoonText}>
-<<<<<<< HEAD
-                                                {isRTL ? "قريباً" : "Soon"}
-=======
                                                 {language === 'ar' ? "قريباً" : language === 'ku' ? "Nêzîkê" : "Soon"}
->>>>>>> feature/Ku_feature
                                             </Text>
                                         </View>
                                     )}
@@ -313,24 +258,15 @@ export default function DonationModal({ visible, onClose, report }: DonationModa
                         >
                             <Ionicons name="heart" size={20} color="#fff" />
                             <Text style={styles.donateBtnText}>
-<<<<<<< HEAD
-                                {isRTL ? "تبرع الآن" : "Donate Now"}
-=======
                                 {language === 'ar' ? "تبرع الآن" : language === 'ku' ? "Niha bexş bike" : "Donate Now"}
->>>>>>> feature/Ku_feature
                             </Text>
                         </Pressable>
 
                         <Text style={styles.disclaimer}>
-<<<<<<< HEAD
-                            {isRTL
-                                ? "⚠️ خدمة الدفع معطلة حالياً. سيتم تفعيلها قريباً."
-=======
                             {language === 'ar'
                                 ? "⚠️ خدمة الدفع معطلة حالياً. سيتم تفعيلها قريباً."
                                 : language === 'ku'
                                 ? "⚠️ Xizmeta dayînê niha neçalak e. Di nêzîkê de dê were aktivkirin."
->>>>>>> feature/Ku_feature
                                 : "⚠️ Payment is currently disabled. Coming soon."}
                         </Text>
                     </View>

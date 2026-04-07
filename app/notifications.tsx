@@ -119,12 +119,6 @@ export default function ModernNotifications() {
 
           <View style={{ flex: 1 }}>
             <Text style={[styles.msg, dir.textAlign, !item.is_read && styles.unreadText]}>
-<<<<<<< HEAD
-              {language === 'ku' && item.title_ku ? item.title_ku : (!effectiveRTL && item.title_en) ? item.title_en : item.title}
-            </Text>
-            {item.body && <Text style={[styles.body, dir.textAlign]}>
-              {language === 'ku' && item.body_ku ? item.body_ku : (!effectiveRTL && item.body_en) ? item.body_en : item.body}
-=======
               {language === 'ku' ? (item.title_ku || item.title_en || item.title)
                 : language === 'en' ? (item.title_en || item.title)
                 : item.title}
@@ -133,7 +127,6 @@ export default function ModernNotifications() {
               {language === 'ku' ? (item.body_ku || item.body_en || item.body)
                 : language === 'en' ? (item.body_en || item.body)
                 : item.body}
->>>>>>> feature/Ku_feature
             </Text>}
             <Text style={[styles.time, dir.textAlign]}>{formatTime(item.created_at)}</Text>
           </View>

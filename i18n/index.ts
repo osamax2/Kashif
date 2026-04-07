@@ -29,22 +29,9 @@ export const initI18n = async (): Promise<Language> => {
       currentLanguage = savedLang;
     }
 
-<<<<<<< HEAD
-    // Configure RTL/LTR (safe access)
-    const shouldBeRTL = currentLanguage === 'ar';
-    try {
-      if (I18nManager && typeof I18nManager.isRTL !== 'undefined' && I18nManager.isRTL !== shouldBeRTL) {
-        I18nManager.allowRTL(shouldBeRTL);
-        I18nManager.forceRTL(shouldBeRTL);
-      }
-    } catch (rtlError) {
-      console.warn('I18nManager not available:', rtlError);
-    }
-=======
     // RTL layout is handled manually via effectiveRTL = isRTL in components.
     // Do NOT call I18nManager.forceRTL here — it changes native layout on restart
     // and breaks the alignment pattern.
->>>>>>> feature/Ku_feature
 
     return currentLanguage;
   } catch (error) {
@@ -58,21 +45,8 @@ export const setLanguage = async (lang: Language): Promise<void> => {
     currentLanguage = lang;
     await AsyncStorage.setItem('app_language', lang);
 
-<<<<<<< HEAD
-    // Configure RTL/LTR (safe access)
-    const shouldBeRTL = lang === 'ar';
-    try {
-      if (I18nManager && typeof I18nManager.allowRTL === 'function') {
-        I18nManager.allowRTL(shouldBeRTL);
-        I18nManager.forceRTL(shouldBeRTL);
-      }
-    } catch (rtlError) {
-      console.warn('I18nManager not available:', rtlError);
-    }
-=======
     // RTL layout is handled manually via effectiveRTL = isRTL in components.
     // Do NOT call I18nManager.forceRTL here.
->>>>>>> feature/Ku_feature
   } catch (error) {
     console.error('Error setting language:', error);
   }

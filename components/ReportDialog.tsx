@@ -2,10 +2,7 @@
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { isOnline, savePendingReport } from "@/services/offline-reports";
-<<<<<<< HEAD
-=======
 import * as Crypto from "expo-crypto";
->>>>>>> feature/Ku_feature
 import * as FileSystem from "expo-file-system";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
@@ -82,8 +79,6 @@ export default function ReportDialog({
 
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-<<<<<<< HEAD
-=======
   // ──── Handle Android Back Button ────
   useEffect(() => {
     if (!visible) return;
@@ -96,7 +91,6 @@ export default function ReportDialog({
     return () => backHandler.remove();
   }, [visible, onClose]);
 
->>>>>>> feature/Ku_feature
   // ──── Image Quality Check ────
   const MIN_WIDTH = 640;
   const MIN_HEIGHT = 480;
@@ -378,45 +372,11 @@ export default function ReportDialog({
                     ]}
                   >
                     {type === "environment"
-<<<<<<< HEAD
-                      ? t("reportDialog.typeLabel")
-=======
                       ? t("reportDialog.severityLabel")
->>>>>>> feature/Ku_feature
                       : t("reportDialog.severityLabel")}
                   </Text>
                 </View>
 
-<<<<<<< HEAD
-                {type === "environment" ? (
-                  <View
-                    style={[
-                      styles.chipRow,
-                      { flexDirection: effectiveRTL ? "row-reverse" : "row" },
-                    ]}
-                  >
-                    <Chip
-                      label={t("reportDialog.radarFixed")}
-                      active={severity === "low"}
-                      variant="radar"
-                      onPress={() => setSeverity("low")}
-                    />
-                    <Chip
-                      label={t("reportDialog.radarMobile")}
-                      active={severity === "medium"}
-                      variant="radar"
-                      onPress={() => setSeverity("medium")}
-                    />
-                    <Chip
-                      label={t("reportDialog.radarCamera")}
-                      active={severity === "high"}
-                      variant="radar"
-                      onPress={() => setSeverity("high")}
-                    />
-                  </View>
-                ) : (
-=======
->>>>>>> feature/Ku_feature
                   <View
                     style={[
                       styles.chipRow,
@@ -502,11 +462,7 @@ export default function ReportDialog({
                         }
                       }}
                       query={{
-<<<<<<< HEAD
-                        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-=======
                         key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBRM_T7GtQ8JROceC_Gm0qRVjgxNh2Fxr4',
->>>>>>> feature/Ku_feature
                         language: isRTL ? "ar" : "en", // ✅ Sprache bleibt echte Sprache
                       }}
                       textInputProps={{

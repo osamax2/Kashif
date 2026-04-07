@@ -3,13 +3,8 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 import { resetBaseUrl, resolveApiBaseUrl } from './api-config';
 import { migrateTokensToSecureStore, secureGet, secureMultiDelete, secureSet } from './secure-storage';
 
-<<<<<<< HEAD
-// API Base URL - Production API endpoint with HTTPS
-const API_BASE_URL = 'https://api.kashifroad.com';
-=======
 // API Base URL - resolved dynamically at startup, can be updated via remote config
 let API_BASE_URL = 'https://api.kashifroad.com';
->>>>>>> feature/Ku_feature
 
 // Storage keys
 const TOKEN_KEY = '@kashif_access_token';
@@ -31,11 +26,7 @@ migrateTokensToSecureStore([TOKEN_KEY, REFRESH_TOKEN_KEY]).catch(() => {});
 // Request interceptor to add auth token
 api.interceptors.request.use(
     async (config) => {
-<<<<<<< HEAD
-      const token = await AsyncStorage.getItem(TOKEN_KEY);
-=======
       const token = await secureGet(TOKEN_KEY);
->>>>>>> feature/Ku_feature
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -57,24 +48,15 @@ api.interceptors.response.use(
         originalRequest._retry = true;
 
         try {
-<<<<<<< HEAD
-          const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
-=======
           const refreshToken = await secureGet(REFRESH_TOKEN_KEY);
->>>>>>> feature/Ku_feature
           if (refreshToken) {
             const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
               refresh_token: refreshToken,
             });
 
             const { access_token, refresh_token } = response.data;
-<<<<<<< HEAD
-            await AsyncStorage.setItem(TOKEN_KEY, access_token);
-            await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
-=======
             await secureSet(TOKEN_KEY, access_token);
             await secureSet(REFRESH_TOKEN_KEY, refresh_token);
->>>>>>> feature/Ku_feature
 
             // Retry original request with new token
             originalRequest.headers.Authorization = `Bearer ${access_token}`;
@@ -87,14 +69,11 @@ api.interceptors.response.use(
         }
       }
 
-<<<<<<< HEAD
-=======
       // On network/connection errors, try re-resolving the API URL
       if (!error.response && (error.code === 'ECONNABORTED' || error.message?.includes('Network Error'))) {
         resetBaseUrl();
       }
 
->>>>>>> feature/Ku_feature
       return Promise.reject(error);
     }
 );
@@ -319,8 +298,6 @@ export const authAPI = {
     return response.data;
   },
 
-<<<<<<< HEAD
-=======
   // Change password
   changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
     const response = await api.post<{ message: string }>('/api/auth/change-password', {
@@ -330,7 +307,6 @@ export const authAPI = {
     return response.data;
   },
 
->>>>>>> feature/Ku_feature
   // Upload profile picture
   uploadProfilePicture: async (imageUri: string): Promise<{ image_url: string }> => {
     const formData = new FormData();
@@ -345,11 +321,7 @@ export const authAPI = {
 
     formData.append('file', file);
 
-<<<<<<< HEAD
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
-=======
     const token = await secureGet(TOKEN_KEY);
->>>>>>> feature/Ku_feature
 
     const response = await fetch(`${API_BASE_URL}/api/auth/me/profile-picture`, {
       method: 'POST',
@@ -788,26 +760,17 @@ export const reportingAPI = {
   },
 
   // Upload image for report - now includes AI analysis
-<<<<<<< HEAD
-  uploadImage: async (imageUri: string): Promise<{
-    url: string;
-    filename: string;
-=======
   uploadImage: async (imageUri: string, asyncAI: boolean = false): Promise<{
     url: string;
     filename: string;
     ai_processing?: string;
->>>>>>> feature/Ku_feature
     ai_analysis?: {
       num_potholes: number;
       max_severity: string | null;
       ai_description: string | null;
       ai_description_ar: string | null;
       ai_description_ku: string | null;
-<<<<<<< HEAD
-=======
       annotated_url?: string;
->>>>>>> feature/Ku_feature
       detections: any[];
     };
   }> => {
@@ -826,11 +789,6 @@ export const reportingAPI = {
 
     formData.append('file', file);
 
-<<<<<<< HEAD
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
-
-    const response = await fetch(`${API_BASE_URL}/api/reports/upload`, {
-=======
     const token = await secureGet(TOKEN_KEY);
 
     // Add async_ai parameter if requested
@@ -839,7 +797,6 @@ export const reportingAPI = {
       : `${API_BASE_URL}/api/reports/upload`;
 
     const response = await fetch(url, {
->>>>>>> feature/Ku_feature
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -859,13 +816,8 @@ export const reportingAPI = {
     return {
       url: data.url, // Keep relative URL like /uploads/xxx.jpg
       filename: data.filename,
-<<<<<<< HEAD
-      ai_analysis: data.ai_analysis,
-      annotated_url: data.ai_analysis?.annotated_url, // URL to AI annotated image
-=======
       ai_processing: data.ai_processing,
       ai_analysis: data.ai_analysis,
->>>>>>> feature/Ku_feature
     };
   },
 

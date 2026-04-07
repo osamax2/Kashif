@@ -101,10 +101,7 @@
     "pothole": "Pothole",
     "accident": "Accident",
     "environment": "Environment",
-<<<<<<< HEAD
-=======
     "environmentHazard": "Environment Hazard",
->>>>>>> feature/Ku_feature
     "testSoundText": "This is a test",
     "warnPothole": "Warning! Pothole ahead",
     "warnAccident": "Warning! Accident on the road",
