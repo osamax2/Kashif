@@ -39,11 +39,7 @@ SERVICES = {
 SMTP_HOST = os.getenv("SMTP_HOST", "mail.kashifroad.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "noreply@kashifroad.com")
-<<<<<<< HEAD
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "SecurePass123!")
-=======
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
->>>>>>> feature/Ku_feature
 SMTP_FROM = os.getenv("SMTP_FROM", "noreply@kashifroad.com")
 ALERT_RECIPIENTS = os.getenv("ALERT_RECIPIENTS", "osobaji@gmail.com").split(",")
 

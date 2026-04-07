@@ -414,14 +414,11 @@ async def analyze_image_only(
             ai_description_ar += f", المساحة: {avg_area:.0f}سم²"
             ai_description_ku += f", rûber: {avg_area:.0f}cm²"
         
-<<<<<<< HEAD
-=======
         # Add YOLOv8 attribution text
         ai_description += "\n\n⚠️ This report was automatically created by the smart detection system (YOLOv8)"
         ai_description_ar += "\n\n⚠️ تم إنشاء هذا التقرير تلقائياً بواسطة نظام الكشف الذكي (YOLOv8)"
         ai_description_ku += "\n\n⚠️ Ev rapor bi awayekî otomatîk ji hêla pergala vedîtina jîr (YOLOv8) ve hatiye afirandin"
         
->>>>>>> feature/Ku_feature
         detections = [d.to_dict() for d in result.detections]
         
         return AnalyzeResponse(
@@ -444,8 +441,6 @@ async def analyze_image_only(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-<<<<<<< HEAD
-=======
 class EnhancedAnalyzeResponse(BaseModel):
     """Response model for enhanced analysis with depth estimation"""
     success: bool
@@ -631,7 +626,6 @@ async def analyze_with_depth(
         raise HTTPException(status_code=500, detail=str(e))
 
 
->>>>>>> feature/Ku_feature
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8006)

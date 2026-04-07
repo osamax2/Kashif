@@ -95,11 +95,6 @@ def handle_report_created(event_data):
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
-<<<<<<< HEAD
-                title="تم استلام بلاغك",
-                body=f"شكراً لك! تم استلام بلاغك #{report_id}",
-                data={"notification_id": str(notification.id), "report_id": str(report_id)},
-=======
                 title=title_ar,
                 body=body_ar,
                 data={
@@ -111,7 +106,6 @@ def handle_report_created(event_data):
                     "body_ku": body_ku,
                     "type": "report_created"
                 },
->>>>>>> feature/Ku_feature
                 notification_type="REPORT_CREATED"
             )
         
@@ -134,14 +128,6 @@ def handle_report_status_updated(event_data):
             return
 
         # Map status IDs to human readable names (ar/en/ku)
-<<<<<<< HEAD
-        status_names = {
-            1: {"ar": "مفتوح", "en": "Open", "ku": "Vekirî"},
-            2: {"ar": "قيد المراجعة", "en": "Under Review", "ku": "Di lêkolînê de"},
-            3: {"ar": "قيد المعالجة", "en": "In Progress", "ku": "Di pêşveçûnê de"},
-            4: {"ar": "تم الإصلاح", "en": "Resolved", "ku": "Çareserkirî"},
-            5: {"ar": "مرفوض", "en": "Rejected", "ku": "Redkirî"},
-=======
         # DB: 1=NEW, 2=IN_PROGRESS, 3=RESOLVED, 4=REJECTED, 5=CLOSED
         status_names = {
             1: {"ar": "جديد", "en": "New", "ku": "Nû"},
@@ -149,7 +135,6 @@ def handle_report_status_updated(event_data):
             3: {"ar": "تم الإصلاح", "en": "Resolved", "ku": "Çareserkirî"},
             4: {"ar": "مرفوض", "en": "Rejected", "ku": "Redkirî"},
             5: {"ar": "مغلق", "en": "Closed", "ku": "Girtî"},
->>>>>>> feature/Ku_feature
         }
         
         status_info = status_names.get(new_status_id, {"ar": f"حالة {new_status_id}", "en": f"Status {new_status_id}", "ku": f"Rewş {new_status_id}"})
@@ -232,11 +217,6 @@ def handle_points_awarded(event_data):
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
-<<<<<<< HEAD
-                title=f"حصلت على {points} نقطة!",
-                body=description or f"تم إضافة {points} نقطة",
-                data={"notification_id": str(notification.id)},
-=======
                 title=title_ar,
                 body=body_ar,
                 data={
@@ -247,7 +227,6 @@ def handle_points_awarded(event_data):
                     "body_ku": body_ku,
                     "type": "points_earned"
                 },
->>>>>>> feature/Ku_feature
                 notification_type="POINTS_AWARDED"
             )
         
@@ -288,11 +267,6 @@ def handle_coupon_redeemed(event_data):
             fcm_service.send_push_notification(
                 db=db,
                 user_id=user_id,
-<<<<<<< HEAD
-                title="تم استبدال القسيمة!",
-                body="يمكنك استخدام قسيمتك الآن",
-                data={"notification_id": str(notification.id), "coupon_id": str(coupon_id)},
-=======
                 title=title_ar,
                 body=body_ar,
                 data={
@@ -304,7 +278,6 @@ def handle_coupon_redeemed(event_data):
                     "body_ku": body_ku,
                     "type": "coupon_redeemed"
                 },
->>>>>>> feature/Ku_feature
                 notification_type="COUPON_REDEEMED"
             )
         

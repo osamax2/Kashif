@@ -145,8 +145,6 @@ def health_check_detailed():
     )
 
 
-<<<<<<< HEAD
-=======
 async def process_ai_background(
     file_path: str,
     unique_filename: str,
@@ -252,7 +250,6 @@ async def process_ai_background(
         )
 
 
->>>>>>> feature/Ku_feature
 @app.post("/upload")
 async def upload_image(
     file: UploadFile = File(...),
@@ -290,9 +287,6 @@ async def upload_image(
     
     logger.info(f"File uploaded: {unique_filename} by user {user_id}")
     
-<<<<<<< HEAD
-    # Run AI analysis on the uploaded image
-=======
     # Check if async AI processing is requested
     if async_ai:
         # Return immediately, process AI in background
@@ -317,7 +311,6 @@ async def upload_image(
         }
     
     # Synchronous AI processing (original behavior)
->>>>>>> feature/Ku_feature
     ai_result = None
     annotated_filename = None
     try:
@@ -352,20 +345,14 @@ async def upload_image(
             "max_severity": ai_result.get("max_severity"),
             "ai_description": ai_result.get("ai_description"),
             "ai_description_ar": ai_result.get("ai_description_ar"),
-<<<<<<< HEAD
-            "detections": ai_result.get("detections", [])
-=======
             "ai_description_ku": ai_result.get("ai_description_ku"),
             "detections": ai_result.get("detections", []),
             "enhanced_dimensions": ai_result.get("enhanced_dimensions"),
             "depth_estimation": ai_result.get("depth_estimation")
->>>>>>> feature/Ku_feature
         }
         # Add annotated image URL if available
         if annotated_filename:
             response["ai_analysis"]["annotated_url"] = f"/uploads/{annotated_filename}"
-<<<<<<< HEAD
-=======
         
         # Save depth map if available
         depth_map_base64 = ai_result.get("depth_map_base64")
@@ -377,7 +364,6 @@ async def upload_image(
                 f.write(base64.b64decode(depth_map_base64))
             response["ai_analysis"]["depth_map_url"] = f"/uploads/{depth_map_filename}"
             logger.info(f"Saved depth map: {depth_map_filename}")
->>>>>>> feature/Ku_feature
     
     return response
 

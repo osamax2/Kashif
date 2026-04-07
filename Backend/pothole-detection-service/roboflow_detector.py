@@ -14,10 +14,7 @@ import cv2
 import numpy as np
 
 from config import settings
-<<<<<<< HEAD
-=======
 from detection_filter import DetectionFilter
->>>>>>> feature/Ku_feature
 
 
 # Roboflow API Configuration
@@ -65,25 +62,6 @@ class PotholeDetection:
     severity: Optional[str] = None
     
     def to_dict(self):
-<<<<<<< HEAD
-        return {
-            "bbox": {
-                "x1": self.bbox.x1,
-                "y1": self.bbox.y1,
-                "x2": self.bbox.x2,
-                "y2": self.bbox.y2,
-                "width": self.bbox.width,
-                "height": self.bbox.height,
-                "area_pixels": self.bbox.area
-            },
-            "confidence": round(self.confidence, 4),
-            "class_id": self.class_id,
-            "class_name": self.class_name,
-            "estimated_width_cm": self.estimated_width_cm,
-            "estimated_height_cm": self.estimated_height_cm,
-            "estimated_depth_cm": self.estimated_depth_cm,
-            "estimated_area_cm2": self.estimated_area_cm2,
-=======
         def _float(v):
             if v is None:
                 return None
@@ -108,7 +86,6 @@ class PotholeDetection:
             "estimated_height_cm": round(_float(self.estimated_height_cm), 1) if self.estimated_height_cm else None,
             "estimated_depth_cm": round(_float(self.estimated_depth_cm), 1) if self.estimated_depth_cm else None,
             "estimated_area_cm2": round(_float(self.estimated_area_cm2), 1) if self.estimated_area_cm2 else None,
->>>>>>> feature/Ku_feature
             "severity": self.severity
         }
 
@@ -221,16 +198,10 @@ class RoboflowPotholeDetector:
     Falls back to local image analysis if API is unavailable.
     """
     
-<<<<<<< HEAD
-    def __init__(self, api_key: str = None, confidence: float = 0.25):
-        self.api_key = api_key or ROBOFLOW_API_KEY
-        self.confidence = confidence
-=======
     def __init__(self, api_key: str = None, confidence: float = 0.40):
         self.api_key = api_key or ROBOFLOW_API_KEY
         self.confidence = confidence
         self.detection_filter = DetectionFilter(min_confidence=confidence)
->>>>>>> feature/Ku_feature
         self.model_id = ROBOFLOW_MODEL_ID
         self.api_url = ROBOFLOW_API_URL
         self.use_roboflow = bool(self.api_key)
@@ -246,11 +217,7 @@ class RoboflowPotholeDetector:
         save_annotated: bool = True,
         output_dir: Optional[str] = None
     ) -> DetectionResult:
-<<<<<<< HEAD
-        """Detect potholes in an image"""
-=======
         """Detect potholes in an image using Roboflow + texture analysis"""
->>>>>>> feature/Ku_feature
         import time
         start_time = time.time()
         
@@ -261,25 +228,6 @@ class RoboflowPotholeDetector:
         
         img_height, img_width = img.shape[:2]
         
-<<<<<<< HEAD
-        # Try Roboflow API first
-        if self.use_roboflow:
-            detections = self._detect_with_roboflow(image_path, img_width, img_height)
-            method = "roboflow"
-        else:
-            detections = []
-            method = "local"
-        
-        # Fallback to local analysis if no detections
-        if not detections:
-            print(f"🔍 Using local image analysis fallback")
-            detections = self._analyze_image_locally(img)
-            method = "local_analysis"
-        
-        processing_time = (time.time() - start_time) * 1000
-        
-        # Save annotated image
-=======
         # Step 1: Try Roboflow API
         roboflow_detections = []
         if self.use_roboflow:
@@ -327,7 +275,6 @@ class RoboflowPotholeDetector:
         processing_time = (time.time() - start_time) * 1000
         
         # Step 6: Save annotated image with ONLY valid detections
->>>>>>> feature/Ku_feature
         annotated_path = None
         if save_annotated and detections:
             annotated_path = self._save_annotated_image(
@@ -463,13 +410,8 @@ class RoboflowPotholeDetector:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
         
-<<<<<<< HEAD
-        # Threshold for dark regions
-        _, thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV)
-=======
         # Threshold for dark regions (raised from 60 to avoid shadow false positives)
         _, thresh = cv2.threshold(blurred, 80, 255, cv2.THRESH_BINARY_INV)
->>>>>>> feature/Ku_feature
         
         # Find contours
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -505,41 +447,6 @@ class RoboflowPotholeDetector:
                     )
                     detections.append(detection)
         
-<<<<<<< HEAD
-        # Fallback: assume center of image is a pothole
-        if not detections:
-            center_x = img_width // 2
-            center_y = img_height // 2
-            size = min(img_width, img_height) // 3
-            
-            bbox = BoundingBox(
-                x1=center_x - size // 2,
-                y1=center_y - size // 2,
-                x2=center_x + size // 2,
-                y2=center_y + size // 2
-            )
-            
-            width_cm, height_cm, depth_cm, area_cm2 = estimator.estimate_physical_size(
-                bbox, img_width, img_height
-            )
-            severity = estimator.classify_severity(width_cm, depth_cm, area_cm2)
-            
-            detection = PotholeDetection(
-                bbox=bbox,
-                confidence=0.5,
-                class_id=0,
-                class_name="pothole",
-                estimated_width_cm=width_cm,
-                estimated_height_cm=height_cm,
-                estimated_depth_cm=depth_cm,
-                estimated_area_cm2=area_cm2,
-                severity=severity
-            )
-            detections.append(detection)
-        
-        return detections[:5]
-    
-=======
         # No fallback - if nothing detected locally, return empty
         # (Removed: fake center-of-image pothole assumption)
         
@@ -688,7 +595,6 @@ class RoboflowPotholeDetector:
         union = bbox1.area + bbox2.area - intersection
         return intersection / max(union, 1)
     
->>>>>>> feature/Ku_feature
     def _save_annotated_image(
         self,
         img: np.ndarray,

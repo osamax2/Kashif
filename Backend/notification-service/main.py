@@ -348,8 +348,6 @@ def verify_internal_key(x_internal_key: str = Header(None)):
         raise HTTPException(status_code=403, detail="Invalid internal API key")
 
 
-<<<<<<< HEAD
-=======
 @app.post("/internal/push")
 def internal_send_push(
     request: schemas.InternalPushRequest,
@@ -389,7 +387,6 @@ def internal_send_push(
         return {"success": False, "error": str(e)}
 
 
->>>>>>> feature/Ku_feature
 @app.delete("/internal/user-data/{user_id}")
 def delete_user_data(
     user_id: int,
